@@ -1,0 +1,85 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
+# Copyright (C) 2026 Shannon Smith
+
+name: prepare-calendar-plus-1.0.6
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - .github/workflows/prepare-release-1.0.6.yml
+
+permissions:
+  contents: write
+  actions: write
+
+jobs:
+  prepare:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          submodules: true
+          fetch-depth: 0
+
+      - name: Regenerate and commit release state
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          sudo apt-get update
+          sudo apt-get install -y gettext
+
+          git pull --ff-only origin main
+
+          python3 - <<'PY'
+          from pathlib import Path
+
+          replacements = {
+              Path('Makefile'): ('VERSION := 1.0.5', 'VERSION := 1.0.6'),
+              Path('README.md'): ('**Stable release:** 1.0.5.', '**Stable release:** 1.0.6.'),
+              Path('src/cinnamon/metadata.json'): ('"version": "1.0.5"', '"version": "1.0.6"'),
+          }
+          for path, (old, new) in replacements.items():
+              text = path.read_text(encoding='utf-8')
+              if old not in text:
+                  raise SystemExit(f'expected release marker not found in {path}: {old}')
+              path.write_text(text.replace(old, new, 1), encoding='utf-8')
+
+          changelog = Path('debian/changelog')
+          current = changelog.read_text(encoding='utf-8')
+          stanza = '''calendar-plus (1.0.6) trixie; urgency=medium
+
+  * Follow Cinnamon's current CalendarServer backend abstraction instead of
+    gating event startup on Evolution Data Server.
+  * Keep a persistent CalendarServer service watch for immediate reconnects
+    across backend or service restarts.
+  * Advance the reviewed Cinnamon calendar integration baseline.
+
+ -- Shannon Smith <noreply@the-infiltratr.com>  Mon, 14 Sep 2026 18:55:00 +1000
+
+'''
+          changelog.write_text(stanza + current, encoding='utf-8')
+          PY
+
+          python3 tools/update-translations.py
+          python3 tools/update-runtime-hashes.py
+          node tests/test-js-runtime.js
+          git diff --check
+
+          git rm .github/workflows/prepare-release-1.0.6.yml
+          git add Makefile README.md debian/changelog src/cinnamon/metadata.json \
+            src/cinnamon/runtime-sources.sha256 src/i18n
+
+          git config user.name 'Shannon Smith'
+          git config user.email 'noreply@the-infiltratr.com'
+          git commit -m 'Release 1.0.6: follow current Cinnamon CalendarServer backend'
+          git push origin HEAD:main
+
+          gh api --method POST \
+            "repos/${GITHUB_REPOSITORY}/actions/workflows/ci.yml/dispatches" \
+            -f ref=main
+          gh api --method POST \
+            "repos/${GITHUB_REPOSITORY}/actions/workflows/upstream-drift.yml/dispatches" \
+            -f ref=main
