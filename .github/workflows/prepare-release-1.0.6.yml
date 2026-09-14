@@ -49,17 +49,15 @@ jobs:
 
           changelog = Path('debian/changelog')
           current = changelog.read_text(encoding='utf-8')
-          stanza = '''calendar-plus (1.0.6) trixie; urgency=medium
-
-  * Follow Cinnamon's current CalendarServer backend abstraction instead of
-    gating event startup on Evolution Data Server.
-  * Keep a persistent CalendarServer service watch for immediate reconnects
-    across backend or service restarts.
-  * Advance the reviewed Cinnamon calendar integration baseline.
-
- -- Shannon Smith <noreply@the-infiltratr.com>  Mon, 14 Sep 2026 18:55:00 +1000
-
-'''
+          stanza = (
+              'calendar-plus (1.0.6) trixie; urgency=medium\n\n'
+              '  * Follow Cinnamon\'s current CalendarServer backend abstraction instead of\n'
+              '    gating event startup on Evolution Data Server.\n'
+              '  * Keep a persistent CalendarServer service watch for immediate reconnects\n'
+              '    across backend or service restarts.\n'
+              '  * Advance the reviewed Cinnamon calendar integration baseline.\n\n'
+              ' -- Shannon Smith <noreply@the-infiltratr.com>  Mon, 14 Sep 2026 18:55:00 +1000\n\n'
+          )
           changelog.write_text(stanza + current, encoding='utf-8')
           PY
 
