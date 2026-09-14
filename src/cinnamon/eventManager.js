@@ -148,15 +148,25 @@ var EventsManager = class EventsManager {
     }
 
     start_events() {
-        if (this._destroyed || this._inited || this._calendar_server_connecting) {
+        if (this._destroyed || this._inited) {
             return;
         }
 
         /*
-         * Cinnamon now owns backend selection behind CalendarServer.  Connect
-         * to that stable service directly and allow D-Bus activation instead
-         * of waiting for Evolution Data Server to appear first.
+         * Cinnamon now owns backend selection behind CalendarServer.  Watch
+         * that stable service itself so a backend/server restart reconnects
+         * immediately, while still connecting directly to allow D-Bus
+         * activation instead of waiting for Evolution Data Server first.
          */
+        if (this._bus_watch_id === 0) {
+            this._bus_watch_id = Gio.bus_watch_name(
+                Gio.BusType.SESSION,
+                CALENDAR_SERVER_BUS_NAME,
+                Gio.BusNameWatcherFlags.NONE,
+                () => this._connectCalendarServer(),
+                () => this._calendarServerVanished()
+            );
+        }
         this._connectCalendarServer();
     }
 
@@ -211,17 +221,6 @@ var EventsManager = class EventsManager {
             this._calendar_server = server;
             this._cached_state = server.status;
             this._inited = true;
-
-            if (this._bus_watch_id === 0) {
-                this._bus_watch_id = Gio.bus_watch_name(
-                    Gio.BusType.SESSION,
-                    CALENDAR_SERVER_BUS_NAME,
-                    Gio.BusNameWatcherFlags.NONE,
-                    () => {},
-                    () => this._calendarServerVanished()
-                );
-            }
-
             this.emit("events-manager-ready");
         } catch (error) {
             if (!this._destroyed && generation === this._calendar_server_generation) {
@@ -240,11 +239,6 @@ var EventsManager = class EventsManager {
     _calendarServerVanished() {
         if (this._destroyed) {
             return;
-        }
-
-        if (this._bus_watch_id > 0) {
-            Gio.bus_unwatch_name(this._bus_watch_id);
-            this._bus_watch_id = 0;
         }
 
         this._calendar_server_generation += 1;
