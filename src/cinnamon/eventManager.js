@@ -20,7 +20,7 @@ const Mainloop = imports.mainloop;
 const APPLET_UUID = "calendar-plus@the-infiltratr";
 const STATUS_UNKNOWN = 0;
 const STATUS_NO_CALENDARS = 1;
-const EDS_BUS_NAME = "org.gnome.evolution.dataserver.Calendar8";
+const CALENDAR_SERVER_BUS_NAME = "org.cinnamon.CalendarServer";
 
 function _loadRuntimeSupport() {
     try {
@@ -148,17 +148,16 @@ var EventsManager = class EventsManager {
     }
 
     start_events() {
-        if (this._destroyed || this._inited || this._bus_watch_id > 0) {
+        if (this._destroyed || this._inited || this._calendar_server_connecting) {
             return;
         }
 
-        this._bus_watch_id = Gio.bus_watch_name(
-            Gio.BusType.SESSION,
-            EDS_BUS_NAME,
-            Gio.BusNameWatcherFlags.NONE,
-            () => this._connectCalendarServer(),
-            () => this._calendarServerVanished()
-        );
+        /*
+         * Cinnamon now owns backend selection behind CalendarServer.  Connect
+         * to that stable service directly and allow D-Bus activation instead
+         * of waiting for Evolution Data Server to appear first.
+         */
+        this._connectCalendarServer();
     }
 
     _connectCalendarServer() {
@@ -172,8 +171,8 @@ var EventsManager = class EventsManager {
         const generation = this._calendar_server_generation;
         Cinnamon.CalendarServerProxy.new_for_bus(
             Gio.BusType.SESSION,
-            Gio.DBusProxyFlags.DO_NOT_AUTO_START_AT_CONSTRUCTION,
-            "org.cinnamon.CalendarServer",
+            Gio.DBusProxyFlags.NONE,
+            CALENDAR_SERVER_BUS_NAME,
             "/org/cinnamon/CalendarServer",
             this._cancellable,
             (object, result) => this._calendarServerReady(result, generation)
@@ -212,6 +211,17 @@ var EventsManager = class EventsManager {
             this._calendar_server = server;
             this._cached_state = server.status;
             this._inited = true;
+
+            if (this._bus_watch_id === 0) {
+                this._bus_watch_id = Gio.bus_watch_name(
+                    Gio.BusType.SESSION,
+                    CALENDAR_SERVER_BUS_NAME,
+                    Gio.BusNameWatcherFlags.NONE,
+                    () => {},
+                    () => this._calendarServerVanished()
+                );
+            }
+
             this.emit("events-manager-ready");
         } catch (error) {
             if (!this._destroyed && generation === this._calendar_server_generation) {
@@ -232,6 +242,11 @@ var EventsManager = class EventsManager {
             return;
         }
 
+        if (this._bus_watch_id > 0) {
+            Gio.bus_unwatch_name(this._bus_watch_id);
+            this._bus_watch_id = 0;
+        }
+
         this._calendar_server_generation += 1;
         this._calendar_server_connecting = false;
         this._cancelReconnect();
@@ -249,6 +264,7 @@ var EventsManager = class EventsManager {
         this.last_update_timestamp = 0;
         this.emit("has-calendars-changed");
         this.emit("events-updated");
+        this._scheduleReconnect();
     }
 
     _scheduleReconnect() {
