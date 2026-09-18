@@ -15,7 +15,7 @@ OUTPUT_DIR=$PWD
 
 usage() {
     cat <<EOF
-Calendar Plus ${VERSION} local hardware-native builder
+Calendar ${VERSION} local hardware-native builder
 
 Usage: $(basename "$0") [OPTIONS]
 
@@ -25,7 +25,7 @@ Usage: $(basename "$0") [OPTIONS]
   -h, --help           Show this help
 
 With no options, the builder installs missing build dependencies, compiles
-Calendar Plus for this machine, creates a Debian-managed package and installs
+Calendar for this machine, creates a Debian-managed package and installs
 it through APT.
 EOF
 }
@@ -87,7 +87,7 @@ printf '%s  %s\n' "$PAYLOAD_SHA256" "$PAYLOAD" | sha256sum --check --status || {
 }
 
 if [ "$VERIFY_ONLY" -eq 1 ]; then
-    printf 'Calendar Plus %s embedded source verified: %s\n' \
+    printf 'Calendar %s embedded source verified: %s\n' \
         "$VERSION" "$PAYLOAD_SHA256"
     exit 0
 fi
@@ -105,7 +105,7 @@ run_privileged() {
 
 install_build_dependencies() {
     command -v apt-get >/dev/null 2>&1 || {
-        echo "APT is required to install Calendar Plus build dependencies" >&2
+        echo "APT is required to install Calendar build dependencies" >&2
         exit 1
     }
     run_privileged apt-get update
@@ -146,7 +146,7 @@ grep -q "^calendar-plus (${NATIVE_VERSION}) " \
         exit 1
     }
 
-printf 'Building Calendar Plus %s for local architecture %s.\n' \
+printf 'Building Calendar %s for local architecture %s.\n' \
     "$NATIVE_VERSION" "$ARCH"
 printf 'Native optimisation: -O3 -march=native -mtune=native -flto=auto\n'
 
@@ -189,10 +189,10 @@ if [ "$BUILD_ONLY" -eq 0 ]; then
     # one-time transition when an older development package is still present.
     # For normal later upgrades this flag is harmless.
     run_privileged apt-get install -y --allow-downgrades "$OUTPUT_DEB"
-    printf 'Calendar Plus %s is installed and managed by APT.\n' \
+    printf 'Calendar %s is installed and managed by APT.\n' \
         "$NATIVE_VERSION"
 else
-    printf 'Calendar Plus native package built without installation.\n'
+    printf 'Calendar native package built without installation.\n'
 fi
 
 printf 'Package: %s\n' "$OUTPUT_DEB"

@@ -1,13 +1,13 @@
 #!/usr/bin/python3
 # SPDX-License-Identifier: GPL-3.0-or-later
 # Copyright (C) 2026 Shannon Smith
-"""Calendar Plus typography host for Cinnamon's native xlet settings UI.
+"""Calendar typography host for Cinnamon's native xlet settings UI.
 
 Cinnamon's generic xlet-settings process is a separate GTK application, so it
 cannot inherit the St/Cinnamon stylesheet used by the panel applet. This thin
 host deliberately reuses Cinnamon's own MainWindow, JSON settings widgets,
 persistence, D-Bus callbacks, import/export and reset behaviour. Its only
-presentation policy is to install the Calendar Plus font family before that
+presentation policy is to install the Calendar font family before that
 window is constructed.
 """
 
@@ -75,12 +75,12 @@ def apply_typography() -> None:
 
 
 def parse_args() -> argparse.Namespace:
-    parser = argparse.ArgumentParser(description="Calendar Plus settings")
+    parser = argparse.ArgumentParser(description="Calendar settings")
     parser.add_argument(
         "--instance",
         type=int,
         default=None,
-        help="Calendar Plus applet instance to configure",
+        help="Calendar applet instance to configure",
     )
     parser.add_argument(
         "--tab",

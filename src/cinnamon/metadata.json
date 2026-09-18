@@ -1,6 +1,6 @@
 {
     "uuid": "calendar-plus@the-infiltratr",
-    "name": "Calendar Plus",
+    "name": "Calendar",
     "description": "The Cinnamon clock and calendar with multiple time and calendar systems",
     "author": "Shannon Smith",
     "icon": "gnome-calendar",
@@ -10,7 +10,7 @@
         "6.6",
         "6.7"
     ],
-    "version": "1.0.8",
+    "version": "1.0.9",
     "gettext-domain": "calendar-plus@the-infiltratr",
     "external-configuration-app": "settings.py",
     "website": "https://github.com/Infiltrator-Projects/Calendar-Plus",

@@ -1,12 +1,12 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 # SOME DESCRIPTIVE TITLE.
 # Copyright (C) YEAR Shannon Smith
-# This file is distributed under the same license as the Calendar Plus package.
+# This file is distributed under the same license as the Calendar package.
 # FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: Calendar Plus 1.0.8\n"
+"Project-Id-Version: Calendar 1.0.9\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2026-09-01 09:25+0000\n"
 "PO-Revision-Date: 2026-09-01 09:25+0000\n"
@@ -36,8 +36,8 @@ msgstr "%d %s, An %s"
 msgid "A native C-backed Cinnamon clock and calendar authored by Shannon Smith, with multiple time and calendar systems."
 msgstr "A native C-backed Cinnamon clock and calendar authored by Shannon Smith, with multiple time and calendar systems."
 
-msgid "About Calendar Plus"
-msgstr "About Calendar Plus"
+msgid "About Calendar"
+msgstr "About Calendar"
 
 msgid "Ahekan"
 msgstr "Ahekan"
@@ -111,8 +111,8 @@ msgstr "Byzantine (Anno Mundi)"
 msgid "Caesar"
 msgstr "Caesar"
 
-msgid "Calendar Plus"
-msgstr "Calendar Plus"
+msgid "Calendar"
+msgstr "Calendar"
 
 msgid "Calendar systems"
 msgstr "Calendar systems"
@@ -227,8 +227,8 @@ msgstr "Floréal"
 msgid "Follow system"
 msgstr "Follow system"
 
-msgid "Follow the current Cinnamon theme, or force Calendar Plus to use its light or dark Infiltrator appearance."
-msgstr "Follow the current Cinnamon theme, or force Calendar Plus to use its light or dark Infiltrator appearance."
+msgid "Follow the current Cinnamon theme, or force Calendar to use its light or dark Infiltrator appearance."
+msgstr "Follow the current Cinnamon theme, or force Calendar to use its light or dark Infiltrator appearance."
 
 msgid "Frederick"
 msgstr "Frederick"

@@ -1,3 +1,11 @@
+calendar-plus (1.0.9) trixie; urgency=medium
+
+  * Rename the user-facing application from Calendar Plus to Calendar.
+  * Keep the calendar-plus package, UUID, ABI and executable identifiers for upgrade compatibility.
+  * Update About, settings, installer and translation-facing application names.
+
+ -- Shannon Smith <noreply@the-infiltratr.com>  Fri, 18 Sep 2026 19:26:00 +1000
+
 calendar-plus (1.0.8) trixie; urgency=medium
 
   * Advance the exact shared dependency to Infiltratr Common 1.19.2.

@@ -1,16 +1,16 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
-# Calendar Plus pt_BR translation.
+# Calendar pt_BR translation.
 # Copyright (C) 2026 Shannon Smith
-# This file is distributed under the same license as the Calendar Plus package.
-# Initial translation prepared for Calendar Plus, 2026.
+# This file is distributed under the same license as the Calendar package.
+# Initial translation prepared for Calendar, 2026.
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: Calendar Plus 3.9.18\n"
+"Project-Id-Version: Calendar 3.9.18\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2026-09-01 04:58+0000\n"
 "PO-Revision-Date: 2026-09-01 03:05+0000\n"
-"Last-Translator: Calendar Plus contributors\n"
+"Last-Translator: Calendar contributors\n"
 "Language-Team: pt_BR\n"
 "Language: pt_BR\n"
 "MIME-Version: 1.0\n"
@@ -36,8 +36,8 @@ msgstr "%d %s, An %s"
 msgid "A native C-backed Cinnamon clock and calendar authored by Shannon Smith, with multiple time and calendar systems."
 msgstr "Um relógio e calendário Cinnamon com backend nativo em C, criado por Shannon Smith, com vários sistemas de horário e calendário."
 
-msgid "About Calendar Plus"
-msgstr "Sobre o Calendar Plus"
+msgid "About Calendar"
+msgstr "Sobre o Calendar"
 
 msgid "Ahekan"
 msgstr "Ahekan"
@@ -111,8 +111,8 @@ msgstr "Bizantino (Anno Mundi)"
 msgid "Caesar"
 msgstr "Caesar"
 
-msgid "Calendar Plus"
-msgstr "Calendar Plus"
+msgid "Calendar"
+msgstr "Calendar"
 
 msgid "Calendar systems"
 msgstr "Sistemas de calendário"
@@ -230,8 +230,8 @@ msgstr "Floréal"
 msgid "Follow system"
 msgstr "Seguir o sistema"
 
-msgid "Follow the current Cinnamon theme, or force Calendar Plus to use its light or dark Infiltrator appearance."
-msgstr "Seguir o tema atual do Cinnamon ou forçar o Calendar Plus a usar a aparência Infiltrator clara ou escura."
+msgid "Follow the current Cinnamon theme, or force Calendar to use its light or dark Infiltrator appearance."
+msgstr "Seguir o tema atual do Cinnamon ou forçar o Calendar a usar a aparência Infiltrator clara ou escura."
 
 msgid "Frederick"
 msgstr "Frederick"

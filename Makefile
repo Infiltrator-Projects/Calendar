@@ -9,7 +9,7 @@ G_IR_COMPILER ?= g-ir-compiler
 PREFIX ?= /usr
 DESTDIR ?=
 
-VERSION := 1.0.8
+VERSION := 1.0.9
 UUID := calendar-plus@the-infiltratr
 APPLET_SRC_DIR := src/cinnamon
 I18N_DIR := src/i18n
@@ -92,7 +92,7 @@ PRIVATE_HEADERS := \
 	src/adapters/event-store-private.h
 HEADERS := $(sort $(PUBLIC_HEADERS) $(CORE_HEADERS) $(PRIVATE_HEADERS))
 # Common is consumed through its own public static-library build product.
-# Calendar Plus deliberately does not enumerate or compile Common's private
+# Calendar deliberately does not enumerate or compile Common's private
 # source-file membership.
 INFILTRATR_COMMON_HEADERS := \
 	$(INFILTRATR_COMMON_DIR)/include/infiltratr/core.h \
@@ -559,7 +559,7 @@ install: all
 	install -d "$(DESTDIR)$(PREFIX)/share/doc/calendar-plus"
 	install -m644 README.md \
 		"$(DESTDIR)$(PREFIX)/share/doc/calendar-plus/"
-	printf 'Calendar Plus source version: %s\nBuild mode: %s\nShared C library: Infiltratr Common %s\n' \
+	printf 'Calendar source version: %s\nBuild mode: %s\nShared C library: Infiltratr Common %s\n' \
 		"$(VERSION)" "$(BUILD_DESCRIPTION)" "$(INFILTRATR_COMMON_VERSION)" \
 		> "$(BUILD_DIR)/BUILD-INFO"
 	install -m644 "$(BUILD_DIR)/BUILD-INFO" \

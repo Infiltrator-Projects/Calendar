@@ -10,7 +10,7 @@
 #include "project-info.h"
 
 /*
- * Calendar Plus only needs GtkAboutDialog's stable GTK 3 ABI. Keeping this
+ * Calendar only needs GtkAboutDialog's stable GTK 3 ABI. Keeping this
  * deliberately small declaration surface and loading the runtime on demand
  * avoids requiring GTK development headers for a single dialog. The binary
  * package declares the GTK 3 runtime directly.
@@ -184,7 +184,7 @@ create_about_dialog(void)
         NULL
     };
     static const gchar *license =
-        "Calendar Plus is free software licensed under the GNU General Public "
+        "Calendar is free software licensed under the GNU General Public "
         "License version 3 or, at your option, any later version "
         "(GPL-3.0-or-later).\n\n"
         "See LICENSE in the source package for the complete licence text.";
@@ -199,7 +199,7 @@ create_about_dialog(void)
         _(info->comments),
         build_label(info->build_profile));
 
-    gtk_api.window_set_title((GtkWindow *) widget, _("About Calendar Plus"));
+    gtk_api.window_set_title((GtkWindow *) widget, _("About Calendar"));
     gtk_api.set_program_name(about, _(info->program_name));
     gtk_api.set_version(about, info->version);
     gtk_api.set_logo_icon_name(about, info->icon_name);

@@ -2,7 +2,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 # Copyright (C) 2026 Shannon Smith
 
-"""Regenerate Calendar Plus's gettext template deterministically."""
+"""Regenerate Calendar's gettext template deterministically."""
 
 from __future__ import annotations
 
@@ -124,7 +124,7 @@ def main() -> None:
     version, _, release_stamp = release_identity()
     common = (
         "--from-code=UTF-8",
-        "--package-name=Calendar Plus",
+        "--package-name=Calendar",
         f"--package-version={version}",
         "--no-location",
         "--copyright-holder=Shannon Smith",

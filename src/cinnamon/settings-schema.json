@@ -161,7 +161,7 @@
             "Day": "day",
             "Night": "night"
         },
-        "tooltip": "Follow the current Cinnamon theme, or force Calendar Plus to use its light or dark Infiltrator appearance."
+        "tooltip": "Follow the current Cinnamon theme, or force Calendar to use its light or dark shared appearance."
     },
     "show-events": {
         "type": "switch",

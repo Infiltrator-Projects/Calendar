@@ -2,7 +2,7 @@
 // Copyright (C) 2026 Shannon Smith
 
 /*
- * Calendar Plus panel controller.
+ * Calendar panel controller.
  *
  * Architecture
  * ------------
@@ -305,7 +305,7 @@ class CalendarPlusApplet extends Applet.Applet {
         dateTimeSettings.connect("activate", () => this._onLaunchSettings());
         this.menu.addMenuItem(dateTimeSettings);
 
-        const aboutItem = new PopupMenu.PopupMenuItem(CP_("About Calendar Plus"));
+        const aboutItem = new PopupMenu.PopupMenuItem(CP_("About Calendar"));
         aboutItem.connect("activate", () => this._onAbout());
         this.menu.addMenuItem(aboutItem);
     }
@@ -761,7 +761,7 @@ class CalendarPlusApplet extends Applet.Applet {
     /*
      * Cinnamon's Applet base class normally opens its generic metadata dialog
      * from the right-click context menu.  That dialog exposes the internal UUID
-     * and only a small subset of Calendar Plus metadata.  Keep every About
+     * and only a small subset of Calendar metadata.  Keep every About
      * entry point on the same native dialog so the application presents one
      * consistent identity regardless of how the user opens it.
      */
@@ -772,7 +772,7 @@ class CalendarPlusApplet extends Applet.Applet {
     /*
      * Cinnamon normally launches its generic xlet-settings process here.
      * That process is outside this applet's St theme tree, so it cannot
-     * inherit Calendar Plus typography. Route Configure through the bundled
+     * inherit Calendar typography. Route Configure through the bundled
      * thin GTK host instead; it reuses Cinnamon's own settings renderer and
      * persistence while applying the same MB Corpo family before widgets are
      * constructed.

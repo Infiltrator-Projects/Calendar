@@ -23,7 +23,7 @@ calendar_plus_project_info(void)
     static const InfiltratrProjectInfo info = {
         .struct_size = sizeof(InfiltratrProjectInfo),
         .abi_version = INFILTRATR_PROJECT_INFO_ABI,
-        .program_name = N_("Calendar Plus"),
+        .program_name = N_("Calendar"),
         .executable_name = "calendar-plus",
         .application_id = "calendar-plus@the-infiltratr",
         .version = CALENDAR_PLUS_VERSION,
