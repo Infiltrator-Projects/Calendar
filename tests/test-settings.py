@@ -57,6 +57,18 @@ def main() -> None:
     assert seconds["type"] == "switch"
     assert seconds["default"] is False
 
+    theme = schema["theme-mode"]
+    assert theme["type"] == "combobox"
+    assert theme["default"] == "system"
+    assert list(theme["options"].values()) == ["system", "day", "night"]
+    assert 'this.settings.bind("theme-mode", "theme_mode", this._onSettingsChanged);' in applet_source
+    assert 'this.theme_mode = "system";' in applet_source
+    assert "calendar-plus-theme-day" in applet_source
+    assert "calendar-plus-theme-night" in applet_source
+    stylesheet = (APPLET_DIR / "stylesheet.css").read_text(encoding="utf-8")
+    assert ".calendar-plus-popup.calendar-plus-theme-day" in stylesheet
+    assert ".calendar-plus-popup.calendar-plus-theme-night" in stylesheet
+
     location_configured = schema["location-configured"]
     assert location_configured["type"] == "switch"
     assert location_configured["default"] is False
