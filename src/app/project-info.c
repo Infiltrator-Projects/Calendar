@@ -35,7 +35,7 @@ calendar_plus_project_info(void)
         .comments = N_("A native C-backed Cinnamon clock and calendar authored "
                        "by Shannon Smith, with multiple time and calendar "
                        "systems."),
-        .icon_name = "gnome-calendar",
+        .icon_name = "infiltratr-calendar",
         .copyright_text = N_("Copyright © 2026 Shannon Smith\n\n"
                              "This program comes with absolutely no warranty.\n"
                              "See the GNU GPL v3+ License for details.")

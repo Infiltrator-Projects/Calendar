@@ -88,6 +88,11 @@ def main() -> None:
     assert "MB Corpo S Title WEB" in read("src/cinnamon/applet.js")
     assert "calendar-plus-popup" in read("src/cinnamon/applet.js")
     assert "external-configuration-app" in read("src/cinnamon/metadata.json")
+    metadata_icon = json.loads(read("src/cinnamon/metadata.json"))["icon"]
+    assert metadata_icon == "infiltratr-calendar"
+    assert (ROOT / "src/assets/infiltratr-calendar.png").is_file()
+    assert "share/icons/hicolor/256x256/apps/$(ICON_NAME).png" in makefile
+    assert '.icon_name = "infiltratr-calendar"' in read("src/app/project-info.c")
     stylesheet = read("src/cinnamon/stylesheet.css")
     assert "MB Corpo S Title WEB" in stylesheet
     assert '.calendar-plus-panel-clock {' in stylesheet
@@ -156,6 +161,7 @@ def main() -> None:
     assert "make reproducible-build" in release
     assert "tools/native-installer-smoke.sh" in release
     assert "tools/validate-release-artifacts.sh" in release
+    assert "infiltratr-calendar.png" in artifact_validator
     assert "lintian --fail-on error" in release
     assert "local-source.zip" not in release
     assert 'dist/calendar_${VERSION}_${ARCH}.deb' in release

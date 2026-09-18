@@ -9,9 +9,11 @@ G_IR_COMPILER ?= g-ir-compiler
 PREFIX ?= /usr
 DESTDIR ?=
 
-VERSION := 1.0.11
+VERSION := 1.0.12
 UUID := calendar-plus@the-infiltratr
 APPLET_SRC_DIR := src/cinnamon
+ICON_NAME := infiltratr-calendar
+ICON_SRC := src/assets/$(ICON_NAME).png
 I18N_DIR := src/i18n
 BUILD_DIR := build
 DIST_DIR := dist
@@ -541,6 +543,8 @@ install: all
 		"$(DESTDIR)$(LIBDIR)/girepository-1.0/$(GIR).typelib"
 	install -Dm755 "$(BUILD_DIR)/$(ABOUT_BINARY)" \
 		"$(DESTDIR)$(PREFIX)/libexec/$(ABOUT_BINARY)"
+	install -Dm644 "$(ICON_SRC)" \
+		"$(DESTDIR)$(PREFIX)/share/icons/hicolor/256x256/apps/$(ICON_NAME).png"
 	install -d \
 		"$(DESTDIR)$(PREFIX)/share/cinnamon/applets/$(UUID)"
 	install -m644 "$(APPLET_SRC_DIR)"/*.js "$(APPLET_SRC_DIR)"/*.json \

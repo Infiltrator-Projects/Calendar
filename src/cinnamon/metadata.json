@@ -3,14 +3,14 @@
     "name": "Calendar",
     "description": "The Cinnamon clock and calendar with multiple time and calendar systems",
     "author": "Shannon Smith",
-    "icon": "gnome-calendar",
+    "icon": "infiltratr-calendar",
     "max-instances": -1,
     "cinnamon-version": [
         "6.4",
         "6.6",
         "6.7"
     ],
-    "version": "1.0.11",
+    "version": "1.0.12",
     "gettext-domain": "calendar-plus@the-infiltratr",
     "external-configuration-app": "settings.py",
     "website": "https://github.com/Infiltrator-Projects/Calendar",

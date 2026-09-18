@@ -1,3 +1,12 @@
+calendar-plus (1.0.12) trixie; urgency=medium
+
+  * Add the project-owned neon Calendar application icon.
+  * Install the icon through the Linux hicolor icon theme for desktop use.
+  * Use the same icon in Cinnamon metadata and the native GTK About dialog.
+  * Add package and release-model checks so the icon cannot silently regress.
+
+ -- Shannon Smith <noreply@the-infiltratr.com>  Fri, 18 Sep 2026 22:48:00 +1000
+
 calendar-plus (1.0.11) trixie; urgency=medium
 
   * Brand public release asset filenames as Calendar while retaining the

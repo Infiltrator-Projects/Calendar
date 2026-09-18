@@ -4,9 +4,9 @@
 
 [![Build and test](https://github.com/Infiltrator-Projects/Calendar/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/Infiltrator-Projects/Calendar/actions/workflows/ci.yml?query=branch%3Amain)
 
-Calendar is a native Cinnamon panel clock and calendar with alternative clock modes, 30 selectable calendar systems and CalendarServer integration.
+Calendar is a native Cinnamon panel clock and calendar with alternative clock modes, 30 selectable calendar systems and CalendarServer integration. Its installed Linux desktop identity and native About dialog use the project-owned neon Calendar icon.
 
-**Stable release:** 1.0.11.
+**Stable release:** 1.0.12.
 
 **Runtime:** Cinnamon 6.4, 6.6 and 6.7.
 
