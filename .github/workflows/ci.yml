@@ -11,7 +11,7 @@ permissions:
   contents: read
 
 concurrency:
-  group: build-and-test-hosted-${{ github.ref }}
+  group: build-and-test-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
@@ -46,7 +46,9 @@ jobs:
           fi
 
   native:
-    runs-on: ubuntu-24.04
+    name: Local native / ${{ matrix.compiler }}
+    runs-on: [self-hosted, Linux, X64, linux-native]
+    timeout-minutes: 30
     strategy:
       fail-fast: false
       matrix:
@@ -63,6 +65,19 @@ jobs:
             build-essential clang gettext gobject-introspection gjs \
             gir1.2-glib-2.0-dev libglib2.0-dev libicu-dev nodejs \
             pkg-config python3 ripgrep
+      - name: Verify local native dependencies
+        if: runner.environment == 'self-hosted'
+        shell: bash
+        run: |
+          set -euo pipefail
+          for command_name in "${{ matrix.compiler }}" make gettext g-ir-scanner gjs node pkg-config python3 rg; do
+            command -v "$command_name" >/dev/null 2>&1 || {
+              echo "Self-hosted runner is missing $command_name." >&2
+              exit 1
+            }
+          done
+          pkg-config --exists glib-2.0
+          pkg-config --exists icu-uc
       - name: Build and test
         env:
           CC: ${{ matrix.compiler }}
@@ -80,7 +95,9 @@ jobs:
         run: tools/live-cinnamon-ci-smoke.sh
 
   sanitizer:
-    runs-on: ubuntu-24.04
+    name: Local ASan / UBSan
+    runs-on: [self-hosted, Linux, X64, linux-native]
+    timeout-minutes: 30
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -92,25 +109,56 @@ jobs:
           sudo apt-get install -y \
             build-essential gobject-introspection \
             gir1.2-glib-2.0-dev libglib2.0-dev libicu-dev pkg-config
+      - name: Verify local sanitizer dependencies
+        if: runner.environment == 'self-hosted'
+        shell: bash
+        run: |
+          set -euo pipefail
+          for command_name in clang make pkg-config; do
+            command -v "$command_name" >/dev/null 2>&1 || {
+              echo "Self-hosted runner is missing $command_name." >&2
+              exit 1
+            }
+          done
+          pkg-config --exists glib-2.0
+          pkg-config --exists icu-uc
       - name: ASan and UBSan
         run: make sanitize
 
   coverage:
-    runs-on: ubuntu-24.04
+    name: Local coverage
+    runs-on: [self-hosted, Linux, X64, linux-native]
+    timeout-minutes: 30
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           submodules: true
       - name: Install coverage dependencies
+        if: runner.environment == 'github-hosted'
         run: |
           sudo apt-get update
           sudo apt-get install -y \
             build-essential gcovr libglib2.0-dev libicu-dev pkg-config
+      - name: Verify local coverage dependencies
+        if: runner.environment == 'self-hosted'
+        shell: bash
+        run: |
+          set -euo pipefail
+          for command_name in gcc make gcovr pkg-config; do
+            command -v "$command_name" >/dev/null 2>&1 || {
+              echo "Self-hosted runner is missing $command_name." >&2
+              exit 1
+            }
+          done
+          pkg-config --exists glib-2.0
+          pkg-config --exists icu-uc
       - name: Coverage gate
         run: make coverage
 
   static-analysis:
-    runs-on: ubuntu-24.04
+    name: Local clang-tidy
+    runs-on: [self-hosted, Linux, X64, linux-native]
+    timeout-minutes: 30
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -121,6 +169,19 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y \
             clang-tidy libglib2.0-dev libicu-dev pkg-config
+      - name: Verify local analysis dependencies
+        if: runner.environment == 'self-hosted'
+        shell: bash
+        run: |
+          set -euo pipefail
+          for command_name in clang-tidy make pkg-config; do
+            command -v "$command_name" >/dev/null 2>&1 || {
+              echo "Self-hosted runner is missing $command_name." >&2
+              exit 1
+            }
+          done
+          pkg-config --exists glib-2.0
+          pkg-config --exists icu-uc
       - name: Clang-Tidy
         run: make static-analysis
 
