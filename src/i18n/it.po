@@ -17,32 +17,6 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 
-msgid ""
-"Copyright © 2026 Shannon Smith\n"
-"\n"
-"This program comes with absolutely no warranty.\n"
-"See the GNU GPL v3+ License for details."
-msgstr ""
-"Copyright © 2026 Shannon Smith\n"
-"\n"
-"Questo programma viene fornito senza alcuna garanzia.\n"
-"Per i dettagli, consultare la licenza GNU GPL v3+.Copyright © 2026 Shannon Smith\n"
-"\n"
-"This program comes with absolutely no warranty.\n"
-"See the GNU GPL v3+ License for details."
-
-msgid "‘Alá’"
-msgstr "‘Alá’"
-
-msgid "‘Aẓamat"
-msgstr "‘Aẓamat"
-
-msgid "‘Ilm"
-msgstr "‘Ilm"
-
-msgid "‘Izzat"
-msgstr "‘Izzat"
-
 #, c-format
 msgid "%d %s %lld"
 msgstr "%d %s %lld"
@@ -182,6 +156,20 @@ msgstr "Controlla la griglia del calendario a comparsa, l'intestazione della dat
 msgid "Coptic"
 msgstr "Copto"
 
+msgid ""
+"Copyright © 2026 Shannon Smith\n"
+"\n"
+"This program comes with absolutely no warranty.\n"
+"See the GNU GPL v3+ License for details."
+msgstr ""
+"Copyright © 2026 Shannon Smith\n"
+"\n"
+"Questo programma viene fornito senza alcuna garanzia.\n"
+"Per i dettagli, consultare la licenza GNU GPL v3+.Copyright © 2026 Shannon Smith\n"
+"\n"
+"This program comes with absolutely no warranty.\n"
+"See the GNU GPL v3+ License for details."
+
 msgid "Dangi (traditional Korean)"
 msgstr "Dangi (tradizionale coreano)"
 
@@ -290,20 +278,26 @@ msgstr "Hoṙi"
 msgid "Hroticʿ"
 msgstr "Hroticʿ"
 
+msgid "ISO week calendar"
+msgstr "Calendario settimanale ISO"
+
 msgid "Ianuarius"
 msgstr "Ianuarius"
 
-msgid "Indian ghaṭī time (from sunrise)"
-msgstr "Tempo indiano ghaṭī (dall’alba)"
-
 msgid "Indian National (Saka)"
 msgstr "Nazionale indiano (Saka)"
+
+msgid "Indian ghaṭī time (from sunrise)"
+msgstr "Tempo indiano ghaṭī (dall’alba)"
 
 msgid "International Fixed"
 msgstr "Internazionale fisso"
 
 msgid "Internet Time (@000 to @999)"
 msgstr "Internet Time (@000–@999)"
+
+msgid "Islamic (Umm al-Qura)"
+msgstr "Islamico (Umm al-Qura)"
 
 msgid "Islamic (astronomical approximation)"
 msgstr "Islamico (approssimazione astronomica)"
@@ -313,12 +307,6 @@ msgstr "Islamico (civile/tabulare)"
 
 msgid "Islamic (tabular, astronomical epoch)"
 msgstr "Islamico (tabulare, epoca astronomica)"
-
-msgid "Islamic (Umm al-Qura)"
-msgstr "Islamico (Umm al-Qura)"
-
-msgid "ISO week calendar"
-msgstr "Calendario settimanale ISO"
 
 msgid "Italian hours (from sunset)"
 msgstr "Ore italiane (dal tramonto)"
@@ -395,11 +383,11 @@ msgstr "Margacʿ"
 msgid "Martius"
 msgstr "Martius"
 
-msgid "Masá’il"
-msgstr "Masá’il"
-
 msgid "Mashíyyat"
 msgstr "Mashíyyat"
+
+msgid "Masá’il"
+msgstr "Masá’il"
 
 msgid "May"
 msgstr "Maggio"
@@ -452,11 +440,11 @@ msgstr "Nessuno"
 msgid "November"
 msgstr "Novembre"
 
-msgid "Núr"
-msgstr "Núr"
-
 msgid "Nuremberg hours (sunrise/sunset reset)"
 msgstr "Ore di Norimberga (azzeramento all’alba e al tramonto)"
+
+msgid "Núr"
+msgstr "Núr"
 
 msgid "October"
 msgstr "Ottobre"
@@ -630,11 +618,11 @@ msgstr "Tempo Unix (secondi dall'epoca)"
 msgid "Use a custom date format"
 msgstr "Usa un formato data personalizzato"
 
-msgid "Used by local sidereal, solar and location-dependent historical time. Enter east longitudes as positive and west longitudes as negative."
-msgstr "Usato dall'ora siderale locale, solare e storica dipendente dalla posizione. Inserisci le longitudini est come positive e quelle ovest come negative."
-
 msgid "Used by Roman temporal, Edo Japanese seasonal, Italian, Babylonian and Nuremberg hours, and Indian ghaṭī time. Enter north latitudes as positive and south latitudes as negative."
 msgstr "Usato per l’ora temporale romana, l’ora stagionale giapponese Edo, le ore italiane, babilonesi e di Norimberga e il tempo indiano ghaṭī. Inserire le latitudini nord come positive e quelle sud come negative."
+
+msgid "Used by local sidereal, solar and location-dependent historical time. Enter east longitudes as positive and west longitudes as negative."
+msgstr "Usato dall'ora siderale locale, solare e storica dipendente dalla posizione. Inserisci le longitudini est come positive e quelle ovest come negative."
 
 msgid "Vendémiaire"
 msgstr "Vendémiaire"
@@ -660,3 +648,15 @@ msgstr "Worldsday"
 
 msgid "Year Day"
 msgstr "Giorno dell'anno"
+
+msgid "‘Alá’"
+msgstr "‘Alá’"
+
+msgid "‘Aẓamat"
+msgstr "‘Aẓamat"
+
+msgid "‘Ilm"
+msgstr "‘Ilm"
+
+msgid "‘Izzat"
+msgstr "‘Izzat"
