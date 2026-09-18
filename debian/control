@@ -30,7 +30,7 @@ Depends:
  ${misc:Depends},
  ${shlibs:Depends}
 Description: Cinnamon clock with multiple time and calendar systems
- Calendar Plus integrates with Cinnamon's panel, popup, settings and calendar
+ Calendar integrates with Cinnamon's panel, popup, settings and calendar
  service while adding French Republican decimal, Internet, Unix, hexadecimal,
  binary, sidereal, solar, Julian Date, mean-solar, Modified Julian, traditional
  Chinese, Roman temporal, Edo Japanese, Italian, Babylonian-hour, Indian ghaṭī

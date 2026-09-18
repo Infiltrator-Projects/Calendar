@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import json
 import re
+import stat
 import subprocess
 from pathlib import Path
 
@@ -38,6 +39,23 @@ def main() -> None:
     assert not (ROOT / "COPYING").exists()
     assert "DEVELOPING.md" not in makefile
     assert "install -m644 README.md" in makefile
+
+    # Scripts invoked directly by Make, CI or another executable script must
+    # retain their Git executable bit. A lost mode is a release-breaking source
+    # defect even when the script contents themselves are unchanged.
+    for executable in (
+        "tools/build-local-installer.sh",
+        "tools/cinnamon-smoke.sh",
+        "tools/live-cinnamon-ci-smoke.sh",
+        "tools/native-installer-smoke.sh",
+        "tools/path-space-build.sh",
+        "tools/release-check.sh",
+        "tools/reproducible-build.sh",
+        "tools/validate-release-artifacts.sh",
+    ):
+        assert (ROOT / executable).stat().st_mode & stat.S_IXUSR, (
+            f"{executable} must be executable"
+        )
 
     assert "BUILD_MODE ?= generic" in makefile
     assert "-O2 -g" in makefile
