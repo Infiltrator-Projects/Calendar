@@ -15,6 +15,7 @@ mkdir -p "$TARGET"
     tar --exclude='./build' \
         --exclude='./dist' \
         --exclude='./debian/.debhelper' \
+        --exclude='./debian/cinnamon-calendar' \
         --exclude='./debian/calendar-plus' \
         --exclude='./debian/files' \
         --exclude='./debian/*.substvars' \
@@ -40,7 +41,7 @@ make -C "$TARGET" all >/dev/null
 # target triplet. Clang may report x86_64-pc-linux-gnu while GCC reports
 # x86_64-linux-gnu, so validate the directory the build actually selected.
 MULTIARCH=$(${CC:-cc} -dumpmachine)
-STAGE="$TARGET/debian/calendar-plus"
+STAGE="$TARGET/debian/cinnamon-calendar"
 test -f "$STAGE/usr/lib/$MULTIARCH/libcalendar-plus.so.0.0.0"
 test -f "$STAGE/usr/lib/$MULTIARCH/girepository-1.0/CalendarPlus-1.0.typelib"
 test -f "$STAGE/usr/share/cinnamon/applets/calendar-plus@the-infiltratr/applet.js"

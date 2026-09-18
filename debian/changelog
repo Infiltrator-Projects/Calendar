@@ -1,3 +1,15 @@
+cinnamon-calendar (1.0.16) trixie; urgency=medium
+
+  * Rename the installed Debian package from calendar-plus to cinnamon-calendar
+    so Linux update tools no longer expose the retired Calendar Plus product name.
+  * Break and replace pre-1.0.16 calendar-plus packages for direct upgrades;
+    the central APT repository supplies a one-time transitional package so
+    existing installations migrate automatically.
+  * Keep the Cinnamon UUID, native ABI, typelib namespace, gettext domain and
+    helper executable names unchanged as runtime compatibility interfaces.
+
+ -- Shannon Smith <noreply@the-infiltratr.com>  Sat, 19 Sep 2026 09:12:00 +1000
+
 calendar-plus (1.0.15) trixie; urgency=medium
 
   * Replace the previous valid-but-wrong icon with the intended neon Calendar

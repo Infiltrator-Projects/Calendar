@@ -109,7 +109,7 @@ if [ "$mode" = "install" ]; then
 
     cd "$ROOT"
     CALENDAR_PLUS_BUILD_MODE=generic dpkg-buildpackage -us -uc -b
-    DEB="../calendar-plus_${EXPECTED_VERSION}_amd64.deb"
+    DEB="../cinnamon-calendar_${EXPECTED_VERSION}_amd64.deb"
     [ -s "$DEB" ] || {
         printf 'Current Calendar package was not produced: %s\n' "$DEB" >&2
         exit 1

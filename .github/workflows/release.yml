@@ -180,7 +180,7 @@ jobs:
       - name: Verify Infiltrator APT repository publication
         env:
           RELEASE_SHA: ${{ github.event.workflow_run.head_sha }}
-          APP_ID: calendar-plus
+          APP_ID: calendar
         shell: bash
         run: |
           set -euo pipefail

@@ -26,14 +26,14 @@ done
 
 DEB="$TMP/output/calendar_${NATIVE_VERSION}_${ARCH}.deb"
 [ -s "$DEB" ]
-[ "$(dpkg-deb -f "$DEB" Package)" = "calendar-plus" ]
+[ "$(dpkg-deb -f "$DEB" Package)" = "cinnamon-calendar" ]
 [ "$(dpkg-deb -f "$DEB" Version)" = "$NATIVE_VERSION" ]
 [ "$(dpkg-deb -f "$DEB" Architecture)" = "$ARCH" ]
 dpkg --compare-versions "$NATIVE_VERSION" gt "$VERSION"
 
 dpkg-deb -x "$DEB" "$TMP/native"
 grep -q '^Build mode: local hardware-native ' \
-    "$TMP/native/usr/share/doc/calendar-plus/BUILD-INFO"
+    "$TMP/native/usr/share/doc/cinnamon-calendar/BUILD-INFO"
 test -f "$TMP/native/usr/lib/$MULTIARCH/libcalendar-plus.so.0.0.0"
 test -f \
     "$TMP/native/usr/lib/$MULTIARCH/girepository-1.0/CalendarPlus-1.0.typelib"

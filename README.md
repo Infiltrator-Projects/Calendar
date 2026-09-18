@@ -6,7 +6,7 @@
 
 Calendar is a native Cinnamon panel clock and calendar with alternative clock modes, 30 selectable calendar systems and CalendarServer integration. Its installed Linux desktop identity, Cinnamon Applets manager entry and native About dialog use the project-owned neon Calendar icon.
 
-**Stable release:** 1.0.15.
+**Stable release:** 1.0.16.
 
 **Runtime:** Cinnamon 6.4, 6.6 and 6.7.
 
@@ -87,7 +87,7 @@ The installed `libcalendar-plus.so.0` and its versioned symbol map are a **runti
 
 ### Compatibility naming
 
-The user-facing application is **Calendar**. The compatibility identifiers `calendar-plus`, `CalendarPlus`, `CALENDAR_PLUS_*`, `libcalendar-plus.so.0` and `calendar-plus@the-infiltratr` are intentionally retained so package upgrades, settings, GObject Introspection consumers and the published runtime ABI do not break. Release asset filenames use the user-facing `Calendar` name; the Debian package contained inside remains `calendar-plus` for upgrade compatibility. Prose should therefore say **Calendar** unless it is naming one of those literal compatibility interfaces. Renaming a compatibility identifier is a separate migration with ABI, packaging and upgrade consequences; it is not a cosmetic documentation change.
+The user-facing application is **Calendar** and its Debian source/binary package is `cinnamon-calendar`. The plain Debian package name `calendar` is deliberately not used because Debian and Ubuntu already ship an unrelated package with that name. The retired `calendar-plus` Debian package name exists only as a repository-generated transitional package for upgrading installations older than 1.0.16. Runtime compatibility identifiers `CalendarPlus`, `CALENDAR_PLUS_*`, `libcalendar-plus.so.0`, `calendar-plus-about`, the gettext domain and `calendar-plus@the-infiltratr` remain unchanged so settings, GObject Introspection consumers and the published ABI do not break. Release asset filenames continue to use the user-facing `Calendar` name.
 
 ### Engineering contracts and invariants
 
