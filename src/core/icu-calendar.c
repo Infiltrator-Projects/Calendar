@@ -5,7 +5,7 @@
  * ICU/CLDR calendar adapter.
  *
  * ICU owns field conversion, leap-month rules, era data and locale-sensitive
- * formatting for established calendars.  Calendar Plus always opens these
+ * formatting for established calendars.  Calendar always opens these
  * calendars in UTC and places the JDN at UTC noon.  Noon avoids any midnight
  * ambiguity while UTC ensures that host timezone and daylight-saving changes
  * cannot alter a date-only conversion.

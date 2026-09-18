@@ -5,7 +5,7 @@
  * Badíʿ calendar conversion.
  *
  * Years 1-171 B.E. retain the historically used Western civil convention:
- * Naw-Rúz is 21 March. From 172 B.E. (2015) onward Calendar Plus implements
+ * Naw-Rúz is 21 March. From 172 B.E. (2015) onward Calendar implements
  * the unified rule announced by the Universal House of Justice: Tehran is the
  * reference location, the northern vernal equinox is calculated
  * astronomically, and Naw-Rúz is the Tehran civil date whose sunset follows

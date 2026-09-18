@@ -88,7 +88,7 @@ def main() -> None:
     import re
     for colour in re.findall(r"#[0-9A-Fa-f]{6}", theme_css):
         assert colour.lower() in canonical_colours, (
-            f"Calendar Plus theme CSS has a private colour outside Common: {colour}"
+            f"Calendar theme CSS has a private colour outside Common: {colour}"
         )
 
     for mode in ("day", "night"):
@@ -103,7 +103,7 @@ def main() -> None:
             "selection_foreground",
         ):
             assert palette[role].lower() in theme_css.lower(), (
-                f"Calendar Plus {mode} CSS does not consume Common role {role}"
+                f"Calendar {mode} CSS does not consume Common role {role}"
             )
 
     location_configured = schema["location-configured"]
@@ -338,7 +338,7 @@ def main() -> None:
     assert "class EventRow" in event_source
     assert "new EventManager.EventsManager(" in applet_source
 
-    # Calendar Plus-owned interface text uses its own installed gettext domain;
+    # Calendar-owned interface text uses its own installed gettext domain;
     # Cinnamon-provided desktop strings remain in Cinnamon's catalogue.
     for source in (applet_source, calendar_source, event_source):
         assert '"calendar-plus@the-infiltratr"' in source

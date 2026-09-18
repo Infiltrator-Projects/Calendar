@@ -7,7 +7,7 @@
  * Surviving Nuremberg instruments carry separate equal-hour counts for the
  * daylight and night portions of the civil day.  The count begins again at
  * sunrise and again at sunset, so noon may be hour 8 near midsummer but only
- * hour 4 near midwinter.  Calendar Plus displays elapsed equal hours within
+ * hour 4 near midwinter.  Calendar displays elapsed equal hours within
  * the current daylight/night span and resets at the computed physical solar
  * boundary. This is distinct from Italian hours (one sunset-to-sunset count)
  * and Babylonian hours (one sunrise-to-sunrise count).

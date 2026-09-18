@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: GPL-3.0-or-later */
 /*
- * Runtime symbol-stability contract for Calendar Plus components.
+ * Runtime symbol-stability contract for Calendar components.
  *
  * These version nodes prevent accidental package-internal ABI regressions.
  * They do not by themselves define a supported external C SDK; source-neutral

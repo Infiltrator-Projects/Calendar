@@ -2,7 +2,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 # Copyright (C) 2026 Shannon Smith
 
-"""Static contracts for Calendar Plus's release model."""
+"""Static contracts for Calendar's release model."""
 
 from __future__ import annotations
 

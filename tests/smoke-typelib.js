@@ -107,4 +107,4 @@ requireCondition(state === CalendarPlus.EventState.PRESENT,
 requireCondition(secondsToStart === -50 && secondsToFinish === 50,
                  "event timing offsets failed");
 
-print("Calendar Plus native typelib contract passed.");
+print("Calendar native typelib contract passed.");

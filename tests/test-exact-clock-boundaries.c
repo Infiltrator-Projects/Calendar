@@ -4,7 +4,7 @@
 /*
  * Calendar-specific integration tests for the exact timing primitives supplied
  * by Infiltratr Common. These tests exercise the boundary semantics through the
- * Calendar Plus public clock functions rather than retesting Common in isolation.
+ * Calendar public clock functions rather than retesting Common in isolation.
  */
 
 #include "julian-day.h"
