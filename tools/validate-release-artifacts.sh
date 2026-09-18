@@ -87,5 +87,5 @@ sed '/^__ARCHIVE_BELOW__$/q' "$RUN" > "$TMP/installer-header.sh"
 sh -n "$TMP/installer-header.sh"
 "$RUN" --verify-only >/dev/null
 
-printf 'Uploaded release artifacts validated for Calendar Plus %s.\n' \
+printf 'Uploaded release artifacts validated for Calendar %s.\n' \
     "$VERSION"

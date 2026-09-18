@@ -78,14 +78,14 @@ if [ "${1:-}" = "--probe" ]; then
             ready=true
             mode=install
         else
-            echo "::warning::Cinnamon is active but the exact Calendar Plus source revision is not installed, and this runner has no passwordless sudo. The live-current-revision step will be shown as skipped, not passed."
+            echo "::warning::Cinnamon is active but the exact Calendar source revision is not installed, and this runner has no passwordless sudo. The live-current-revision step will be shown as skipped, not passed."
         fi
     fi
 
     if [ -n "${GITHUB_OUTPUT:-}" ]; then
         printf 'ready=%s\nmode=%s\n' "$ready" "$mode" >> "$GITHUB_OUTPUT"
     fi
-    printf 'Calendar Plus live qualification: ready=%s mode=%s\n' "$ready" "$mode"
+    printf 'Calendar live qualification: ready=%s mode=%s\n' "$ready" "$mode"
     exit 0
 fi
 
@@ -111,7 +111,7 @@ if [ "$mode" = "install" ]; then
     CALENDAR_PLUS_BUILD_MODE=generic dpkg-buildpackage -us -uc -b
     DEB="../calendar-plus_${EXPECTED_VERSION}_amd64.deb"
     [ -s "$DEB" ] || {
-        printf 'Current Calendar Plus package was not produced: %s\n' "$DEB" >&2
+        printf 'Current Calendar package was not produced: %s\n' "$DEB" >&2
         exit 1
     }
     sudo -n apt-get install -y --no-install-recommends "$DEB"
@@ -125,14 +125,14 @@ if [ "$mode" = "install" ]; then
 EOF
 )
     gdbus call --session         --dest org.Cinnamon         --object-path /org/Cinnamon         --method org.Cinnamon.Eval         "$RELOAD_SCRIPT" | grep -Eq '^\(true,' || {
-            echo 'Cinnamon refused to reload the newly installed Calendar Plus applet.' >&2
+            echo 'Cinnamon refused to reload the newly installed Calendar applet.' >&2
             exit 1
         }
 fi
 
 current="$(installed_version)"
 [ "$current" = "$EXPECTED_VERSION" ] || {
-    printf 'Installed Calendar Plus %s does not match source %s.\n' "$current" "$EXPECTED_VERSION" >&2
+    printf 'Installed Calendar %s does not match source %s.\n' "$current" "$EXPECTED_VERSION" >&2
     exit 1
 }
 

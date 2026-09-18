@@ -7,7 +7,7 @@ set -eu
 ROOT=$(CDPATH='' cd -- "$(dirname -- "$0")/.." && pwd)
 TMP=$(mktemp -d)
 trap 'rm -rf "$TMP"' EXIT HUP INT TERM
-TARGET="$TMP/Calendar Plus path-space smoke"
+TARGET="$TMP/Calendar path-space smoke"
 
 mkdir -p "$TARGET"
 (

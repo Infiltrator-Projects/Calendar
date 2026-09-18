@@ -4,7 +4,7 @@
 """Generate or verify the small runtime integrity manifest.
 
 The manifest deliberately covers files loaded directly by Cinnamon or by the
-Calendar Plus settings host before or alongside the native library: JavaScript,
+Calendar settings host before or alongside the native library: JavaScript,
 runtime JSON, the applet stylesheet and the thin settings launcher. Source,
 tests and packaging are covered by the immutable Git tag and GitHub source
 archives.

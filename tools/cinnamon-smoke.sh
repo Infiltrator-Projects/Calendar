@@ -68,7 +68,7 @@ ENABLED=$(gsettings get org.cinnamon enabled-applets)
 case "$ENABLED" in
     *"$UUID"*) ;;
     *)
-        echo "Calendar Plus is installed but is not enabled on a panel." >&2
+        echo "Calendar is installed but is not enabled on a panel." >&2
         exit 1
         ;;
 esac
@@ -82,11 +82,11 @@ EVAL_SCRIPT=$(cat <<EOF
 (() => {
     const applets = AppletManager.getRunningInstancesForUuid("$UUID");
     if (!applets || applets.length === 0)
-        throw new Error("Calendar Plus has no running Cinnamon instance");
+        throw new Error("Calendar has no running Cinnamon instance");
 
     for (const applet of applets) {
         if (!applet || applet._destroyed)
-            throw new Error("Calendar Plus instance is not healthy");
+            throw new Error("Calendar instance is not healthy");
 
         applet._updateClockAndDate();
         applet._resetCalendar();
@@ -116,26 +116,26 @@ EVAL_RESULT=$(gdbus call --session \
     --object-path /org/Cinnamon \
     --method org.Cinnamon.Eval \
     "$EVAL_SCRIPT") || {
-        echo "Calendar Plus live Cinnamon evaluation failed." >&2
+        echo "Calendar live Cinnamon evaluation failed." >&2
         exit 1
     }
 
 printf '%s\n' "$EVAL_RESULT" | grep -Eq '^\(true,' || {
-    echo "Calendar Plus live Cinnamon evaluation returned failure: $EVAL_RESULT" >&2
+    echo "Calendar live Cinnamon evaluation returned failure: $EVAL_RESULT" >&2
     exit 1
 }
 printf '%s\n' "$EVAL_RESULT" | grep -Fq '"healthy":true' || {
-    echo "Calendar Plus live Cinnamon evaluation did not report a healthy instance." >&2
+    echo "Calendar live Cinnamon evaluation did not report a healthy instance." >&2
     exit 1
 }
 
 if [ -f "$HOME/.xsession-errors" ]; then
     if tail -n 1000 "$HOME/.xsession-errors" | \
         grep -E "\[$UUID\].*(Failed to load|Could not create)|$UUID.*(ReferenceError|TypeError)" >/dev/null; then
-        echo "A Calendar Plus load error is present in the current session log." >&2
+        echo "A Calendar load error is present in the current session log." >&2
         exit 1
     fi
 fi
 
-printf 'Calendar Plus %s passed installed hashes, native providers, live applet interaction and Cinnamon enablement checks.\n' \
+printf 'Calendar %s passed installed hashes, native providers, live applet interaction and Cinnamon enablement checks.\n' \
     "$EXPECTED_VERSION"

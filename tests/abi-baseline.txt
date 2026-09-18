@@ -1,4 +1,4 @@
-# Published Calendar Plus ABI. Do not edit existing entries in routine releases.
+# Published Calendar ABI. Do not edit existing entries in routine releases.
 calendar_plus_calendar_catalogue_get@CALENDAR_PLUS_2.0
 calendar_plus_calendar_catalogue_get_count@CALENDAR_PLUS_2.0
 calendar_plus_calendar_engine_add_periods@CALENDAR_PLUS_2.0

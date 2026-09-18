@@ -1,3 +1,13 @@
+calendar-plus (1.0.10) trixie; urgency=medium
+
+  * Complete the user-facing rename from Calendar Plus to Calendar.
+  * Publish GitHub releases under the Calendar name and remove remaining old
+    product-name prose from runtime diagnostics, tools, tests and documentation.
+  * Retain calendar-plus package, UUID, ABI and executable identifiers only as
+    compatibility interfaces so existing upgrades and settings keep working.
+
+ -- Shannon Smith <noreply@the-infiltratr.com>  Fri, 18 Sep 2026 21:00:00 +1000
+
 calendar-plus (1.0.9) trixie; urgency=medium
 
   * Rename the user-facing application from Calendar Plus to Calendar.

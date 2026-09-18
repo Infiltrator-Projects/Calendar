@@ -6,7 +6,7 @@
 
 Calendar is a native Cinnamon panel clock and calendar with alternative clock modes, 30 selectable calendar systems and CalendarServer integration.
 
-**Stable release:** 1.0.9.
+**Stable release:** 1.0.10.
 
 **Runtime:** Cinnamon 6.4, 6.6 and 6.7.
 
@@ -87,7 +87,7 @@ The installed `libcalendar-plus.so.0` and its versioned symbol map are a **runti
 
 ### Compatibility naming
 
-The user-facing application is **Calendar**. The repository name and compatibility identifiers `Calendar-Plus`, `calendar-plus`, `CalendarPlus`, `CALENDAR_PLUS_*`, `libcalendar-plus.so.0` and `calendar-plus@the-infiltratr` are intentionally retained so package upgrades, settings, GObject Introspection consumers and the published runtime ABI do not break. Prose should therefore say **Calendar** unless it is naming one of those literal compatibility interfaces. Renaming a compatibility identifier is a separate migration with ABI, packaging and upgrade consequences; it is not a cosmetic documentation change.
+The user-facing application is **Calendar**. The compatibility identifiers `calendar-plus`, `CalendarPlus`, `CALENDAR_PLUS_*`, `libcalendar-plus.so.0` and `calendar-plus@the-infiltratr` are intentionally retained so package upgrades, settings, GObject Introspection consumers and the published runtime ABI do not break. Prose should therefore say **Calendar** unless it is naming one of those literal compatibility interfaces. Renaming a compatibility identifier is a separate migration with ABI, packaging and upgrade consequences; it is not a cosmetic documentation change.
 
 ### Engineering contracts and invariants
 

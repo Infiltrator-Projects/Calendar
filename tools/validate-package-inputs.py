@@ -81,7 +81,7 @@ def validate_abi_manifest() -> None:
     version_map = (ROOT / "src/abi/calendar-plus.map").read_text(encoding="utf-8")
     mapped = set(re.findall(r"\b(calendar_plus_[a-z0-9_]+);", version_map))
 
-    assert mapped, "linker version map exports no Calendar Plus symbols"
+    assert mapped, "linker version map exports no Calendar symbols"
     assert "CALENDAR_PLUS_1.0" in version_map
     assert "CALENDAR_PLUS_1.1" in version_map
     assert "CALENDAR_PLUS_1.2" in version_map
@@ -155,16 +155,16 @@ def validate_version() -> None:
         "Makefile and applet metadata versions differ"
     )
     assert metadata.get("website") == PROJECT_URL, (
-        "Cinnamon metadata does not use the canonical Calendar Plus URL"
+        "Cinnamon metadata does not use the canonical Calendar URL"
     )
 
     project_info = (ROOT / "src/app/project-info.c").read_text(encoding="utf-8")
     assert f'.website = "{PROJECT_URL}"' in project_info, (
-        "native project metadata does not use the canonical Calendar Plus URL"
+        "native project metadata does not use the canonical Calendar URL"
     )
     readme = (ROOT / "README.md").read_text(encoding="utf-8")
     assert f"git clone --recurse-submodules {PROJECT_URL}.git" in readme, (
-        "README clone instructions do not use the canonical Calendar Plus URL"
+        "README clone instructions do not use the canonical Calendar URL"
     )
 
     applet_source = (APPLET / "applet.js").read_text(encoding="utf-8")
