@@ -21,8 +21,8 @@ Calendar combines a portable C core, thin native adapters and a Cinnamon JavaScr
 Clone recursively because Calendar pins Infiltratr Common as a submodule:
 
 ```bash
-git clone --recurse-submodules https://github.com/Infiltrator-Projects/Calendar-Plus.git
-cd Calendar-Plus
+git clone --recurse-submodules https://github.com/Infiltrator-Projects/Calendar.git
+cd Calendar
 make check
 ```
 

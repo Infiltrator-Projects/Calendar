@@ -568,17 +568,17 @@ install: all
 package-source: common-check validate-settings-generated
 	@mkdir -p "$(DIST_DIR)"
 	@rm -rf "$(BUILD_DIR)/source-stage"
-	@mkdir -p "$(BUILD_DIR)/source-stage/Calendar-Plus-$(VERSION)"
+	@mkdir -p "$(BUILD_DIR)/source-stage/Calendar-$(VERSION)"
 	@tar --exclude='.git' --exclude='*/.git' -cf - $(DIST_FILES) | \
-		tar -C "$(BUILD_DIR)/source-stage/Calendar-Plus-$(VERSION)" -xf -
+		tar -C "$(BUILD_DIR)/source-stage/Calendar-$(VERSION)" -xf -
 	@rm -rf \
-		"$(BUILD_DIR)/source-stage/Calendar-Plus-$(VERSION)/debian/.debhelper" \
-		"$(BUILD_DIR)/source-stage/Calendar-Plus-$(VERSION)/debian/calendar-plus" \
-		"$(BUILD_DIR)/source-stage/Calendar-Plus-$(VERSION)/debian/calendar-plus-dbgsym"
+		"$(BUILD_DIR)/source-stage/Calendar-$(VERSION)/debian/.debhelper" \
+		"$(BUILD_DIR)/source-stage/Calendar-$(VERSION)/debian/calendar-plus" \
+		"$(BUILD_DIR)/source-stage/Calendar-$(VERSION)/debian/calendar-plus-dbgsym"
 	@rm -f \
-		"$(BUILD_DIR)/source-stage/Calendar-Plus-$(VERSION)/debian/files" \
-		"$(BUILD_DIR)/source-stage/Calendar-Plus-$(VERSION)/debian/"*.substvars \
-		"$(BUILD_DIR)/source-stage/Calendar-Plus-$(VERSION)/debian/debhelper-build-stamp"
+		"$(BUILD_DIR)/source-stage/Calendar-$(VERSION)/debian/files" \
+		"$(BUILD_DIR)/source-stage/Calendar-$(VERSION)/debian/"*.substvars \
+		"$(BUILD_DIR)/source-stage/Calendar-$(VERSION)/debian/debhelper-build-stamp"
 	@find "$(BUILD_DIR)/source-stage" -depth -type d -name __pycache__ -exec rm -rf {} +
 	@find "$(BUILD_DIR)/source-stage" -type f \
 		\( -name '*.pyc' -o -name '*.pyo' \) -delete
@@ -588,14 +588,14 @@ package-source: common-check validate-settings-generated
 		--mtime="@$(SOURCE_DATE_EPOCH)" \
 		--owner=0 --group=0 --numeric-owner \
 		-C "$(BUILD_DIR)/source-stage" \
-		-cf - "Calendar-Plus-$(VERSION)" | \
+		-cf - "Calendar-$(VERSION)" | \
 		gzip -n -9 > \
-		"$(BUILD_DIR)/Calendar-Plus-$(VERSION)-local-source.tar.gz"
+		"$(BUILD_DIR)/Calendar-$(VERSION)-local-source.tar.gz"
 	@rm -rf "$(BUILD_DIR)/source-stage"
 
 package-local-installer: package-source
 	tools/build-local-installer.sh \
-		"$(BUILD_DIR)/Calendar-Plus-$(VERSION)-local-source.tar.gz" \
+		"$(BUILD_DIR)/Calendar-$(VERSION)-local-source.tar.gz" \
 		"$(DIST_DIR)/calendar-plus-$(VERSION)-local-folder.run"
 
 release-check:

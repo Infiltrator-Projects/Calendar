@@ -16,9 +16,9 @@ Build-Depends:
  ripgrep
 Standards-Version: 4.7.2
 Rules-Requires-Root: no
-Homepage: https://github.com/Infiltrator-Projects/Calendar-Plus
-Vcs-Browser: https://github.com/Infiltrator-Projects/Calendar-Plus
-Vcs-Git: https://github.com/Infiltrator-Projects/Calendar-Plus.git
+Homepage: https://github.com/Infiltrator-Projects/Calendar
+Vcs-Browser: https://github.com/Infiltrator-Projects/Calendar
+Vcs-Git: https://github.com/Infiltrator-Projects/Calendar.git
 
 Package: calendar-plus
 Architecture: any

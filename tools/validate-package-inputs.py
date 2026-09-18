@@ -21,7 +21,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 APPLET = ROOT / "src/cinnamon"
-PROJECT_URL = "https://github.com/Infiltrator-Projects/Calendar-Plus"
+PROJECT_URL = "https://github.com/Infiltrator-Projects/Calendar"
 
 TRANSIENT_PATTERNS = (
     re.compile(r"^g-ir-cpp-.*\.c$"),

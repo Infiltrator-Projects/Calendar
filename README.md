@@ -2,7 +2,7 @@
 
 # Calendar
 
-[![Build and test](https://github.com/Infiltrator-Projects/Calendar-Plus/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/Infiltrator-Projects/Calendar-Plus/actions/workflows/ci.yml?query=branch%3Amain)
+[![Build and test](https://github.com/Infiltrator-Projects/Calendar/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/Infiltrator-Projects/Calendar/actions/workflows/ci.yml?query=branch%3Amain)
 
 Calendar is a native Cinnamon panel clock and calendar with alternative clock modes, 30 selectable calendar systems and CalendarServer integration.
 
@@ -147,8 +147,8 @@ sudo apt install build-essential clang debhelper gettext gobject-introspection g
 Clone recursively because Calendar pins Infiltratr Common as a submodule:
 
 ```bash
-git clone --recurse-submodules https://github.com/Infiltrator-Projects/Calendar-Plus.git
-cd Calendar-Plus
+git clone --recurse-submodules https://github.com/Infiltrator-Projects/Calendar.git
+cd Calendar
 make check
 ```
 

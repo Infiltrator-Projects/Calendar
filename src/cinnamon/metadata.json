@@ -13,6 +13,6 @@
     "version": "1.0.10",
     "gettext-domain": "calendar-plus@the-infiltratr",
     "external-configuration-app": "settings.py",
-    "website": "https://github.com/Infiltrator-Projects/Calendar-Plus",
+    "website": "https://github.com/Infiltrator-Projects/Calendar",
     "license": "GPL-3.0-or-later"
 }

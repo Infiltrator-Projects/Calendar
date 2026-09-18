@@ -1,7 +1,7 @@
 Format: https://www.debian.org/doc/packaging-manuals/copyright-format/1.0/
 Upstream-Name: Calendar
 Upstream-Contact: Shannon Smith <infiltratr@yandex.com>
-Source: https://github.com/Infiltrator-Projects/Calendar-Plus
+Source: https://github.com/Infiltrator-Projects/Calendar
 
 Files: .github/* .gitmodules LICENSE Makefile README.md debian/* src/* tests/* tools/*
 Copyright: 2026 Shannon Smith

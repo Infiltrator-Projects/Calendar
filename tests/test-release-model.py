@@ -61,8 +61,8 @@ def main() -> None:
     assert "-O2 -g" in makefile
     assert "-O3 -g -march=native -mtune=native -flto=auto" in makefile
     assert "override CFLAGS += $(NATIVE_CFLAGS) $(CALENDAR_CFLAGS)" in makefile
-    assert "Calendar-Plus-$(VERSION)-local-source.tar.gz" in makefile
-    assert "Calendar-Plus-$(VERSION)-local-source.zip" not in makefile
+    assert "Calendar-$(VERSION)-local-source.tar.gz" in makefile
+    assert "Calendar-$(VERSION)-local-source.zip" not in makefile
     assert "TZ=UTC zip -X -9 -q" not in makefile
     assert "export CFLAGS" not in makefile
     assert "INFILTRATR_COMMON_CFLAGS :=" in makefile
@@ -411,7 +411,7 @@ def main() -> None:
     assert extracted_version == version
     assert f"VERSION := {version}" in makefile
     assert metadata["author"] == "Shannon Smith"
-    assert metadata["website"] == "https://github.com/Infiltrator-Projects/Calendar-Plus"
+    assert metadata["website"] == "https://github.com/Infiltrator-Projects/Calendar"
     assert "const APP_VERSION" not in applet
     assert "metadata.version" in applet
 
