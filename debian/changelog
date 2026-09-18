@@ -5,6 +5,15 @@ calendar-plus (1.0.8) trixie; urgency=medium
     latest CalendarServer lifecycle changes.
   * Advance the reviewed upstream Cinnamon calendar integration baseline.
   * Publish the accumulated theme, settings and applet improvements from main.
+  * Use Common checked arithmetic for representability-sensitive solar instant
+    construction and ICU-derived allocation sizing rather than duplicating or
+    silently saturating generic overflow mechanics.
+  * Delegate generic signed saturating add/subtract directly to Common and keep
+    Calendar-owned arithmetic only where Calendar-specific policy remains.
+  * Keep event revision advancement defined at the signed-integer boundary and
+    add regression coverage for extreme solar-instant inputs.
+  * Refresh deterministic gettext and runtime-integrity metadata required by
+    the complete release gates.
 
  -- Shannon Smith <noreply@the-infiltratr.com>  Fri, 18 Sep 2026 19:26:00 +1000
 
