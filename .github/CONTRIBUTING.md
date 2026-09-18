@@ -1,8 +1,8 @@
 <!-- SPDX-License-Identifier: GPL-3.0-or-later -->
 
-# Contributing to Calendar Plus
+# Contributing to Calendar
 
-Calendar Plus combines a portable C core, thin native adapters and a Cinnamon JavaScript frontend. Contributions should preserve those boundaries, keep behaviour verifiable and avoid unnecessary repository complexity.
+Calendar combines a portable C core, thin native adapters and a Cinnamon JavaScript frontend. Contributions should preserve those boundaries, keep behaviour verifiable and avoid unnecessary repository complexity.
 
 ## Engineering rules
 
@@ -12,13 +12,13 @@ Calendar Plus combines a portable C core, thin native adapters and a Cinnamon Ja
 - Keep Cinnamon runtime code and settings in `src/cinnamon/`.
 - Reuse the pinned Infiltratr Common public API when it is the correct shared abstraction; do not modify the submodule from this repository.
 - Treat unsupported or ambiguous behaviour as unavailable rather than inventing results.
-- Preserve the published runtime ABI unless a deliberate ABI change is part of the work. The neutral core headers are source-internal; Calendar Plus does not currently publish a third-party C SDK.
+- Preserve the published runtime ABI unless a deliberate ABI change is part of the work. The neutral core headers are source-internal; Calendar does not currently publish a third-party C SDK.
 - Add deterministic regression coverage for behavioural, parser, lifecycle, timing, ABI or packaging changes.
 - Do not commit build products, temporary extraction files or generated artifacts that the repository intentionally derives during validation.
 
 ## Build and validation
 
-Clone recursively because Calendar Plus pins Infiltratr Common as a submodule:
+Clone recursively because Calendar pins Infiltratr Common as a submodule:
 
 ```bash
 git clone --recurse-submodules https://github.com/Infiltrator-Projects/Calendar-Plus.git
@@ -40,9 +40,18 @@ Changes should compile cleanly under the repository warning policy and preserve 
 
 Keep commits focused. Do not combine unrelated formatting, behaviour, packaging and documentation changes without a clear reason.
 
-## Documentation discipline
+## Documentation and commenting discipline
 
 User and developer guidance belongs in `README.md`. Contribution policy belongs here, vulnerability handling belongs in `SECURITY.md`, and participation standards belong in `CODE_OF_CONDUCT.md`. Release history belongs in `debian/changelog`.
+
+Comments are engineering evidence, not a narration of syntax:
+
+- Module comments state responsibility, architectural boundary and the important invariant that would otherwise have to be inferred from implementation.
+- Algorithm comments identify the authority or model being implemented, its units, assumptions, validity range and any deliberate deviation or continuation rule. Historical or astronomical constants that materially affect output require provenance or a derivation.
+- Public/introspected API comments state ownership, units, valid ranges, failure behaviour and threading/lifetime constraints when those facts are not already explicit in the type.
+- Compatibility comments distinguish the user-facing **Calendar** name from literal legacy identifiers such as `CalendarPlus`, `calendar-plus` and `CALENDAR_PLUS_*`.
+- Comments explain *why* a constraint exists and what must remain true. Do not add comments that merely restate a loop, assignment or function name.
+- When an algorithmic assumption changes, update its source comment, the README correctness/provenance material when applicable, and deterministic reference or boundary tests in the same change.
 
 Do not add parallel README files, a second changelog, duplicated architecture notes or generated documentation when the information already has an authoritative home.
 

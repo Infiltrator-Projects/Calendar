@@ -38,11 +38,12 @@ gboolean calendar_plus_date_same(gint year_a,
  * @month: Gregorian month
  * @day: Gregorian day
  *
- * Returns the conventional Monday-through-Friday classification used by the
- * Cinnamon calendar theme.  Weekend policy remains presentation-independent
- * and has one tested native implementation.
+ * Uses ICU/CLDR weekend policy for the active locale. Monday-Friday is only
+ * the deterministic fallback when locale weekend data is unavailable.
+ * Weekend classification remains presentation-independent and has one tested
+ * native implementation.
  *
- * Returns: %TRUE for Monday through Friday
+ * Returns: %TRUE when the civil date is a work day under that policy
  */
 gboolean calendar_plus_date_is_work_day(gint year,
                                         gint month,
@@ -56,7 +57,7 @@ G_DECLARE_FINAL_TYPE(CalendarPlusCalendarSystem,
 
 /**
  * calendar_plus_calendar_system_new:
- * @calendar_id: a stable Calendar Plus calendar setting value
+ * @calendar_id: a stable Calendar calendar setting value
  *
  * Creates a date-only calendar converter. The object is deliberately
  * independent of the panel clock: appointments keep their absolute Gregorian
@@ -113,8 +114,9 @@ gchar *calendar_plus_calendar_system_format_date(
  * @gregorian_day: Gregorian day of month
  * @part: a typed date component
  *
- * Formats a valid Gregorian civil date using a typed selector.  This is the
- * preferred 3.x API; format_date() remains as a source-compatible 2.x wrapper.
+ * Formats a valid Gregorian civil date using a typed selector. This is the
+ * preferred typed entry point; format_date() is retained as the compatibility
+ * wrapper for callers that still pass a string selector.
  *
  * Returns: (transfer full): a newly allocated UTF-8 string, or an empty string
  *   when the date or selector is invalid

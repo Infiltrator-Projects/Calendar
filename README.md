@@ -85,6 +85,27 @@ The portable core is kept separate from presentation and platform adapters. Cinn
 
 The installed `libcalendar-plus.so.0` and its versioned symbol map are a **runtime stability contract for Calendar itself**, not a separately supported C SDK. The neutral core headers remain source-internal and are not installed as a development package. The exported ABI is nevertheless regression-tested so the Cinnamon typelib, About helper and packaged runtime cannot drift accidentally between releases. If a supported third-party SDK is ever introduced, it will get installed headers, pkg-config metadata and its own compatibility policy rather than silently treating these internal headers as public.
 
+### Compatibility naming
+
+The user-facing application is **Calendar**. The repository name and compatibility identifiers `Calendar-Plus`, `calendar-plus`, `CalendarPlus`, `CALENDAR_PLUS_*`, `libcalendar-plus.so.0` and `calendar-plus@the-infiltratr` are intentionally retained so package upgrades, settings, GObject Introspection consumers and the published runtime ABI do not break. Prose should therefore say **Calendar** unless it is naming one of those literal compatibility interfaces. Renaming a compatibility identifier is a separate migration with ABI, packaging and upgrade consequences; it is not a cosmetic documentation change.
+
+### Engineering contracts and invariants
+
+These contracts define the meaning of values crossing module boundaries. They are part of the design, not incidental implementation details.
+
+| Contract | Invariant |
+| --- | --- |
+| Civil-date boundary | `CalendarPlusDate` is a proleptic-Gregorian civil coordinate. Alternative calendars format and navigate that absolute coordinate rather than replacing event storage with calendar-specific dates. |
+| Internal date axis | Date-only native algorithms use an integral, midnight-based Julian Day Number. This is deliberately distinct from the fractional astronomical Julian Date whose day boundary is noon. |
+| Year numbering | Internal proleptic arithmetic uses astronomical numbering where the provider requires it, including year 0. Presentation code is responsible for historical era labels. |
+| Absolute time | Native clock instants are signed Unix microseconds from 1970-01-01T00:00:00Z. Event transport fields documented as Unix seconds remain seconds until their single normalisation boundary. |
+| Geographic coordinates | Latitude is north-positive and longitude east-positive, in degrees. Location-dependent modes report unavailable when a location or required solar crossing is unavailable; they do not invent Greenwich or extrapolated polar events. |
+| Arithmetic | Checked Common arithmetic is used when overflow means a result is unrepresentable. Saturating arithmetic is used only where clamping is the explicit policy. Signed-overflow undefined behaviour is not an accepted failure mode. |
+| Event intervals | Timed event endpoints are inclusive. CalendarServer all-day end points enter as exclusive following-midnight values and are converted to an inclusive final instant exactly once in the native event boundary. |
+| Event ownership | The native event index is single-owner-thread state. Snapshots are detached deep copies; their revision value is an opaque equality token rather than a timestamp for callers to interpret. |
+| Localisation | ICU/CLDR and Cinnamon own locale-sensitive calendar names, weekend policy and conventional clock presentation where their data is authoritative. Project-owned strings use gettext. |
+| Failure semantics | Invalid, unsupported or physically undefined states return the documented empty/false/null/unavailable result. A plausible-looking fabricated date or clock value is considered a correctness failure. |
+
 ## Correctness model
 
 | Area | Authority / model |
@@ -96,6 +117,22 @@ The installed `libcalendar-plus.so.0` and its versioned symbol map are a **runti
 | Sidereal, solar, Roman temporal, Edo seasonal, Italian, Babylonian-hour, Indian ghaṭī and Nuremberg clocks | Native astronomical models using configured coordinates |
 
 Historical calendars and clocks are deterministic computational models rather than claims about every historical locality or observational practice. Modern Badíʿ years use a Tehran-referenced astronomical March equinox and sunset boundary; years before 172 B.E. retain the historical Western 21-March civil convention. Italian hours use equal hours measured strictly from computed sunset. “Babylonian hours” uses the later European gnomonic convention of equal hours from sunrise; Calendar does not present that label as a reconstruction of ancient Mesopotamian civil timekeeping. The source comments document the exact continuation rules, epochs and astronomical assumptions used where more than one convention exists.
+
+### Model provenance and references
+
+Calendar treats external literature and standards as evidence for a particular model, not as a blanket claim that every implementation detail is inherited unchanged. The relevant source module records the subset used, deliberate approximations and project-specific continuation policy.
+
+| Model / decision | Primary reference used by the implementation |
+| --- | --- |
+| General calendrical algorithms, epochs and cross-calendar reference practice | Edward M. Reingold and Nachum Dershowitz, *Calendrical Calculations: The Ultimate Edition*, 4th ed., Cambridge University Press, 2018, DOI [10.1017/9781107415058](https://doi.org/10.1017/9781107415058). |
+| ICU-backed calendar variants and locale data | Unicode Locale Data Markup Language / CLDR calendar data and ICU calendar implementations: [Unicode TR35 / LDML](https://unicode.org/reports/tr35/) and [ICU](https://icu.unicode.org/). |
+| Solar equation-of-time/declination and sunrise/sunset conventions | NOAA Global Monitoring Laboratory, [Solar Calculation Details](https://gml.noaa.gov/grad/solcalc/calcdetails.html), which documents a Meeus-derived solar-calculation model and the conventional 0.833° sunrise/sunset assumption. Calendar intentionally uses a compact fractional-year subset rather than claiming equivalence to NOAA's complete calculator. |
+| Equinox calculation | Jean Meeus, *Astronomical Algorithms*, 2nd ed., Willmann-Bell, 1998, especially the equinox/solstice polynomial and periodic correction. |
+| ΔT conversion used by the modern Badíʿ calculation | Fred Espenak and Jean Meeus, NASA GSFC, [Polynomial Expressions for Delta T](https://eclipse.gsfc.nasa.gov/LEcat5/deltatpoly.html). Only the pieces relevant to Calendar's supported modern-year range are implemented. |
+| Modern Badíʿ Naw-Rúz reference location and equinox rule | Universal House of Justice, 10 July 2014, [message on implementation of the Badíʿ calendar](https://www.bahai.org/library/authoritative-texts/the-universal-house-of-justice/messages/20140710_001/1). Calendar's numerical astronomy is an implementation of that rule, not an official calendrical authority. |
+| Cinnamon integration behaviour | The reviewed Linux Mint Cinnamon calendar surface recorded in `tools/upstream-calendar-baseline.json`; scheduled drift detection forces explicit review when that upstream integration surface changes. |
+
+Reference provenance is deliberately kept close to the algorithms it justifies. A constant, epoch or historical rule that materially affects output should have either an explanatory source comment or an entry above; tests then protect the chosen interpretation from accidental drift.
 
 ## Build and test
 

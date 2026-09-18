@@ -4,10 +4,13 @@
 
 """Protect the published C ABI from symbol removal or version reassignment.
 
-The baseline records the first symbol-version node assigned to every API that
-has shipped through Calendar Plus 3.6.2.  Normal releases may add symbols, but
-must not edit historical baseline entries.  The optional library check also
-verifies that the linker emitted the recorded GNU symbol versions.
+The baseline intentionally preserves symbol-version assignments first published
+during the project's earlier 2.x/3.x lineage, including the API surface that had
+shipped through 3.6.2. The current application release line is 1.0.x, but those
+historical version nodes remain part of the compatibility contract. Normal
+releases may add symbols, but must not edit historical baseline entries. The
+optional library check also verifies that the linker emitted the recorded GNU
+symbol versions.
 """
 
 from __future__ import annotations

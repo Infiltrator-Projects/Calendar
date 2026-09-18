@@ -2,7 +2,7 @@
 
 # Code of Conduct
 
-Calendar Plus is an open-source engineering project. Project spaces are expected to remain professional, constructive and focused on the work.
+Calendar is an open-source engineering project. Project spaces are expected to remain professional, constructive and focused on the work.
 
 ## Expected conduct
 
@@ -12,11 +12,11 @@ Harassment, threats, discriminatory abuse, sexual harassment, deliberate disrupt
 
 ## Engineering discussions
 
-Technical disagreement is welcome when it improves Calendar Plus. Reviews should explain the engineering reason for a requested change. Test results, supported platforms, security claims and known limitations should be represented accurately.
+Technical disagreement is welcome when it improves Calendar. Reviews should explain the engineering reason for a requested change. Test results, supported platforms, security claims and known limitations should be represented accurately.
 
 ## Scope and enforcement
 
-This code applies to issues, pull requests, reviews, discussions and other spaces operated for Calendar Plus, including situations where someone represents the project officially.
+This code applies to issues, pull requests, reviews, discussions and other spaces operated for Calendar, including situations where someone represents the project officially.
 
 Maintainers may edit or remove inappropriate content, close or lock discussions, reject contributions, or restrict participation when necessary to protect the project and its participants. Enforcement decisions should be proportionate to the behaviour, its impact and any pattern of repeated conduct.
 

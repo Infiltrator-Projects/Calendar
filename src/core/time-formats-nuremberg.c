@@ -9,8 +9,15 @@
  * sunrise and again at sunset, so noon may be hour 8 near midsummer but only
  * hour 4 near midwinter.  Calendar Plus displays elapsed equal hours within
  * the current daylight/night span and resets at the computed physical solar
- * boundary.  This is distinct from Italian hours (one sunset-to-sunset count)
+ * boundary. This is distinct from Italian hours (one sunset-to-sunset count)
  * and Babylonian hours (one sunrise-to-sunrise count).
+ *
+ * Model choice: Calendar interprets the historical equal-hour description as
+ * elapsed ordinary hours reset at the same computed 0.833-degree sunrise and
+ * sunset boundaries used by the other solar-origin providers. Surviving
+ * instruments and local practice were not a single numerical refraction model;
+ * this is therefore a deterministic reconstruction rule, not a claim that
+ * every historical Nuremberg clock used identical boundaries.
  */
 
 #include "time-formats-internal.h"

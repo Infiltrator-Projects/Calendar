@@ -10,7 +10,7 @@ Security fixes are applied to the current `main` branch and, where appropriate, 
 
 Do not open a public issue for a vulnerability that could expose user data, local system information, package or installer integrity, release infrastructure, or other sensitive material.
 
-If GitHub private vulnerability reporting is available for this repository, use the repository's **Security** reporting flow. Otherwise, contact `infiltratr@yandex.com` with the subject `Calendar Plus security report`.
+If GitHub private vulnerability reporting is available for this repository, use the repository's **Security** reporting flow. Otherwise, contact `infiltratr@yandex.com` with the subject `Calendar security report`.
 
 Include the affected version or commit, operating system and Cinnamon version, impact, reliable reproduction steps and relevant logs where possible. Remove unrelated private information, credentials and tokens from logs or screenshots.
 

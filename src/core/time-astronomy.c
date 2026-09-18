@@ -7,8 +7,17 @@
  * These functions intentionally return continuous seconds/date values rather
  * than formatted strings. Presentation precision and timer scheduling belong
  * to time providers; this module owns only UTC/location mathematics. The
- * compact solar model follows the NOAA fractional-year approximation already
- * used by Calendar Plus rather than depending on an external ephemeris.
+ * compact solar model uses the NOAA/GML fractional-year equation-of-time and
+ * declination approximation rather than an external ephemeris. NOAA documents
+ * its broader solar calculator as Meeus-derived; this module deliberately uses
+ * only the compact subset, so the accuracy claims of the complete calculator
+ * must not be transferred to this implementation without separate validation.
+ *
+ * Source model: NOAA Global Monitoring Laboratory, "Solar Calculation
+ * Details". Sunrise/sunset callers conventionally request a 0.833-degree solar
+ * depression, representing the standard refraction/solar-radius convention.
+ * Results remain calculated boundaries, not observations of local atmospheric
+ * conditions.
  */
 
 #include "time-astronomy.h"

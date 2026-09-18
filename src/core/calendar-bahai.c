@@ -11,10 +11,21 @@
  * astronomically, and Naw-Rúz is the Tehran civil date whose sunset follows
  * that equinox (or the following date when the equinox is after sunset).
  *
- * The equinox calculation is the Meeus March-equinox polynomial plus its
- * periodic correction, converted from TT to UTC with a modern ΔT model. The
- * supported astronomical range is 1000-3000 CE; dates outside it use the
- * historical 21-March continuation rather than pretending greater precision.
+ * Authority for the modern rule is the Universal House of Justice message of
+ * 10 July 2014, which designates Tehran as the reference location and the
+ * northern vernal equinox as the basis for Naw-Rúz.
+ *
+ * Numerically, the equinox is the March-equinox polynomial and periodic
+ * correction from Jean Meeus, Astronomical Algorithms (2nd ed., ch. 27).
+ * TT-to-UTC conversion uses the Espenak/Meeus NASA GSFC ΔT polynomial pieces
+ * relevant to this module's modern-year range. The supported astronomical
+ * range is 1000-3000 CE; dates outside it use the historical 21-March
+ * continuation rather than pretending greater precision.
+ *
+ * Tehran is represented by fixed reference coordinates and a +03:30 standard
+ * civil offset. That fixed offset is an explicit reproducibility policy rather
+ * than a claim that historical Iranian timezone/DST law is part of the Badíʿ
+ * astronomical rule.
  */
 
 #include "calendar-bahai.h"

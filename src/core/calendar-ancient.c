@@ -5,7 +5,12 @@
  * Ancient-calendar engines.
  *
  * Mayan conversion uses the Goodman-Martínez-Thompson correlation constant
- * (JDN 584283) and treats the Long Count as arithmetic over kin.  The native
+ * (JDN 584283), the conventional correlation adopted by the project's
+ * reference literature (including Reingold/Dershowitz, Calendrical
+ * Calculations). Alternative historical correlations exist, so Mayan absolute
+ * dates are explicitly model-dependent rather than presented as uniquely
+ * established chronology. The Long Count is treated as arithmetic over kin.
+ * The native
  * representation stores tun / uinal / kin because those are the fields the UI
  * browses; conversion remains reversible even for dates before the epoch by
  * using floor division and a positive remainder.
