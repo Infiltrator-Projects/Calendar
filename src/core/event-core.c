@@ -64,8 +64,13 @@ touch_index(CalendarPlusEventIndex *index)
 {
     const gint64 now = g_get_monotonic_time();
 
-    /* Preserve a strict change token even inside one monotonic microsecond. */
-    index->revision = now > index->revision ? now : index->revision + 1;
+    /*
+     * Preserve a strict change token whenever another gint64 token exists.
+     * Common's saturating add also keeps the theoretical terminal value
+     * defined instead of relying on signed-overflow behaviour.
+     */
+    index->revision = now > index->revision ?
+        now : infiltratr_i64_add_saturating(index->revision, 1);
 }
 
 static gint64

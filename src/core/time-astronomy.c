@@ -259,10 +259,18 @@ calendar_plus_solar_boundary_instants(gint64 unix_microseconds,
     }
 
     day_index = calendar_plus_floor_divide(unix_microseconds, MICROSECONDS_PER_DAY);
-    day_start = calendar_plus_i64_multiply_saturating(
-        day_index, MICROSECONDS_PER_DAY);
-    noon = calendar_plus_i64_add_saturating(
-        day_start, MICROSECONDS_PER_DAY / 2);
+    /*
+     * This API reports whether a physical boundary can be represented. An
+     * overflowing day origin is therefore failure, not a value to saturate.
+     * Common's checked arithmetic keeps that distinction explicit.
+     */
+    if (!infiltratr_i64_multiply_checked(
+            day_index, MICROSECONDS_PER_DAY, &day_start) ||
+        !infiltratr_i64_add_checked(
+            day_start, MICROSECONDS_PER_DAY / 2, &noon))
+    {
+        return FALSE;
+    }
 
     if (!solar_terms(noon, &equation_minutes, &declination))
         return FALSE;

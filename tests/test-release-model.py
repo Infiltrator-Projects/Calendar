@@ -337,6 +337,24 @@ def main() -> None:
     assert "calendar_plus_julian_month_length" in read(
         "src/core/calendar-ancient.c"
     )
+    integer_math = read("src/core/integer-math.h")
+    assert (
+        "#define calendar_plus_i64_add_saturating "
+        "infiltratr_i64_add_saturating"
+    ) in integer_math
+    assert (
+        "#define calendar_plus_i64_subtract_saturating "
+        "infiltratr_i64_subtract_saturating"
+    ) in integer_math
+    assert "infiltratr_i64_multiply_checked" in read(
+        "src/core/time-astronomy.c"
+    )
+    assert "infiltratr_i64_add_checked" in read(
+        "src/core/time-astronomy.c"
+    )
+    assert "infiltratr_size_add_checked" in read("src/core/icu-calendar.c")
+    assert "infiltratr_size_multiply_checked" in read("src/core/icu-calendar.c")
+    assert "index->revision + 1" not in read("src/core/event-core.c")
 
     control = read("debian/control")
     assert "cinnamon (>= 6.4)" in control

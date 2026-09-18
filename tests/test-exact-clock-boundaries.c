@@ -9,6 +9,7 @@
 
 #include "julian-day.h"
 #include "time-formats.h"
+#include "time-astronomy.h"
 
 #include <glib.h>
 
@@ -159,6 +160,28 @@ assert_julian_round_trip(gint year,
 }
 
 static void
+test_solar_instant_overflow_rejection(void)
+{
+    gint64 dawn = 0;
+    gint64 dusk = 0;
+
+    /*
+     * The instant API must reject values whose containing solar day cannot be
+     * represented without overflow; it must never silently clamp them.
+     */
+    g_assert_false(calendar_plus_solar_boundary_instants(
+        G_MININT64, -36.3833, 145.4000, 0.833, &dawn, &dusk));
+    g_assert_false(calendar_plus_solar_boundary_instants(
+        G_MAXINT64, -36.3833, 145.4000, 0.833, &dawn, &dusk));
+
+    /* A normal mid-latitude date remains representable and ordered. */
+    g_assert_true(calendar_plus_solar_boundary_instants(
+        1788177600LL * G_USEC_PER_SEC,
+        -36.3833, 145.4000, 0.833, &dawn, &dusk));
+    g_assert_cmpint(dawn, <, dusk);
+}
+
+static void
 test_complete_civil_year_domain(void)
 {
     assert_gregorian_round_trip(G_MININT, 1, 1);
@@ -184,6 +207,8 @@ main(int argc, char **argv)
                     test_signed_unix_boundaries);
     g_test_add_func("/exact-clock/extreme-instant-normalisation",
                     test_extreme_instant_normalisation);
+    g_test_add_func("/exact-clock/solar-overflow-rejection",
+                    test_solar_instant_overflow_rejection);
     g_test_add_func("/date-domain/complete-gint-years",
                     test_complete_civil_year_domain);
     return g_test_run();

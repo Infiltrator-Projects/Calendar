@@ -14,6 +14,7 @@
 
 #include "icu-calendar.h"
 
+#include <infiltratr/arithmetic.h>
 #include <infiltratr/core.h>
 
 #include "julian-day.h"
@@ -168,9 +169,17 @@ utf16_to_utf8(const UChar *source,
         return g_strdup("");
 
     status = U_ZERO_ERROR;
-    result = g_malloc((gsize)required + 1);
+    size_t capacity = 0U;
+    if (required < 0 ||
+        !infiltratr_size_add_checked((size_t)required, 1U, &capacity) ||
+        capacity > (size_t)G_MAXINT32)
+    {
+        return g_strdup("");
+    }
+
+    result = g_malloc(capacity);
     u_strToUTF8(result,
-                required + 1,
+                (gint32)capacity,
                 NULL,
                 source,
                 source_length,
@@ -277,9 +286,23 @@ calendar_plus_icu_format(CalendarPlusCalendarMode format_profile,
                          &status);
     if (status == U_BUFFER_OVERFLOW_ERROR)
     {
+        size_t element_count = 0U;
+        size_t allocation_bytes = 0U;
+
         status = U_ZERO_ERROR;
-        capacity = length + 1;
-        output = g_new(UChar, (gsize)capacity);
+        if (length < 0 ||
+            !infiltratr_size_add_checked(
+                (size_t)length, 1U, &element_count) ||
+            element_count > (size_t)G_MAXINT32 ||
+            !infiltratr_size_multiply_checked(
+                element_count, sizeof(UChar), &allocation_bytes))
+        {
+            udat_close(formatter);
+            return g_strdup("");
+        }
+
+        capacity = (gint32)element_count;
+        output = g_malloc(allocation_bytes);
         length = udat_format(formatter,
                              jdn_to_udate(jdn),
                              output,

@@ -28,19 +28,13 @@ calendar_plus_positive_modulo(int64_t value,
         remainder : 0;
 }
 
-static inline int64_t
-calendar_plus_i64_add_saturating(int64_t left,
-                                 int64_t right)
-{
-    return infiltratr_i64_add_saturating(left, right);
-}
-
-static inline int64_t
-calendar_plus_i64_subtract_saturating(int64_t left,
-                                      int64_t right)
-{
-    return infiltratr_i64_subtract_saturating(left, right);
-}
+/*
+ * Calendar names remain useful at call sites, but these two operations have no
+ * Calendar-specific policy. Alias them directly to Common so there is one
+ * implementation and one overflow contract.
+ */
+#define calendar_plus_i64_add_saturating infiltratr_i64_add_saturating
+#define calendar_plus_i64_subtract_saturating infiltratr_i64_subtract_saturating
 
 static inline int64_t
 calendar_plus_i64_multiply_saturating(int64_t left,
