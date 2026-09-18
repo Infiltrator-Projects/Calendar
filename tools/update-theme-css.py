@@ -50,12 +50,12 @@ def render(data: dict) -> str:
 .calendar-plus-popup.calendar-plus-theme-night .calendar-month-label,
 .calendar-plus-popup.calendar-plus-theme-night .calendar-events-date-label,
 .calendar-plus-popup.calendar-plus-theme-night .calendar-events-no-events-label {{
-    color: {night["text"]};
+    color: {night["title"]};
 }}
 
 .calendar-plus-popup.calendar-plus-theme-night .calendar-day-base:hover,
 .calendar-plus-popup.calendar-plus-theme-night .calendar-today-home-button-enabled:hover {{
-    background-color: {night["card"]};
+    background-color: {night["surface_hover"]};
 }}
 
 .calendar-plus-popup.calendar-plus-theme-day,
@@ -77,12 +77,12 @@ def render(data: dict) -> str:
 .calendar-plus-popup.calendar-plus-theme-day .calendar-month-label,
 .calendar-plus-popup.calendar-plus-theme-day .calendar-events-date-label,
 .calendar-plus-popup.calendar-plus-theme-day .calendar-events-no-events-label {{
-    color: {day["text"]};
+    color: {day["title"]};
 }}
 
 .calendar-plus-popup.calendar-plus-theme-day .calendar-day-base:hover,
 .calendar-plus-popup.calendar-plus-theme-day .calendar-today-home-button-enabled:hover {{
-    background-color: {day["surface"]};
+    background-color: {day["surface_hover"]};
 }}
 
 .calendar-plus-popup.calendar-plus-theme-day .calendar-day-base.calendar-day-selected,
