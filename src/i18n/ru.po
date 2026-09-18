@@ -182,6 +182,9 @@ msgstr "Формат даты"
 msgid "Date format for tooltip"
 msgstr "Формат даты во всплывающей подсказке"
 
+msgid "Day"
+msgstr "День"
+
 msgid "December"
 msgstr "Декабрь"
 
@@ -223,6 +226,12 @@ msgstr "Festival of Holy Women"
 
 msgid "Floréal"
 msgstr "Floréal"
+
+msgid "Follow system"
+msgstr "Следовать системной теме"
+
+msgid "Follow the current Cinnamon theme, or force Calendar Plus to use its light or dark Infiltrator appearance."
+msgstr "Использовать текущую тему Cinnamon или принудительно включить светлое или тёмное оформление Infiltrator для Calendar Plus."
 
 msgid "Frederick"
 msgstr "Frederick"
@@ -419,6 +428,9 @@ msgstr "Следующий месяц"
 msgid "Next year"
 msgstr "Следующий год"
 
+msgid "Night"
+msgstr "Ночь"
+
 msgid "Nivôse"
 msgstr "Nivôse"
 
@@ -571,6 +583,9 @@ msgstr "Шведский исторический (1700–1753)"
 
 msgid "The Cinnamon clock and calendar with multiple time and calendar systems"
 msgstr "Часы и календарь Cinnamon с несколькими системами времени и календарями"
+
+msgid "Theme"
+msgstr "Тема"
 
 msgid "Thermidor"
 msgstr "Thermidor"
