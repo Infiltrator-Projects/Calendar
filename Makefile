@@ -180,7 +180,7 @@ DIST_FILES := \
 	validate-sources validate-exports validate-abi validate-runtime-deps validate-release-model smoke-gjs \
 	path-space-smoke release-check \
 	reproducible-build translations update-pot validate-translations \
-	update-settings validate-settings-generated update-runtime-hashes
+	update-settings validate-settings-generated update-theme validate-theme update-runtime-hashes
 
 all: common-check check-deps \
 	$(INFILTRATR_COMMON_ARCHIVE) \
@@ -318,6 +318,13 @@ update-settings:
 
 validate-settings-generated:
 	python3 tools/update-settings.py --check
+	python3 tools/update-theme-css.py --check
+
+update-theme:
+	python3 tools/update-theme-css.py
+
+validate-theme:
+	python3 tools/update-theme-css.py --check
 
 $(BUILD_DIR)/$(GIR).gir: \
 		$(PUBLIC_HEADERS) \
