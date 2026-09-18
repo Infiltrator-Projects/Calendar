@@ -2,7 +2,7 @@
 // Copyright (C) 2026 Shannon Smith
 
 /*
- * Small Cinnamon/GJS compatibility primitives shared by Calendar Plus views.
+ * Small Cinnamon/GJS compatibility primitives shared by Calendar views.
  *
  * This module owns only runtime mechanics that are independent of any calendar
  * feature: local-module resolution across Cinnamon 6.4/6.6/6.7 and deterministic

@@ -2,7 +2,7 @@
 // Copyright (C) 2026 Shannon Smith
 
 /*
- * Calendar Plus month/period view.
+ * Calendar month/period view.
  *
  * The visible calendar is always a 6 x 7 actor grid, but the meaning of a
  * "month" is delegated to CalendarPlus.CalendarSystem.  ISO week and Mayan
@@ -166,7 +166,7 @@ var Calendar = class Calendar {
         this._monthBeforeYear = headingOrder !== "calendar:YM";
         if (headingOrder !== "calendar:MY" && headingOrder !== "calendar:YM") {
             global.logError(
-                "Calendar Plus: GTK calendar heading-order translation is invalid."
+                "Calendar: GTK calendar heading-order translation is invalid."
             );
         }
 
@@ -179,7 +179,7 @@ var Calendar = class Calendar {
         }
         const replacement = CalendarPlus.CalendarSystem.new(calendarId);
         if (replacement === null) {
-            global.logError(`Calendar Plus: unknown calendar '${calendarId}'.`);
+            global.logError(`Calendar: unknown calendar '${calendarId}'.`);
             return;
         }
         this._calendarSystem = replacement;
@@ -190,7 +190,7 @@ var Calendar = class Calendar {
     formatDate(date, part) {
         const typedPart = DATE_PARTS[part];
         if (typedPart === undefined) {
-            global.logError(`Calendar Plus: invalid date part '${part}'.`);
+            global.logError(`Calendar: invalid date part '${part}'.`);
             return "";
         }
         return this._calendarSystem.format_date_part(
@@ -492,7 +492,7 @@ var Calendar = class Calendar {
             this._weekStart
         );
         if (model === null) {
-            global.logError("Calendar Plus: native grid generation failed.");
+            global.logError("Calendar: native grid generation failed.");
             return;
         }
 

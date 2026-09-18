@@ -7,9 +7,9 @@
  * Weekdays are ISO 1=Monday through 7=Sunday. Conversion callers are
  * responsible for validating civil dates before converting them.
  *
- * Calendar Plus exposes civil years as gint through CalendarPlusDate. The JDN
+ * Calendar exposes civil years as gint through CalendarPlusDate. The JDN
  * conversion arithmetic is deliberately implemented in gint64 and is tested at
- * both G_MININT and G_MAXINT, so every representable Calendar Plus civil year
+ * both G_MININT and G_MAXINT, so every representable Calendar civil year
  * has substantial intermediate headroom. JDN-to-date callers must likewise
  * supply JDNs originating from that civil domain or from a calendar provider
  * operating on it; arbitrary extremes of the gint64 number line are not a

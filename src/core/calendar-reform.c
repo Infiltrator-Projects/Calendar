@@ -4,7 +4,7 @@
 /*
  * Reform-calendar conversion.
  *
- * Calendar Plus uses the arithmetic (Romme-style) continuation of the French
+ * Calendar uses the arithmetic (Romme-style) continuation of the French
  * Republican calendar: the historical epoch is fixed at JDN 2375840 and leap
  * years follow the shifted Gregorian 400-year rule.  That choice is deliberate
  * because several incompatible post-historical proposals exist; callers must
@@ -35,7 +35,7 @@ gboolean
 calendar_plus_french_is_leap(gint64 year)
 {
     /*
-     * Calendar Plus uses the Romme-style arithmetic continuation: apply the
+     * Calendar uses the Romme-style arithmetic continuation: apply the
      * Gregorian 4/100/400 rule to the following Republican year number. This
      * choice is deterministic for proleptic dates where historical practice
      * does not define a single answer.

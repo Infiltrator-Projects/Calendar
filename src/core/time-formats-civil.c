@@ -278,7 +278,7 @@ delay_chinese_provider(gint64 unix_microseconds,
 
 /*
  * A documented Han-era convention divided one civil day into one hundred kè.
- * Calendar Plus exposes that exact equal partition without implying that the
+ * Calendar exposes that exact equal partition without implying that the
  * convention was uniform across every Chinese dynasty.
  */
 gchar *

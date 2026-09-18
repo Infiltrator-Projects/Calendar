@@ -4,7 +4,7 @@
 /*
  * Panel-clock presentation policy.
  *
- * This module has no actor ownership.  It translates Calendar Plus settings
+ * This module has no actor ownership.  It translates Calendar settings
  * and Cinnamon desktop preferences into WallClock formatting, native timer
  * configuration and the final panel/date strings.  Keeping those decisions
  * out of applet.js leaves the applet controller responsible for lifecycle and
@@ -32,7 +32,7 @@ const DATE_FORMAT_FULL = CinnamonDesktop.WallClock.lctime_format(
 
 /*
  * These strings intentionally pass through CinnamonDesktop.WallClock.  That
- * preserves locale-aware day/month ordering while Calendar Plus independently
+ * preserves locale-aware day/month ordering while Calendar independently
  * controls whether this applet instance displays seconds.
  */
 const DEFAULT_CLOCK_FORMATS = Object.freeze({

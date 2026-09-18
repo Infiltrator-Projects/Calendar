@@ -4,13 +4,13 @@
  *
  * ICU runtime ABI bridge.
  *
- * Calendar Plus uses ICU's stable C API but deliberately does not bind its
+ * Calendar uses ICU's stable C API but deliberately does not bind its
  * generic binary to one ICU SONAME/symbol suffix.  ICU renames public C
  * symbols at build time (for example ucal_open_74 and ucal_open_76).  This
  * bridge resolves the installed ICU major at runtime and exposes the ordinary
- * unsuffixed C names to the rest of Calendar Plus.
+ * unsuffixed C names to the rest of Calendar.
  *
- * U_DISABLE_RENAMING is set by the Calendar Plus build, so icu-calendar.c
+ * U_DISABLE_RENAMING is set by the Calendar build, so icu-calendar.c
  * calls these functions rather than a build-host-specific ICU symbol.  The
  * ICU headers still provide the authoritative ABI types and constants.
  */

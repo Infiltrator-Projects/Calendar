@@ -30,7 +30,7 @@ G_BEGIN_DECLS
  * @CALENDAR_PLUS_TIME_MODE_CHINESE_KE: Chinese hundred-kè civil-day division
  * @CALENDAR_PLUS_TIME_MODE_NUREMBERG_HOURS: equal hours reset at sunrise and sunset
  *
- * Native time systems supported by Calendar Plus. Conventional 12-hour and
+ * Native time systems supported by Calendar. Conventional 12-hour and
  * 24-hour modes remain with CinnamonDesktop.WallClock for locale handling.
  */
 typedef enum

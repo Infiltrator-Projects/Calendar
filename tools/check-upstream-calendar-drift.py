@@ -4,7 +4,7 @@
 
 """Report relevant Cinnamon calendar changes after the reviewed baseline.
 
-This is deliberately a monitoring tool, not a source dependency. Calendar Plus
+This is deliberately a monitoring tool, not a source dependency. Calendar
 never downloads or incorporates Cinnamon code during its ordinary build. A
 scheduled CI job compares upstream history and fails only when files in the
 reviewed calendar integration surface changed, forcing a human compatibility

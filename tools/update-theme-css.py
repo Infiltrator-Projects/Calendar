@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 # SPDX-License-Identifier: GPL-3.0-or-later
-"""Generate Calendar Plus theme colours from the pinned Common design contract.
+"""Generate Calendar theme colours from the pinned Common design contract.
 
-Selectors and Cinnamon widget mechanics remain local to Calendar Plus. Common
+Selectors and Cinnamon widget mechanics remain local to Calendar. Common
 owns only semantic theme values. This keeps the CSS native to Cinnamon without
 allowing a second private palette truth to drift from Common.
 """
@@ -29,7 +29,7 @@ def render(data: dict) -> str:
     return f"""{BEGIN}
 /*
  * Generated from Infiltratr Common. Do not hand-edit colour values here.
- * Calendar Plus deliberately owns only Cinnamon selectors/widget mechanics.
+ * Calendar deliberately owns only Cinnamon selectors/widget mechanics.
  */
 .calendar-plus-popup.calendar-plus-theme-night,
 .calendar-plus-popup.calendar-plus-theme-night .calendar-main-box {{
@@ -111,7 +111,7 @@ def desired_stylesheet() -> str:
 
     marker = "/*\n * Theme policy\n"
     if marker not in source:
-        raise SystemExit("Calendar Plus theme policy marker not found")
+        raise SystemExit("Calendar theme policy marker not found")
     before = source.split(marker, 1)[0].rstrip()
     return before + "\n\n/*\n * Theme policy\n * ------------\n * Follow system is platform-authoritative; Day/Night values come from Common.\n */\n\n" + generated + "\n"
 
@@ -124,7 +124,7 @@ def main() -> int:
     if args.check:
         actual = STYLESHEET.read_text(encoding="utf-8")
         if actual != desired:
-            raise SystemExit("Calendar Plus theme CSS is stale; run make update-theme")
+            raise SystemExit("Calendar theme CSS is stale; run make update-theme")
         return 0
     STYLESHEET.write_text(desired, encoding="utf-8")
     return 0

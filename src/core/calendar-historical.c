@@ -11,7 +11,7 @@
  *
  * Byzantine Anno Mundi uses the Julian calendar, a 1 September year boundary
  * and the Constantinopolitan creation era whose first year begins 1 September
- * 5509 BC. Calendar Plus uses astronomical year numbering internally but
+ * 5509 BC. Calendar uses astronomical year numbering internally but
  * formats the historical Anno Mundi year without changing Julian month/day.
  *
  * Egyptian civil dates use Ptolemy's Nabonassar era as the absolute epoch:

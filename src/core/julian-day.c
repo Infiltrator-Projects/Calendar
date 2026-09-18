@@ -4,7 +4,7 @@
  *
  * Integer civil-date arithmetic.
  *
- * Calendar Plus uses an integral Julian Day Number (JDN) as the internal
+ * Calendar uses an integral Julian Day Number (JDN) as the internal
  * date-only axis. A JDN changes at civil midnight in this module; it is not
  * the fractional astronomical Julian Date used by the clock display.
  *

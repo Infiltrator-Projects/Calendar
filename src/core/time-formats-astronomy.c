@@ -561,7 +561,7 @@ delay_equal_hours_from_solar_origin(gint64 unix_microseconds,
 /*
  * Italian hours (horae ab occasu Solis) are equal hours counted from sunset.
  * Historical local practice sometimes offset the reset from literal sunset;
- * Calendar Plus intentionally uses the unambiguous strict-sunset convention.
+ * Calendar intentionally uses the unambiguous strict-sunset convention.
  */
 gchar *
 format_italian_hours_provider(gint64 unix_microseconds,

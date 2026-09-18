@@ -11,7 +11,7 @@ G_BEGIN_DECLS
 /**
  * calendar_plus_get_version:
  *
- * Returns the Calendar Plus source version used to build the loaded native
+ * Returns the Calendar source version used to build the loaded native
  * library.  This is intentionally part of the introspected ABI so the GJS
  * front end can reject a stale or mismatched native library instead of
  * failing later with misleading secondary errors.
