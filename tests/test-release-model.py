@@ -224,7 +224,7 @@ def main() -> None:
     source_root = ROOT / "src"
     assert not [path for path in source_root.iterdir() if path.is_file()]
     assert sorted(path.name for path in source_root.iterdir() if path.is_dir()) == [
-        "abi", "adapters", "app", "cinnamon", "core", "i18n", "vendor"
+        "abi", "adapters", "app", "assets", "cinnamon", "core", "i18n", "vendor"
     ]
 
     applet = read("src/cinnamon/applet.js")
