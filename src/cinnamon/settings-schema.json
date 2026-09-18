@@ -152,6 +152,17 @@
         "type": "section",
         "description": "Display"
     },
+    "theme-mode": {
+        "type": "combobox",
+        "default": "system",
+        "description": "Theme",
+        "options": {
+            "Follow system": "system",
+            "Day": "day",
+            "Night": "night"
+        },
+        "tooltip": "Follow the current Cinnamon theme, or force Calendar Plus to use its light or dark Infiltrator appearance."
+    },
     "show-events": {
         "type": "switch",
         "default": true,
