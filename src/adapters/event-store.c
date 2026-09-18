@@ -137,7 +137,7 @@ calendar_plus_event_store_get_colors(CalendarPlusEventStore *self,
         return NULL;
     }
 
-    colors = g_malloc0(allocation_bytes);
+    colors = (gchar **)g_malloc0(allocation_bytes);
     for (item = 0; item < snapshot->length; item++)
         colors[item] = g_strdup(snapshot->events[item].color);
 
