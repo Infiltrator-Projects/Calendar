@@ -17,29 +17,6 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 
-msgid ""
-"Copyright © 2026 Shannon Smith\n"
-"\n"
-"This program comes with absolutely no warranty.\n"
-"See the GNU GPL v3+ License for details."
-msgstr ""
-"Copyright © 2026 Shannon Smith\n"
-"\n"
-"Dieses Programm wird ohne jegliche Gewährleistung bereitgestellt.\n"
-"Einzelheiten finden Sie in der GNU GPL v3+ Lizenz."
-
-msgid "‘Alá’"
-msgstr "‘Alá’"
-
-msgid "‘Aẓamat"
-msgstr "‘Aẓamat"
-
-msgid "‘Ilm"
-msgstr "‘Ilm"
-
-msgid "‘Izzat"
-msgstr "‘Izzat"
-
 #, c-format
 msgid "%d %s %lld"
 msgstr "%d %s %lld"
@@ -179,6 +156,17 @@ msgstr "Steuert Kalendergitter, Datumsüberschrift und Navigation im Popup. Term
 msgid "Coptic"
 msgstr "Koptisch"
 
+msgid ""
+"Copyright © 2026 Shannon Smith\n"
+"\n"
+"This program comes with absolutely no warranty.\n"
+"See the GNU GPL v3+ License for details."
+msgstr ""
+"Copyright © 2026 Shannon Smith\n"
+"\n"
+"Dieses Programm wird ohne jegliche Gewährleistung bereitgestellt.\n"
+"Einzelheiten finden Sie in der GNU GPL v3+ Lizenz."
+
 msgid "Dangi (traditional Korean)"
 msgstr "Dangi (traditionell koreanisch)"
 
@@ -287,20 +275,26 @@ msgstr "Hoṙi"
 msgid "Hroticʿ"
 msgstr "Hroticʿ"
 
+msgid "ISO week calendar"
+msgstr "ISO-Wochenkalender"
+
 msgid "Ianuarius"
 msgstr "Ianuarius"
 
-msgid "Indian ghaṭī time (from sunrise)"
-msgstr "Indische Ghaṭī-Zeit (ab Sonnenaufgang)"
-
 msgid "Indian National (Saka)"
 msgstr "Indischer Nationalkalender (Saka)"
+
+msgid "Indian ghaṭī time (from sunrise)"
+msgstr "Indische Ghaṭī-Zeit (ab Sonnenaufgang)"
 
 msgid "International Fixed"
 msgstr "Internationaler Fixkalender"
 
 msgid "Internet Time (@000 to @999)"
 msgstr "Internetzeit (@000 bis @999)"
+
+msgid "Islamic (Umm al-Qura)"
+msgstr "Islamisch (Umm al-Qura)"
 
 msgid "Islamic (astronomical approximation)"
 msgstr "Islamisch (astronomische Näherung)"
@@ -310,12 +304,6 @@ msgstr "Islamisch (bürgerlich/tabellarisch)"
 
 msgid "Islamic (tabular, astronomical epoch)"
 msgstr "Islamisch (tabellarisch, astronomische Epoche)"
-
-msgid "Islamic (Umm al-Qura)"
-msgstr "Islamisch (Umm al-Qura)"
-
-msgid "ISO week calendar"
-msgstr "ISO-Wochenkalender"
 
 msgid "Italian hours (from sunset)"
 msgstr "Italienische Stunden (ab Sonnenuntergang)"
@@ -392,11 +380,11 @@ msgstr "Margacʿ"
 msgid "Martius"
 msgstr "Martius"
 
-msgid "Masá’il"
-msgstr "Masá’il"
-
 msgid "Mashíyyat"
 msgstr "Mashíyyat"
+
+msgid "Masá’il"
+msgstr "Masá’il"
 
 msgid "May"
 msgstr "Mai"
@@ -449,11 +437,11 @@ msgstr "Keine"
 msgid "November"
 msgstr "November"
 
-msgid "Núr"
-msgstr "Núr"
-
 msgid "Nuremberg hours (sunrise/sunset reset)"
 msgstr "Nürnberger Stunden (Neustart bei Sonnenauf- und -untergang)"
+
+msgid "Núr"
+msgstr "Núr"
 
 msgid "October"
 msgstr "Oktober"
@@ -627,11 +615,11 @@ msgstr "Unix-Zeit (Epochen-Sekunden)"
 msgid "Use a custom date format"
 msgstr "Benutzerdefiniertes Datumsformat verwenden"
 
-msgid "Used by local sidereal, solar and location-dependent historical time. Enter east longitudes as positive and west longitudes as negative."
-msgstr "Wird für lokale Sternzeit, Sonnenzeit und standortabhängige historische Zeit verwendet. Östliche Längengrade positiv, westliche negativ eingeben."
-
 msgid "Used by Roman temporal, Edo Japanese seasonal, Italian, Babylonian and Nuremberg hours, and Indian ghaṭī time. Enter north latitudes as positive and south latitudes as negative."
 msgstr "Verwendet für römische Temporalstunden, japanische Saisonzeit der Edo-Zeit, italienische, babylonische und Nürnberger Stunden sowie indische Ghaṭī-Zeit. Nördliche Breitengrade positiv und südliche negativ eingeben."
+
+msgid "Used by local sidereal, solar and location-dependent historical time. Enter east longitudes as positive and west longitudes as negative."
+msgstr "Wird für lokale Sternzeit, Sonnenzeit und standortabhängige historische Zeit verwendet. Östliche Längengrade positiv, westliche negativ eingeben."
 
 msgid "Vendémiaire"
 msgstr "Vendémiaire"
@@ -657,3 +645,15 @@ msgstr "Welttag"
 
 msgid "Year Day"
 msgstr "Jahrestag"
+
+msgid "‘Alá’"
+msgstr "‘Alá’"
+
+msgid "‘Aẓamat"
+msgstr "‘Aẓamat"
+
+msgid "‘Ilm"
+msgstr "‘Ilm"
+
+msgid "‘Izzat"
+msgstr "‘Izzat"
