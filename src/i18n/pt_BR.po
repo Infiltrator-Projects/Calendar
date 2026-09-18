@@ -17,6 +17,32 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 
+msgid ""
+"Copyright © 2026 Shannon Smith\n"
+"\n"
+"This program comes with absolutely no warranty.\n"
+"See the GNU GPL v3+ License for details."
+msgstr ""
+"Copyright © 2026 Shannon Smith\n"
+"\n"
+"Este programa é fornecido sem qualquer garantia.\n"
+"Consulte a licença GNU GPL v3+ para obter detalhes.Copyright © 2026 Shannon Smith\n"
+"\n"
+"This program comes with absolutely no warranty.\n"
+"See the GNU GPL v3+ License for details."
+
+msgid "‘Alá’"
+msgstr "‘Alá’"
+
+msgid "‘Aẓamat"
+msgstr "‘Aẓamat"
+
+msgid "‘Ilm"
+msgstr "‘Ilm"
+
+msgid "‘Izzat"
+msgstr "‘Izzat"
+
 #, c-format
 msgid "%d %s %lld"
 msgstr "%d %s %lld"
@@ -156,20 +182,6 @@ msgstr "Controla a grade do calendário, o cabeçalho de data e a navegação. O
 msgid "Coptic"
 msgstr "Copta"
 
-msgid ""
-"Copyright © 2026 Shannon Smith\n"
-"\n"
-"This program comes with absolutely no warranty.\n"
-"See the GNU GPL v3+ License for details."
-msgstr ""
-"Copyright © 2026 Shannon Smith\n"
-"\n"
-"Este programa é fornecido sem qualquer garantia.\n"
-"Consulte a licença GNU GPL v3+ para obter detalhes.Copyright © 2026 Shannon Smith\n"
-"\n"
-"This program comes with absolutely no warranty.\n"
-"See the GNU GPL v3+ License for details."
-
 msgid "Dangi (traditional Korean)"
 msgstr "Dangi (tradicional coreano)"
 
@@ -181,6 +193,9 @@ msgstr "Formato de data"
 
 msgid "Date format for tooltip"
 msgstr "Formato de data da dica"
+
+msgid "Day"
+msgstr "Dia"
 
 msgid "December"
 msgstr "Dezembro"
@@ -223,6 +238,12 @@ msgstr "Festival of Holy Women"
 
 msgid "Floréal"
 msgstr "Floréal"
+
+msgid "Follow system"
+msgstr "Seguir o sistema"
+
+msgid "Follow the current Cinnamon theme, or force Calendar Plus to use its light or dark Infiltrator appearance."
+msgstr "Seguir o tema atual do Cinnamon ou forçar o Calendar Plus a usar a aparência Infiltrator clara ou escura."
 
 msgid "Frederick"
 msgstr "Frederick"
@@ -269,26 +290,20 @@ msgstr "Hoṙi"
 msgid "Hroticʿ"
 msgstr "Hroticʿ"
 
-msgid "ISO week calendar"
-msgstr "Calendário semanal ISO"
-
 msgid "Ianuarius"
 msgstr "Ianuarius"
 
-msgid "Indian National (Saka)"
-msgstr "Nacional indiano (Saka)"
-
 msgid "Indian ghaṭī time (from sunrise)"
 msgstr "Hora indiana ghaṭī (desde o nascer do sol)"
+
+msgid "Indian National (Saka)"
+msgstr "Nacional indiano (Saka)"
 
 msgid "International Fixed"
 msgstr "Fixo internacional"
 
 msgid "Internet Time (@000 to @999)"
 msgstr "Hora da Internet (@000 a @999)"
-
-msgid "Islamic (Umm al-Qura)"
-msgstr "Islâmico (Umm al-Qura)"
 
 msgid "Islamic (astronomical approximation)"
 msgstr "Islâmico (aproximação astronômica)"
@@ -298,6 +313,12 @@ msgstr "Islâmico (civil/tabular)"
 
 msgid "Islamic (tabular, astronomical epoch)"
 msgstr "Islâmico (tabular, época astronômica)"
+
+msgid "Islamic (Umm al-Qura)"
+msgstr "Islâmico (Umm al-Qura)"
+
+msgid "ISO week calendar"
+msgstr "Calendário semanal ISO"
 
 msgid "Italian hours (from sunset)"
 msgstr "Horas italianas (desde o pôr do sol)"
@@ -374,11 +395,11 @@ msgstr "Margacʿ"
 msgid "Martius"
 msgstr "Martius"
 
-msgid "Mashíyyat"
-msgstr "Mashíyyat"
-
 msgid "Masá’il"
 msgstr "Masá’il"
+
+msgid "Mashíyyat"
+msgstr "Mashíyyat"
 
 msgid "May"
 msgstr "Maio"
@@ -419,6 +440,9 @@ msgstr "Próximo mês"
 msgid "Next year"
 msgstr "Próximo ano"
 
+msgid "Night"
+msgstr "Noite"
+
 msgid "Nivôse"
 msgstr "Nivôse"
 
@@ -428,11 +452,11 @@ msgstr "Nenhum"
 msgid "November"
 msgstr "Novembro"
 
-msgid "Nuremberg hours (sunrise/sunset reset)"
-msgstr "Horas de Nuremberg (reinício ao nascer e ao pôr do sol)"
-
 msgid "Núr"
 msgstr "Núr"
+
+msgid "Nuremberg hours (sunrise/sunset reset)"
+msgstr "Horas de Nuremberg (reinício ao nascer e ao pôr do sol)"
 
 msgid "October"
 msgstr "Outubro"
@@ -572,6 +596,9 @@ msgstr "Sueco histórico (1700–1753)"
 msgid "The Cinnamon clock and calendar with multiple time and calendar systems"
 msgstr "O relógio e calendário Cinnamon com vários sistemas de horário e calendário"
 
+msgid "Theme"
+msgstr "Tema"
+
 msgid "Thermidor"
 msgstr "Thermidor"
 
@@ -603,11 +630,11 @@ msgstr "Tempo Unix (segundos desde a época)"
 msgid "Use a custom date format"
 msgstr "Usar formato de data personalizado"
 
-msgid "Used by Roman temporal, Edo Japanese seasonal, Italian, Babylonian and Nuremberg hours, and Indian ghaṭī time. Enter north latitudes as positive and south latitudes as negative."
-msgstr "Usado para a hora temporal romana, a hora sazonal japonesa Edo, as horas italianas, babilônicas e de Nuremberg e a hora indiana ghaṭī. Insira latitudes norte como positivas e sul como negativas."
-
 msgid "Used by local sidereal, solar and location-dependent historical time. Enter east longitudes as positive and west longitudes as negative."
 msgstr "Usado pela hora sideral local, solar e histórica dependente da localização. Digite longitudes leste como positivas e oeste como negativas."
+
+msgid "Used by Roman temporal, Edo Japanese seasonal, Italian, Babylonian and Nuremberg hours, and Indian ghaṭī time. Enter north latitudes as positive and south latitudes as negative."
+msgstr "Usado para a hora temporal romana, a hora sazonal japonesa Edo, as horas italianas, babilônicas e de Nuremberg e a hora indiana ghaṭī. Insira latitudes norte como positivas e sul como negativas."
 
 msgid "Vendémiaire"
 msgstr "Vendémiaire"
@@ -633,15 +660,3 @@ msgstr "Worldsday"
 
 msgid "Year Day"
 msgstr "Dia do ano"
-
-msgid "‘Alá’"
-msgstr "‘Alá’"
-
-msgid "‘Aẓamat"
-msgstr "‘Aẓamat"
-
-msgid "‘Ilm"
-msgstr "‘Ilm"
-
-msgid "‘Izzat"
-msgstr "‘Izzat"
