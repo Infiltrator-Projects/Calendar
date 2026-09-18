@@ -27,3 +27,78 @@
     font-family: "MB Corpo S Title WEB";
     font-weight: 700;
 }
+
+
+/*
+ * Theme policy
+ * ------------
+ * Follow system is the default and deliberately adds no colour override class,
+ * so Cinnamon remains the authority for the popup palette. Day/Night are
+ * explicit Calendar Plus overrides scoped to this applet only.
+ */
+
+.calendar-plus-popup.calendar-plus-theme-night,
+.calendar-plus-popup.calendar-plus-theme-night .calendar-main-box {
+    background-color: #050608;
+    color: #e8ecef;
+}
+
+.calendar-plus-popup.calendar-plus-theme-night .calendar-today-home-button,
+.calendar-plus-popup.calendar-plus-theme-night .calendar-today-home-button-enabled,
+.calendar-plus-popup.calendar-plus-theme-night .calendar,
+.calendar-plus-popup.calendar-plus-theme-night .calendar-events-main-box {
+    background-color: #101318;
+    color: #e8ecef;
+}
+
+.calendar-plus-popup.calendar-plus-theme-night .calendar-day-base,
+.calendar-plus-popup.calendar-plus-theme-night .calendar-day-heading,
+.calendar-plus-popup.calendar-plus-theme-night .calendar-month-label,
+.calendar-plus-popup.calendar-plus-theme-night .calendar-events-date-label,
+.calendar-plus-popup.calendar-plus-theme-night .calendar-events-no-events-label {
+    color: #e8ecef;
+}
+
+.calendar-plus-popup.calendar-plus-theme-night .calendar-day-base:hover,
+.calendar-plus-popup.calendar-plus-theme-night .calendar-today-home-button-enabled:hover {
+    background-color: #171b20;
+}
+
+.calendar-plus-popup.calendar-plus-theme-day,
+.calendar-plus-popup.calendar-plus-theme-day .calendar-main-box {
+    background-color: #f4f5f7;
+    color: #20252b;
+}
+
+.calendar-plus-popup.calendar-plus-theme-day .calendar-today-home-button,
+.calendar-plus-popup.calendar-plus-theme-day .calendar-today-home-button-enabled,
+.calendar-plus-popup.calendar-plus-theme-day .calendar,
+.calendar-plus-popup.calendar-plus-theme-day .calendar-events-main-box {
+    background-color: #ffffff;
+    color: #20252b;
+}
+
+.calendar-plus-popup.calendar-plus-theme-day .calendar-day-base,
+.calendar-plus-popup.calendar-plus-theme-day .calendar-day-heading,
+.calendar-plus-popup.calendar-plus-theme-day .calendar-month-label,
+.calendar-plus-popup.calendar-plus-theme-day .calendar-events-date-label,
+.calendar-plus-popup.calendar-plus-theme-day .calendar-events-no-events-label {
+    color: #20252b;
+}
+
+.calendar-plus-popup.calendar-plus-theme-day .calendar-day-base:hover,
+.calendar-plus-popup.calendar-plus-theme-day .calendar-today-home-button-enabled:hover {
+    background-color: #eceff2;
+}
+
+.calendar-plus-popup.calendar-plus-theme-day .calendar-day-base.calendar-day-selected,
+.calendar-plus-popup.calendar-plus-theme-day .calendar-day-base.calendar-today {
+    background-color: #dde2e7;
+    color: #111418;
+}
+
+.calendar-plus-popup.calendar-plus-theme-night .calendar-day-base.calendar-day-selected,
+.calendar-plus-popup.calendar-plus-theme-night .calendar-day-base.calendar-today {
+    background-color: #2b3137;
+    color: #eef1f3;
+}
