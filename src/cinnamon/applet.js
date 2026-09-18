@@ -137,6 +137,7 @@ class CalendarPlusApplet extends Applet.Applet {
         this.primary_calendar = "gregorian";
         this.secondary_calendar = "none";
         this.show_events = true;
+        this.theme_mode = "system";
         this.use_custom_format = false;
         this.custom_format = "";
         this.custom_tooltip_format = "";
@@ -311,6 +312,7 @@ class CalendarPlusApplet extends Applet.Applet {
 
     _bindSettings() {
         this.settings.bind("show-events", "show_events", this._onSettingsChanged);
+        this.settings.bind("theme-mode", "theme_mode", this._onSettingsChanged);
         this.settings.bind("clock-mode", "clock_mode", this._onSettingsChanged);
         this.settings.bind("show-seconds", "show_seconds", this._onSettingsChanged);
         this.settings.bind(
@@ -459,11 +461,33 @@ class CalendarPlusApplet extends Applet.Applet {
         this._updateClockAndDate();
     }
 
+    _applyThemeMode() {
+        if (!this.menu || !this.menu.actor) {
+            return;
+        }
+
+        for (const styleClass of [
+            "calendar-plus-theme-day",
+            "calendar-plus-theme-night",
+        ]) {
+            if (typeof this.menu.actor.remove_style_class_name === "function") {
+                this.menu.actor.remove_style_class_name(styleClass);
+            }
+        }
+
+        if (this.theme_mode === "day") {
+            _addStyleClass(this.menu.actor, "calendar-plus-theme-day");
+        } else if (this.theme_mode === "night") {
+            _addStyleClass(this.menu.actor, "calendar-plus-theme-night");
+        }
+    }
+
     _onSettingsChanged() {
         if (this._destroyed || !this._calendar || !this.events_manager) {
             return;
         }
 
+        this._applyThemeMode();
         this._resetLabelWidth();
         this._syncCalendarSystems();
         this._configureWallClock();
@@ -789,6 +813,7 @@ class CalendarPlusApplet extends Applet.Applet {
             this._updateClockAndDate();
         });
         this._signals.connect(Main.themeManager, "theme-set", () => {
+            this._applyThemeMode();
             this._resetLabelWidth();
             this._rebalancePopupWidth();
         });
