@@ -1,3 +1,13 @@
+calendar-plus (1.0.8) trixie; urgency=medium
+
+  * Advance the exact shared dependency to Infiltratr Common 1.19.2.
+  * Incorporate Cinnamon's selected-date event reload behaviour and review the
+    latest CalendarServer lifecycle changes.
+  * Advance the reviewed upstream Cinnamon calendar integration baseline.
+  * Publish the accumulated theme, settings and applet improvements from main.
+
+ -- Shannon Smith <noreply@the-infiltratr.com>  Fri, 18 Sep 2026 19:26:00 +1000
+
 calendar-plus (1.0.7) trixie; urgency=medium
 
   * Advance the exact shared dependency to Infiltratr Common 1.18.1.

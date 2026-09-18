@@ -133,7 +133,7 @@ var EventsManager = class EventsManager {
         this._cancellable = new Gio.Cancellable();
         this._cached_state = STATUS_UNKNOWN;
         this._gc_timer_id = 0;
-        this._reload_today_id = 0;
+        this._reload_id = 0;
         this._force_reload_pending = false;
         this._event_list = event_list || null;
         this.current_range_start = null;
@@ -305,7 +305,7 @@ var EventsManager = class EventsManager {
 
         this.event_store.refresh_timezone();
         this._refreshSelectedAgenda(false);
-        this.queue_reload_today(true);
+        this.queue_reload(true);
         this.emit("events-updated");
     }
 
@@ -336,7 +336,7 @@ var EventsManager = class EventsManager {
         if (this.event_store.remove(serializedIds)) {
             this._refreshSelectedAgenda(false);
         }
-        this.queue_reload_today(false);
+        this.queue_reload(false);
         this.emit("events-updated");
     }
 
@@ -353,7 +353,7 @@ var EventsManager = class EventsManager {
         this.event_store.clear();
         this.current_range_start = null;
         this.current_range_end = null;
-        this.queue_reload_today(true);
+        this.queue_reload(true);
         this.emit("events-updated");
     }
 
@@ -367,7 +367,7 @@ var EventsManager = class EventsManager {
         }
 
         this._cached_state = next;
-        this.queue_reload_today(true);
+        this.queue_reload(true);
         this.emit("has-calendars-changed");
     }
 
@@ -452,19 +452,23 @@ var EventsManager = class EventsManager {
         );
     }
 
-    queue_reload_today(force) {
-        if (this._reload_today_id > 0) {
-            Mainloop.source_remove(this._reload_today_id);
-            this._reload_today_id = 0;
+    queue_reload(force) {
+        if (this._reload_id > 0) {
+            Mainloop.source_remove(this._reload_id);
+            this._reload_id = 0;
         }
         if (this._destroyed) {
             return;
         }
         this._force_reload_pending = this._force_reload_pending || Boolean(force);
-        this._reload_today_id = Mainloop.idle_add(() => {
-            this._reload_today_id = 0;
+        this._reload_id = Mainloop.idle_add(() => {
+            this._reload_id = 0;
             if (!this._destroyed) {
-                this.select_date(new Date(), this._force_reload_pending);
+                const selectedDate = this.current_selected_date !== null &&
+                    this.current_selected_date.to_unix() > 0 ?
+                    new Date(this.current_selected_date.to_unix() * 1000) :
+                    new Date();
+                this.select_date(selectedDate, this._force_reload_pending);
             }
             this._force_reload_pending = false;
             return GLib.SOURCE_REMOVE;
@@ -559,9 +563,9 @@ var EventsManager = class EventsManager {
 
         this._cancelCull();
         this._cancelReconnect();
-        if (this._reload_today_id > 0) {
-            Mainloop.source_remove(this._reload_today_id);
-            this._reload_today_id = 0;
+        if (this._reload_id > 0) {
+            Mainloop.source_remove(this._reload_id);
+            this._reload_id = 0;
         }
 
         if (this._timezone_monitor !== null) {
