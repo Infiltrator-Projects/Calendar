@@ -6,7 +6,7 @@
 
 Calendar is a native Cinnamon panel clock and calendar with alternative clock modes, 30 selectable calendar systems and CalendarServer integration. Its installed Linux desktop identity, Cinnamon Applets manager entry and native About dialog use the project-owned neon Calendar icon.
 
-**Stable release:** 1.0.14.
+**Stable release:** 1.0.15.
 
 **Runtime:** Cinnamon 6.4, 6.6 and 6.7.
 

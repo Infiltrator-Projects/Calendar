@@ -14,6 +14,7 @@ for the provider metadata rather than duplicating registry knowledge here.
 from __future__ import annotations
 
 import binascii
+import hashlib
 import json
 import os
 import re
@@ -26,6 +27,7 @@ ROOT = Path(__file__).resolve().parents[1]
 APPLET = ROOT / "src/cinnamon"
 PROJECT_URL = "https://github.com/Infiltrator-Projects/Calendar"
 ICON = ROOT / "src/assets/infiltratr-calendar.png"
+ICON_SHA256 = "92cace99117653bad9a89c23073f8aeabc1058b5e0ec61902dc8441eb13fa9ec"
 
 TRANSIENT_PATTERNS = (
     re.compile(r"^g-ir-cpp-.*\.c$"),
@@ -39,6 +41,9 @@ TRANSIENT_PATTERNS = (
 def validate_icon_asset() -> None:
     """Reject malformed PNG artwork before packaging or release."""
     data = ICON.read_bytes()
+    assert hashlib.sha256(data).hexdigest() == ICON_SHA256, (
+        "Calendar icon artwork does not match the canonical asset"
+    )
     assert data.startswith(b"\x89PNG\r\n\x1a\n"), "Calendar icon is not a PNG"
 
     offset = 8
