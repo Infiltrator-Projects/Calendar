@@ -11,6 +11,8 @@
 
 #include "event-store-private.h"
 
+#include <infiltratr/arithmetic.h>
+
 struct _CalendarPlusEventStore
 {
     GObject parent_instance;
@@ -115,6 +117,8 @@ calendar_plus_event_store_get_colors(CalendarPlusEventStore *self,
 {
     CalendarPlusEventSnapshot *snapshot;
     gchar **colors;
+    size_t color_count;
+    size_t allocation_bytes;
     gsize item;
 
     g_return_val_if_fail(CALENDAR_PLUS_IS_EVENT_STORE(self), NULL);
@@ -124,7 +128,16 @@ calendar_plus_event_store_get_colors(CalendarPlusEventStore *self,
     if (snapshot == NULL)
         return NULL;
 
-    colors = g_new0(gchar *, snapshot->length + 1);
+    if (!infiltratr_size_add_checked((size_t)snapshot->length, 1U,
+                                     &color_count) ||
+        !infiltratr_size_multiply_checked(color_count, sizeof(*colors),
+                                          &allocation_bytes))
+    {
+        calendar_plus_event_snapshot_free(snapshot);
+        return NULL;
+    }
+
+    colors = g_malloc0(allocation_bytes);
     for (item = 0; item < snapshot->length; item++)
         colors[item] = g_strdup(snapshot->events[item].color);
 

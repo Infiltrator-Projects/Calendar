@@ -87,9 +87,9 @@ def main() -> None:
     assert "src/vendor/infiltratr-common" in makefile
     assert (
         "INFILTRATR_COMMON_COMMIT := "
-        "44409af17c89b6ece6b4bcb2c0c133213c695c23"
+        "de7251ce12ed176048df1bad05ef7e4d0db7e9ec"
     ) in makefile
-    assert "INFILTRATR_COMMON_VERSION := 1.19.2" in makefile
+    assert "INFILTRATR_COMMON_VERSION := 1.19.3" in makefile
     assert "normal `make` automatically retrieves" in read("README.md")
     assert "common-bootstrap: common-check" in makefile
     assert "common-test: $(INFILTRATR_COMMON_ARCHIVE)" in makefile
@@ -346,6 +346,11 @@ def main() -> None:
         "#define calendar_plus_i64_subtract_saturating "
         "infiltratr_i64_subtract_saturating"
     ) in integer_math
+    assert (
+        "#define calendar_plus_i64_multiply_saturating "
+        "infiltratr_i64_multiply_saturating"
+    ) in integer_math
+    assert "static inline int64_t\ncalendar_plus_i64_multiply_saturating" not in integer_math
     assert "infiltratr_i64_multiply_checked" in read(
         "src/core/time-astronomy.c"
     )
@@ -354,7 +359,15 @@ def main() -> None:
     )
     assert "infiltratr_size_add_checked" in read("src/core/icu-calendar.c")
     assert "infiltratr_size_multiply_checked" in read("src/core/icu-calendar.c")
+    assert "infiltratr_size_add_checked" in read("src/adapters/event-store.c")
+    assert "infiltratr_size_multiply_checked" in read("src/adapters/event-store.c")
+    assert "infiltratr_i64_floor_divmod" in read("src/adapters/clock-glib-adapter.c")
+    assert "INFILTRATR_ARRAY_LENGTH(majors)" in read("src/core/icu-compat-bridge.c")
+    assert "++index->next_sequence" not in read("src/core/event-core.c")
+    assert "infiltratr_u64_add_saturating" in read("src/core/event-core.c")
     assert "index->revision + 1" not in read("src/core/event-core.c")
+    assert "unix_microseconds + delta" not in read("src/core/time-formats-astronomy.c")
+    assert "unix_microseconds + delta" not in read("src/core/time-formats-nuremberg.c")
 
     control = read("debian/control")
     assert "cinnamon (>= 6.4)" in control
@@ -398,7 +411,7 @@ def main() -> None:
     )
 
     assert ("GPL-" + "2.0-or-later") not in read("README.md")
-    assert "Calendar Plus is GPL-3.0-or-later" in read("README.md")
+    assert "Calendar is GPL-3.0-or-later" in read("README.md")
     assert "License: GPL-3+" in read("debian/copyright")
     assert "/usr/share/common-licenses/GPL-3" in read("debian/copyright")
     assert "GNU GENERAL PUBLIC LICENSE" in read(

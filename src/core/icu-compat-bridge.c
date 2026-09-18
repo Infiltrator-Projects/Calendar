@@ -18,6 +18,7 @@
 #include <stddef.h>
 #include <stdint.h>
 #include <stdio.h>
+#include <infiltratr/core.h>
 #include <infiltratr/dynlib.h>
 
 #include <unicode/ucal.h>
@@ -186,7 +187,7 @@ initialise_bridge(void)
     };
     size_t index;
 
-    for (index = 0; index < sizeof majors / sizeof majors[0]; index++)
+    for (index = 0; index < INFILTRATR_ARRAY_LENGTH(majors); index++)
     {
         IcuBridgeApi candidate = { 0 };
 

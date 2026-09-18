@@ -5,7 +5,6 @@
 #define CALENDAR_PLUS_INTEGER_MATH_H
 
 #include <infiltratr/arithmetic.h>
-#include <limits.h>
 #include <stdint.h>
 
 static inline int64_t
@@ -35,16 +34,6 @@ calendar_plus_positive_modulo(int64_t value,
  */
 #define calendar_plus_i64_add_saturating infiltratr_i64_add_saturating
 #define calendar_plus_i64_subtract_saturating infiltratr_i64_subtract_saturating
-
-static inline int64_t
-calendar_plus_i64_multiply_saturating(int64_t left,
-                                      int64_t right)
-{
-    int64_t result = 0;
-
-    if (infiltratr_i64_multiply_checked(left, right, &result))
-        return result;
-    return ((left < 0) != (right < 0)) ? INT64_MIN : INT64_MAX;
-}
+#define calendar_plus_i64_multiply_saturating infiltratr_i64_multiply_saturating
 
 #endif

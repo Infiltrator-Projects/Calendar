@@ -352,9 +352,9 @@ def main() -> None:
     ):
         assert f'CP_("{label}")' in calendar_source
     assert 'CP_("Show today")' in applet_source
-    assert 'CP_("About Calendar Plus")' in applet_source
+    assert 'CP_("About Calendar")' in applet_source
     # Cinnamon's automatic right-click About item must use the same native
-    # Calendar Plus dialog as the popup item, never xlet-about-dialog.
+    # Calendar dialog as the popup item, never xlet-about-dialog.
     assert "openAbout()" in applet_source
     assert "this._onAbout();" in applet_source
     assert 'Util.spawnCommandLine("/usr/libexec/calendar-plus-about")' in applet_source

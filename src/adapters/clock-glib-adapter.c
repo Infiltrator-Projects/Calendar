@@ -7,6 +7,8 @@
 
 #include "clock-glib-adapter.h"
 
+#include <infiltratr/arithmetic.h>
+
 typedef struct
 {
     CalendarPlusClockTimerFunc callback;
@@ -24,10 +26,19 @@ static gint
 glib_utc_offset(gpointer context,
                 gint64 unix_microseconds)
 {
-    g_autoptr(GDateTime) local = g_date_time_new_from_unix_local(
-        unix_microseconds / G_USEC_PER_SEC);
+    gint64 unix_seconds = 0;
+    g_autoptr(GDateTime) local = NULL;
 
     (void)context;
+    if (!infiltratr_i64_floor_divmod(unix_microseconds,
+                                     G_USEC_PER_SEC,
+                                     &unix_seconds,
+                                     NULL))
+    {
+        return 0;
+    }
+
+    local = g_date_time_new_from_unix_local(unix_seconds);
     return local != NULL ?
         (gint)(g_date_time_get_utc_offset(local) / G_TIME_SPAN_SECOND) : 0;
 }

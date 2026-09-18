@@ -92,13 +92,6 @@ local_day_start(gint64 unix_time)
     return midnight != NULL ? g_date_time_to_unix(midnight) : unix_time;
 }
 
-static gint64
-saturating_difference(gint64 left,
-                      gint64 right)
-{
-    return infiltratr_i64_subtract_saturating(left, right);
-}
-
 guint
 calendar_plus_event_day_relation(gint64 start_day_unix,
                                  gint64 end_day_unix,
@@ -146,8 +139,8 @@ calendar_plus_event_calculate_timing(gint64 start_unix,
 {
     const CalendarPlusEventTiming result = {
         calendar_plus_event_state(start_unix, end_unix, now_unix),
-        saturating_difference(start_unix, now_unix),
-        saturating_difference(end_unix, now_unix)
+        infiltratr_i64_subtract_saturating(start_unix, now_unix),
+        infiltratr_i64_subtract_saturating(end_unix, now_unix)
     };
 
     return result;
@@ -313,8 +306,16 @@ calendar_plus_event_index_upsert(CalendarPlusEventIndex *index,
         return FALSE;
     }
 
-    replacement->sequence = existing != NULL ?
-        existing->sequence : ++index->next_sequence;
+    if (existing != NULL)
+    {
+        replacement->sequence = existing->sequence;
+    }
+    else
+    {
+        index->next_sequence =
+            infiltratr_u64_add_saturating(index->next_sequence, 1U);
+        replacement->sequence = index->next_sequence;
+    }
     if (existing != NULL)
     {
         g_hash_table_steal(index->events_by_id, existing->id);

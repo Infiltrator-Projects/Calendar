@@ -445,13 +445,8 @@ solar_origin_window(gint64 unix_microseconds,
         gint64 dusk;
         gint64 candidate;
 
-        if ((delta < 0 && unix_microseconds < G_MININT64 - delta) ||
-            (delta > 0 && unix_microseconds > G_MAXINT64 - delta))
-        {
+        if (!infiltratr_i64_add_checked(unix_microseconds, delta, &sample))
             continue;
-        }
-
-        sample = unix_microseconds + delta;
         if (!calendar_plus_solar_boundary_instants(sample,
                                                    latitude,
                                                    longitude,
