@@ -13,15 +13,19 @@ for the provider metadata rather than duplicating registry knowledge here.
 
 from __future__ import annotations
 
+import binascii
 import json
 import os
 import re
+import struct
+import zlib
 from pathlib import Path
 
 
 ROOT = Path(__file__).resolve().parents[1]
 APPLET = ROOT / "src/cinnamon"
 PROJECT_URL = "https://github.com/Infiltrator-Projects/Calendar"
+ICON = ROOT / "src/assets/infiltratr-calendar.png"
 
 TRANSIENT_PATTERNS = (
     re.compile(r"^g-ir-cpp-.*\.c$"),
@@ -29,6 +33,67 @@ TRANSIENT_PATTERNS = (
     re.compile(r"(^|/)__pycache__(/|$)"),
     re.compile(r"(^|/)\.package-root-"),
 )
+
+
+
+def validate_icon_asset() -> None:
+    """Reject malformed PNG artwork before packaging or release."""
+    data = ICON.read_bytes()
+    assert data.startswith(b"\x89PNG\r\n\x1a\n"), "Calendar icon is not a PNG"
+
+    offset = 8
+    saw_ihdr = False
+    saw_iend = False
+    idat = bytearray()
+
+    while offset < len(data):
+        assert offset + 12 <= len(data), "truncated PNG chunk header"
+        length = struct.unpack(">I", data[offset:offset + 4])[0]
+        chunk_type = data[offset + 4:offset + 8]
+        chunk_start = offset + 8
+        chunk_end = chunk_start + length
+        crc_end = chunk_end + 4
+        assert crc_end <= len(data), (
+            f"truncated PNG {chunk_type.decode('ascii', errors='replace')} chunk"
+        )
+
+        chunk = data[chunk_start:chunk_end]
+        stored_crc = struct.unpack(">I", data[chunk_end:crc_end])[0]
+        calculated_crc = binascii.crc32(chunk_type)
+        calculated_crc = binascii.crc32(chunk, calculated_crc) & 0xFFFFFFFF
+        assert stored_crc == calculated_crc, (
+            f"bad PNG CRC for {chunk_type.decode('ascii', errors='replace')}"
+        )
+
+        if chunk_type == b"IHDR":
+            assert not saw_ihdr and length == 13, "invalid PNG IHDR"
+            width, height, bit_depth, colour_type, compression, filter_method, interlace = (
+                struct.unpack(">IIBBBBB", chunk)
+            )
+            assert (width, height) == (256, 256), "Calendar icon must be 256x256"
+            assert bit_depth == 8, "Calendar icon must use 8-bit channels"
+            assert colour_type in (2, 3, 6), "unsupported Calendar icon colour type"
+            assert compression == 0 and filter_method == 0, "unsupported PNG encoding"
+            assert interlace in (0, 1), "invalid PNG interlace method"
+            saw_ihdr = True
+        elif chunk_type == b"IDAT":
+            idat.extend(chunk)
+        elif chunk_type == b"IEND":
+            assert length == 0, "invalid PNG IEND"
+            saw_iend = True
+            offset = crc_end
+            break
+
+        offset = crc_end
+
+    assert saw_ihdr, "Calendar icon has no IHDR"
+    assert idat, "Calendar icon has no IDAT payload"
+    assert saw_iend, "Calendar icon has no IEND"
+    assert offset == len(data), "Calendar icon has trailing bytes after IEND"
+    try:
+        zlib.decompress(bytes(idat))
+    except zlib.error as exc:
+        raise AssertionError("Calendar icon has invalid compressed image data") from exc
 
 
 def validate_no_transient_files() -> None:
@@ -177,6 +242,7 @@ def validate_version() -> None:
 
 
 def main() -> None:
+    validate_icon_asset()
     validate_no_transient_files()
     validate_no_workspace_paths()
     validate_abi_manifest()

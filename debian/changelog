@@ -1,3 +1,12 @@
+calendar-plus (1.0.14) trixie; urgency=medium
+
+  * Replace the malformed Calendar PNG asset with a structurally valid icon.
+  * Add strict PNG chunk, CRC and zlib validation to release-input checks.
+  * Keep the validated icon shared by the Cinnamon Applets manager, hicolor
+    desktop theme and native About dialog.
+
+ -- Shannon Smith <noreply@the-infiltratr.com>  Fri, 18 Sep 2026 23:45:00 +1000
+
 calendar-plus (1.0.13) trixie; urgency=medium
 
   * Install the project-owned Calendar artwork as the applet-local icon.png
