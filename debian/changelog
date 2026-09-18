@@ -1,6 +1,6 @@
 calendar-plus (1.0.7) trixie; urgency=medium
 
-  * Advance the exact shared dependency to Infiltratr Common 1.18.0.
+  * Advance the exact shared dependency to Infiltratr Common 1.18.1.
   * Keep Common pinned by both immutable release commit and version validation.
   * Move GCC, Clang, sanitizer and static-analysis qualification to GitHub-hosted Ubuntu runners.
 
