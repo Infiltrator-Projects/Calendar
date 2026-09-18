@@ -29,6 +29,7 @@ def main() -> None:
     workflow = read(".github/workflows/ci.yml")
     publisher = read(".github/workflows/release.yml")
     artifact_validator = read("tools/validate-release-artifacts.sh")
+    native_installer_smoke = read("tools/native-installer-smoke.sh")
     gitmodules = read(".gitmodules")
 
     assert sorted(path.name for path in ROOT.glob("*.md")) == ["README.md"]
@@ -161,6 +162,8 @@ def main() -> None:
     assert 'dist/calendar-${VERSION}-local-folder.run' in release
     assert 'DEB="$DIST/calendar_${VERSION}_${ARCH}.deb"' in artifact_validator
     assert 'RUN="$DIST/calendar-${VERSION}-local-folder.run"' in artifact_validator
+    assert 'calendar-${VERSION}-local-folder.run' in native_installer_smoke
+    assert 'calendar_${NATIVE_VERSION}_${ARCH}.deb' in native_installer_smoke
     assert 'deb="dist/calendar_${version}_amd64.deb"' in publisher
     assert 'installer="dist/calendar-${version}-local-folder.run"' in publisher
     assert "exactly two files" in artifact_validator

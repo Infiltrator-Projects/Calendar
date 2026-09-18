@@ -51,5 +51,5 @@ tools/native-installer-smoke.sh \
 
 printf 'Release gates passed: generic=%s; installer=%s; dsc=%s\n' \
     "dist/calendar_${VERSION}_${ARCH}.deb" \
-    "dist/calendar-plus-${VERSION}-local-folder.run" \
+    "dist/calendar-${VERSION}-local-folder.run" \
     "$DSC"

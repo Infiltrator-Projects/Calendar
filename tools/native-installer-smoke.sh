@@ -6,7 +6,7 @@ set -eu
 
 ROOT=$(CDPATH='' cd -- "$(dirname -- "$0")/.." && pwd)
 VERSION=$(sed -n 's/^VERSION := //p' "$ROOT/Makefile")
-RUN=${1:-"$ROOT/dist/calendar-plus-${VERSION}-local-folder.run"}
+RUN=${1:-"$ROOT/dist/calendar-${VERSION}-local-folder.run"}
 ARCH=$(dpkg-architecture -qDEB_HOST_ARCH)
 MULTIARCH=$(dpkg-architecture -qDEB_HOST_MULTIARCH)
 NATIVE_VERSION="${VERSION}+native1"
@@ -24,7 +24,7 @@ for native_flag in -O3 -march=native -mtune=native -flto=auto; do
     grep -Eq "^cc .* ${native_flag}( |$)" "$TMP/native-build.log"
 done
 
-DEB="$TMP/output/calendar-plus_${NATIVE_VERSION}_${ARCH}.deb"
+DEB="$TMP/output/calendar_${NATIVE_VERSION}_${ARCH}.deb"
 [ -s "$DEB" ]
 [ "$(dpkg-deb -f "$DEB" Package)" = "calendar-plus" ]
 [ "$(dpkg-deb -f "$DEB" Version)" = "$NATIVE_VERSION" ]
