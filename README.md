@@ -12,6 +12,44 @@ Calendar Plus is a native Cinnamon panel clock and calendar with alternative clo
 
 **Build-tested bases:** Debian 13, Linux Mint 22 and Ubuntu 24.04.
 
+## Engineering ethos
+
+Calendar Plus is a first-principles engineering project. It does not treat the
+existing desktop clock/calendar as the specification for what a calendar can
+be. The question is what a calendar and timekeeping system should look like
+when chronology, astronomy, historical evidence, international standards,
+human-interface research and current software-engineering practice are all
+considered together.
+
+"Modern" is not treated as a synonym for "better". Current research, standards
+and mature implementations are studied deliberately, but techniques are adopted
+because they improve correctness, fidelity, performance, resilience, usability,
+accessibility or maintainability, not merely because they are new. Older
+algorithms and conventions are retained when they remain the strongest
+available model; historical claims are separated from modern computational
+continuation rules when the evidence does not justify pretending they are the
+same thing.
+
+External authorities such as ICU/CLDR, Cinnamon and established astronomical
+models are evidence and infrastructure to use where they are authoritative.
+They are not excuses to duplicate assumptions blindly. Calendar Plus owns the
+behaviour for which it is responsible, documents epochs, continuation rules and
+approximations explicitly, and tests those choices against known references and
+edge cases.
+
+The implementation therefore aims for the best justified approach rather than
+the newest fashionable one or the easiest conventional one. Architecture,
+chronology and astronomical behaviour should be measurable, testable and
+explainable. A feature is not complete merely because it produces a plausible
+date or clock reading: locality, historical scope, polar and boundary cases,
+failure modes, reproducibility and regression protection are part of the
+feature.
+
+The same principle applies across the Infiltrator family: start from the
+problem, study what is known now, preserve proven ideas that still deserve to
+survive, replace assumptions that no longer do, and prove the result in real
+use.
+
 ## Capabilities
 
 Clock modes include normal 12/24-hour time, French Republican decimal time, Internet Time, Unix time, hexadecimal and binary time, sidereal time, apparent and mean solar time, Julian/MJD, traditional Chinese double-hours and hundred-kè time, Roman temporal time, Edo Japanese seasonal time, Italian hours from sunset, the historical European gnomonic convention known as Babylonian hours from sunrise, Indian ghaṭī time from sunrise, and Nuremberg equal hours resetting at sunrise and sunset.
