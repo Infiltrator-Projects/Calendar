@@ -7,7 +7,7 @@ set -eu
 ROOT=$(CDPATH='' cd -- "$(dirname -- "$0")/.." && pwd)
 VERSION=$(sed -n 's/^VERSION := //p' "$ROOT/Makefile")
 SOURCE_TAR=${1:-"$ROOT/build/Calendar-${VERSION}-local-source.tar.gz"}
-OUTPUT=${2:-"$ROOT/dist/calendar-plus-${VERSION}-local-folder.run"}
+OUTPUT=${2:-"$ROOT/dist/calendar-${VERSION}-local-folder.run"}
 TEMPLATE="$ROOT/tools/local-installer.sh.in"
 
 [ -s "$SOURCE_TAR" ] || {

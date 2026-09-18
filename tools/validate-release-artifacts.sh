@@ -10,8 +10,8 @@ COMMON_VERSION=$(sed -n 's/^INFILTRATR_COMMON_VERSION := //p' "$ROOT/Makefile")
 DIST=${1:-"$ROOT/dist"}
 ARCH=amd64
 MULTIARCH=$(dpkg-architecture -qDEB_HOST_MULTIARCH)
-DEB="$DIST/calendar-plus_${VERSION}_${ARCH}.deb"
-RUN="$DIST/calendar-plus-${VERSION}-local-folder.run"
+DEB="$DIST/calendar_${VERSION}_${ARCH}.deb"
+RUN="$DIST/calendar-${VERSION}-local-folder.run"
 TMP=$(mktemp -d)
 trap 'rm -rf "$TMP"' EXIT HUP INT TERM
 

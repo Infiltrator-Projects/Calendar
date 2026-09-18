@@ -1,3 +1,13 @@
+calendar-plus (1.0.11) trixie; urgency=medium
+
+  * Brand public release asset filenames as Calendar while retaining the
+    calendar-plus Debian package identity for upgrade compatibility.
+  * Keep GitHub source archives and local source payloads aligned with the
+    renamed Calendar repository and product name.
+  * Add release-model regression checks for Calendar-branded public artifacts.
+
+ -- Shannon Smith <noreply@the-infiltratr.com>  Fri, 18 Sep 2026 21:28:00 +1000
+
 calendar-plus (1.0.10) trixie; urgency=medium
 
   * Complete the user-facing rename from Calendar Plus to Calendar.

@@ -43,13 +43,13 @@ command -v lintian >/dev/null || {
     exit 1
 }
 lintian --fail-on error "$DEB"
-install -m 0644 "$DEB" "dist/calendar-plus_${VERSION}_${ARCH}.deb"
+install -m 0644 "$DEB" "dist/calendar_${VERSION}_${ARCH}.deb"
 
 tools/validate-release-artifacts.sh dist
 tools/native-installer-smoke.sh \
-    "dist/calendar-plus-${VERSION}-local-folder.run"
+    "dist/calendar-${VERSION}-local-folder.run"
 
 printf 'Release gates passed: generic=%s; installer=%s; dsc=%s\n' \
-    "dist/calendar-plus_${VERSION}_${ARCH}.deb" \
+    "dist/calendar_${VERSION}_${ARCH}.deb" \
     "dist/calendar-plus-${VERSION}-local-folder.run" \
     "$DSC"

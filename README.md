@@ -6,7 +6,7 @@
 
 Calendar is a native Cinnamon panel clock and calendar with alternative clock modes, 30 selectable calendar systems and CalendarServer integration.
 
-**Stable release:** 1.0.10.
+**Stable release:** 1.0.11.
 
 **Runtime:** Cinnamon 6.4, 6.6 and 6.7.
 
@@ -87,7 +87,7 @@ The installed `libcalendar-plus.so.0` and its versioned symbol map are a **runti
 
 ### Compatibility naming
 
-The user-facing application is **Calendar**. The compatibility identifiers `calendar-plus`, `CalendarPlus`, `CALENDAR_PLUS_*`, `libcalendar-plus.so.0` and `calendar-plus@the-infiltratr` are intentionally retained so package upgrades, settings, GObject Introspection consumers and the published runtime ABI do not break. Prose should therefore say **Calendar** unless it is naming one of those literal compatibility interfaces. Renaming a compatibility identifier is a separate migration with ABI, packaging and upgrade consequences; it is not a cosmetic documentation change.
+The user-facing application is **Calendar**. The compatibility identifiers `calendar-plus`, `CalendarPlus`, `CALENDAR_PLUS_*`, `libcalendar-plus.so.0` and `calendar-plus@the-infiltratr` are intentionally retained so package upgrades, settings, GObject Introspection consumers and the published runtime ABI do not break. Release asset filenames use the user-facing `Calendar` name; the Debian package contained inside remains `calendar-plus` for upgrade compatibility. Prose should therefore say **Calendar** unless it is naming one of those literal compatibility interfaces. Renaming a compatibility identifier is a separate migration with ABI, packaging and upgrade consequences; it is not a cosmetic documentation change.
 
 ### Engineering contracts and invariants
 
@@ -168,20 +168,20 @@ Numbered releases publish two project-owned artifacts:
 
 | File | Purpose |
 | --- | --- |
-| `calendar-plus_<version>_amd64.deb` | Generic amd64 Debian package |
-| `calendar-plus-<version>-local-folder.run` | Verified local hardware-native builder |
+| `calendar_<version>_amd64.deb` | Generic amd64 Debian package |
+| `calendar-<version>-local-folder.run` | Verified local hardware-native builder |
 
 Install the generic package with:
 
 ```bash
-sudo apt install ./calendar-plus_<version>_amd64.deb
+sudo apt install ./calendar_<version>_amd64.deb
 ```
 
 Or use the native builder:
 
 ```bash
-chmod +x calendar-plus-<version>-local-folder.run
-./calendar-plus-<version>-local-folder.run
+chmod +x calendar-<version>-local-folder.run
+./calendar-<version>-local-folder.run
 ```
 
 After installation, add **Calendar** from **System Settings → Applets**.

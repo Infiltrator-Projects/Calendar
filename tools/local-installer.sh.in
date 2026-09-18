@@ -180,7 +180,7 @@ test -f \
 
 mkdir -p "$OUTPUT_DIR"
 OUTPUT_DIR=$(CDPATH='' cd -- "$OUTPUT_DIR" && pwd)
-OUTPUT_DEB="$OUTPUT_DIR/calendar-plus_${NATIVE_VERSION}_${ARCH}.deb"
+OUTPUT_DEB="$OUTPUT_DIR/calendar_${NATIVE_VERSION}_${ARCH}.deb"
 install -m 0644 "$BUILT_DEB" "$OUTPUT_DEB"
 
 if [ "$BUILD_ONLY" -eq 0 ]; then

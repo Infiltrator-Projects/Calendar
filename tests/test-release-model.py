@@ -75,7 +75,7 @@ def main() -> None:
     assert "\n\t.gitmodules \\\n" in makefile
     assert "--exclude='*/.git'" in makefile
     assert "--exclude-vcs" not in read("tools/reproducible-build.sh")
-    assert "calendar-plus-$(VERSION)-local-folder.run" in makefile
+    assert "calendar-$(VERSION)-local-folder.run" in makefile
     assert "calendar-plus-about" in makefile
     assert "FONT_ARCHIVE :=" not in makefile
     assert "prepare-fonts.py" not in makefile
@@ -157,6 +157,12 @@ def main() -> None:
     assert "tools/validate-release-artifacts.sh" in release
     assert "lintian --fail-on error" in release
     assert "local-source.zip" not in release
+    assert 'dist/calendar_${VERSION}_${ARCH}.deb' in release
+    assert 'dist/calendar-${VERSION}-local-folder.run' in release
+    assert 'DEB="$DIST/calendar_${VERSION}_${ARCH}.deb"' in artifact_validator
+    assert 'RUN="$DIST/calendar-${VERSION}-local-folder.run"' in artifact_validator
+    assert 'deb="dist/calendar_${version}_amd64.deb"' in publisher
+    assert 'installer="dist/calendar-${version}-local-folder.run"' in publisher
     assert "exactly two files" in artifact_validator
     assert 'gh release create "$tag"' in publisher
     assert 'gh release upload "$tag" "$deb" "$installer" --clobber' in publisher

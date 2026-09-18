@@ -82,8 +82,8 @@ jobs:
 
           make release-check
 
-          deb="dist/calendar-plus_${version}_amd64.deb"
-          installer="dist/calendar-plus-${version}-local-folder.run"
+          deb="dist/calendar_${version}_amd64.deb"
+          installer="dist/calendar-${version}-local-folder.run"
           test -f "$deb"
           test -x "$installer"
 

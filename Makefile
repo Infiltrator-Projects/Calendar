@@ -9,7 +9,7 @@ G_IR_COMPILER ?= g-ir-compiler
 PREFIX ?= /usr
 DESTDIR ?=
 
-VERSION := 1.0.10
+VERSION := 1.0.11
 UUID := calendar-plus@the-infiltratr
 APPLET_SRC_DIR := src/cinnamon
 I18N_DIR := src/i18n
@@ -596,7 +596,7 @@ package-source: common-check validate-settings-generated
 package-local-installer: package-source
 	tools/build-local-installer.sh \
 		"$(BUILD_DIR)/Calendar-$(VERSION)-local-source.tar.gz" \
-		"$(DIST_DIR)/calendar-plus-$(VERSION)-local-folder.run"
+		"$(DIST_DIR)/calendar-$(VERSION)-local-folder.run"
 
 release-check:
 	tools/release-check.sh
