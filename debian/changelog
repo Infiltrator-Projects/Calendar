@@ -1,3 +1,11 @@
+calendar-plus (1.0.7) trixie; urgency=medium
+
+  * Advance the exact shared dependency to Infiltratr Common 1.18.0.
+  * Keep Common pinned by both immutable release commit and version validation.
+  * Move GCC, Clang, sanitizer and static-analysis qualification to GitHub-hosted Ubuntu runners.
+
+ -- Shannon Smith <noreply@the-infiltratr.com>  Fri, 18 Sep 2026 10:25:00 +1000
+
 calendar-plus (1.0.6) trixie; urgency=medium
 
   * Follow Cinnamon's current CalendarServer backend abstraction instead of

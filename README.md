@@ -41,7 +41,7 @@ src/
 └── vendor/     Pinned Infiltratr Common submodule
 ```
 
-The portable core is kept separate from presentation and platform adapters. Cinnamon owns desktop actors, settings and CalendarServer transport; the native C library owns chronology, astronomy, alternative clocks and event semantics. Generic strings, UTF-8 validation, checked/saturating arithmetic, timing and dynamic-library mechanics are supplied by the pinned Infiltratr Common library.
+The portable core is kept separate from presentation and platform adapters. Cinnamon owns desktop actors, settings and CalendarServer transport; the native C library owns chronology, astronomy, alternative clocks and event semantics. Generic strings, UTF-8 validation, checked/saturating arithmetic, timing and dynamic-library mechanics are supplied by the exact Infiltratr Common 1.18.0 release. The build verifies both the Common version and immutable release commit before linking.
 
 ### Native ABI policy
 
@@ -79,7 +79,7 @@ make check
 
 Git clones carry the pinned Common submodule. If a GitHub automatic source archive does not contain the vendor checkout, normal `make` automatically retrieves the exact pinned Common commit.
 
-Additional quality gates are available through `make sanitize`, `make coverage`, `make static-analysis`, `make reproducible-build` and `make release-check`. CI requires at least 80% C line coverage and 60% branch coverage in addition to sanitizer, static-analysis, ABI, packaging and reproducibility gates. A clean Debian 13 container also builds, installs, executes and purges the generic package before a release is eligible for publication; the central Infiltrator repository separately performs a full Linux Mint 22.3 package lifecycle test after publication.
+Additional quality gates are available through `make sanitize`, `make coverage`, `make static-analysis`, `make reproducible-build` and `make release-check`. GCC, Clang, sanitizer and static-analysis CI run on GitHub-hosted Ubuntu so normal qualification does not depend on a private workstation runner. CI requires at least 80% C line coverage and 60% branch coverage in addition to sanitizer, static-analysis, ABI, packaging and reproducibility gates. A clean Debian 13 container also builds, installs, executes and purges the generic package before a release is eligible for publication; the central Infiltrator repository separately performs a full Linux Mint 22.3 package lifecycle test after publication.
 
 For an installed Cinnamon session, `tools/cinnamon-smoke.sh` verifies installed runtime hashes and typelib identity, then exercises the live applet through Cinnamon's D-Bus evaluation interface without changing persistent settings. CI first probes whether a trusted runner can qualify the exact source revision. A matching installed version is tested directly; a Cinnamon runner with passwordless package-install permission builds, installs and reloads the exact revision before testing. When neither is possible the actual live-smoke step is explicitly shown as skipped rather than reporting an older applet as a pass.
 
