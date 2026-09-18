@@ -6,7 +6,7 @@
 
 Calendar is a native Cinnamon panel clock and calendar with alternative clock modes, 30 selectable calendar systems and CalendarServer integration.
 
-**Stable release:** 1.0.8.
+**Stable release:** 1.0.9.
 
 **Runtime:** Cinnamon 6.4, 6.6 and 6.7.
 
