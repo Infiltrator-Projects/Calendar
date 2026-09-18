@@ -1,3 +1,13 @@
+calendar-plus (1.0.13) trixie; urgency=medium
+
+  * Install the project-owned Calendar artwork as the applet-local icon.png
+    that Cinnamon's Applets manager explicitly prefers for installed applets.
+  * Keep the hicolor desktop icon and native About dialog on the same artwork.
+  * Validate both icon installation paths in generic and hardware-native
+    packages so the Applets manager cannot silently regress to a placeholder.
+
+ -- Shannon Smith <noreply@the-infiltratr.com>  Fri, 18 Sep 2026 23:08:00 +1000
+
 calendar-plus (1.0.12) trixie; urgency=medium
 
   * Add the project-owned neon Calendar application icon.

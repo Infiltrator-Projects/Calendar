@@ -9,7 +9,7 @@ G_IR_COMPILER ?= g-ir-compiler
 PREFIX ?= /usr
 DESTDIR ?=
 
-VERSION := 1.0.12
+VERSION := 1.0.13
 UUID := calendar-plus@the-infiltratr
 APPLET_SRC_DIR := src/cinnamon
 ICON_NAME := infiltratr-calendar
@@ -547,6 +547,8 @@ install: all
 		"$(DESTDIR)$(PREFIX)/share/icons/hicolor/256x256/apps/$(ICON_NAME).png"
 	install -d \
 		"$(DESTDIR)$(PREFIX)/share/cinnamon/applets/$(UUID)"
+	install -m644 "$(ICON_SRC)" \
+		"$(DESTDIR)$(PREFIX)/share/cinnamon/applets/$(UUID)/icon.png"
 	install -m644 "$(APPLET_SRC_DIR)"/*.js "$(APPLET_SRC_DIR)"/*.json \
 		"$(APPLET_SRC_DIR)"/*.css \
 		"$(DESTDIR)$(PREFIX)/share/cinnamon/applets/$(UUID)/"

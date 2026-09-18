@@ -42,6 +42,8 @@ test -f \
     "$TMP/generic/usr/share/cinnamon/applets/calendar-plus@the-infiltratr/applet.js"
 test -f \
     "$TMP/generic/usr/share/cinnamon/applets/calendar-plus@the-infiltratr/stylesheet.css"
+test -f \
+    "$TMP/generic/usr/share/cinnamon/applets/calendar-plus@the-infiltratr/icon.png"
 test -x \
     "$TMP/generic/usr/share/cinnamon/applets/calendar-plus@the-infiltratr/settings.py"
 test -x "$TMP/generic/usr/libexec/calendar-plus-about"
