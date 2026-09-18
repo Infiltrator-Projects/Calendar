@@ -79,7 +79,7 @@ src/
 └── vendor/     Pinned Infiltratr Common submodule
 ```
 
-The portable core is kept separate from presentation and platform adapters. Cinnamon owns desktop actors, settings and CalendarServer transport; the native C library owns chronology, astronomy, alternative clocks and event semantics. Generic strings, UTF-8 validation, checked/saturating arithmetic, timing and dynamic-library mechanics are supplied by the exact Infiltratr Common 1.18.1 release. The build verifies both the Common version and immutable release commit before linking.
+The portable core is kept separate from presentation and platform adapters. Cinnamon owns desktop actors, settings and CalendarServer transport; the native C library owns chronology, astronomy, alternative clocks and event semantics. Generic strings, UTF-8 validation, checked/saturating arithmetic, timing and dynamic-library mechanics are supplied by the exact Infiltratr Common 1.19.1 release. The build verifies both the Common version and immutable release commit before linking.
 
 ### Native ABI policy
 

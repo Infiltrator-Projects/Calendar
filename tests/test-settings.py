@@ -69,6 +69,43 @@ def main() -> None:
     assert ".calendar-plus-popup.calendar-plus-theme-day" in stylesheet
     assert ".calendar-plus-popup.calendar-plus-theme-night" in stylesheet
 
+    common_design = json.loads(
+        (
+            PROJECT_ROOT
+            / "src/vendor/infiltratr-common/design/infiltrator-design-v1.json"
+        ).read_text(encoding="utf-8")
+    )
+    assert common_design["theme"]["modes"] == ["system", "day", "night"]
+    assert common_design["theme"]["default_mode"] == "system"
+    assert common_design["theme"]["system_policy"] == "platform_authoritative"
+
+    theme_css = stylesheet.split("Theme policy", 1)[1]
+    canonical_colours = {
+        value.lower()
+        for mode in ("day", "night")
+        for value in common_design["theme"]["palettes"][mode].values()
+    }
+    import re
+    for colour in re.findall(r"#[0-9A-Fa-f]{6}", theme_css):
+        assert colour.lower() in canonical_colours, (
+            f"Calendar Plus theme CSS has a private colour outside Common: {colour}"
+        )
+
+    for mode in ("day", "night"):
+        palette = common_design["theme"]["palettes"][mode]
+        for role in (
+            "background",
+            "panel",
+            "text",
+            "title",
+            "surface_hover",
+            "selection_background",
+            "selection_foreground",
+        ):
+            assert palette[role].lower() in theme_css.lower(), (
+                f"Calendar Plus {mode} CSS does not consume Common role {role}"
+            )
+
     location_configured = schema["location-configured"]
     assert location_configured["type"] == "switch"
     assert location_configured["default"] is False
