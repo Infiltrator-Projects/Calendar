@@ -1,3 +1,18 @@
+infiltrator-calendar (1.0.25) trixie; urgency=medium
+
+  * Advance the pinned shared foundation to Infiltratr Common 1.19.10.
+  * Fix Cinnamon Day/Night application by retaining popup identity and the
+    effective mode through PopupMenu.setCustomStyleClass().
+  * Preserve forced theme selection when Cinnamon rebuilds menu classes after
+    orientation changes.
+  * Project the complete MBLINK-derived Common Night roles into Calendar cards,
+    headings, borders, hover states and selected-day accent styling.
+  * Make the external settings host follow System/Day/Night live.
+  * Extend regression coverage for popup theme-class ownership and settings
+    theme propagation.
+
+ -- Shannon Smith <noreply@the-infiltratr.com>  Sun, 20 Sep 2026 01:35:00 +1000
+
 infiltrator-calendar (1.0.24) trixie; urgency=medium
 
   * Complete Calendar's consumption of Infiltratr Common 1.19.8 design data.

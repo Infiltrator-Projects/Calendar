@@ -173,9 +173,15 @@ class CalendarPlusApplet extends Applet.Applet {
     _buildApplet() {
         this.menuManager = new PopupMenu.PopupMenuManager(this);
         this.menu = new Applet.AppletPopupMenu(this, this.orientation);
-        _addStyleClass(this.menu.actor, "calendar-plus-popup");
+        /*
+         * PopupMenu.setCustomStyleClass() rebuilds the complete actor style
+         * class list.  Keep Calendar's identity in that authoritative slot:
+         * adding calendar-plus-popup first and then calling setCustomStyleClass()
+         * silently removed it, so every Day/Night selector missed the visible
+         * popup actor.
+         */
+        this.menu.setCustomStyleClass("calendar-plus-popup");
         this.menuManager.addMenu(this.menu);
-        this.menu.setCustomStyleClass("calendar-background");
 
         this.settings = new Settings.AppletSettings(this, UUID, this.instance_id);
         this._migrateLocationSetting();
@@ -457,25 +463,25 @@ class CalendarPlusApplet extends Applet.Applet {
             return;
         }
 
-        for (const styleClass of [
-            "calendar-plus-theme-day",
-            "calendar-plus-theme-night",
-        ]) {
-            if (typeof this.menu.actor.remove_style_class_name === "function") {
-                this.menu.actor.remove_style_class_name(styleClass);
-            }
-        }
-
         let effectiveTheme = this.theme_mode;
+        if (effectiveTheme !== "day" &&
+            effectiveTheme !== "night" &&
+            effectiveTheme !== "system") {
+            effectiveTheme = "system";
+        }
         if (effectiveTheme === "system") {
             effectiveTheme = this._systemPrefersDark() ? "night" : "day";
         }
 
-        if (effectiveTheme === "day") {
-            _addStyleClass(this.menu.actor, "calendar-plus-theme-day");
-        } else {
-            _addStyleClass(this.menu.actor, "calendar-plus-theme-night");
-        }
+        /*
+         * Persist the effective theme inside PopupMenu's custom style class.
+         * Cinnamon rewrites menu.actor's style classes whenever orientation
+         * changes; add_style_class_name() therefore made forced themes fragile.
+         * setCustomStyleClass() is the supported durable ownership point.
+         */
+        this.menu.setCustomStyleClass(
+            `calendar-plus-popup calendar-plus-theme-${effectiveTheme}`
+        );
     }
 
     _onSettingsChanged() {

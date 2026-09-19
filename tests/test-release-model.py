@@ -140,6 +140,10 @@ def main() -> None:
     assert "_applyTypography(" not in applet
     settings_source = read("src/cinnamon/settings.py")
     assert "BEGIN GENERATED COMMON TYPOGRAPHY TOKENS" in settings_source
+    assert "THEME_CSS = {" in settings_source
+    assert "def install_calendar_style(window)" in settings_source
+    assert 'settings.listen("theme-mode", refresh)' in settings_source
+    assert 'desktop.connect("changed::gtk-theme", refresh)' in settings_source
     assert "xlet-settings.py" in settings_source
     about_source = read("src/app/about-dialog.c")
     assert "#include <infiltratr/design.h>" in about_source
@@ -155,9 +159,9 @@ def main() -> None:
     assert "src/vendor/infiltratr-common" in makefile
     assert (
         "INFILTRATR_COMMON_COMMIT := "
-        "3bfcb6f76ca44ac33bc2fee54fb114caa0eca5f9"
+        "33e69c0a462b56d388881d89c4eb49f72fa0b0fe"
     ) in makefile
-    assert "INFILTRATR_COMMON_VERSION := 1.19.8" in makefile
+    assert "INFILTRATR_COMMON_VERSION := 1.19.10" in makefile
     assert "normal `make` automatically retrieves" in read("README.md")
     assert "common-bootstrap: common-check" in makefile
     assert "common-test: $(INFILTRATR_COMMON_ARCHIVE)" in makefile
@@ -287,6 +291,9 @@ def main() -> None:
     ]
 
     applet = read("src/cinnamon/applet.js")
+    assert 'this.menu.setCustomStyleClass("calendar-plus-popup");' in applet
+    assert '`calendar-plus-popup calendar-plus-theme-${effectiveTheme}`' in applet
+    assert 'setCustomStyleClass("calendar-background")' not in applet
     assert 'Util.spawnCommandLine("/usr/libexec/calendar-plus-about")' in applet
     assert "getCurrentExtension" in applet
     assert 'return require("./runtimeSupport")' in applet
@@ -379,7 +386,7 @@ def main() -> None:
     # Validate Calendar's actual Common calls against Common's complete public
     # header surface. Do not duplicate Common's private source membership here.
     common = ROOT / "src/vendor/infiltratr-common"
-    assert (common / "VERSION").read_text(encoding="utf-8").strip() == "1.19.8"
+    assert (common / "VERSION").read_text(encoding="utf-8").strip() == "1.19.10"
     assert (common / "LICENSE").is_file()
     common_include = common / "include/infiltratr"
     for public_header in (

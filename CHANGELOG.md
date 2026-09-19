@@ -6,6 +6,16 @@ This changelog records user-visible, compatibility, architecture and validation 
 
 No unreleased changes.
 
+## 1.0.25 - 2026-09-20
+
+- Advance the exact shared dependency to published Infiltratr Common 1.19.10, whose Night palette now mirrors the complete Linux MBLINK reference face.
+- Fix Day/Night selection by keeping Calendar's popup identity and effective theme in Cinnamon's authoritative custom-style class instead of adding a class that setCustomStyleClass() immediately discarded.
+- Preserve the selected popup theme across orientation changes, where Cinnamon rebuilds the menu actor's class list.
+- Expand Calendar's generated Day/Night projection to use Common's card, border, heading, summary, status-border, accent and hover roles rather than flattening Night into a few greys.
+- Use the MBLINK/Common blue accent for the selected/current calendar day while retaining Common's contrasting accent foreground.
+- Make the external Cinnamon settings window follow the same System/Day/Night preference live, including system GTK-theme changes, instead of applying typography alone.
+- Add regression guards for the real popup class lifecycle and settings-host theme binding.
+
 ## 1.0.24 - 2026-09-20
 
 - Complete the Calendar-side adoption of Infiltratr Common 1.19.8 design contracts by consuming Common structural metrics as well as palette and typography data.

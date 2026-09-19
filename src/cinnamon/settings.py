@@ -1,14 +1,14 @@
 #!/usr/bin/python3
 # SPDX-License-Identifier: GPL-3.0-or-later
 # Copyright (C) 2016-2026 Shannon Smith
-"""Calendar typography host for Cinnamon's native xlet settings UI.
+"""Calendar design host for Cinnamon's native xlet settings UI.
 
 Cinnamon's generic xlet-settings process is a separate GTK application, so it
 cannot inherit the St/Cinnamon stylesheet used by the panel applet. This thin
 host deliberately reuses Cinnamon's own MainWindow, JSON settings widgets,
-persistence, D-Bus callbacks, import/export and reset behaviour. Its only
-presentation policy is to install the Calendar font family before that
-window is constructed.
+persistence, D-Bus callbacks, import/export and reset behaviour while projecting
+the same Common-owned typography and System/Day/Night appearance contract as
+the applet itself.
 """
 
 from __future__ import annotations
@@ -23,7 +23,7 @@ import gi
 
 gi.require_version("Gtk", "3.0")
 gi.require_version("Gdk", "3.0")
-from gi.repository import Gdk, Gtk  # noqa: E402
+from gi.repository import Gdk, Gio, Gtk  # noqa: E402
 
 UUID = "calendar-plus@the-infiltratr"
 CINNAMON_SETTINGS_DIR = Path("/usr/share/cinnamon/cinnamon-settings")
@@ -47,6 +47,120 @@ button {
     border-radius: 10px;
 }
 """
+THEME_CSS = {
+    "day": b"""
+window,
+window.background,
+.background,
+.view,
+viewport {
+    background-color: #FFFFFF;
+    color: #20252B;
+}
+headerbar {
+    background-color: #ECEFF2;
+    color: #111418;
+    border-color: #C7CDD3;
+}
+headerbar label,
+headerbar .title {
+    color: #111418;
+}
+frame > border,
+separator {
+    border-color: #C7CDD3;
+    background-color: #C7CDD3;
+}
+entry,
+spinbutton,
+combobox button {
+    background-color: #FFFFFF;
+    color: #20252B;
+    border-color: #C7CDD3;
+}
+button {
+    background-color: #E8ECEF;
+    color: #20252B;
+    border-color: #C7CDD3;
+}
+button:hover {
+    background-color: #DDE2E7;
+    border-color: #00ADEF;
+}
+switch {
+    background-color: #ECEFF2;
+    border-color: #C7CDD3;
+}
+switch:checked {
+    background-color: #00ADEF;
+    color: #031018;
+}
+row:selected,
+treeview.view:selected {
+    background-color: #DDE2E7;
+    color: #111418;
+}
+.dim-label {
+    color: #59636C;
+}
+""",
+    "night": b"""
+window,
+window.background,
+.background,
+.view,
+viewport {
+    background-color: #050608;
+    color: #E8ECEF;
+}
+headerbar {
+    background-color: #202125;
+    color: #E7EBEE;
+    border-color: #353A40;
+}
+headerbar label,
+headerbar .title {
+    color: #E7EBEE;
+}
+frame > border,
+separator {
+    border-color: #353A40;
+    background-color: #353A40;
+}
+entry,
+spinbutton,
+combobox button {
+    background-color: #0E1115;
+    color: #E8ECEF;
+    border-color: #31363B;
+}
+button {
+    background-color: #20252B;
+    color: #E8ECEF;
+    border-color: #353A40;
+}
+button:hover {
+    background-color: #2B3137;
+    border-color: #00ADEF;
+}
+switch {
+    background-color: #0D1014;
+    border-color: #353A40;
+}
+switch:checked {
+    background-color: #00ADEF;
+    color: #031018;
+}
+row:selected,
+treeview.view:selected {
+    background-color: #2B3137;
+    color: #EEF1F3;
+}
+.dim-label {
+    color: #98A1A9;
+}
+""",
+}
 # END GENERATED COMMON TYPOGRAPHY TOKENS
 
 
@@ -70,18 +184,51 @@ def load_cinnamon_settings():
     return module
 
 
-def apply_typography() -> None:
+def install_calendar_style(window) -> None:
     screen = Gdk.Screen.get_default()
     if screen is None:
         return
 
     provider = Gtk.CssProvider()
-    provider.load_from_data(CSS)
+    desktop = Gio.Settings.new("org.cinnamon.desktop.interface")
+
+    def system_prefers_dark() -> bool:
+        try:
+            theme = desktop.get_string("gtk-theme")
+        except Exception:
+            return False
+        return isinstance(theme, str) and "dark" in theme.lower()
+
+    def effective_theme() -> str:
+        mode = "system"
+        try:
+            if window.selected_instance is not None:
+                mode = window.selected_instance["settings"].get_value("theme-mode")
+        except (KeyError, TypeError):
+            mode = "system"
+        if mode not in ("system", "day", "night"):
+            mode = "system"
+        if mode == "system":
+            return "night" if system_prefers_dark() else "day"
+        return mode
+
+    def refresh(*_args) -> None:
+        provider.load_from_data(CSS + THEME_CSS[effective_theme()])
+
     Gtk.StyleContext.add_provider_for_screen(
         screen,
         provider,
         Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION,
     )
+
+    for info in window.instance_info:
+        settings = info.get("settings")
+        if settings is not None and settings.has_key("theme-mode"):
+            settings.listen("theme-mode", refresh)
+
+    window.instance_stack.connect("notify::visible-child-name", refresh)
+    desktop.connect("changed::gtk-theme", refresh)
+    refresh()
 
 
 def parse_args() -> argparse.Namespace:
@@ -104,7 +251,6 @@ def parse_args() -> argparse.Namespace:
 def main() -> int:
     args = parse_args()
     cinnamon_settings = load_cinnamon_settings()
-    apply_typography()
 
     native_args = argparse.Namespace(
         type="applet",
@@ -113,6 +259,7 @@ def main() -> int:
         tab=args.tab,
     )
     window = cinnamon_settings.MainWindow(native_args)
+    install_calendar_style(window)
     signal.signal(signal.SIGINT, window.quit)
     Gtk.main()
     return 0

@@ -73,33 +73,63 @@
 /*
  * Generated from Infiltratr Common. Do not hand-edit colour values here.
  * Calendar deliberately owns only Cinnamon selectors/widget mechanics.
+ * Common 1.19.10 carries the complete Linux MBLINK Night reference roles.
  */
+
 .calendar-plus-popup.calendar-plus-theme-night,
 .calendar-plus-popup.calendar-plus-theme-night .calendar-main-box {
     background-color: #050608;
     color: #E8ECEF;
 }
 
-.calendar-plus-popup.calendar-plus-theme-night .calendar-today-home-button,
-.calendar-plus-popup.calendar-plus-theme-night .calendar-today-home-button-enabled,
 .calendar-plus-popup.calendar-plus-theme-night .calendar,
 .calendar-plus-popup.calendar-plus-theme-night .calendar-events-main-box {
-    background-color: #101318;
+    background-color: #171B20;
     color: #E8ECEF;
+    border-color: #353A40;
 }
 
-.calendar-plus-popup.calendar-plus-theme-night .calendar-day-base,
-.calendar-plus-popup.calendar-plus-theme-night .calendar-day-heading,
+.calendar-plus-popup.calendar-plus-theme-night .calendar-today-home-button,
+.calendar-plus-popup.calendar-plus-theme-night .calendar-today-home-button-enabled {
+    background-color: #0D1014;
+    color: #E7EBEE;
+    border-color: #3B4147;
+}
+
 .calendar-plus-popup.calendar-plus-theme-night .calendar-month-label,
 .calendar-plus-popup.calendar-plus-theme-night .calendar-events-date-label,
 .calendar-plus-popup.calendar-plus-theme-night .calendar-events-no-events-label {
-    color: #EEF1F3;
+    color: #E7EBEE;
+}
+
+.calendar-plus-popup.calendar-plus-theme-night .calendar-day-heading {
+    color: #98A1A9;
+}
+
+.calendar-plus-popup.calendar-plus-theme-night .calendar-day-base {
+    color: #E8ECEF;
 }
 
 .calendar-plus-popup.calendar-plus-theme-night .calendar-day-base:hover,
-.calendar-plus-popup.calendar-plus-theme-night .calendar-today-home-button-enabled:hover {
+.calendar-plus-popup.calendar-plus-theme-night .calendar-today-home-button-enabled:hover,
+.calendar-plus-popup.calendar-plus-theme-night .popup-menu-item:hover {
     background-color: #171B20;
 }
+
+.calendar-plus-popup.calendar-plus-theme-night .calendar-day-base.calendar-day-selected,
+.calendar-plus-popup.calendar-plus-theme-night .calendar-day-base.calendar-today {
+    background-color: #00ADEF;
+    color: #031018;
+}
+
+.calendar-plus-popup.calendar-plus-theme-night .popup-menu-item {
+    color: #E8ECEF;
+}
+
+.calendar-plus-popup.calendar-plus-theme-night .popup-separator-menu-item {
+    color: #353A40;
+}
+
 
 .calendar-plus-popup.calendar-plus-theme-day,
 .calendar-plus-popup.calendar-plus-theme-day .calendar-main-box {
@@ -107,36 +137,52 @@
     color: #20252B;
 }
 
-.calendar-plus-popup.calendar-plus-theme-day .calendar-today-home-button,
-.calendar-plus-popup.calendar-plus-theme-day .calendar-today-home-button-enabled,
 .calendar-plus-popup.calendar-plus-theme-day .calendar,
 .calendar-plus-popup.calendar-plus-theme-day .calendar-events-main-box {
-    background-color: #FFFFFF;
+    background-color: #F8F9FA;
     color: #20252B;
+    border-color: #C7CDD3;
 }
 
-.calendar-plus-popup.calendar-plus-theme-day .calendar-day-base,
-.calendar-plus-popup.calendar-plus-theme-day .calendar-day-heading,
+.calendar-plus-popup.calendar-plus-theme-day .calendar-today-home-button,
+.calendar-plus-popup.calendar-plus-theme-day .calendar-today-home-button-enabled {
+    background-color: #ECEFF2;
+    color: #111418;
+    border-color: #C7CDD3;
+}
+
 .calendar-plus-popup.calendar-plus-theme-day .calendar-month-label,
 .calendar-plus-popup.calendar-plus-theme-day .calendar-events-date-label,
 .calendar-plus-popup.calendar-plus-theme-day .calendar-events-no-events-label {
     color: #111418;
 }
 
+.calendar-plus-popup.calendar-plus-theme-day .calendar-day-heading {
+    color: #59636C;
+}
+
+.calendar-plus-popup.calendar-plus-theme-day .calendar-day-base {
+    color: #20252B;
+}
+
 .calendar-plus-popup.calendar-plus-theme-day .calendar-day-base:hover,
-.calendar-plus-popup.calendar-plus-theme-day .calendar-today-home-button-enabled:hover {
+.calendar-plus-popup.calendar-plus-theme-day .calendar-today-home-button-enabled:hover,
+.calendar-plus-popup.calendar-plus-theme-day .popup-menu-item:hover {
     background-color: #F1F3F5;
 }
 
 .calendar-plus-popup.calendar-plus-theme-day .calendar-day-base.calendar-day-selected,
 .calendar-plus-popup.calendar-plus-theme-day .calendar-day-base.calendar-today {
-    background-color: #DDE2E7;
-    color: #111418;
+    background-color: #00ADEF;
+    color: #031018;
 }
 
-.calendar-plus-popup.calendar-plus-theme-night .calendar-day-base.calendar-day-selected,
-.calendar-plus-popup.calendar-plus-theme-night .calendar-day-base.calendar-today {
-    background-color: #2B3137;
-    color: #EEF1F3;
+.calendar-plus-popup.calendar-plus-theme-day .popup-menu-item {
+    color: #20252B;
 }
+
+.calendar-plus-popup.calendar-plus-theme-day .popup-separator-menu-item {
+    color: #C7CDD3;
+}
+
 /* END GENERATED COMMON THEME TOKENS */

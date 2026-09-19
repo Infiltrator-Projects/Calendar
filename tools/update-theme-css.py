@@ -3,7 +3,7 @@
 """Project Common design tokens into Calendar's Cinnamon and GTK surfaces.
 
 Calendar owns Cinnamon/GTK selectors and widget mechanics. Infiltratr Common
-owns semantic theme values, typography identity and structural metrics. This generator keeps the
+owns semantic theme values, typography identity and structural metrics. Common 1.19.10 also carries the complete Linux MBLINK Night reference roles. This generator keeps the
 toolkit-specific source native while preventing a second private design truth
 from drifting away from the pinned Common release.
 """
@@ -82,6 +82,68 @@ def render_settings_typography(data: dict) -> str:
     regular = type_data["ui_regular_weight"]
     bold = type_data["ui_bold_weight"]
     brand_weight = type_data["brand_weight"]
+    metric_data = metrics(data)
+    day = palette(data, "day")
+    night = palette(data, "night")
+
+    def gtk_theme(p: dict[str, str]) -> str:
+        return f"""
+window,
+window.background,
+.background,
+.view,
+viewport {{
+    background-color: {p["background"]};
+    color: {p["text"]};
+}}
+headerbar {{
+    background-color: {p["titlebar"]};
+    color: {p["heading"]};
+    border-color: {p["border"]};
+}}
+headerbar label,
+headerbar .title {{
+    color: {p["heading"]};
+}}
+frame > border,
+separator {{
+    border-color: {p["border"]};
+    background-color: {p["border"]};
+}}
+entry,
+spinbutton,
+combobox button {{
+    background-color: {p["input"]};
+    color: {p["text"]};
+    border-color: {p["connection_border"]};
+}}
+button {{
+    background-color: {p["operation"]};
+    color: {p["text"]};
+    border-color: {p["border"]};
+}}
+button:hover {{
+    background-color: {p["operation_hover"]};
+    border-color: {p["neutral_accent"]};
+}}
+switch {{
+    background-color: {p["surface"]};
+    border-color: {p["border"]};
+}}
+switch:checked {{
+    background-color: {p["neutral_accent"]};
+    color: {p["accent_foreground"]};
+}}
+row:selected,
+treeview.view:selected {{
+    background-color: {p["selection_background"]};
+    color: {p["selection_foreground"]};
+}}
+.dim-label {{
+    color: {p["summary"]};
+}}
+"""
+
     return f'''{SETTINGS_TYPOGRAPHY_BEGIN}
 CSS = b"""
 * {{
@@ -97,12 +159,14 @@ button, button label {{
     font-weight: {bold};
 }}
 button {{
-    border-radius: {metrics(data)["control_radius"]}px;
+    border-radius: {metric_data["control_radius"]}px;
 }}
 """
+THEME_CSS = {{
+    "day": b"""{gtk_theme(day)}""",
+    "night": b"""{gtk_theme(night)}""",
+}}
 {SETTINGS_TYPOGRAPHY_END}'''
-
-
 
 def render_metrics(data: dict) -> str:
     metric_data = metrics(data)
@@ -137,78 +201,74 @@ def render_metrics(data: dict) -> str:
 def render_theme(data: dict) -> str:
     day = palette(data, "day")
     night = palette(data, "night")
+
+    def mode_css(mode: str, p: dict[str, str]) -> str:
+        root = f".calendar-plus-popup.calendar-plus-theme-{mode}"
+        return f"""
+{root}},
+{root} .calendar-main-box {{
+    background-color: {p["background"]};
+    color: {p["text"]};
+}}
+
+{root} .calendar,
+{root} .calendar-events-main-box {{
+    background-color: {p["card"]};
+    color: {p["text"]};
+    border-color: {p["border"]};
+}}
+
+{root} .calendar-today-home-button,
+{root} .calendar-today-home-button-enabled {{
+    background-color: {p["surface"]};
+    color: {p["heading"]};
+    border-color: {p["status_border"]};
+}}
+
+{root} .calendar-month-label,
+{root} .calendar-events-date-label,
+{root} .calendar-events-no-events-label {{
+    color: {p["heading"]};
+}}
+
+{root} .calendar-day-heading {{
+    color: {p["summary"]};
+}}
+
+{root} .calendar-day-base {{
+    color: {p["text"]};
+}}
+
+{root} .calendar-day-base:hover,
+{root} .calendar-today-home-button-enabled:hover,
+{root} .popup-menu-item:hover {{
+    background-color: {p["surface_hover"]};
+}}
+
+{root} .calendar-day-base.calendar-day-selected,
+{root} .calendar-day-base.calendar-today {{
+    background-color: {p["neutral_accent"]};
+    color: {p["accent_foreground"]};
+}}
+
+{root} .popup-menu-item {{
+    color: {p["text"]};
+}}
+
+{root} .popup-separator-menu-item {{
+    color: {p["border"]};
+}}
+"""
+
     return f"""{THEME_BEGIN}
 /*
  * Generated from Infiltratr Common. Do not hand-edit colour values here.
  * Calendar deliberately owns only Cinnamon selectors/widget mechanics.
+ * Common 1.19.10 carries the complete Linux MBLINK Night reference roles.
  */
-.calendar-plus-popup.calendar-plus-theme-night,
-.calendar-plus-popup.calendar-plus-theme-night .calendar-main-box {{
-    background-color: {night["background"]};
-    color: {night["text"]};
-}}
-
-.calendar-plus-popup.calendar-plus-theme-night .calendar-today-home-button,
-.calendar-plus-popup.calendar-plus-theme-night .calendar-today-home-button-enabled,
-.calendar-plus-popup.calendar-plus-theme-night .calendar,
-.calendar-plus-popup.calendar-plus-theme-night .calendar-events-main-box {{
-    background-color: {night["panel"]};
-    color: {night["text"]};
-}}
-
-.calendar-plus-popup.calendar-plus-theme-night .calendar-day-base,
-.calendar-plus-popup.calendar-plus-theme-night .calendar-day-heading,
-.calendar-plus-popup.calendar-plus-theme-night .calendar-month-label,
-.calendar-plus-popup.calendar-plus-theme-night .calendar-events-date-label,
-.calendar-plus-popup.calendar-plus-theme-night .calendar-events-no-events-label {{
-    color: {night["title"]};
-}}
-
-.calendar-plus-popup.calendar-plus-theme-night .calendar-day-base:hover,
-.calendar-plus-popup.calendar-plus-theme-night .calendar-today-home-button-enabled:hover {{
-    background-color: {night["surface_hover"]};
-}}
-
-.calendar-plus-popup.calendar-plus-theme-day,
-.calendar-plus-popup.calendar-plus-theme-day .calendar-main-box {{
-    background-color: {day["background"]};
-    color: {day["text"]};
-}}
-
-.calendar-plus-popup.calendar-plus-theme-day .calendar-today-home-button,
-.calendar-plus-popup.calendar-plus-theme-day .calendar-today-home-button-enabled,
-.calendar-plus-popup.calendar-plus-theme-day .calendar,
-.calendar-plus-popup.calendar-plus-theme-day .calendar-events-main-box {{
-    background-color: {day["panel"]};
-    color: {day["text"]};
-}}
-
-.calendar-plus-popup.calendar-plus-theme-day .calendar-day-base,
-.calendar-plus-popup.calendar-plus-theme-day .calendar-day-heading,
-.calendar-plus-popup.calendar-plus-theme-day .calendar-month-label,
-.calendar-plus-popup.calendar-plus-theme-day .calendar-events-date-label,
-.calendar-plus-popup.calendar-plus-theme-day .calendar-events-no-events-label {{
-    color: {day["title"]};
-}}
-
-.calendar-plus-popup.calendar-plus-theme-day .calendar-day-base:hover,
-.calendar-plus-popup.calendar-plus-theme-day .calendar-today-home-button-enabled:hover {{
-    background-color: {day["surface_hover"]};
-}}
-
-.calendar-plus-popup.calendar-plus-theme-day .calendar-day-base.calendar-day-selected,
-.calendar-plus-popup.calendar-plus-theme-day .calendar-day-base.calendar-today {{
-    background-color: {day["selection_background"]};
-    color: {day["selection_foreground"]};
-}}
-
-.calendar-plus-popup.calendar-plus-theme-night .calendar-day-base.calendar-day-selected,
-.calendar-plus-popup.calendar-plus-theme-night .calendar-day-base.calendar-today {{
-    background-color: {night["selection_background"]};
-    color: {night["selection_foreground"]};
-}}
+{mode_css("night", night)}
+{mode_css("day", day)}
 {THEME_END}"""
-
 
 def replace_block(source: str, begin: str, end: str, generated: str, label: str) -> str:
     if begin not in source or end not in source:

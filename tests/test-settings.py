@@ -69,7 +69,10 @@ def main() -> None:
     assert 'changed::${key}' in applet_source
     assert '"gtk-theme"' in applet_source
     assert 'this._systemPrefersDark() ? "night" : "day"' in applet_source
-    assert 'effectiveTheme === "day"' in applet_source
+    assert 'this.menu.setCustomStyleClass("calendar-plus-popup");' in applet_source
+    assert '`calendar-plus-popup calendar-plus-theme-${effectiveTheme}`' in applet_source
+    assert 'setCustomStyleClass("calendar-background")' not in applet_source
+    assert '_addStyleClass(this.menu.actor, "calendar-plus-popup")' not in applet_source
     stylesheet = (APPLET_DIR / "stylesheet.css").read_text(encoding="utf-8")
     assert ".calendar-plus-popup.calendar-plus-theme-day" in stylesheet
     assert ".calendar-plus-popup.calendar-plus-theme-night" in stylesheet
@@ -120,15 +123,39 @@ def main() -> None:
         palette = common_design["theme"]["palettes"][mode]
         for role in (
             "background",
-            "panel",
+            "card",
+            "border",
             "text",
-            "title",
+            "heading",
+            "summary",
             "surface_hover",
-            "selection_background",
-            "selection_foreground",
+            "status_border",
+            "neutral_accent",
+            "accent_foreground",
         ):
             assert palette[role].lower() in theme_css.lower(), (
                 f"Calendar {mode} CSS does not consume Common role {role}"
+            )
+
+    assert "THEME_CSS = {" in settings_source
+    assert "def install_calendar_style(window)" in settings_source
+    assert 'settings.listen("theme-mode", refresh)' in settings_source
+    assert 'desktop.connect("changed::gtk-theme", refresh)' in settings_source
+    assert "THEME_CSS[effective_theme()]" in settings_source
+    for mode in ("day", "night"):
+        palette = common_design["theme"]["palettes"][mode]
+        for role in (
+            "background",
+            "titlebar",
+            "heading",
+            "input",
+            "connection_border",
+            "operation",
+            "operation_hover",
+            "neutral_accent",
+        ):
+            assert palette[role].lower() in settings_source.lower(), (
+                f"Calendar settings {mode} CSS does not consume Common role {role}"
             )
 
     location_configured = schema["location-configured"]
