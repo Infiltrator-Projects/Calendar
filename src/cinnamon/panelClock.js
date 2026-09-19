@@ -94,8 +94,23 @@ function nativeModeRequiresLocation(mode) {
 }
 
 function locationIsConfigured(config) {
-    return !nativeModeRequiresLocation(config.mode) ||
-        Boolean(config.locationConfigured);
+    if (!nativeModeRequiresLocation(config.mode)) {
+        return true;
+    }
+    if (!Boolean(config.locationConfigured)) {
+        return false;
+    }
+
+    const parsed = CalendarPlus.time_mode_from_string(config.mode);
+    if (CalendarPlus.time_mode_requires_latitude(parsed) &&
+        !Number.isFinite(config.latitude)) {
+        return false;
+    }
+    if (CalendarPlus.time_mode_requires_longitude(parsed) &&
+        !Number.isFinite(config.longitude)) {
+        return false;
+    }
+    return true;
 }
 
 function clockForFormat(clock, format) {
