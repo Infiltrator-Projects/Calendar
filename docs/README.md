@@ -18,11 +18,12 @@ This directory is the canonical documentation entry point for Calendar. The Infi
 
 The baseline files have distinct responsibilities and should not compete as alternate sources of truth. Architecture describes where behaviour belongs; Design explains why; Roadmap describes direction; Validation records what evidence is required. Code and tests remain authoritative for executable behaviour, while immutable tags/releases identify historical source.
 
-Specialist documents may go deeper into one subsystem, protocol, platform, research area or historical investigation. They should link back to the canonical baseline when a reader needs the wider project context.
+Specialist documents may go deeper into one subsystem, protocol, platform, research area or historical investigation. They should link back to the canonical baseline when a reader needs the wider project context. Calendar keeps model evidence in `MODELS.md` and cross-platform/representation contracts in `PORTABILITY.md` so the project README can remain a product and build/use entry point.
 
 ## Specialist documentation
 
-- No additional specialist document is required at present; project-specific detail lives in the canonical baseline and source comments/tests.
+- [Chronology, time and astronomy models](MODELS.md) — evidence hierarchy, provenance, continuation rules, astronomical assumptions and model failure semantics.
+- [Portability](PORTABILITY.md) — language, platform, representation, locale, ABI and compatibility boundaries.
 
 ## Maintenance rule
 
