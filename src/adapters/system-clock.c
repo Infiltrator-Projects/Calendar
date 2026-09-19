@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-// Copyright (C) 2026 Shannon Smith
+// Copyright (C) 2016-2026 Shannon Smith
 
 /* GObject/GJS facade over the injected platform-neutral clock engine. */
 
