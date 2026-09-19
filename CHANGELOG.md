@@ -8,7 +8,7 @@ No unreleased changes.
 
 ## 1.0.22 - 2026-09-19
 
-- Advance the exact shared dependency to Infiltratr Common 1.19.5.
+- Advance the exact shared dependency to Infiltratr Common 1.19.6, retaining the 1.19.5 build-profile and dynamic-binding consolidation while consuming the unified System/Day/Night appearance contract.
 - Replace Calendar's private build-profile display mapping with Common's canonical project-family label contract.
 - Replace the About dialog's private required-symbol loading loop with Common's atomic dynamic-symbol table binder while retaining ICU-specific version probing locally.
 - Consolidate duplicated local-midnight and instant-equality JavaScript helpers into the shared Cinnamon runtime support module.

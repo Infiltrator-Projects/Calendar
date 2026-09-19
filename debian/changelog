@@ -1,6 +1,6 @@
 infiltrator-calendar (1.0.22) trixie; urgency=medium
 
-  * Advance the exact shared dependency to Infiltratr Common 1.19.5.
+  * Advance the exact shared dependency to Infiltratr Common 1.19.6.
   * Use Common's canonical build-profile labels in the native About dialog.
   * Use Common's atomic dynamic-symbol table binding for GTK/GDK loading while
     retaining ICU version probing as Calendar-specific policy.
@@ -8,6 +8,8 @@ infiltrator-calendar (1.0.22) trixie; urgency=medium
     helpers into the Cinnamon runtime-support module.
   * Use Common's shared NULL-safe equality for Gregorian ICU selection.
   * Add regression guards for the strengthened Common ownership boundary.
+  * Consume Common's unified System/Day/Night appearance contract and keep the
+    generated Calendar theme stylesheet aligned with the pinned Common source.
 
  -- Shannon Smith <noreply@the-infiltratr.com>  Sat, 19 Sep 2026 23:15:00 +1000
 
