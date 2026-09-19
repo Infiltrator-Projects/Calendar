@@ -69,12 +69,12 @@ Calendar treats references as evidence for specific rules, not as a blanket clai
 
 | Model / decision | Primary reference used by the implementation |
 | --- | --- |
-| General calendrical algorithms, epochs and cross-calendar reference practice | Edward M. Reingold and Nachum Dershowitz, *Calendrical Calculations: The Ultimate Edition*, 4th ed., Cambridge University Press, 2018, DOI 10.1017/9781107415058 |
-| ICU-backed calendar variants and locale data | Unicode TR35 / LDML and ICU calendar implementations |
-| Solar equation-of-time/declination and sunrise/sunset conventions | NOAA Global Monitoring Laboratory Solar Calculation Details, using a Meeus-derived model and the conventional 0.833° sunrise/sunset assumption |
+| General calendrical algorithms, epochs and cross-calendar reference practice | Edward M. Reingold and Nachum Dershowitz, *Calendrical Calculations: The Ultimate Edition*, 4th ed., Cambridge University Press, 2018, DOI [10.1017/9781107415058](https://doi.org/10.1017/9781107415058) |
+| ICU-backed calendar variants and locale data | [Unicode TR35 / LDML](https://unicode.org/reports/tr35/) and [ICU](https://icu.unicode.org/) calendar implementations |
+| Solar equation-of-time/declination and sunrise/sunset conventions | NOAA Global Monitoring Laboratory, [Solar Calculation Details](https://gml.noaa.gov/grad/solcalc/calcdetails.html), using a Meeus-derived model and the conventional 0.833° sunrise/sunset assumption |
 | Equinox calculation | Jean Meeus, *Astronomical Algorithms*, 2nd ed., Willmann-Bell, 1998 |
-| ΔT conversion used by the modern Badíʿ calculation | Fred Espenak and Jean Meeus, NASA GSFC, Polynomial Expressions for Delta T |
-| Modern Badíʿ Naw-Rúz reference location and equinox rule | Universal House of Justice, message dated 10 July 2014 on implementation of the Badíʿ calendar |
+| ΔT conversion used by the modern Badíʿ calculation | Fred Espenak and Jean Meeus, NASA GSFC, [Polynomial Expressions for Delta T](https://eclipse.gsfc.nasa.gov/LEcat5/deltatpoly.html) |
+| Modern Badíʿ Naw-Rúz reference location and equinox rule | Universal House of Justice, [message dated 10 July 2014](https://www.bahai.org/library/authoritative-texts/the-universal-house-of-justice/messages/20140710_001/1) on implementation of the Badíʿ calendar |
 | Cinnamon integration behaviour | Reviewed Linux Mint Cinnamon calendar surface recorded in `tools/upstream-calendar-baseline.json` |
 
 The source module should keep a reference or explanatory comment close to constants, epochs and historical rules that materially affect output.
