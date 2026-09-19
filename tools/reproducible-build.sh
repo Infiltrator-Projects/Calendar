@@ -28,7 +28,8 @@ copy_source() {
             --exclude='./build' \
             --exclude='./dist' \
             --exclude='./debian/.debhelper' \
-            --exclude='./debian/cinnamon-calendar' \
+            --exclude='./debian/infiltrator-calendar' \
+        --exclude='./debian/cinnamon-calendar' \
             --exclude='./debian/calendar-plus' \
             --exclude='./debian/files' \
             --exclude='./debian/*.substvars' \
@@ -77,7 +78,7 @@ preserve_failure() {
         > "$out/payload.diff" || true
 
     for run in 1 2; do
-        deb="$out/run-$run/cinnamon-calendar_${VERSION}_${ARCH}.deb"
+        deb="$out/run-$run/infiltrator-calendar_${VERSION}_${ARCH}.deb"
         mkdir -p "$out/run-$run/ar-members"
         (
             cd "$out/run-$run/ar-members"
@@ -108,8 +109,8 @@ preserve_failure() {
 build_once 1
 build_once 2
 
-DEB1="$TMP/run-1/cinnamon-calendar_${VERSION}_${ARCH}.deb"
-DEB2="$TMP/run-2/cinnamon-calendar_${VERSION}_${ARCH}.deb"
+DEB1="$TMP/run-1/infiltrator-calendar_${VERSION}_${ARCH}.deb"
+DEB2="$TMP/run-2/infiltrator-calendar_${VERSION}_${ARCH}.deb"
 
 if ! cmp -s "$DEB1" "$DEB2"; then
     echo "Reproducibility check failed: binary packages differ" >&2
