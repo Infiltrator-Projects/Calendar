@@ -65,6 +65,10 @@ def main() -> None:
     assert 'this.theme_mode = "system";' in applet_source
     assert "calendar-plus-theme-day" in applet_source
     assert "calendar-plus-theme-night" in applet_source
+    assert 'changed::${key}' in applet_source
+    assert '"gtk-theme"' in applet_source
+    assert 'this._systemPrefersDark() ? "night" : "day"' in applet_source
+    assert 'effectiveTheme === "day"' in applet_source
     stylesheet = (APPLET_DIR / "stylesheet.css").read_text(encoding="utf-8")
     assert ".calendar-plus-popup.calendar-plus-theme-day" in stylesheet
     assert ".calendar-plus-popup.calendar-plus-theme-night" in stylesheet
