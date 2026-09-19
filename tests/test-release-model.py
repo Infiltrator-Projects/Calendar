@@ -32,9 +32,15 @@ def main() -> None:
     native_installer_smoke = read("tools/native-installer-smoke.sh")
     gitmodules = read(".gitmodules")
 
-    assert sorted(path.name for path in ROOT.glob("*.md")) == ["README.md"]
+    assert sorted(path.name for path in ROOT.glob("*.md")) == [
+        "CHANGELOG.md", "CONTRIBUTING.md", "README.md", "SECURITY.md"
+    ]
     assert sorted(path.name for path in (ROOT / ".github").glob("*.md")) == [
-        "CODE_OF_CONDUCT.md", "CONTRIBUTING.md", "SECURITY.md"
+        "CODE_OF_CONDUCT.md"
+    ]
+    assert sorted(path.name for path in (ROOT / "docs").glob("*.md")) == [
+        "ARCHITECTURE.md", "DECISIONS.md", "DESIGN.md", "MODELS.md",
+        "PORTABILITY.md", "README.md", "ROADMAP.md", "VALIDATION.md"
     ]
     assert (ROOT / "LICENSE").is_file()
     assert not (ROOT / "COPYING").exists()
@@ -74,6 +80,10 @@ def main() -> None:
     ) == 2
     assert "\n\tCFLAGS= \\\n\t$(G_IR_SCANNER) \\" in makefile
     assert "\n\t.gitmodules \\\n" in makefile
+    assert "\n\tCHANGELOG.md \\\n" in makefile
+    assert "\n\tCONTRIBUTING.md \\\n" in makefile
+    assert "\n\tSECURITY.md \\\n" in makefile
+    assert "\n\tdocs \\\n" in makefile
     assert "--exclude='*/.git'" in makefile
     assert "--exclude-vcs" not in read("tools/reproducible-build.sh")
     assert "calendar-$(VERSION)-local-folder.run" in makefile
@@ -295,6 +305,8 @@ def main() -> None:
     assert (ROOT / "src/adapters/clock-glib-adapter.c").is_file()
     assert (ROOT / "tests/test-exact-clock-boundaries.c").is_file()
     assert "g_variant_" not in calendar_system
+    assert "GObject/GVariant" in read("docs/ARCHITECTURE.md")
+    assert "GLib foundational facilities" in read("docs/ARCHITECTURE.md")
     assert "g_timeout_" not in read("src/adapters/system-clock.c")
     assert "CORE_SOURCES :=" in makefile
     assert "ADAPTER_SOURCES :=" in makefile
@@ -316,7 +328,7 @@ def main() -> None:
         "src/core/event-source.h": 2,
     }.items():
         assert read(header).count("/**") >= minimum_docs
-    assert "### Native ABI policy" in read("README.md")
+    assert "## Native ABI and compatibility" in read("docs/ARCHITECTURE.md")
 
     assert "COVERAGE_MIN_LINES ?= 80" in makefile
     assert "COVERAGE_MIN_BRANCHES ?= 60" in makefile
