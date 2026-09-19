@@ -32,6 +32,7 @@ def main() -> None:
     native_installer_smoke = read("tools/native-installer-smoke.sh")
     gitmodules = read(".gitmodules")
     copyright_file = read("debian/copyright")
+    control = read("debian/control")
 
     assert sorted(path.name for path in ROOT.glob("*.md")) == [
         "CHANGELOG.md", "CONTRIBUTING.md", "README.md", "SECURITY.md"
@@ -78,7 +79,10 @@ def main() -> None:
     assert "TZ=UTC zip -X -9 -q" not in makefile
     assert "export CFLAGS" not in makefile
     assert "INFILTRATR_COMMON_CFLAGS :=" in makefile
+    assert "INFILTRATR_COMMON_EXTRA_CFLAGS ?=" in makefile
     assert "INFILTRATR_COMMON_CPPFLAGS := -Iinclude" in makefile
+    assert 'INFILTRATR_COMMON_EXTRA_CFLAGS="$(SANITIZER_CFLAGS)"' in makefile
+    assert "Sanitizer instrumentation is missing from Infiltratr Common." in makefile
     assert makefile.count(
         '\n\t\tCPPFLAGS="$(INFILTRATR_COMMON_CPPFLAGS)" \\\n'
         "\t\tCFLAGS='$(INFILTRATR_COMMON_CFLAGS)' \\\n"
@@ -132,7 +136,11 @@ def main() -> None:
     assert "xlet-settings.py" in read("src/cinnamon/settings.py")
     assert "MB Corpo S Title WEB" in read("src/app/about-dialog.c")
     assert "MB Corpo A Title Cond WEB" in read("src/app/about-dialog.c")
-    assert "fontconfig," not in read("debian/control")
+    assert "fontconfig," not in control
+    assert "Breaks: calendar-plus, cinnamon-calendar" in control
+    assert "Replaces: calendar-plus, cinnamon-calendar" in control
+    assert "calendar-plus (<<" not in control
+    assert "cinnamon-calendar (<<" not in control
     assert "libinfiltratr-common.a" in makefile
     assert "src/vendor/infiltratr-common" in makefile
     assert (
@@ -232,6 +240,9 @@ def main() -> None:
     assert "tools/live-cinnamon-ci-smoke.sh" in workflow
     assert "Probe exact-version live Cinnamon qualification" in workflow
     assert "steps.live-cinnamon.outputs.ready == 'true'" in workflow
+    assert "Migrate retired package identities" in workflow
+    assert '"calendar-plus 3.6.0"' in workflow
+    assert '"cinnamon-calendar 1.0.16"' in workflow
     live_smoke = read("tools/live-cinnamon-ci-smoke.sh")
     assert "dpkg-buildpackage -us -uc -b" in live_smoke
     assert "sudo -n apt-get install -y --no-install-recommends" in live_smoke
