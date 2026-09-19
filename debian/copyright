@@ -4,12 +4,12 @@ Upstream-Contact: Shannon Smith <infiltratr@yandex.com>
 Source: https://github.com/Infiltrator-Projects/Calendar
 
 Files: .github/* .gitmodules CHANGELOG.md CONTRIBUTING.md LICENSE Makefile README.md SECURITY.md docs/* debian/* src/* tests/* tools/*
-Copyright: 2026 Shannon Smith
+Copyright: 2016-2026 Shannon Smith
 License: GPL-3+
 
 Files: src/cinnamon/settings-schema.json
 Copyright: Linux Mint Project and Cinnamon contributors
-           2026 Shannon Smith
+           2016-2026 Shannon Smith
 License: GPL-3+
 Comment: This settings schema descends from the Cinnamon calendar applet's
  GPL-2.0-or-later schema and has been extended for Calendar. Attribution is

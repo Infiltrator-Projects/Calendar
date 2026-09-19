@@ -174,4 +174,6 @@ Development is performed on `main`. Published tags and release assets are immuta
 
 ## Licence
 
+Copyright © 2016–2026 Shannon Smith.
+
 Calendar is GPL-3.0-or-later. The pinned Infiltratr Common dependency uses the same licence. The complete project licence is in `LICENSE`; Debian packaging provenance is recorded in `debian/copyright`.
