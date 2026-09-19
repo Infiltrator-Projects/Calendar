@@ -123,6 +123,8 @@ CPPFLAGS += -Isrc/app -Isrc/core -Isrc/adapters -I$(INFILTRATR_COMMON_DIR)/inclu
 BUILD_MODE ?= generic
 GENERIC_CFLAGS := -O2 -g
 NATIVE_CFLAGS := -O3 -g -march=native -mtune=native -flto=auto
+INFILTRATR_COMMON_EXTRA_CFLAGS ?=
+SANITIZER_CFLAGS := -fsanitize=address,undefined -fno-omit-frame-pointer
 REPRODUCIBLE_CFLAGS := \
 	"-ffile-prefix-map=$(CURDIR)=." \
 	"-fdebug-prefix-map=$(CURDIR)=." \
@@ -136,13 +138,13 @@ ifeq ($(BUILD_MODE),generic)
 CFLAGS ?= $(GENERIC_CFLAGS)
 CFLAGS += $(CALENDAR_CFLAGS)
 INFILTRATR_COMMON_CFLAGS := $(GENERIC_CFLAGS) -fstack-protector-strong \
-	-fno-common $(REPRODUCIBLE_CFLAGS)
+	-fno-common $(REPRODUCIBLE_CFLAGS) $(INFILTRATR_COMMON_EXTRA_CFLAGS)
 BUILD_DESCRIPTION := generic amd64-compatible (Debian/Mint ICU runtime bridge)
 else ifeq ($(BUILD_MODE),native)
 CFLAGS ?=
 override CFLAGS += $(NATIVE_CFLAGS) $(CALENDAR_CFLAGS)
 INFILTRATR_COMMON_CFLAGS := $(NATIVE_CFLAGS) -fstack-protector-strong \
-	-fno-common $(REPRODUCIBLE_CFLAGS)
+	-fno-common $(REPRODUCIBLE_CFLAGS) $(INFILTRATR_COMMON_EXTRA_CFLAGS)
 LDFLAGS += -flto=auto
 BUILD_DESCRIPTION := local hardware-native (-O3 -march=native -mtune=native -flto=auto)
 else
@@ -503,9 +505,13 @@ sanitize:
 	UBSAN_OPTIONS="halt_on_error=1:print_stacktrace=1" \
 	$(MAKE) CFLAGS="-O1 -g -std=c11 -fPIC -Wall -Wextra -Wpedantic \
 		-Werror -Wformat=2 -Wshadow -Wstrict-prototypes \
-		-Wmissing-prototypes -fsanitize=address,undefined \
-		-fno-omit-frame-pointer" \
+		-Wmissing-prototypes $(SANITIZER_CFLAGS)" \
+		INFILTRATR_COMMON_EXTRA_CFLAGS="$(SANITIZER_CFLAGS)" \
 		LDFLAGS="-fsanitize=address,undefined" test
+	@nm -u "$(INFILTRATR_COMMON_ARCHIVE)" | grep -Eq '__asan_|__ubsan_' || { \
+		echo "Sanitizer instrumentation is missing from Infiltratr Common." >&2; \
+		exit 1; \
+	}
 	@for test_path in \
 		/portable/clock-interfaces \
 		/portable/clock-destroy-during-tick \
