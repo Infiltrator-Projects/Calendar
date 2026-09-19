@@ -27,6 +27,13 @@
 #include <unicode/ustring.h>
 
 #define MILLISECONDS_PER_DAY 86400000.0
+/*
+ * ICU's Gregorian calendar is hybrid by default: Julian before the 1582
+ * cutover and Gregorian afterwards.  Calendar's "gregorian" provider is
+ * explicitly proleptic, so place the ICU cutover far before the supported
+ * civil range.  -8.64e15 ms is 100,000,000 days before the Unix epoch.
+ */
+#define PROLEPTIC_GREGORIAN_CUTOVER (-8.64e15)
 
 static const UChar utc_zone[] = { 0x0055, 0x0054, 0x0043, 0 };
 
@@ -62,7 +69,25 @@ open_icu_calendar(const gchar *calendar_keyword,
         return NULL;
     }
 
-    return ucal_open(utc_zone, 3, locale, UCAL_DEFAULT, status);
+    UCalendar *calendar =
+        ucal_open(utc_zone, 3, locale, UCAL_DEFAULT, status);
+
+    if (U_FAILURE(*status) || calendar == NULL)
+        return NULL;
+
+    if (g_strcmp0(calendar_keyword, "gregorian") == 0)
+    {
+        ucal_setGregorianChange(calendar,
+                                PROLEPTIC_GREGORIAN_CUTOVER,
+                                status);
+        if (U_FAILURE(*status))
+        {
+            ucal_close(calendar);
+            return NULL;
+        }
+    }
+
+    return calendar;
 }
 
 gboolean
@@ -248,6 +273,7 @@ calendar_plus_icu_format(CalendarPlusCalendarMode format_profile,
     UChar pattern_utf16[128];
     gint32 pattern_length;
     UDateFormat *formatter;
+    UCalendar *calendar;
     UChar stack_buffer[256];
     UChar *output = stack_buffer;
     gint32 capacity = G_N_ELEMENTS(stack_buffer);
@@ -277,6 +303,20 @@ calendar_plus_icu_format(CalendarPlusCalendarMode format_profile,
                           &status);
     if (U_FAILURE(status) || formatter == NULL)
         return g_strdup("");
+
+    /*
+     * UDateFormat creates its own calendar, which would otherwise restore the
+     * default 1582 Gregorian cutover.  Give formatting the exact same calendar
+     * policy as field conversion and navigation.
+     */
+    calendar = open_icu_calendar(calendar_keyword, &status);
+    if (U_FAILURE(status) || calendar == NULL)
+    {
+        udat_close(formatter);
+        return g_strdup("");
+    }
+    udat_setCalendar(formatter, calendar);
+    ucal_close(calendar);
 
     length = udat_format(formatter,
                          jdn_to_udate(jdn),
