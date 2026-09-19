@@ -1,3 +1,16 @@
+infiltrator-calendar (1.0.22) trixie; urgency=medium
+
+  * Advance the exact shared dependency to Infiltratr Common 1.19.5.
+  * Use Common's canonical build-profile labels in the native About dialog.
+  * Use Common's atomic dynamic-symbol table binding for GTK/GDK loading while
+    retaining ICU version probing as Calendar-specific policy.
+  * Consolidate duplicated local-midnight and instant-equality JavaScript
+    helpers into the Cinnamon runtime-support module.
+  * Use Common's shared NULL-safe equality for Gregorian ICU selection.
+  * Add regression guards for the strengthened Common ownership boundary.
+
+ -- Shannon Smith <noreply@the-infiltratr.com>  Sat, 19 Sep 2026 23:15:00 +1000
+
 infiltrator-calendar (1.0.21) trixie; urgency=medium
 
   * Bundle the canonical MB Corpo font archive used by MBLINK.

@@ -237,19 +237,33 @@ function evaluateEventsManager() {
         global: { logError() {} },
         require(name) {
             if (name === "./runtimeSupport") {
-                return { SignalBag: class SignalBag {
-                    constructor() { this.entries = []; }
-                    connect(object, signal, callback) {
-                        const id = object.connect(signal, callback);
-                        this.entries.push([object, id]);
-                        return id;
-                    }
-                    disconnectAll() {
-                        for (const [object, id] of this.entries.splice(0)) {
-                            object.disconnect(id);
+                return {
+                    midnight(value) {
+                        return dateTime.new_local(
+                            value.get_year(),
+                            value.get_month(),
+                            value.get_day_of_month(),
+                            0, 0, 0
+                        );
+                    },
+                    sameInstant(a, b) {
+                        return a !== null && b !== null &&
+                            a.to_unix() === b.to_unix();
+                    },
+                    SignalBag: class SignalBag {
+                        constructor() { this.entries = []; }
+                        connect(object, signal, callback) {
+                            const id = object.connect(signal, callback);
+                            this.entries.push([object, id]);
+                            return id;
                         }
-                    }
-                }};
+                        disconnectAll() {
+                            for (const [object, id] of this.entries.splice(0)) {
+                                object.disconnect(id);
+                            }
+                        }
+                    },
+                };
             }
             throw new Error(`unexpected module ${name}`);
         },
@@ -372,10 +386,17 @@ function evaluateEventView() {
         ngettext: (one, many, count) => count === 1 ? one : many,
         require(name) {
             if (name === "./runtimeSupport") {
-                return { SignalBag: class SignalBag {
-                    connect() { return 1; }
-                    disconnectAll() {}
-                }};
+                return {
+                    midnight() { return null; },
+                    sameInstant(a, b) {
+                        return a !== null && b !== null &&
+                            a.to_unix() === b.to_unix();
+                    },
+                    SignalBag: class SignalBag {
+                        connect() { return 1; }
+                        disconnectAll() {}
+                    },
+                };
             }
             throw new Error("unexpected module " + name);
         },

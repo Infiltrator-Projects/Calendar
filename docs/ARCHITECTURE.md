@@ -25,7 +25,7 @@ platform-neutral Calendar domain contracts
                     ↓
 chronology / clocks / astronomy / event semantics
 
-ICU / CLDR                    Infiltratr Common 1.19.3
+ICU / CLDR                    Infiltratr Common 1.19.5
      ↓                                  ↓
 locale/calendar authority     reusable checked arithmetic /
 where explicitly delegated    formatting / timing / loading /

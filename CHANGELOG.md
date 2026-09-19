@@ -6,6 +6,15 @@ This changelog records user-visible, compatibility, architecture and validation 
 
 No unreleased changes.
 
+## 1.0.22 - 2026-09-19
+
+- Advance the exact shared dependency to Infiltratr Common 1.19.5.
+- Replace Calendar's private build-profile display mapping with Common's canonical project-family label contract.
+- Replace the About dialog's private required-symbol loading loop with Common's atomic dynamic-symbol table binder while retaining ICU-specific version probing locally.
+- Consolidate duplicated local-midnight and instant-equality JavaScript helpers into the shared Cinnamon runtime support module.
+- Use Common's NULL-safe string equality for Gregorian ICU-provider selection instead of a second GLib equality path.
+- Add regression guards for the Common ownership boundary so these generic mechanics do not drift back into Calendar.
+
 ## 1.0.21 - 2026-09-19
 
 - Bundle the canonical MB Corpo font archive from MBLINK directly in Calendar source and verify the archive and all three extracted TTF files by SHA-256.

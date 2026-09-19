@@ -151,9 +151,9 @@ def main() -> None:
     assert "src/vendor/infiltratr-common" in makefile
     assert (
         "INFILTRATR_COMMON_COMMIT := "
-        "de7251ce12ed176048df1bad05ef7e4d0db7e9ec"
+        "4303ffdebc8e9471ab5d0706d908014dd315f3bc"
     ) in makefile
-    assert "INFILTRATR_COMMON_VERSION := 1.19.3" in makefile
+    assert "INFILTRATR_COMMON_VERSION := 1.19.5" in makefile
     assert "normal `make` automatically retrieves" in read("README.md")
     assert "common-bootstrap: common-check" in makefile
     assert "common-test: $(INFILTRATR_COMMON_ARCHIVE)" in makefile
@@ -187,6 +187,15 @@ def main() -> None:
     assert "INFILTRATR_COMMON_BUILD_DIR :=" in makefile
     assert '$(MAKE) -C "$(INFILTRATR_COMMON_DIR)"' in makefile
     assert 'BUILD_DIR="$(INFILTRATR_COMMON_BUILD_DIR)"' in makefile
+
+    about_source = read("src/app/about-dialog.c")
+    assert "infiltratr_build_profile_label" in about_source
+    assert "build_label(" not in about_source
+    assert "infiltratr_dynlib_bind_symbols" in about_source
+    assert "LOAD_GTK" not in about_source
+    icu_source = read("src/core/icu-calendar.c")
+    assert 'infiltratr_string_equal(calendar_keyword, "gregorian")' in icu_source
+    assert 'g_strcmp0(calendar_keyword, "gregorian")' not in icu_source
 
     assert 'NATIVE_VERSION="${VERSION}+native${NATIVE_REVISION}"' in installer
     assert "CALENDAR_PLUS_BUILD_MODE=native" in installer
@@ -366,7 +375,7 @@ def main() -> None:
     # Validate Calendar's actual Common calls against Common's complete public
     # header surface. Do not duplicate Common's private source membership here.
     common = ROOT / "src/vendor/infiltratr-common"
-    assert (common / "VERSION").read_text(encoding="utf-8").strip() == "1.19.3"
+    assert (common / "VERSION").read_text(encoding="utf-8").strip() == "1.19.5"
     assert (common / "LICENSE").is_file()
     common_include = common / "include/infiltratr"
     for public_header in (

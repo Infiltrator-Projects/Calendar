@@ -75,7 +75,7 @@ open_icu_calendar(const gchar *calendar_keyword,
     if (U_FAILURE(*status) || calendar == NULL)
         return NULL;
 
-    if (g_strcmp0(calendar_keyword, "gregorian") == 0)
+    if (infiltratr_string_equal(calendar_keyword, "gregorian"))
     {
         ucal_setGregorianChange(calendar,
                                 PROLEPTIC_GREGORIAN_CUTOVER,

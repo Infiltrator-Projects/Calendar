@@ -333,8 +333,15 @@ def main() -> None:
     # Shared runtime mechanics live in one module; feature modules own only
     # their domain state. Transport and agenda presentation are separate.
     assert runtime_source.count("var SignalBag = class SignalBag") == 1
+    assert runtime_source.count("var midnight = function midnight") == 1
+    assert runtime_source.count("var sameInstant = function sameInstant") == 1
     for source in (applet_source, calendar_source, event_source, event_manager_source, panel_clock_source):
         assert "class SignalBag" not in source
+    for source in (event_source, event_manager_source):
+        assert "function _midnight" not in source
+        assert "function _sameInstant" not in source
+        assert "RuntimeSupport.midnight" in source
+        assert "RuntimeSupport.sameInstant" in source
     assert 'RuntimeSupport.loadLocalModule("eventManager")' in applet_source
     assert "class EventList" not in event_manager_source
     assert "class EventRow" not in event_manager_source

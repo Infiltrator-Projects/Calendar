@@ -48,6 +48,8 @@ function _loadRuntimeSupport() {
 
 const RuntimeSupport = _loadRuntimeSupport();
 const SignalBag = RuntimeSupport.SignalBag;
+const midnight = RuntimeSupport.midnight;
+const sameInstant = RuntimeSupport.sameInstant;
 const ARROW_SEPARATOR = "  ►  ";
 const DATE_FORMAT_FULL = CinnamonDesktop.WallClock.lctime_format(
     "cinnamon", _("%A, %B %-e, %Y")
@@ -58,19 +60,6 @@ function _capitaliseLocale(text) {
     return text.length === 0
         ? text
         : text.charAt(0).toLocaleUpperCase() + text.slice(1);
-}
-
-function _midnight(dateTime) {
-    return GLib.DateTime.new_local(
-        dateTime.get_year(),
-        dateTime.get_month(),
-        dateTime.get_day_of_month(),
-        0, 0, 0
-    );
-}
-
-function _sameInstant(a, b) {
-    return a !== null && b !== null && a.to_unix() === b.to_unix();
 }
 
 function _relationHas(mask, flag) {
@@ -433,7 +422,7 @@ class EventRow {
 
     update_variations() {
         const now = GLib.DateTime.new_now_local();
-        const today = _midnight(now);
+        const today = midnight(now);
         const selected = this.selected_date;
         const [state, secondsUntilStart] = this.event.timing(now);
         const todayRelation = this.event.relation_to_day(today);
@@ -511,12 +500,12 @@ class EventRow {
             if (!this.event.all_day) {
                 return endpoint.format(timeFormat);
             }
-            return _sameInstant(endpointDay, today)
+            return sameInstant(endpointDay, today)
                 ? _("Today")
                 : _capitaliseLocale(endpointDay.format(DAY_FORMAT));
         }
 
-        if (_sameInstant(endpointDay, today)) {
+        if (sameInstant(endpointDay, today)) {
             return this.event.all_day
                 ? _("Today")
                 : `${endpoint.format(timeFormat)} ${_("Today")}`;
@@ -528,7 +517,7 @@ class EventRow {
          * raw seconds-per-day division would not.
          */
         for (let offset = -4; offset <= 4; offset++) {
-            if (_sameInstant(endpointDay, today.add_days(offset))) {
+            if (sameInstant(endpointDay, today.add_days(offset))) {
                 return _capitaliseLocale(endpointDay.format(DAY_FORMAT));
             }
         }

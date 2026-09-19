@@ -70,54 +70,61 @@ static InfiltratrDynlib gdk_module = INFILTRATR_DYNLIB_INIT;
 static gboolean
 load_gtk(void)
 {
+#define REQUIRED_GTK(member, symbol) \
+    { symbol, &gtk_api.member, sizeof gtk_api.member, true }
+    const InfiltratrDynlibBinding bindings[] = {
+        REQUIRED_GTK(init_check, "gtk_init_check"),
+        REQUIRED_GTK(about_dialog_new, "gtk_about_dialog_new"),
+        REQUIRED_GTK(set_program_name, "gtk_about_dialog_set_program_name"),
+        REQUIRED_GTK(set_version, "gtk_about_dialog_set_version"),
+        REQUIRED_GTK(set_comments, "gtk_about_dialog_set_comments"),
+        REQUIRED_GTK(set_website, "gtk_about_dialog_set_website"),
+        REQUIRED_GTK(set_website_label, "gtk_about_dialog_set_website_label"),
+        REQUIRED_GTK(set_copyright, "gtk_about_dialog_set_copyright"),
+        REQUIRED_GTK(set_license, "gtk_about_dialog_set_license"),
+        REQUIRED_GTK(set_wrap_license, "gtk_about_dialog_set_wrap_license"),
+        REQUIRED_GTK(set_logo_icon_name, "gtk_about_dialog_set_logo_icon_name"),
+        REQUIRED_GTK(set_authors, "gtk_about_dialog_set_authors"),
+        REQUIRED_GTK(window_set_title, "gtk_window_set_title"),
+        REQUIRED_GTK(dialog_run, "gtk_dialog_run"),
+        REQUIRED_GTK(widget_show, "gtk_widget_show"),
+        REQUIRED_GTK(widget_destroy, "gtk_widget_destroy"),
+        REQUIRED_GTK(css_provider_new, "gtk_css_provider_new"),
+        REQUIRED_GTK(css_provider_load_from_data,
+                     "gtk_css_provider_load_from_data"),
+        REQUIRED_GTK(style_context_add_provider_for_screen,
+                     "gtk_style_context_add_provider_for_screen")
+    };
+#undef REQUIRED_GTK
+
     if (!infiltratr_dynlib_open(&gtk_module, "libgtk-3.so.0"))
         return FALSE;
-
-#define LOAD_GTK(member, symbol) \
-    do { \
-        if (!infiltratr_dynlib_symbol(&gtk_module, symbol, \
-                                      &gtk_api.member, \
-                                      sizeof gtk_api.member)) { \
-            infiltratr_dynlib_close(&gtk_module); \
-            gtk_api = (Gtk3Api){ 0 }; \
-            return FALSE; \
-        } \
-    } while (0)
-
-    LOAD_GTK(init_check, "gtk_init_check");
-    LOAD_GTK(about_dialog_new, "gtk_about_dialog_new");
-    LOAD_GTK(set_program_name, "gtk_about_dialog_set_program_name");
-    LOAD_GTK(set_version, "gtk_about_dialog_set_version");
-    LOAD_GTK(set_comments, "gtk_about_dialog_set_comments");
-    LOAD_GTK(set_website, "gtk_about_dialog_set_website");
-    LOAD_GTK(set_website_label, "gtk_about_dialog_set_website_label");
-    LOAD_GTK(set_copyright, "gtk_about_dialog_set_copyright");
-    LOAD_GTK(set_license, "gtk_about_dialog_set_license");
-    LOAD_GTK(set_wrap_license, "gtk_about_dialog_set_wrap_license");
-    LOAD_GTK(set_logo_icon_name, "gtk_about_dialog_set_logo_icon_name");
-    LOAD_GTK(set_authors, "gtk_about_dialog_set_authors");
-    LOAD_GTK(window_set_title, "gtk_window_set_title");
-    LOAD_GTK(dialog_run, "gtk_dialog_run");
-    LOAD_GTK(widget_show, "gtk_widget_show");
-    LOAD_GTK(widget_destroy, "gtk_widget_destroy");
-    LOAD_GTK(css_provider_new, "gtk_css_provider_new");
-    LOAD_GTK(css_provider_load_from_data, "gtk_css_provider_load_from_data");
-    LOAD_GTK(style_context_add_provider_for_screen,
-             "gtk_style_context_add_provider_for_screen");
-
-#undef LOAD_GTK
+    if (!infiltratr_dynlib_bind_symbols(
+            &gtk_module, bindings, INFILTRATR_ARRAY_LENGTH(bindings)))
+    {
+        infiltratr_dynlib_close(&gtk_module);
+        gtk_api = (Gtk3Api){ 0 };
+        return FALSE;
+    }
     return TRUE;
 }
 
 static gboolean
 load_gdk(void)
 {
+    const InfiltratrDynlibBinding bindings[] = {
+        {
+            "gdk_screen_get_default",
+            &gdk_api.screen_get_default,
+            sizeof gdk_api.screen_get_default,
+            true
+        }
+    };
+
     if (!infiltratr_dynlib_open(&gdk_module, "libgdk-3.so.0"))
         return FALSE;
-    if (!infiltratr_dynlib_symbol(&gdk_module,
-                                  "gdk_screen_get_default",
-                                  &gdk_api.screen_get_default,
-                                  sizeof gdk_api.screen_get_default))
+    if (!infiltratr_dynlib_bind_symbols(
+            &gdk_module, bindings, INFILTRATR_ARRAY_LENGTH(bindings)))
     {
         infiltratr_dynlib_close(&gdk_module);
         gdk_api = (Gdk3Api){ 0 };
@@ -166,16 +173,6 @@ print_metadata(void)
         fputs("Unable to print project metadata.\n", stderr);
 }
 
-static const gchar *
-build_label(const gchar *profile)
-{
-    if (infiltratr_string_equal(profile, "native"))
-        return "Native / local machine compile";
-    if (infiltratr_string_equal(profile, "generic"))
-        return "Generic / APT package";
-    return "Source / development build";
-}
-
 static GtkWidget *
 create_about_dialog(void)
 {
@@ -197,7 +194,7 @@ create_about_dialog(void)
         sizeof comments,
         "%s\n\nBuild: %s",
         _(info->comments),
-        build_label(info->build_profile));
+        infiltratr_build_profile_label(info->build_profile));
 
     gtk_api.window_set_title((GtkWindow *) widget, _("About Calendar"));
     gtk_api.set_program_name(about, _(info->program_name));

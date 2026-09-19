@@ -26,6 +26,20 @@ function loadLocalModule(name) {
     return require(`./${name}`);
 }
 
+var midnight = function midnight(dateTime) {
+    const GLib = imports.gi.GLib;
+    return GLib.DateTime.new_local(
+        dateTime.get_year(),
+        dateTime.get_month(),
+        dateTime.get_day_of_month(),
+        0, 0, 0
+    );
+};
+
+var sameInstant = function sameInstant(a, b) {
+    return a !== null && b !== null && a.to_unix() === b.to_unix();
+};
+
 var SignalBag = class SignalBag {
     constructor() {
         this._connections = [];

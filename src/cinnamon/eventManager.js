@@ -39,22 +39,11 @@ function _loadRuntimeSupport() {
 
 const RuntimeSupport = _loadRuntimeSupport();
 const SignalBag = RuntimeSupport.SignalBag;
+const midnight = RuntimeSupport.midnight;
+const sameInstant = RuntimeSupport.sameInstant;
 
 function _jsDateToLocalDateTime(date) {
     return GLib.DateTime.new_from_unix_local(Math.floor(date.getTime() / 1000));
-}
-
-function _midnight(dateTime) {
-    return GLib.DateTime.new_local(
-        dateTime.get_year(),
-        dateTime.get_month(),
-        dateTime.get_day_of_month(),
-        0, 0, 0
-    );
-}
-
-function _sameInstant(a, b) {
-    return a !== null && b !== null && a.to_unix() === b.to_unix();
 }
 
 class EventRecord {
@@ -420,15 +409,15 @@ var EventsManager = class EventsManager {
             return;
         }
 
-        const first = _midnight(_jsDateToLocalDateTime(firstDate));
-        const last = _midnight(_jsDateToLocalDateTime(lastDate));
+        const first = midnight(_jsDateToLocalDateTime(firstDate));
+        const last = midnight(_jsDateToLocalDateTime(lastDate));
         if (last.to_unix() < first.to_unix()) {
             global.logError(`${APPLET_UUID}: invalid visible event range.`);
             return;
         }
 
-        const changed = !_sameInstant(first, this.current_range_start) ||
-            !_sameInstant(last, this.current_range_end);
+        const changed = !sameInstant(first, this.current_range_start) ||
+            !sameInstant(last, this.current_range_end);
         const needsRetry = !this._range_request_pending &&
             !this._range_request_succeeded;
         if (!changed && !force && !needsRetry) {
@@ -531,7 +520,7 @@ var EventsManager = class EventsManager {
             return;
         }
 
-        const day = _midnight(_jsDateToLocalDateTime(date));
+        const day = midnight(_jsDateToLocalDateTime(date));
         const previous = this.current_selected_date;
         const changedMonth = previous !== null &&
             (previous.get_year() !== day.get_year() ||
@@ -576,7 +565,7 @@ var EventsManager = class EventsManager {
         if (this._destroyed || this.event_store === null) {
             return [];
         }
-        const day = _midnight(_jsDateToLocalDateTime(js_date));
+        const day = midnight(_jsDateToLocalDateTime(js_date));
         return this.event_store.get_colors(
             day.to_unix(),
             GLib.DateTime.new_now_local().to_unix()
