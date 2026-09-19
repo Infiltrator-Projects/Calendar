@@ -163,6 +163,7 @@ function evaluateEventsManager() {
     let nextWatchId = 1;
     let nextSourceId = 100;
     const timeouts = new Map();
+    const idles = new Map();
     const observations = {
         watches: 0,
         unwatches: 0,
@@ -174,6 +175,7 @@ function evaluateEventsManager() {
         timezoneMonitorCancels: 0,
         timezoneMonitorDisconnects: 0,
         rangeCalls: [],
+        rangeCallbacks: [],
         busAppeared: null,
         busVanished: null,
         proxyCallback: null,
@@ -182,6 +184,13 @@ function evaluateEventsManager() {
             assert.equal(next.done, false, "a reconnect timeout must be pending");
             const [id, callback] = next.value;
             timeouts.delete(id);
+            callback();
+        },
+        runNextIdle() {
+            const next = idles.entries().next();
+            assert.equal(next.done, false, "an idle callback must be pending");
+            const [id, callback] = next.value;
+            idles.delete(id);
             callback();
         },
     };
@@ -318,8 +327,14 @@ function evaluateEventsManager() {
                     timeouts.set(id, callback);
                     return id;
                 },
+                idle_add(callback) {
+                    const id = nextSourceId++;
+                    idles.set(id, callback);
+                    return id;
+                },
                 source_remove(id) {
                     timeouts.delete(id);
+                    idles.delete(id);
                     observations.removedSources += 1;
                 },
             },
@@ -340,6 +355,84 @@ function evaluateEventsManager() {
         { filename: "eventManager.js" }
     );
     return { EventsManager: context.__EventsManager, observations };
+}
+
+
+
+function evaluateEventView() {
+    const signals = {
+        addSignalMethods(prototype) {
+            prototype.connect = prototype.connect || function() { return 1; };
+            prototype.emit = prototype.emit || function() {};
+        },
+    };
+    const context = {
+        console,
+        _: (value) => value,
+        ngettext: (one, many, count) => count === 1 ? one : many,
+        require(name) {
+            if (name === "./runtimeSupport") {
+                return { SignalBag: class SignalBag {
+                    connect() { return 1; }
+                    disconnectAll() {}
+                }};
+            }
+            throw new Error("unexpected module " + name);
+        },
+        imports: {
+            gi: {
+                Atk: { Role: { LIST: 1, LIST_ITEM: 2 } },
+                CalendarPlus: {
+                    EventDayRelation: { STARTS_ON_DAY: 1, ENDS_ON_DAY: 2 },
+                    EventState: { PAST: 0, FUTURE: 1, PRESENT: 2 },
+                },
+                CinnamonDesktop: {
+                    WallClock: {
+                        lctime_format(domain, value) { return value; },
+                    },
+                },
+                Clutter: { ActorAlign: { CENTER: 0, START: 1, END: 2 } },
+                GLib: {
+                    SOURCE_REMOVE: false,
+                    find_program_in_path() { return null; },
+                    DateTime: {
+                        new_now_local() { return null; },
+                        new_local() { return null; },
+                    },
+                },
+                Pango: { EllipsizeMode: { NEVER: 0 } },
+                St: {
+                    PolicyType: { NEVER: 0, AUTOMATIC: 1 },
+                    IconType: { SYMBOLIC: 0 },
+                },
+            },
+            signals,
+            ui: { separator: { Separator: class {} } },
+            misc: { util: {} },
+            mainloop: {},
+            gettext: {
+                bindtextdomain() {},
+                domain() { return { gettext(value) { return value; } }; },
+            },
+        },
+    };
+    vm.createContext(context);
+    const source = fs.readFileSync(
+        path.join(root, "src", "cinnamon", "eventView.js"),
+        "utf8"
+    );
+    vm.runInContext(
+        source +
+            "\nglobalThis.__EventList = EventList;" +
+            "\nglobalThis.__replaceEventRowForTest = " +
+            "(replacement) => { EventRow = replacement; };",
+        context,
+        { filename: "eventView.js" }
+    );
+    return {
+        EventList: context.__EventList,
+        replaceEventRow: context.__replaceEventRowForTest,
+    };
 }
 
 
@@ -737,8 +830,14 @@ function testVisibleEventRange() {
     manager._inited = true;
     manager._calendar_server = {
         status: 2,
-        call_set_time_range(start, end, force) {
+        call_set_time_range(start, end, force, cancellable, callback) {
             observations.rangeCalls.push([start, end, force]);
+            observations.rangeCallbacks.push(callback);
+        },
+        call_set_time_range_finish(result) {
+            if (result && result.error) {
+                throw result.error;
+            }
         },
     };
 
@@ -751,20 +850,181 @@ function testVisibleEventRange() {
         42 * 86400 - 1,
         "six visible weeks must be fetched as one inclusive interval"
     );
+    observations.rangeCallbacks[0](manager._calendar_server, {});
 
     manager.set_visible_range(first, last, false);
     assert.equal(
         observations.rangeCalls.length,
         1,
-        "unchanged visible range must not trigger a duplicate fetch"
+        "unchanged successful range must not trigger a duplicate fetch"
     );
     manager.set_visible_range(first, last, true);
     assert.equal(
         observations.rangeCalls.length,
         2,
-        "forced refresh must re-query the current visible range"
+        "direct forced refresh must re-query the current visible range"
+    );
+    observations.rangeCallbacks[1](manager._calendar_server, {});
+
+    manager.queue_reload(true);
+    observations.runNextIdle();
+    assert.equal(
+        observations.rangeCalls.length,
+        3,
+        "queued forced refresh must re-query the authoritative visible range"
+    );
+    assert.equal(observations.rangeCalls[2][2], true);
+    observations.rangeCallbacks[2](manager._calendar_server, {});
+    manager.destroy();
+}
+
+function testVisibleEventRangeFailureRecovery() {
+    const { EventsManager, observations } = evaluateEventsManager();
+    const manager = new EventsManager({ getValue() { return true; } }, {});
+    manager._inited = true;
+    manager._calendar_server = {
+        status: 2,
+        call_set_time_range(start, end, force, cancellable, callback) {
+            observations.rangeCalls.push([start, end, force]);
+            observations.rangeCallbacks.push(callback);
+        },
+        call_set_time_range_finish(result) {
+            if (result && result.error) {
+                throw result.error;
+            }
+        },
+    };
+
+    const first = new Date(Date.UTC(2026, 7, 2, 12, 0, 0));
+    const last = new Date(Date.UTC(2026, 8, 12, 12, 0, 0));
+    manager.set_visible_range(first, last, false);
+    observations.rangeCallbacks[0](
+        manager._calendar_server,
+        { error: new Error("temporary range failure") }
+    );
+
+    manager.set_visible_range(first, last, false);
+    assert.equal(
+        observations.rangeCalls.length,
+        2,
+        "failed range must remain retryable without changing the grid"
+    );
+    observations.rangeCallbacks[1](manager._calendar_server, {});
+
+    const nextFirst = new Date(Date.UTC(2026, 8, 6, 12, 0, 0));
+    const nextLast = new Date(Date.UTC(2026, 9, 17, 12, 0, 0));
+    manager.set_visible_range(nextFirst, nextLast, false);
+    const staleCallback = observations.rangeCallbacks[2];
+    manager.set_visible_range(first, last, true);
+    const currentCallback = observations.rangeCallbacks[3];
+    currentCallback(manager._calendar_server, {});
+    staleCallback(
+        manager._calendar_server,
+        { error: new Error("stale range failure") }
+    );
+
+    manager.set_visible_range(first, last, false);
+    assert.equal(
+        observations.rangeCalls.length,
+        4,
+        "stale failure must not invalidate a newer successful range"
     );
     manager.destroy();
+}
+
+function testEventListCacheIdentity() {
+    const { EventList, replaceEventRow } = evaluateEventView();
+    class FakeRow {
+        constructor(event, selectedDate, params) {
+            this.event = event;
+            this.selected_date = selectedDate;
+            this.use_24h = params.use_24h;
+            this.actor = {};
+            this.is_current_or_next = false;
+            this.variationUpdates = 0;
+        }
+        connect() {}
+        update_variations() { this.variationUpdates += 1; }
+    }
+    replaceEventRow(FakeRow);
+
+    let use24h = true;
+    const view = Object.create(EventList.prototype);
+    const actors = [];
+    Object.assign(view, {
+        _destroyed: false,
+        selected_date: null,
+        _rows: [],
+        _current_event_cache_key: null,
+        _canLaunchCalendar: false,
+        desktop_settings: {
+            get_boolean(key) {
+                assert.equal(key, "clock-use-24h");
+                return use24h;
+            },
+        },
+        selected_date_label: {
+            set_label() {},
+            set_accessible_name() {},
+        },
+        no_events_box: { hide() {}, show() {} },
+        events_box: {
+            add_actor(actor) { actors.push(actor); },
+            get_children() { return []; },
+        },
+        _cancelScroll() {},
+        _cancelEmptyDelay() {},
+        _showEmptyState() {},
+        _queueScrollTo() {},
+        _clearRows() {
+            actors.length = 0;
+            this._rows = [];
+        },
+    });
+
+    function date(unix, label) {
+        return {
+            to_unix() { return unix; },
+            format() { return label; },
+        };
+    }
+    function snapshot(summary) {
+        return {
+            timestamp: 55,
+            get_event_list() {
+                return [{ summary, color: "#000000" }];
+            },
+        };
+    }
+
+    const monday = date(1789344000, "Monday");
+    const tuesday = date(1789430400, "Tuesday");
+    view.set_date(monday);
+    view.set_events(snapshot("Monday event"), false);
+    assert.equal(view._rows[0].event.summary, "Monday event");
+
+    view.set_date(tuesday);
+    view.set_events(snapshot("Tuesday event"), false);
+    assert.equal(
+        view._rows[0].event.summary,
+        "Tuesday event",
+        "same store revision on a new selected day must rebuild the agenda"
+    );
+
+    const tuesdayRow = view._rows[0];
+    use24h = false;
+    view.set_events(snapshot("Tuesday event"), false);
+    assert.notEqual(
+        view._rows[0],
+        tuesdayRow,
+        "12/24-hour preference is part of the rendered agenda identity"
+    );
+    assert.equal(view._rows[0].use_24h, false);
+
+    const stableRow = view._rows[0];
+    view.set_events(snapshot("Tuesday event"), false);
+    assert.equal(view._rows[0], stableRow);
+    assert.equal(stableRow.variationUpdates, 1);
 }
 
 
@@ -842,7 +1102,9 @@ testLocationMigration();
 testConstructorAtomicity();
 testModuleLoaderCompatibility();
 testCalendarLifecycle();
+testEventListCacheIdentity();
 testVisibleEventRange();
+testVisibleEventRangeFailureRecovery();
 testEventsManagerLifecycle();
 testEventsManagerReconnect();
 console.log("JavaScript runtime lifecycle tests passed.");
