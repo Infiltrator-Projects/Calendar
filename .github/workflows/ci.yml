@@ -255,13 +255,13 @@ jobs:
             root="$temp/${name}-root"
             rm -rf "$root"
             mkdir -p "$root/DEBIAN" "$root/usr/lib/x86_64-linux-gnu"
-            cat >"$root/DEBIAN/control" <<EOF
-Package: $name
-Version: $legacy_version
-Architecture: amd64
-Maintainer: Calendar migration test <noreply@the-infiltratr.com>
-Description: synthetic retired Calendar package for upgrade testing
-EOF
+            printf '%s\n' \
+              "Package: $name" \
+              "Version: $legacy_version" \
+              "Architecture: amd64" \
+              "Maintainer: Calendar migration test <noreply@the-infiltratr.com>" \
+              "Description: synthetic retired Calendar package for upgrade testing" \
+              >"$root/DEBIAN/control"
             printf 'legacy-owned-path\n' > \
               "$root/usr/lib/x86_64-linux-gnu/libcalendar-plus.so.0.0.0"
             dpkg-deb --build "$root" "$temp/${name}_${legacy_version}_amd64.deb" \
