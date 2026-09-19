@@ -138,9 +138,9 @@ done
 ARCH=$(dpkg-architecture -qDEB_HOST_ARCH)
 MULTIARCH=$(dpkg-architecture -qDEB_HOST_MULTIARCH)
 sed -i \
-    "1s/cinnamon-calendar (${VERSION})/cinnamon-calendar (${NATIVE_VERSION})/" \
+    "1s/infiltrator-calendar (${VERSION})/infiltrator-calendar (${NATIVE_VERSION})/" \
     "$SOURCE_DIR/debian/changelog"
-grep -q "^cinnamon-calendar (${NATIVE_VERSION}) " \
+grep -q "^infiltrator-calendar (${NATIVE_VERSION}) " \
     "$SOURCE_DIR/debian/changelog" || {
         echo "Unable to prepare the local native package version" >&2
         exit 1
@@ -156,19 +156,19 @@ printf 'Native optimisation: -O3 -march=native -mtune=native -flto=auto\n'
         dpkg-buildpackage -us -uc -b
 )
 
-BUILT_DEB="$WORK_DIR/cinnamon-calendar_${NATIVE_VERSION}_${ARCH}.deb"
+BUILT_DEB="$WORK_DIR/infiltrator-calendar_${NATIVE_VERSION}_${ARCH}.deb"
 [ -s "$BUILT_DEB" ] || {
     echo "Native Debian package was not produced" >&2
     exit 1
 }
-[ "$(dpkg-deb -f "$BUILT_DEB" Package)" = "cinnamon-calendar" ]
+[ "$(dpkg-deb -f "$BUILT_DEB" Package)" = "infiltrator-calendar" ]
 [ "$(dpkg-deb -f "$BUILT_DEB" Version)" = "$NATIVE_VERSION" ]
 [ "$(dpkg-deb -f "$BUILT_DEB" Architecture)" = "$ARCH" ]
 
 PACKAGE_ROOT="$WORK_DIR/package-root"
 dpkg-deb -x "$BUILT_DEB" "$PACKAGE_ROOT"
 grep -q '^Build mode: local hardware-native ' \
-    "$PACKAGE_ROOT/usr/share/doc/cinnamon-calendar/BUILD-INFO"
+    "$PACKAGE_ROOT/usr/share/doc/infiltrator-calendar/BUILD-INFO"
 test -f "$PACKAGE_ROOT/usr/lib/$MULTIARCH/libcalendar-plus.so.0.0.0"
 test -f \
     "$PACKAGE_ROOT/usr/lib/$MULTIARCH/girepository-1.0/CalendarPlus-1.0.typelib"
