@@ -6,6 +6,12 @@ This changelog records user-visible, compatibility, architecture and validation 
 
 No unreleased changes.
 
+## 1.0.26 - 2026-09-20
+
+- Restore the intended Calendar neon artwork from the previously staged canonical Git blob; the 1.0.15 repair had pinned a different image instead.
+- Make the restored artwork the single source for the Cinnamon applet, hicolor desktop identity, Linux Mint Software Manager alias and native About dialog.
+- Re-pin release validation to the restored artwork SHA-256 so the wrong image cannot silently return.
+
 ## 1.0.25 - 2026-09-20
 
 - Advance the exact shared dependency to published Infiltratr Common 1.19.10, whose Night palette now mirrors the complete Linux MBLINK reference face.

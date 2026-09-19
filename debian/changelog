@@ -1,3 +1,13 @@
+infiltrator-calendar (1.0.26) trixie; urgency=medium
+
+  * Restore the intended Calendar neon artwork from the previously staged
+    canonical Git blob that was never wired into the packaged asset.
+  * Use that one canonical image for Cinnamon, hicolor, Software Manager and
+    the native About dialog.
+  * Re-pin the icon SHA-256 regression guard to the restored artwork.
+
+ -- Shannon Smith <noreply@the-infiltratr.com>  Sun, 20 Sep 2026 02:10:00 +1000
+
 infiltrator-calendar (1.0.25) trixie; urgency=medium
 
   * Advance the pinned shared foundation to Infiltratr Common 1.19.10.

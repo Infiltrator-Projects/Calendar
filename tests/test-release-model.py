@@ -120,7 +120,7 @@ def main() -> None:
     assert "share/cinnamon/applets/$(UUID)/icon.png" in makefile
     package_validator = read("tools/validate-package-inputs.py")
     assert "validate_icon_asset()" in package_validator
-    assert '92cace99117653bad9a89c23073f8aeabc1058b5e0ec61902dc8441eb13fa9ec' in package_validator
+    assert '1caf02c45b166275ae98ca3736f64dec12324299096022ead52eafb185895bcd' in package_validator
     assert '.icon_name = "infiltratr-calendar"' in read("src/app/project-info.c")
     local_installer = read("tools/local-installer.sh.in")
     assert "share/cinnamon/applets/calendar-plus@the-infiltratr/icon.png" in local_installer
