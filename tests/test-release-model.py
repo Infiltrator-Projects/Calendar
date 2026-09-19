@@ -109,6 +109,7 @@ def main() -> None:
     assert metadata_icon == "infiltratr-calendar"
     assert (ROOT / "src/assets/infiltratr-calendar.png").is_file()
     assert "share/icons/hicolor/256x256/apps/$(ICON_NAME).png" in makefile
+    assert "share/app-install/icons/infiltrator-calendar.png" in makefile
     assert "share/cinnamon/applets/$(UUID)/icon.png" in makefile
     package_validator = read("tools/validate-package-inputs.py")
     assert "validate_icon_asset()" in package_validator
@@ -117,6 +118,7 @@ def main() -> None:
     local_installer = read("tools/local-installer.sh.in")
     assert "share/cinnamon/applets/calendar-plus@the-infiltratr/icon.png" in local_installer
     assert "share/icons/hicolor/256x256/apps/infiltratr-calendar.png" in local_installer
+    assert "share/app-install/icons/infiltrator-calendar.png" in local_installer
     stylesheet = read("src/cinnamon/stylesheet.css")
     assert "MB Corpo S Title WEB" in stylesheet
     assert '.calendar-plus-panel-clock {' in stylesheet
