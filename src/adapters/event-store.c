@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-// Copyright (C) 2016-2026 Shannon Smith
+// Copyright (C) 2000-2026 Shannon Smith
 
 /*
  * GObject lifetime facade for the platform-neutral event index.

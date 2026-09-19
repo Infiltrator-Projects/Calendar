@@ -4,7 +4,7 @@ Upstream-Contact: Shannon Smith <infiltratr@yandex.com>
 Source: https://github.com/Infiltrator-Projects/Calendar
 
 Files: .github/* .gitmodules CHANGELOG.md CONTRIBUTING.md LICENSE Makefile README.md SECURITY.md docs/* debian/* src/* tests/* tools/*
-Copyright: 2016-2026 Shannon Smith
+Copyright: 2000-2026 Shannon Smith
 License: GPL-3+
 
 Files: src/assets/fonts/mb-corpo-fonts.tar.xz

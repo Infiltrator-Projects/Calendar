@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 # Calendar ru translation.
-# Copyright (C) 2016-2026 Shannon Smith
+# Copyright (C) 2000-2026 Shannon Smith
 # This file is distributed under the same license as the Calendar package.
 # Initial translation prepared for Calendar, 2026.
 #
@@ -157,15 +157,15 @@ msgid "Coptic"
 msgstr "Коптский"
 
 msgid ""
-"Copyright © 2016–2026 Shannon Smith\n"
+"Copyright © 2000-2026 Shannon Smith\n"
 "\n"
 "This program comes with absolutely no warranty.\n"
 "See the GNU GPL v3+ License for details."
 msgstr ""
-"Copyright © 2016–2026 Shannon Smith\n"
+"Copyright © 2000-2026 Shannon Smith\n"
 "\n"
 "Эта программа предоставляется без каких-либо гарантий.\n"
-"Подробности см. в лицензии GNU GPL v3+.Copyright © 2016–2026 Shannon Smith\n"
+"Подробности см. в лицензии GNU GPL v3+.Copyright © 2000-2026 Shannon Smith\n"
 "\n"
 "This program comes with absolutely no warranty.\n"
 "See the GNU GPL v3+ License for details."

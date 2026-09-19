@@ -158,7 +158,7 @@ msgid "Coptic"
 msgstr ""
 
 msgid ""
-"Copyright © 2016–2026 Shannon Smith\n"
+"Copyright © 2000-2026 Shannon Smith\n"
 "\n"
 "This program comes with absolutely no warranty.\n"
 "See the GNU GPL v3+ License for details."

@@ -2,7 +2,7 @@
 
 # Calendar
 
-**Project copyright:** © 2000–2026 Shannon Smith
+**Project copyright:** © 2000-2026 Shannon Smith
 
 [![Build and test](https://github.com/Infiltrator-Projects/Calendar/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/Infiltrator-Projects/Calendar/actions/workflows/ci.yml?query=branch%3Amain)
 
@@ -177,6 +177,6 @@ Development is performed on `main`. Published tags and release assets are immuta
 
 ## Licence
 
-Copyright © 2016–2026 Shannon Smith.
+Copyright © 2000-2026 Shannon Smith.
 
 Calendar is GPL-3.0-or-later. The pinned Infiltratr Common dependency uses the same licence. The complete project licence is in `LICENSE`; Debian packaging provenance is recorded in `debian/copyright`.
