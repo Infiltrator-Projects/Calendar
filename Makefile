@@ -9,7 +9,7 @@ G_IR_COMPILER ?= g-ir-compiler
 PREFIX ?= /usr
 DESTDIR ?=
 
-VERSION := 1.0.16
+VERSION := 1.0.17
 UUID := calendar-plus@the-infiltratr
 APPLET_SRC_DIR := src/cinnamon
 ICON_NAME := infiltratr-calendar
@@ -561,15 +561,15 @@ install: all
 			"$(DESTDIR)$(PREFIX)/share/locale/$$language/LC_MESSAGES/$(UUID).mo"; \
 	done < $(I18N_DIR)/LINGUAS
 	install -Dm644 LICENSE \
-		"$(DESTDIR)$(PREFIX)/share/licenses/cinnamon-calendar/LICENSE"
-	install -d "$(DESTDIR)$(PREFIX)/share/doc/cinnamon-calendar"
+		"$(DESTDIR)$(PREFIX)/share/licenses/infiltrator-calendar/LICENSE"
+	install -d "$(DESTDIR)$(PREFIX)/share/doc/infiltrator-calendar"
 	install -m644 README.md \
-		"$(DESTDIR)$(PREFIX)/share/doc/cinnamon-calendar/"
+		"$(DESTDIR)$(PREFIX)/share/doc/infiltrator-calendar/"
 	printf 'Calendar source version: %s\nBuild mode: %s\nShared C library: Infiltratr Common %s\n' \
 		"$(VERSION)" "$(BUILD_DESCRIPTION)" "$(INFILTRATR_COMMON_VERSION)" \
 		> "$(BUILD_DIR)/BUILD-INFO"
 	install -m644 "$(BUILD_DIR)/BUILD-INFO" \
-		"$(DESTDIR)$(PREFIX)/share/doc/cinnamon-calendar/BUILD-INFO"
+		"$(DESTDIR)$(PREFIX)/share/doc/infiltrator-calendar/BUILD-INFO"
 
 package-source: common-check validate-settings-generated
 	@mkdir -p "$(DIST_DIR)"
@@ -579,6 +579,8 @@ package-source: common-check validate-settings-generated
 		tar -C "$(BUILD_DIR)/source-stage/Calendar-$(VERSION)" -xf -
 	@rm -rf \
 		"$(BUILD_DIR)/source-stage/Calendar-$(VERSION)/debian/.debhelper" \
+		"$(BUILD_DIR)/source-stage/Calendar-$(VERSION)/debian/infiltrator-calendar" \
+		"$(BUILD_DIR)/source-stage/Calendar-$(VERSION)/debian/infiltrator-calendar-dbgsym" \
 		"$(BUILD_DIR)/source-stage/Calendar-$(VERSION)/debian/cinnamon-calendar" \
 		"$(BUILD_DIR)/source-stage/Calendar-$(VERSION)/debian/cinnamon-calendar-dbgsym" \
 		"$(BUILD_DIR)/source-stage/Calendar-$(VERSION)/debian/calendar-plus" \
