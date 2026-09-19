@@ -7,7 +7,7 @@ Calendar combines a portable native chronology/event core, thin adapters and a C
 ## Engineering rules
 
 - Keep portable calendar, clock and event logic in `src/core/`.
-- Keep GLib, GVariant and platform integration in `src/adapters/`.
+- Keep GObject, GVariant, main-loop and desktop/platform integration in `src/adapters/`. The platform-neutral core may use GLib foundational data, string, container and civil-time facilities, but it must not acquire GObject/GVariant or Cinnamon presentation dependencies.
 - Keep project identity and the About helper in `src/app/`.
 - Keep Cinnamon runtime code and settings in `src/cinnamon/`.
 - Reuse the pinned Infiltratr Common API when it is the correct shared abstraction; improve Common first if Calendar has the stronger generic implementation.
