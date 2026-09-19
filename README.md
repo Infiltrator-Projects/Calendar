@@ -57,7 +57,7 @@ Cinnamon presentation / settings / panel lifecycle
                     ↓
          JavaScript/native boundary
                     ↓
-GLib / GVariant / CalendarServer adapters
+GObject / GVariant / CalendarServer / main-loop adapters
                     ↓
 portable Calendar domain contracts
                     ↓
@@ -75,7 +75,7 @@ The source tree is grouped by responsibility:
 ```text
 src/
 ├── core/       Portable chronology, clock, astronomy and event logic
-├── adapters/   GLib, GVariant and native integration
+├── adapters/   GObject, GVariant, main-loop and native integration
 ├── app/        Project identity, version API and About helper
 ├── cinnamon/   Cinnamon JavaScript runtime and settings
 ├── i18n/       Gettext sources and translations
