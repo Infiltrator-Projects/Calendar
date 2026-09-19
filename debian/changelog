@@ -1,3 +1,19 @@
+infiltrator-calendar (1.0.20) trixie; urgency=medium
+
+  * Repair agenda cache identity so date and 12/24-hour presentation changes
+    cannot reuse stale event rows.
+  * Force queued reloads through CalendarServer and allow failed same-range
+    requests to retry without stale asynchronous completions winning.
+  * Break and replace all retired calendar-plus and cinnamon-calendar package
+    versions, including the supplied 3.6.0 development package lineage.
+  * Make Gregorian ICU conversion, formatting and navigation consistently
+    proleptic before the 1582 cutover.
+  * Instrument the linked Infiltratr Common archive under ASan/UBSan and verify
+    the instrumentation in the sanitizer target.
+  * Add focused regressions for the forensic findings and legacy migration path.
+
+ -- Shannon Smith <noreply@the-infiltratr.com>  Sat, 19 Sep 2026 21:30:00 +1000
+
 infiltrator-calendar (1.0.19) trixie; urgency=medium
 
   * Install the project-owned Calendar icon under the package-name app-install
