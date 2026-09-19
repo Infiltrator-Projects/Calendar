@@ -16,6 +16,8 @@
 #include "event-source.h"
 #include "julian-day.h"
 
+#include <math.h>
+
 
 #define CALENDAR_FIELD_ANY G_MININT
 
@@ -263,6 +265,14 @@ test_clock_interfaces(void)
     calendar_plus_clock_engine_stop(engine);
     g_assert_false(calendar_plus_clock_engine_is_running(engine));
     g_assert_cmpuint(clock.cancellations, ==, 2);
+
+    config.mode = CALENDAR_PLUS_TIME_MODE_NUREMBERG_HOURS;
+    config.latitude = NAN;
+    config.longitude = 11.0767;
+    g_assert_false(calendar_plus_clock_engine_start(engine, &config));
+    g_assert_false(calendar_plus_clock_engine_is_running(engine));
+    g_assert_cmpuint(clock.schedules, ==, 3);
+
     calendar_plus_clock_engine_free(engine);
 }
 
@@ -604,6 +614,7 @@ test_nuremberg_clock_boundaries(void)
     g_autofree gchar *day = NULL;
     g_autofree gchar *night = NULL;
     g_autofree gchar *polar = NULL;
+    g_autofree gchar *invalid_location = NULL;
     guint delay;
 
     g_assert_cmpint(mode, ==, CALENDAR_PLUS_TIME_MODE_NUREMBERG_HOURS);
@@ -635,6 +646,13 @@ test_nuremberg_clock_boundaries(void)
     g_assert_cmpstr(polar, ==, "N/A NUR");
     g_assert_cmpuint(calendar_plus_time_delay_to_next_tick_at_location(
                          mode, summer_noon, 0, FALSE, 90.0, 0.0),
+                     ==, 3600000);
+
+    invalid_location = calendar_plus_format_time_at_location(
+        mode, summer_noon, 0, FALSE, FALSE, NAN, 11.0767);
+    g_assert_cmpstr(invalid_location, ==, "");
+    g_assert_cmpuint(calendar_plus_time_delay_to_next_tick_at_location(
+                         mode, summer_noon, 0, FALSE, NAN, 11.0767),
                      ==, 3600000);
 }
 
