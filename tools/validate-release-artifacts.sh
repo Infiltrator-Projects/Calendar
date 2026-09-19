@@ -48,6 +48,7 @@ test -x \
     "$TMP/generic/usr/share/cinnamon/applets/calendar-plus@the-infiltratr/settings.py"
 test -x "$TMP/generic/usr/libexec/calendar-plus-about"
 test -f "$TMP/generic/usr/share/icons/hicolor/256x256/apps/infiltratr-calendar.png"
+test -f "$TMP/generic/usr/share/app-install/icons/infiltrator-calendar.png"
 test ! -e "$TMP/generic/usr/share/fonts/truetype/calendar-plus"
 test -f \
     "$TMP/generic/usr/share/locale/en_AU/LC_MESSAGES/calendar-plus@the-infiltratr.mo"
