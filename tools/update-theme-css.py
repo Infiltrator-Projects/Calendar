@@ -205,7 +205,7 @@ def render_theme(data: dict) -> str:
     def mode_css(mode: str, p: dict[str, str]) -> str:
         root = f".calendar-plus-popup.calendar-plus-theme-{mode}"
         return f"""
-{root}},
+{root},
 {root} .calendar-main-box {{
     background-color: {p["background"]};
     color: {p["text"]};
