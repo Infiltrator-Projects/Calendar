@@ -1,6 +1,6 @@
 #!/bin/sh
 # SPDX-License-Identifier: GPL-3.0-or-later
-# Copyright (C) 2026 Shannon Smith
+# Copyright (C) 2016-2026 Shannon Smith
 
 # Qualify the exact source revision inside a real Cinnamon session. A probe
 # distinguishes a real pass from an unavailable host configuration so CI never
