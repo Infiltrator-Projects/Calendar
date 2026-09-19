@@ -2,7 +2,7 @@
 
 # Architecture
 
-Calendar separates portable chronology, clock, astronomy and event semantics from Cinnamon presentation, GLib/platform adapters and reusable Common mechanisms. That separation is a correctness boundary: desktop code should present completed Calendar-owned state rather than becoming a second implementation of chronology or timekeeping rules.
+Calendar separates platform-neutral chronology, clock, astronomy and event semantics from Cinnamon presentation, GObject/GVariant/main-loop adapters and reusable Common mechanisms. That separation is a correctness boundary: desktop code should present completed Calendar-owned state rather than becoming a second implementation of chronology or timekeeping rules.
 
 ## First-principles design
 
@@ -19,9 +19,9 @@ Cinnamon presentation / settings / panel lifecycle
                     ↓
          JavaScript/native boundary
                     ↓
-GLib / GVariant / CalendarServer adapters
+GObject / GVariant / CalendarServer / main-loop adapters
                     ↓
-portable Calendar domain contracts
+platform-neutral Calendar domain contracts
                     ↓
 chronology / clocks / astronomy / event semantics
 
@@ -47,13 +47,13 @@ src/
 
 ## Contracts and ownership
 
-The native core owns Calendar-specific chronology models, continuation rules, alternative clocks, astronomical calculations and event semantics. Those contracts remain independent of Cinnamon actors and presentation objects.
+The native core owns Calendar-specific chronology models, continuation rules, alternative clocks, astronomical calculations and event semantics. It deliberately uses GLib foundational facilities such as fixed-width types, strings, containers and civil-time helpers, but remains independent of GObject presentation facades, GVariant transport schemas, Cinnamon actors and desktop lifecycle APIs.
 
 Cinnamon owns panel integration, settings presentation, lifecycle and CalendarServer transport mechanics. ICU/CLDR owns the locale-sensitive calendar data that Calendar explicitly delegates to it. Common owns genuinely generic primitives whose contract is reusable across the software family.
 
 Ownership is visible at API boundaries. Caller-owned values, returned heap data, snapshots, compatibility ABI objects and adapter-owned platform state should not be inferred from accidental implementation detail.
 
-Cross-layer shortcuts require a documented reason. A toolkit or platform object should not leak into portable chronology merely because doing so is convenient.
+Cross-layer shortcuts require a documented reason. GObject/GVariant, toolkit or desktop-platform objects should not leak into platform-neutral chronology merely because doing so is convenient.
 
 ## Date and time representation
 
