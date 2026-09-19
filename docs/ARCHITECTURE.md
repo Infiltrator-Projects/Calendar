@@ -25,7 +25,7 @@ platform-neutral Calendar domain contracts
                     ↓
 chronology / clocks / astronomy / event semantics
 
-ICU / CLDR                    Infiltratr Common 1.19.6
+ICU / CLDR                    Infiltratr Common 1.19.8
      ↓                                  ↓
 locale/calendar authority     reusable checked arithmetic /
 where explicitly delegated    formatting / timing / loading /
@@ -49,7 +49,7 @@ src/
 
 The native core owns Calendar-specific chronology models, continuation rules, alternative clocks, astronomical calculations and event semantics. It deliberately uses GLib foundational facilities such as fixed-width types, strings, containers and civil-time helpers, but remains independent of GObject presentation facades, GVariant transport schemas, Cinnamon actors and desktop lifecycle APIs.
 
-Cinnamon owns panel integration, settings presentation, lifecycle and CalendarServer transport mechanics. ICU/CLDR owns the locale-sensitive calendar data that Calendar explicitly delegates to it. Common owns genuinely generic primitives whose contract is reusable across the software family.
+Cinnamon owns panel integration, settings presentation, lifecycle and CalendarServer transport mechanics. ICU/CLDR owns the locale-sensitive calendar data that Calendar explicitly delegates to it. Common owns genuinely generic primitives whose contract is reusable across the software family. Calendar's native About helper consumes Common's typography identity through `infiltratr/design.h`; Cinnamon and GTK settings surfaces project the pinned Common design JSON into toolkit-specific CSS under generated, regression-checked markers rather than carrying independent typography values.
 
 Ownership is visible at API boundaries. Caller-owned values, returned heap data, snapshots, compatibility ABI objects and adapter-owned platform state should not be inferred from accidental implementation detail.
 
@@ -111,7 +111,7 @@ UTF-8, locale and translation handling must not become hidden chronology policy.
 
 If Calendar contains a stronger implementation of a capability that is fundamentally generic, the correct direction is to improve Common so its generic contract preserves that correctness, performance and resilience. Once Common is at least as strong, Calendar should consume it and remove the duplicate implementation.
 
-Do not weaken specialised chronology merely to increase reuse. Equally, do not preserve a private generic helper indefinitely when its advantages can be incorporated into Common.
+Do not weaken specialised chronology merely to increase reuse. Equally, do not preserve a private generic helper indefinitely when its advantages can be incorporated into Common. Common 1.19.8 is therefore consumed wherever its public contract is genuinely stronger or more general: checked/saturating arithmetic, timing, strings, dynamic loading, project metadata and the shared design/typography contract. Calendar does not manufacture artificial callers for unrelated Common APIs such as POSIX hardware readers, byte order helpers or graphics surfaces.
 
 ## Native ABI and compatibility
 

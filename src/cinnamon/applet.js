@@ -41,19 +41,6 @@ function CP_(text) {
     return CalendarPlusGettext.gettext(text);
 }
 
-const FONT_UI_REGULAR =
-    'font-family: "MB Corpo S Title WEB";';
-const FONT_UI_BOLD =
-    'font-family: "MB Corpo S Title WEB"; font-weight: 700;';
-const FONT_PANEL_CLOCK =
-    'font-family: "MB Corpo S Title WEB"; font-weight: 400; font-size: 1.08em;';
-
-function _applyTypography(actor, style) {
-    if (actor && typeof actor.set_style === "function") {
-        actor.set_style(style);
-    }
-}
-
 function _addStyleClass(actor, styleClass) {
     if (actor && typeof actor.add_style_class_name === "function") {
         actor.add_style_class_name(styleClass);
@@ -108,7 +95,6 @@ class CalendarPlusApplet extends Applet.Applet {
         const label = new St.Label({
             style_class: "applet-label calendar-plus-panel-clock",
         });
-        _applyTypography(label, FONT_PANEL_CLOCK);
         label.reactive = true;
         label.track_hover = true;
         label.clutter_text.ellipsize = Pango.EllipsizeMode.NONE;
@@ -188,8 +174,6 @@ class CalendarPlusApplet extends Applet.Applet {
         this.menuManager = new PopupMenu.PopupMenuManager(this);
         this.menu = new Applet.AppletPopupMenu(this, this.orientation);
         _addStyleClass(this.menu.actor, "calendar-plus-popup");
-        _applyTypography(this.actor, FONT_UI_REGULAR);
-        _applyTypography(this.menu.actor, FONT_UI_REGULAR);
         this.menuManager.addMenu(this.menu);
         this.menu.setCustomStyleClass("calendar-background");
 
@@ -211,8 +195,6 @@ class CalendarPlusApplet extends Applet.Applet {
             this.settings,
             this.desktop_settings
         );
-        _applyTypography(this.event_list.actor, FONT_UI_REGULAR);
-        _applyTypography(this.event_list.selected_date_label, FONT_UI_BOLD);
         this.events_manager = new EventManager.EventsManager(
             this.settings,
             this.desktop_settings,
@@ -241,7 +223,6 @@ class CalendarPlusApplet extends Applet.Applet {
             style_class: "calendar-main-box",
             vertical: false,
         });
-        _applyTypography(body, FONT_UI_REGULAR);
         this._popupBody = body;
         this.menu.addActor(body);
 
@@ -280,9 +261,6 @@ class CalendarPlusApplet extends Applet.Applet {
         this._secondary_date = new St.Label({
             style_class: "calendar-today-date-label",
         });
-        _applyTypography(this._day, FONT_UI_BOLD);
-        _applyTypography(this._date, FONT_UI_REGULAR);
-        _applyTypography(this._secondary_date, FONT_UI_REGULAR);
         this._today_box.add_actor(this._day);
         this._today_box.add_actor(this._date);
         this._today_box.add_actor(this._secondary_date);

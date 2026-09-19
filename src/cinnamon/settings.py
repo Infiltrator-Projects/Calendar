@@ -29,15 +29,22 @@ UUID = "calendar-plus@the-infiltratr"
 CINNAMON_SETTINGS_DIR = Path("/usr/share/cinnamon/cinnamon-settings")
 XLET_SETTINGS = CINNAMON_SETTINGS_DIR / "xlet-settings.py"
 
+# BEGIN GENERATED COMMON TYPOGRAPHY TOKENS
 CSS = b"""
 * {
     font-family: "MB Corpo S Title WEB";
+    font-weight: 400;
 }
 headerbar .title {
     font-family: "MB Corpo A Title Cond WEB";
     font-weight: 400;
 }
+button, button label {
+    font-family: "MB Corpo S Title WEB";
+    font-weight: 700;
+}
 """
+# END GENERATED COMMON TYPOGRAPHY TOKENS
 
 
 def load_cinnamon_settings():

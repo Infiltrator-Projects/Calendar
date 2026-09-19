@@ -1,3 +1,14 @@
+infiltrator-calendar (1.0.23) trixie; urgency=medium
+
+  * Advance the exact shared dependency to Infiltratr Common 1.19.8.
+  * Consume Common's native typography contract in the GTK About helper.
+  * Remove redundant inline Cinnamon font overrides and keep Cinnamon/settings
+    typography generated from the pinned Common design contract.
+  * Validate bundled MB Corpo archive/file provenance against Common.
+  * Extend release regressions for the strengthened Common ownership boundary.
+
+ -- Shannon Smith <noreply@the-infiltratr.com>  Sat, 19 Sep 2026 23:55:00 +1000
+
 infiltrator-calendar (1.0.22) trixie; urgency=medium
 
   * Advance the exact shared dependency to Infiltratr Common 1.19.6.

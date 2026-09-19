@@ -2,6 +2,7 @@
 // Copyright (C) 2016-2026 Shannon Smith
 
 #include <glib.h>
+#include <infiltratr/design.h>
 #include <infiltratr/dynlib.h>
 #include <libintl.h>
 #include <locale.h>
@@ -136,17 +137,30 @@ load_gdk(void)
 static void
 apply_typography(void)
 {
-    static const gchar css[] =
-        "* { font-family: \"MB Corpo S Title WEB\"; font-weight: 400; }"
-        ".title, .heading { font-family: \"MB Corpo A Title Cond WEB\"; "
-        "font-weight: 400; }"
-        "button, button label { font-family: \"MB Corpo S Title WEB\"; "
-        "font-weight: 700; }";
+    const InfiltratrTypography *typography = infiltratr_typography();
+    g_autofree gchar *css = NULL;
     GtkCssProvider *provider;
     GdkScreen *screen;
 
-    if (!load_gdk())
+    if (typography == NULL || !load_gdk())
         return;
+
+    css = g_strdup_printf(
+        "* { font-family: \"%s\"; font-weight: %u; }"
+        ".title, .heading { font-family: \"%s\"; font-weight: %u; }"
+        "button, button label { font-family: \"%s\"; font-weight: %u; }",
+        typography->ui_family,
+        (unsigned int)typography->ui_regular_weight,
+        typography->brand_family,
+        (unsigned int)typography->brand_weight,
+        typography->ui_family,
+        (unsigned int)typography->ui_bold_weight);
+    if (css == NULL)
+    {
+        infiltratr_dynlib_close(&gdk_module);
+        gdk_api = (Gdk3Api){ 0 };
+        return;
+    }
 
     screen = gdk_api.screen_get_default();
     provider = gtk_api.css_provider_new();

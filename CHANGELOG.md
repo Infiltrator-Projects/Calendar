@@ -6,6 +6,16 @@ This changelog records user-visible, compatibility, architecture and validation 
 
 No unreleased changes.
 
+## 1.0.23 - 2026-09-19
+
+- Advance the exact shared dependency to the published Infiltratr Common 1.19.8 release.
+- Consume Common's native typography contract in the GTK About helper instead of hardcoding MB Corpo family names and role weights.
+- Remove redundant inline Cinnamon typography styles so applet presentation has one generated stylesheet projection of the pinned Common design contract.
+- Extend the existing Common design generator to keep both Cinnamon CSS and the separate GTK settings host typography aligned with Common.
+- Validate Calendar's bundled MB Corpo archive, filenames and extracted file hashes against Common's immutable typography provenance rather than maintaining an unchecked parallel truth.
+- Extend release-model and settings regressions so Common design ownership, public-header coverage and the absence of private typography overrides cannot silently drift.
+- Preserve Calendar-owned chronology, astronomy, event semantics, Cinnamon selectors and ICU version-probing policy instead of forcing unrelated Common APIs into product code.
+
 ## 1.0.22 - 2026-09-19
 
 - Advance the exact shared dependency to Infiltratr Common 1.19.6, retaining the 1.19.5 build-profile and dynamic-binding consolidation while consuming the unified System/Day/Night appearance contract.

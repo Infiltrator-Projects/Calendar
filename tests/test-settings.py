@@ -24,6 +24,7 @@ def main() -> None:
     event_manager_source = (APPLET_DIR / "eventManager.js").read_text(encoding="utf-8")
     runtime_source = (APPLET_DIR / "runtimeSupport.js").read_text(encoding="utf-8")
     panel_clock_source = (APPLET_DIR / "panelClock.js").read_text(encoding="utf-8")
+    settings_source = (APPLET_DIR / "settings.py").read_text(encoding="utf-8")
 
     clock_modes = schema["clock-mode"]["options"]
     expected_modes = [
@@ -82,6 +83,26 @@ def main() -> None:
     assert common_design["theme"]["modes"] == ["system", "day", "night"]
     assert common_design["theme"]["default_mode"] == "system"
     assert common_design["theme"]["system_policy"] == "platform_authoritative"
+
+    common_typography = common_design["typography"]
+    ui_family = common_typography["ui_family"]
+    brand_family = common_typography["brand_family"]
+    ui_regular_weight = common_typography["ui_regular_weight"]
+    ui_bold_weight = common_typography["ui_bold_weight"]
+    brand_weight = common_typography["brand_weight"]
+
+    assert f'font-family: "{ui_family}";' in stylesheet
+    assert f"font-weight: {ui_regular_weight};" in stylesheet
+    assert f"font-weight: {ui_bold_weight};" in stylesheet
+    assert f'font-family: "{ui_family}";' in settings_source
+    assert f'font-family: "{brand_family}";' in settings_source
+    assert f"font-weight: {brand_weight};" in settings_source
+    assert "BEGIN GENERATED COMMON TYPOGRAPHY TOKENS" in stylesheet
+    assert "BEGIN GENERATED COMMON TYPOGRAPHY TOKENS" in settings_source
+    assert "FONT_UI_REGULAR" not in applet_source
+    assert "FONT_UI_BOLD" not in applet_source
+    assert "FONT_PANEL_CLOCK" not in applet_source
+    assert "_applyTypography(" not in applet_source
 
     theme_css = stylesheet.split("Theme policy", 1)[1]
     canonical_colours = {

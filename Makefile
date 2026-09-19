@@ -9,7 +9,7 @@ G_IR_COMPILER ?= g-ir-compiler
 PREFIX ?= /usr
 DESTDIR ?=
 
-VERSION := 1.0.22
+VERSION := 1.0.23
 UUID := calendar-plus@the-infiltratr
 APPLET_SRC_DIR := src/cinnamon
 ICON_NAME := infiltratr-calendar
@@ -18,6 +18,7 @@ I18N_DIR := src/i18n
 BUILD_DIR := build
 DIST_DIR := dist
 FONT_ARCHIVE := src/assets/fonts/mb-corpo-fonts.tar.xz
+# Mirrored from pinned Common typography provenance. Release validation rejects drift.
 FONT_ARCHIVE_SHA256 := bdb6063f838a7fab22b4d6b412170640c69511df53aa3dfa9a4ea8431c9d8274
 FONT_BUILD_DIR := $(BUILD_DIR)/fonts
 FONT_A_COND_REGULAR := $(FONT_BUILD_DIR)/mb_corpo_a_cond_regular.ttf
@@ -26,8 +27,8 @@ FONT_S_REGULAR := $(FONT_BUILD_DIR)/mb_corpo_s_regular.ttf
 FONT_FILES := $(FONT_A_COND_REGULAR) $(FONT_S_BOLD) $(FONT_S_REGULAR)
 INFILTRATR_COMMON_DIR := src/vendor/infiltratr-common
 INFILTRATR_COMMON_URL := https://github.com/Infiltrator-Projects/Infiltrator-Libraries.git
-INFILTRATR_COMMON_COMMIT := a0e26896cc2a5674a138b29f009a7b30f0d636c6
-INFILTRATR_COMMON_VERSION := 1.19.6
+INFILTRATR_COMMON_COMMIT := 3bfcb6f76ca44ac33bc2fee54fb114caa0eca5f9
+INFILTRATR_COMMON_VERSION := 1.19.8
 LIB_BASENAME := calendar-plus
 LIB_SONAME := lib$(LIB_BASENAME).so.0
 LIB_REALNAME := lib$(LIB_BASENAME).so.0.0.0
@@ -108,6 +109,7 @@ INFILTRATR_COMMON_HEADERS := \
 	$(INFILTRATR_COMMON_DIR)/include/infiltratr/arithmetic.h \
 	$(INFILTRATR_COMMON_DIR)/include/infiltratr/timing.h \
 	$(INFILTRATR_COMMON_DIR)/include/infiltratr/dynlib.h \
+	$(INFILTRATR_COMMON_DIR)/include/infiltratr/design.h \
 	$(INFILTRATR_COMMON_DIR)/include/infiltratr/utf8.h
 # The Common sub-make runs from src/vendor/infiltratr-common. Keep its BUILD_DIR
 # textual value relative and whitespace-free so GNU make never has to parse the

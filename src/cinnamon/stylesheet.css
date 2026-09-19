@@ -6,11 +6,17 @@
  * rules would alter unrelated applets.
  */
 
+/* BEGIN GENERATED COMMON TYPOGRAPHY TOKENS */
+/*
+ * Generated from Infiltratr Common. Do not hand-edit typography values here.
+ * Calendar deliberately owns only Cinnamon selectors/widget mechanics.
+ */
 .calendar-plus-applet,
 .calendar-plus-applet *,
 .calendar-plus-popup,
 .calendar-plus-popup * {
     font-family: "MB Corpo S Title WEB";
+    font-weight: 400;
 }
 
 .calendar-plus-panel-clock {
@@ -27,6 +33,7 @@
     font-family: "MB Corpo S Title WEB";
     font-weight: 700;
 }
+/* END GENERATED COMMON TYPOGRAPHY TOKENS */
 
 /*
  * Theme policy

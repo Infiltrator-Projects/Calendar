@@ -109,7 +109,7 @@ def main() -> None:
     assert "Linux Mint Project and Cinnamon contributors" in copyright_file
     assert "CHANGELOG.md CONTRIBUTING.md LICENSE Makefile README.md SECURITY.md docs/*" in copyright_file
     assert "3.4.0" not in copyright_file
-    assert "MB Corpo S Title WEB" in read("src/cinnamon/applet.js")
+    assert "MB Corpo S Title WEB" not in read("src/cinnamon/applet.js")
     assert "calendar-plus-popup" in read("src/cinnamon/applet.js")
     assert "external-configuration-app" in read("src/cinnamon/metadata.json")
     metadata_icon = json.loads(read("src/cinnamon/metadata.json"))["icon"]
@@ -136,12 +136,16 @@ def main() -> None:
     assert "font-weight: 400;" in stylesheet
     assert "font-size: 1.08em;" in stylesheet
     applet = read("src/cinnamon/applet.js")
-    assert "FONT_PANEL_CLOCK" in applet
-    assert 'font-family: "MB Corpo S Title WEB"; font-weight: 400; font-size: 1.08em;' in applet
-    assert "MB Corpo S Title WEB" in read("src/cinnamon/settings.py")
-    assert "xlet-settings.py" in read("src/cinnamon/settings.py")
-    assert "MB Corpo S Title WEB" in read("src/app/about-dialog.c")
-    assert "MB Corpo A Title Cond WEB" in read("src/app/about-dialog.c")
+    assert "FONT_PANEL_CLOCK" not in applet
+    assert "_applyTypography(" not in applet
+    settings_source = read("src/cinnamon/settings.py")
+    assert "BEGIN GENERATED COMMON TYPOGRAPHY TOKENS" in settings_source
+    assert "xlet-settings.py" in settings_source
+    about_source = read("src/app/about-dialog.c")
+    assert "#include <infiltratr/design.h>" in about_source
+    assert "infiltratr_typography()" in about_source
+    assert "MB Corpo S Title WEB" not in about_source
+    assert "MB Corpo A Title Cond WEB" not in about_source
     assert "fontconfig," not in control
     assert "Breaks: calendar-plus, cinnamon-calendar" in control
     assert "Replaces: calendar-plus, cinnamon-calendar" in control
@@ -151,9 +155,9 @@ def main() -> None:
     assert "src/vendor/infiltratr-common" in makefile
     assert (
         "INFILTRATR_COMMON_COMMIT := "
-        "a0e26896cc2a5674a138b29f009a7b30f0d636c6"
+        "3bfcb6f76ca44ac33bc2fee54fb114caa0eca5f9"
     ) in makefile
-    assert "INFILTRATR_COMMON_VERSION := 1.19.6" in makefile
+    assert "INFILTRATR_COMMON_VERSION := 1.19.8" in makefile
     assert "normal `make` automatically retrieves" in read("README.md")
     assert "common-bootstrap: common-check" in makefile
     assert "common-test: $(INFILTRATR_COMMON_ARCHIVE)" in makefile
@@ -375,11 +379,11 @@ def main() -> None:
     # Validate Calendar's actual Common calls against Common's complete public
     # header surface. Do not duplicate Common's private source membership here.
     common = ROOT / "src/vendor/infiltratr-common"
-    assert (common / "VERSION").read_text(encoding="utf-8").strip() == "1.19.6"
+    assert (common / "VERSION").read_text(encoding="utf-8").strip() == "1.19.8"
     assert (common / "LICENSE").is_file()
     common_include = common / "include/infiltratr"
     for public_header in (
-        "core.h", "arithmetic.h", "timing.h", "dynlib.h", "utf8.h"
+        "core.h", "arithmetic.h", "timing.h", "dynlib.h", "design.h", "utf8.h"
     ):
         assert (common_include / public_header).is_file()
     public_api = "\n".join(
@@ -403,6 +407,24 @@ def main() -> None:
         f"{missing_common_api}"
     )
     assert "calendar_plus_project_info" in read("src/app/project-info.c")
+
+    common_design = json.loads(
+        read("src/vendor/infiltratr-common/design/infiltrator-design-v1.json")
+    )
+    typography = common_design["typography"]
+    typography_assets = typography["assets"]
+    assert f'FONT_ARCHIVE_SHA256 := {typography_assets["archive_sha256"]}' in makefile
+    for role, filename in typography["font_files"].items():
+        assert filename in makefile, f"Calendar package does not use Common font file {role}"
+    for role, digest in typography_assets["file_sha256"].items():
+        assert digest in makefile, f"Calendar package does not verify Common font hash {role}"
+    assert "infiltratr_typography()" in read("src/app/about-dialog.c")
+    assert "BEGIN GENERATED COMMON TYPOGRAPHY TOKENS" in read(
+        "src/cinnamon/stylesheet.css"
+    )
+    assert "BEGIN GENERATED COMMON TYPOGRAPHY TOKENS" in read(
+        "src/cinnamon/settings.py"
+    )
 
     # Keep generic mechanics in Common and one Calendar-owned shim/helper layer.
     assert "src/core/calendar-helpers.c" in makefile
