@@ -172,13 +172,13 @@ def main() -> None:
     assert "lintian --fail-on error" in release
     assert "local-source.zip" not in release
     assert 'dist/calendar_${VERSION}_${ARCH}.deb' in release
-    assert 'DEB="../cinnamon-calendar_${VERSION}_${ARCH}.deb"' in release
+    assert 'DEB="../infiltrator-calendar_${VERSION}_${ARCH}.deb"' in release
     assert 'dist/calendar-${VERSION}-local-folder.run' in release
     assert 'DEB="$DIST/calendar_${VERSION}_${ARCH}.deb"' in artifact_validator
     assert 'RUN="$DIST/calendar-${VERSION}-local-folder.run"' in artifact_validator
     assert 'calendar-${VERSION}-local-folder.run' in native_installer_smoke
     assert 'calendar_${NATIVE_VERSION}_${ARCH}.deb' in native_installer_smoke
-    assert '"$(dpkg-deb -f "$DEB" Package)" = "cinnamon-calendar"' in native_installer_smoke
+    assert '"$(dpkg-deb -f "$DEB" Package)" = "infiltrator-calendar"' in native_installer_smoke
     assert 'deb="dist/calendar_${version}_amd64.deb"' in publisher
     assert 'installer="dist/calendar-${version}-local-folder.run"' in publisher
     assert "exactly two files" in artifact_validator
@@ -417,11 +417,11 @@ def main() -> None:
     for icu_major in range(72, 81):
         assert f"libicu{icu_major}" in control
     assert "libgtk-3-0," in control
-    assert "Source: cinnamon-calendar" in control
-    assert "Package: cinnamon-calendar" in control
+    assert "Source: infiltrator-calendar" in control
+    assert "Package: infiltrator-calendar" in control
     assert "Package: calendar-plus" not in control
-    assert "Breaks: calendar-plus (<< 1.0.16)" in control
-    assert "Replaces: calendar-plus (<< 1.0.16)" in control
+    assert "Breaks: calendar-plus (<< 1.0.17), cinnamon-calendar (<< 1.0.17)" in control
+    assert "Replaces: calendar-plus (<< 1.0.17), cinnamon-calendar (<< 1.0.17)" in control
     assert "$(PKG_CONFIG) --libs gobject-2.0)" in makefile
     assert "$(PKG_CONFIG) --libs glib-2.0)" in makefile
     assert "-DU_DISABLE_RENAMING=1" in makefile
