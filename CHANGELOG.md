@@ -6,6 +6,12 @@ This changelog records user-visible, compatibility, architecture and validation 
 
 No unreleased changes.
 
+## 1.0.19 - 2026-09-19
+
+- Make the Calendar Debian package itself install the `infiltrator-calendar` Linux Mint Software Manager icon alias.
+- Remove any architectural dependency on a shared app-install icon helper; Calendar remains the sole owner and publisher of its artwork.
+- Extend release-model, generic-package and local-native-package validation so the package cannot ship without its Software Manager icon alias.
+
 ## 1.0.18 - 2026-09-19
 
 - Align the canonical documentation structure with the implemented architecture, including dedicated model and portability contracts.
