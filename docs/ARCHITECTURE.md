@@ -37,7 +37,7 @@ The source tree reflects those responsibilities:
 ```text
 src/
 ├── core/       Portable chronology, clock, astronomy and event logic
-├── adapters/   GLib, GVariant and native integration
+├── adapters/   GObject, GVariant, main-loop and native integration
 ├── app/        Project identity, version API and About helper
 ├── cinnamon/   Cinnamon JavaScript runtime and settings
 ├── i18n/       Gettext sources and translations
