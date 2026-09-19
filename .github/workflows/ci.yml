@@ -238,3 +238,53 @@ jobs:
           apt-get purge -y infiltrator-calendar
           ! dpkg-query -W infiltrator-calendar >/dev/null 2>&1
           apt-get check
+      - name: Migrate retired package identities
+        shell: bash
+        run: |
+          set -euo pipefail
+          version="$(sed -n 's/^VERSION := //p' Makefile)"
+          deb="../infiltrator-calendar_${version}_amd64.deb"
+          test -s "$deb"
+
+          temp="$(mktemp -d)"
+          trap 'rm -rf "$temp"' EXIT
+
+          build_legacy_package() {
+            name="$1"
+            legacy_version="$2"
+            root="$temp/${name}-root"
+            rm -rf "$root"
+            mkdir -p "$root/DEBIAN" "$root/usr/lib/x86_64-linux-gnu"
+            cat >"$root/DEBIAN/control" <<EOF
+Package: $name
+Version: $legacy_version
+Architecture: amd64
+Maintainer: Calendar migration test <noreply@the-infiltratr.com>
+Description: synthetic retired Calendar package for upgrade testing
+EOF
+            printf 'legacy-owned-path\n' > \
+              "$root/usr/lib/x86_64-linux-gnu/libcalendar-plus.so.0.0.0"
+            dpkg-deb --build "$root" "$temp/${name}_${legacy_version}_amd64.deb" \
+              >/dev/null
+          }
+
+          for legacy in "calendar-plus 3.6.0" "cinnamon-calendar 1.0.16"; do
+            set -- $legacy
+            name="$1"
+            legacy_version="$2"
+            build_legacy_package "$name" "$legacy_version"
+            legacy_deb="$temp/${name}_${legacy_version}_amd64.deb"
+
+            dpkg -i "$legacy_deb"
+            test "$(dpkg-query -W -f='${Status}' "$name")" = "install ok installed"
+
+            apt-get install -y --no-install-recommends "$deb"
+            test "$(dpkg-query -W -f='${Status}' infiltrator-calendar)" = \
+              "install ok installed"
+            ! dpkg-query -W -f='${Status}' "$name" 2>/dev/null | \
+              grep -qx "install ok installed"
+
+            apt-get purge -y infiltrator-calendar
+            dpkg --purge "$name" >/dev/null 2>&1 || true
+          done
+          apt-get check
