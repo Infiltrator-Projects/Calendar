@@ -22,7 +22,7 @@ ARCH=$(dpkg-architecture -qDEB_HOST_ARCH)
     exit 1
 }
 dpkg-source -b .
-DSC="../cinnamon-calendar_${VERSION}.dsc"
+DSC="../infiltrator-calendar_${VERSION}.dsc"
 if [ ! -s "$DSC" ]; then
     echo "Debian source package was not produced" >&2
     exit 1
@@ -30,7 +30,7 @@ fi
 
 CALENDAR_PLUS_BUILD_MODE=generic dpkg-buildpackage -us -uc -b
 
-DEB="../cinnamon-calendar_${VERSION}_${ARCH}.deb"
+DEB="../infiltrator-calendar_${VERSION}_${ARCH}.deb"
 if [ ! -s "$DEB" ]; then
     echo "Debian package was not produced" >&2
     exit 1
