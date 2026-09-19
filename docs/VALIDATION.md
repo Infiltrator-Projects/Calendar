@@ -22,6 +22,8 @@ Real Cinnamon-session behaviour, location-dependent astronomical presentation an
 
 Manual evidence supplements automation and must be described at the level actually observed. A simulator, fixture or mocked provider must not be described as physical-device proof.
 
+Exact-source Cinnamon-session and location-dependent observations belong in [QUALIFICATION.md](QUALIFICATION.md), which records environment-dependent evidence without turning a skipped or unavailable live environment into a pass.
+
 ## Release criterion
 
 The exact revision intended for release must pass the required automated gates. Release assets must be derived from that revision, and documentation must not advertise known-failing or merely planned behaviour as supported.
