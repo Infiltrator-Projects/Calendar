@@ -3,13 +3,9 @@ Upstream-Name: Calendar
 Upstream-Contact: Shannon Smith <infiltratr@yandex.com>
 Source: https://github.com/Infiltrator-Projects/Calendar
 
-Files: .github/* .gitmodules LICENSE Makefile README.md debian/* src/* tests/* tools/*
+Files: .github/* .gitmodules CHANGELOG.md CONTRIBUTING.md LICENSE Makefile README.md SECURITY.md docs/* debian/* src/* tests/* tools/*
 Copyright: 2026 Shannon Smith
 License: GPL-3+
-Comment: Calendar releases from 3.4.0 onward use an independently
- implemented runtime against Cinnamon public interfaces. Releases through 3.3.0
- retain their original source notices and copyright metadata.
-
 Files: src/cinnamon/settings-schema.json
 Copyright: Linux Mint Project and Cinnamon contributors
            2026 Shannon Smith
