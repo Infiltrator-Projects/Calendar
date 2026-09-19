@@ -1,25 +1,55 @@
-# Contributing
+<!-- SPDX-License-Identifier: GPL-3.0-or-later -->
 
-## Engineering standard
+# Contributing to Calendar
 
-Changes to Calendar should preserve its first-principles ownership model. Start by identifying which layer owns the behaviour and what evidence will demonstrate the change.
+Calendar combines a portable native chronology/event core, thin adapters and a Cinnamon JavaScript frontend. Contributions must preserve those boundaries, keep behaviour verifiable and avoid unnecessary repository complexity.
 
-## Before coding
+## Engineering rules
 
-1. Read README.md, docs/ARCHITECTURE.md and docs/DESIGN.md.
-2. Search for an existing implementation before creating a parallel path.
-3. Keep generic shared behaviour in the appropriate first-party shared project rather than copying it.
-4. Add or update regression coverage for the changed contract.
-5. Update roadmap, validation or specialist documentation when support boundaries move.
+- Keep portable calendar, clock and event logic in `src/core/`.
+- Keep GLib, GVariant and platform integration in `src/adapters/`.
+- Keep project identity and the About helper in `src/app/`.
+- Keep Cinnamon runtime code and settings in `src/cinnamon/`.
+- Reuse the pinned Infiltratr Common API when it is the correct shared abstraction; improve Common first if Calendar has the stronger generic implementation.
+- Treat unsupported or ambiguous behaviour as unavailable rather than inventing results.
+- Preserve the published runtime ABI unless a deliberate ABI change is part of the work.
+- Add deterministic regression coverage for behavioural, parser, lifecycle, timing, ABI or packaging changes.
+- Do not add parallel documentation where the canonical documents already own the subject.
 
 ## Language and dependency policy
 
-Prefer C/C++ for first-party native code where suitable. Use platform-native language only at a platform boundary that genuinely requires it. External dependencies must have a clear contract and must not replace project-owned semantics merely for convenience.
+C and C++ are preferred for project-owned native code; neither is preferred over the other merely by language. Cinnamon integration necessarily uses its JavaScript platform boundary. ICU/CLDR and Cinnamon are used where their documented contracts are authoritative; they do not replace Calendar's ownership of chronology, continuation rules or project-specific behaviour.
 
-## Verification
+## Build and validation
 
-Run the repository's normal build and test path before publishing a change and ensure the relevant CI workflows remain green. Warnings, sanitizer failures, packaging failures and deliberately skipped mandatory evidence are not successful validation.
+Clone recursively because Calendar pins Infiltratr Common:
 
-## Repository policy
+```bash
+git clone --recurse-submodules https://github.com/Infiltrator-Projects/Calendar.git
+cd Calendar
+make check
+```
 
-main is the working branch. Published tags and releases are immutable source identities. Changes should be small enough that their ownership, tests and documentation can be reviewed together.
+For a release-equivalent local pass:
+
+```bash
+make release-check
+```
+
+Changes should remain warning-clean and preserve architecture, ABI, translation, runtime-integrity, packaging and reproducibility gates. Upstream Cinnamon drift is reviewed for compatibility rather than copied mechanically.
+
+## Documentation and comments
+
+Read `docs/README.md` for document authority. Architecture belongs in `docs/ARCHITECTURE.md`; rationale in `docs/DESIGN.md`; durable choices in `docs/DECISIONS.md`; direction in `docs/ROADMAP.md`; evidence in `docs/VALIDATION.md`.
+
+Comments should capture information expensive to reconstruct: units, validity ranges, historical/astronomical authority, invariants, ownership, ABI constraints and deliberate deviations. Do not narrate obvious syntax.
+
+## Repository discipline
+
+`main` is the authoritative development and release branch. Keep commits focused. Published tags/releases are immutable identities.
+
+Participation standards remain in [CODE_OF_CONDUCT.md](.github/CODE_OF_CONDUCT.md).
+
+## Licence
+
+Contributions are accepted under GPL-3.0-or-later unless explicitly agreed otherwise beforehand.
