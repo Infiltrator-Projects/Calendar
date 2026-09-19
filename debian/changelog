@@ -1,3 +1,19 @@
+infiltrator-calendar (1.0.18) trixie; urgency=medium
+
+  * Harden location-dependent clock handling so invalid astronomical
+    coordinates remain explicitly unavailable instead of falling back to a
+    fabricated Greenwich location.
+  * Add regression coverage for invalid coordinates across the C clock engine,
+    native time providers and Cinnamon panel presentation.
+  * Consolidate the Calendar engineering documentation, qualification ledger,
+    chronology/time model ranges and portability contracts.
+  * Include the canonical documentation set in source packaging and strengthen
+    release-model, documentation and repository-integrity guards.
+  * Add Calendar-specific issue forms and align maintained project copyright
+    headers with the 2016-2026 project span.
+
+ -- Shannon Smith <noreply@the-infiltratr.com>  Sat, 19 Sep 2026 17:42:00 +1000
+
 infiltrator-calendar (1.0.17) trixie; urgency=medium
 
   * Move the Debian source and binary package into the collision-resistant
