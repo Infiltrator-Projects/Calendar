@@ -4,6 +4,10 @@ This changelog records user-visible, compatibility, architecture and validation 
 
 ## Unreleased
 
+- Align the canonical documentation structure with the implemented architecture, including dedicated model and portability contracts.
+- Preserve invalid configured astronomical coordinates as unavailable instead of silently normalising non-finite values to Greenwich.
+- Include the canonical documentation set in local source payloads and Debian copyright coverage, and update release-model regression checks accordingly.
+
 - Documentation baseline aligned with the Infiltrator project family.
 
 ## Recording policy
