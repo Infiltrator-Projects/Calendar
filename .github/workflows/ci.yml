@@ -64,7 +64,7 @@ jobs:
           sudo apt-get install -y \
             build-essential clang gettext gobject-introspection gjs \
             gir1.2-glib-2.0-dev libglib2.0-dev libicu-dev nodejs \
-            pkg-config python3 ripgrep
+            pkg-config python3 ripgrep xz-utils
       - name: Verify local native dependencies
         if: runner.environment == 'self-hosted'
         shell: bash
@@ -197,7 +197,7 @@ jobs:
           sudo apt-get install -y \
             build-essential debhelper devscripts gettext gobject-introspection gjs \
             gir1.2-glib-2.0-dev libglib2.0-dev libicu-dev nodejs \
-            pkg-config python3 ripgrep \
+            pkg-config python3 ripgrep xz-utils \
             lintian shellcheck
       - name: Run complete release gates
         run: make release-check
@@ -222,7 +222,7 @@ jobs:
           apt-get install -y --no-install-recommends \
             build-essential debhelper devscripts gettext gobject-introspection gjs \
             gir1.2-glib-2.0-dev libglib2.0-dev libicu-dev nodejs \
-            pkg-config python3 ripgrep
+            pkg-config python3 ripgrep xz-utils
       - name: Build, install, execute and purge generic package
         shell: bash
         run: |

@@ -6,7 +6,7 @@
 
 Calendar is a native Cinnamon panel clock and calendar with alternative clock modes, 30 selectable calendar systems and CalendarServer integration. Its installed Linux desktop identity, Cinnamon Applets manager entry, Linux Mint Software Manager package-name alias and native About dialog all use the project-owned Calendar icon. The Calendar package owns and installs that artwork itself; no shared icon-helper package is required.
 
-**Stable release:** 1.0.20  
+**Stable release:** 1.0.21  
 **Runtime:** Cinnamon 6.4, 6.6 and 6.7  
 **Build-tested bases:** Debian 13, Linux Mint 22 and Ubuntu 24.04  
 **Shared foundation:** pinned Infiltratr Common 1.19.3
@@ -29,7 +29,7 @@ Primary and optional secondary dates include Gregorian, Julian, ISO week, Hebrew
 
 The applet has its own seconds preference, can coexist with Cinnamon's stock Calendar applet and installs no project-owned daemon, polling service or autostart entry.
 
-Calendar prefers the MB Corpo family throughout its owned interface when those fonts are already installed on the host. It does not redistribute proprietary MB Corpo font binaries; normal Cinnamon/GTK fallback is used automatically when they are unavailable.
+Calendar bundles and installs the MB Corpo font set used by the project: MB Corpo S Regular, MB Corpo S Bold and MB Corpo A Condensed Regular. The package installs them under `/usr/share/fonts/truetype/infiltrator-calendar`, while Calendar's own UI requests only the MB Corpo S Title WEB and MB Corpo A Title Cond WEB families. Normal Cinnamon/GTK fallback remains only as an operating-system fallback if font discovery fails.
 
 Location-dependent clocks do not silently assume Greenwich. They show `N/A LOC` until **Geographic location** is enabled and coordinates are supplied.
 

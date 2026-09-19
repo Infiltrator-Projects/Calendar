@@ -9,7 +9,7 @@ G_IR_COMPILER ?= g-ir-compiler
 PREFIX ?= /usr
 DESTDIR ?=
 
-VERSION := 1.0.20
+VERSION := 1.0.21
 UUID := calendar-plus@the-infiltratr
 APPLET_SRC_DIR := src/cinnamon
 ICON_NAME := infiltratr-calendar
@@ -17,6 +17,13 @@ ICON_SRC := src/assets/$(ICON_NAME).png
 I18N_DIR := src/i18n
 BUILD_DIR := build
 DIST_DIR := dist
+FONT_ARCHIVE := src/assets/fonts/mb-corpo-fonts.tar.xz
+FONT_ARCHIVE_SHA256 := bdb6063f838a7fab22b4d6b412170640c69511df53aa3dfa9a4ea8431c9d8274
+FONT_BUILD_DIR := $(BUILD_DIR)/fonts
+FONT_A_COND_REGULAR := $(FONT_BUILD_DIR)/mb_corpo_a_cond_regular.ttf
+FONT_S_BOLD := $(FONT_BUILD_DIR)/mb_corpo_s_bold.ttf
+FONT_S_REGULAR := $(FONT_BUILD_DIR)/mb_corpo_s_regular.ttf
+FONT_FILES := $(FONT_A_COND_REGULAR) $(FONT_S_BOLD) $(FONT_S_REGULAR)
 INFILTRATR_COMMON_DIR := src/vendor/infiltratr-common
 INFILTRATR_COMMON_URL := https://github.com/Infiltrator-Projects/Infiltrator-Libraries.git
 INFILTRATR_COMMON_COMMIT := de7251ce12ed176048df1bad05ef7e4d0db7e9ec
@@ -187,7 +194,7 @@ DIST_FILES := \
 	sanitize static-analysis test validate-architecture validate-js validate-package-inputs \
 	validate-sources validate-exports validate-abi validate-runtime-deps validate-release-model smoke-gjs \
 	path-space-smoke release-check \
-	reproducible-build translations update-pot validate-translations \
+	reproducible-build translations prepare-fonts update-pot validate-translations \
 	update-settings validate-settings-generated update-theme validate-theme update-runtime-hashes
 
 all: common-check check-deps \
@@ -196,6 +203,7 @@ all: common-check check-deps \
 	$(BUILD_DIR)/$(LIB_REALNAME) \
 	$(BUILD_DIR)/$(GIR).typelib \
 	$(BUILD_DIR)/$(ABOUT_BINARY) \
+	prepare-fonts \
 	translations
 
 common-bootstrap: common-check
@@ -255,6 +263,8 @@ check-deps: common-check
 		echo "Missing test dependency: ripgrep" >&2; exit 1; }
 	@command -v gjs >/dev/null || { \
 		echo "Missing test dependency: gjs" >&2; exit 1; }
+	@command -v xz >/dev/null || { \
+		echo "Missing build dependency: xz" >&2; exit 1; }
 
 $(INFILTRATR_COMMON_HEADERS): | common-check
 	@test -f "$@" || { echo "Unable to materialize pinned Infiltratr Common public header: $@" >&2; exit 1; }
@@ -304,6 +314,28 @@ $(BUILD_DIR)/$(ABOUT_BINARY): src/app/about-dialog.c src/app/project-info.c \
 		$(GLIB_CFLAGS) src/app/about-dialog.c src/app/project-info.c \
 		$(INFILTRATR_COMMON_ARCHIVE) -o $@ $(LDFLAGS) $(DYNLIB_LIBS) $(MATH_LIBS)
 	chmod 0755 $@
+
+prepare-fonts:
+	@test -f "$(FONT_ARCHIVE)" || { \
+		echo "Required MB Corpo font archive is missing: $(FONT_ARCHIVE)" >&2; \
+		exit 1; \
+	}
+	@printf '%s  %s\n' '$(FONT_ARCHIVE_SHA256)' '$(FONT_ARCHIVE)' | \
+		sha256sum --check --status || { \
+			echo "MB Corpo font archive hash mismatch." >&2; \
+			exit 1; \
+		}
+	rm -rf "$(FONT_BUILD_DIR)"
+	mkdir -p "$(FONT_BUILD_DIR)"
+	tar -xJf "$(FONT_ARCHIVE)" -C "$(FONT_BUILD_DIR)"
+	@printf '%s  %s\n' \
+		'c8bcd7e1a7d71169b38491d9b7c1ffe7ba7b46e888f0c1219931343a47bc0e05' '$(FONT_A_COND_REGULAR)' \
+		'd37ea986e2344d83390f94f170e6272b56efd00bfec808afe8314c4ca45d43b4' '$(FONT_S_BOLD)' \
+		'94ede6629443c03d4362dcef425fb3ff520be5d654370021a34e81286804465c' '$(FONT_S_REGULAR)' | \
+		sha256sum --check --status || { \
+			echo "Extracted MB Corpo font hash mismatch." >&2; \
+			exit 1; \
+		}
 
 translations:
 	@mkdir -p "$(BUILD_DIR)/locale"
@@ -561,6 +593,12 @@ install: all
 		"$(DESTDIR)$(PREFIX)/share/cinnamon/applets/$(UUID)"
 	install -m644 "$(ICON_SRC)" \
 		"$(DESTDIR)$(PREFIX)/share/cinnamon/applets/$(UUID)/icon.png"
+	install -Dm644 "$(FONT_A_COND_REGULAR)" \
+		"$(DESTDIR)$(PREFIX)/share/fonts/truetype/infiltrator-calendar/mb_corpo_a_cond_regular.ttf"
+	install -Dm644 "$(FONT_S_BOLD)" \
+		"$(DESTDIR)$(PREFIX)/share/fonts/truetype/infiltrator-calendar/mb_corpo_s_bold.ttf"
+	install -Dm644 "$(FONT_S_REGULAR)" \
+		"$(DESTDIR)$(PREFIX)/share/fonts/truetype/infiltrator-calendar/mb_corpo_s_regular.ttf"
 	install -m644 "$(APPLET_SRC_DIR)"/*.js "$(APPLET_SRC_DIR)"/*.json \
 		"$(APPLET_SRC_DIR)"/*.css \
 		"$(DESTDIR)$(PREFIX)/share/cinnamon/applets/$(UUID)/"

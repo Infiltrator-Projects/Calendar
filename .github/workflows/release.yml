@@ -45,7 +45,7 @@ jobs:
           sudo apt-get install -y --no-install-recommends \
             build-essential debhelper devscripts gettext gh gobject-introspection gjs jq \
             gir1.2-glib-2.0-dev libglib2.0-dev libicu-dev nodejs \
-            pkg-config python3 ripgrep lintian shellcheck
+            pkg-config python3 ripgrep xz-utils lintian shellcheck
 
       - name: Validate, build and publish
         env:

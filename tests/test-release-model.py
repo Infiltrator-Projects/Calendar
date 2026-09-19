@@ -97,11 +97,14 @@ def main() -> None:
     assert "--exclude-vcs" not in read("tools/reproducible-build.sh")
     assert "calendar-$(VERSION)-local-folder.run" in makefile
     assert "calendar-plus-about" in makefile
-    assert "FONT_ARCHIVE :=" not in makefile
+    assert "FONT_ARCHIVE := src/assets/fonts/mb-corpo-fonts.tar.xz" in makefile
+    assert "FONT_ARCHIVE_SHA256 := bdb6063f838a7fab22b4d6b412170640c69511df53aa3dfa9a4ea8431c9d8274" in makefile
+    assert "prepare-fonts:" in makefile
+    assert "share/fonts/truetype/infiltrator-calendar" in makefile
     assert "prepare-fonts.py" not in makefile
-    assert not (ROOT / "assets/fonts/mb-corpo-fonts.tar.xz").exists()
+    assert (ROOT / "src/assets/fonts/mb-corpo-fonts.tar.xz").is_file()
     assert not (ROOT / "tools/prepare-fonts.py").exists()
-    assert "does not redistribute proprietary MB Corpo font binaries" in read("README.md")
+    assert "bundles and installs the MB Corpo font set" in read("README.md")
     assert "Files: src/cinnamon/settings-schema.json" in copyright_file
     assert "Linux Mint Project and Cinnamon contributors" in copyright_file
     assert "CHANGELOG.md CONTRIBUTING.md LICENSE Makefile README.md SECURITY.md docs/*" in copyright_file
@@ -123,6 +126,9 @@ def main() -> None:
     assert "share/cinnamon/applets/calendar-plus@the-infiltratr/icon.png" in local_installer
     assert "share/icons/hicolor/256x256/apps/infiltratr-calendar.png" in local_installer
     assert "share/app-install/icons/infiltrator-calendar.png" in local_installer
+    assert "share/fonts/truetype/infiltrator-calendar/mb_corpo_a_cond_regular.ttf" in local_installer
+    assert "share/fonts/truetype/infiltrator-calendar/mb_corpo_s_bold.ttf" in local_installer
+    assert "share/fonts/truetype/infiltrator-calendar/mb_corpo_s_regular.ttf" in local_installer
     stylesheet = read("src/cinnamon/stylesheet.css")
     assert "MB Corpo S Title WEB" in stylesheet
     assert '.calendar-plus-panel-clock {' in stylesheet

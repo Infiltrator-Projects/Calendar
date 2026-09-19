@@ -6,6 +6,13 @@ This changelog records user-visible, compatibility, architecture and validation 
 
 No unreleased changes.
 
+## 1.0.21 - 2026-09-19
+
+- Bundle the canonical MB Corpo font archive from MBLINK directly in Calendar source and verify the archive and all three extracted TTF files by SHA-256.
+- Install MB Corpo A Condensed Regular, S Bold and S Regular into `/usr/share/fonts/truetype/infiltrator-calendar` from both generic and hardware-native packages.
+- Extend generic-release, local-native and release-model checks so a Calendar package cannot pass while omitting its required typography assets.
+- Keep font preparation inside the Makefile rather than introducing a separate font-helper program.
+
 ## 1.0.20 - 2026-09-19
 
 - Correct the agenda render-cache identity so changing the selected day or 12/24-hour preference cannot reuse stale rows from another presentation state.

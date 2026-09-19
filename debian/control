@@ -13,7 +13,8 @@ Build-Depends:
  nodejs,
  pkg-config,
  python3,
- ripgrep
+ ripgrep,
+ xz-utils
 Standards-Version: 4.7.2
 Rules-Requires-Root: no
 Homepage: https://github.com/Infiltrator-Projects/Calendar

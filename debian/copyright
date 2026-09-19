@@ -7,6 +7,13 @@ Files: .github/* .gitmodules CHANGELOG.md CONTRIBUTING.md LICENSE Makefile READM
 Copyright: 2016-2026 Shannon Smith
 License: GPL-3+
 
+Files: src/assets/fonts/mb-corpo-fonts.tar.xz
+Copyright: Not specified in the supplied font archive
+License: proprietary
+Comment: This archive is copied byte-for-byte from the canonical MBLINK project
+ asset at assets/fonts/mb-corpo-fonts.tar.xz and contains the three MB Corpo
+ TTF files used by the Calendar interface.
+
 Files: src/cinnamon/settings-schema.json
 Copyright: Linux Mint Project and Cinnamon contributors
            2016-2026 Shannon Smith
@@ -24,3 +31,7 @@ License: GPL-3+
  .
  On Debian systems, the complete text of the GNU General Public License version
  3 can be found in /usr/share/common-licenses/GPL-3.
+
+License: proprietary
+ No separate redistribution licence text accompanies these font binaries in
+ the canonical source asset.

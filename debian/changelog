@@ -1,3 +1,14 @@
+infiltrator-calendar (1.0.21) trixie; urgency=medium
+
+  * Bundle the canonical MB Corpo font archive used by MBLINK.
+  * Verify the source archive and all three extracted TTF files by SHA-256.
+  * Install MB Corpo A Condensed Regular, S Bold and S Regular into the
+    system font path from generic and hardware-native Calendar packages.
+  * Extend release and local-installer checks so required fonts cannot be
+    omitted silently.
+
+ -- Shannon Smith <noreply@the-infiltratr.com>  Sat, 19 Sep 2026 22:25:00 +1000
+
 infiltrator-calendar (1.0.20) trixie; urgency=medium
 
   * Repair agenda cache identity so date and 12/24-hour presentation changes

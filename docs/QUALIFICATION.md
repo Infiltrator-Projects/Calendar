@@ -15,7 +15,7 @@ These are distinct evidence classes. A hosted build does not become Cinnamon-ses
 
 ## Current development boundary
 
-The current `main` at version 1.0.20 contains the documented correctness, repository-hardening, package-owned Software Manager icon work and the forensic event-cache, reload/retry, package-migration, proleptic-Gregorian and sanitizer-instrumentation repairs completed after 1.0.19. This ledger deliberately makes no claim that automated conformance substitutes for a separately recorded manual Cinnamon/location qualification.
+The current `main` at version 1.0.21 contains the documented correctness, repository-hardening, package-owned Software Manager icon work, the forensic event-cache/reload/retry/package-migration/proleptic-Gregorian/sanitizer repairs, and package-owned MB Corpo typography assets installed and verified by the release gates. This ledger deliberately makes no claim that automated conformance substitutes for a separately recorded manual Cinnamon/location qualification.
 
 Automated CI remains authoritative for automated conformance of each commit. A live Cinnamon step that is unavailable is shown as skipped, not converted into a pass.
 
