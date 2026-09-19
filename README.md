@@ -115,6 +115,9 @@ cd Calendar
 make check
 ```
 
+A recursive Git clone carries the pinned Common submodule. If that vendor checkout is absent, normal `make` automatically retrieves the exact Common commit recorded by Calendar before building; it does not follow an unpinned moving branch.
+
+
 Additional gates include `make sanitize`, `make coverage`, `make static-analysis`, `make reproducible-build` and `make release-check`.
 
 CI qualifies the portable/native code, JavaScript boundary, ABI, packaging and reproducibility contracts. The exact revision intended for release must pass the required gates. Live Cinnamon behaviour remains a distinct integration boundary and is verified with the installed-session smoke tooling where a suitable runner/session is available.
