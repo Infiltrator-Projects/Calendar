@@ -370,12 +370,25 @@ class CalendarPlusApplet extends Applet.Applet {
     }
 
     _watchDesktopPreferences() {
-        for (const key of ["clock-use-24h", "clock-show-date"]) {
+        for (const key of ["clock-use-24h", "clock-show-date", "gtk-theme"]) {
             this._signals.connect(
                 this.desktop_settings,
                 `changed::${key}`,
                 () => this._onSettingsChanged()
             );
+        }
+    }
+
+    _systemPrefersDark() {
+        if (!this.desktop_settings) {
+            return false;
+        }
+        try {
+            const theme = this.desktop_settings.get_string("gtk-theme");
+            return typeof theme === "string" &&
+                theme.toLowerCase().includes("dark");
+        } catch (error) {
+            return false;
         }
     }
 
@@ -475,9 +488,14 @@ class CalendarPlusApplet extends Applet.Applet {
             }
         }
 
-        if (this.theme_mode === "day") {
+        let effectiveTheme = this.theme_mode;
+        if (effectiveTheme === "system") {
+            effectiveTheme = this._systemPrefersDark() ? "night" : "day";
+        }
+
+        if (effectiveTheme === "day") {
             _addStyleClass(this.menu.actor, "calendar-plus-theme-day");
-        } else if (this.theme_mode === "night") {
+        } else {
             _addStyleClass(this.menu.actor, "calendar-plus-theme-night");
         }
     }
