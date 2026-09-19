@@ -41,6 +41,68 @@ These classes have different authorities and should not be described as though t
 
 Sweden's 1700–1753 civil calendar is modelled explicitly, including 30 February 1712.
 
+## Range and continuation matrix
+
+The registry contains 30 calendar providers and 18 native time providers. The tables below state the maintained range/continuation contract without pretending that every historical name is a universal historical reconstruction.
+
+### Calendar providers
+
+| Provider id | Range / continuation contract |
+| --- | --- |
+| `gregorian` | ICU-backed proleptic Gregorian conversion where the installed ICU implementation succeeds; Calendar does not invent a second fallback model. |
+| `julian` | Proleptic Julian arithmetic across Calendar's representable civil-date domain. |
+| `iso-week` | ISO week arithmetic derived from the proleptic Gregorian civil-date domain. |
+| `hebrew` | ICU-backed; effective supported range and calendar data are those established by the installed ICU implementation. |
+| `islamic` | ICU computational Islamic model; not local crescent observation. Effective supported range is ICU-defined. |
+| `islamic-civil` | ICU civil/tabular Islamic model; effective supported range is ICU-defined. |
+| `islamic-umalqura` | ICU Umm al-Qura model; outside ICU's supported result Calendar reports failure rather than inventing a continuation. |
+| `persian` | ICU Solar Hijri model; effective supported range is ICU-defined. |
+| `chinese` | ICU traditional Chinese calendar; effective supported range and cyclical fields are ICU-defined. |
+| `indian` | ICU Indian National/Saka calendar; effective supported range is ICU-defined. |
+| `coptic` | ICU Coptic calendar; effective supported range is ICU-defined. |
+| `ethiopian` | ICU Ethiopic Amete Mihret calendar; effective supported range is ICU-defined. |
+| `buddhist` | ICU Buddhist calendar; effective supported range is ICU-defined. |
+| `japanese` | ICU Japanese imperial-era data; era availability follows the installed ICU data rather than a Calendar-owned era table. |
+| `minguo` | ICU Republic of China calendar; effective supported range is ICU-defined. |
+| `french-republican` | Historical epoch at JDN 2375840 with Calendar's explicit Romme-style arithmetic continuation using the shifted Gregorian 4/100/400 rule outside the historical republican era. |
+| `roman` | Roman date naming over the proleptic Julian calendar; not a separate absolute chronology. |
+| `mayan` | Arithmetic Long Count over kin using the Goodman–Martínez–Thompson correlation JDN 584283; dates before the epoch remain reversible through floor-division arithmetic. |
+| `bahai` | Years 1–171 B.E. use the historical Western 21-March convention. From 172 B.E., years whose corresponding Gregorian year is 1000–3000 use the Tehran/equinox model; outside that astronomical range Calendar deliberately returns to the 21-March continuation. |
+| `international-fixed` | Deterministic reform-calendar mapping derived from the proleptic Gregorian civil year, including explicit intercalary days. |
+| `world` | Deterministic World Calendar mapping derived from the proleptic Gregorian civil year, including explicit intercalary days. |
+| `positivist` | Deterministic Positivist mapping derived from the proleptic Gregorian civil year and its leap rule. |
+| `revised-julian` | Milanković 1923 leap rule continued arithmetically in both directions, anchored where Revised Julian and Gregorian coincide at 2000-01-01. |
+| `byzantine` | Julian month/day with a 1 September year boundary and Constantinopolitan Anno Mundi era; continued arithmetically using astronomical year numbering internally. |
+| `egyptian-nabonassar` | Wandering 365-day Egyptian civil year anchored at 1 Thoth year 1 = JDN 1448638; arithmetic continuation in both directions. |
+| `dangi` | ICU Dangi calendar; effective supported range and cyclical data are ICU-defined. |
+| `ethiopic-amete-alem` | ICU Ethiopic Amete Alem calendar; effective supported range is ICU-defined. |
+| `islamic-tbla` | ICU tabular Islamic calendar using the astronomical epoch variant; effective supported range is ICU-defined. |
+| `armenian-traditional` | Traditional 365-day wandering year anchored to 11 July 552 Julian, with twelve 30-day months plus five epagomenal days and no leap day; arithmetic continuation in both directions. |
+| `swedish-historical` | Actual Swedish civil transitions are modelled for 1700–1753, including 30 February 1712 and the 1753 omission. Earlier dates use Julian labels; dates from March 1753 onward use Gregorian labels rather than inventing a proleptic Swedish system. |
+
+### Native time providers
+
+| Provider id | Range / continuation contract |
+| --- | --- |
+| `decimal` | Exact ten-hour partition of the local civil day for any representable input instant. |
+| `internet` | Exact 1000-beat partition using the defined Internet Time offset for any representable input instant. |
+| `unix` | Signed Unix epoch seconds over the representable native instant domain. |
+| `hexadecimal` | Exact hexadecimal partition of the civil day for any representable input instant. |
+| `binary` | Exact binary presentation of the civil-day partition for any representable input instant. |
+| `sidereal` | Continuous local sidereal model for finite longitude; unavailable for invalid coordinates. |
+| `solar` | NOAA/Meeus-derived apparent solar time for finite longitude; unavailable for invalid coordinates. |
+| `julian` | Astronomical Julian Date derived directly from the representable Unix-microsecond instant. |
+| `mean-solar` | Local mean solar time for finite longitude; unavailable for invalid coordinates. |
+| `modified-julian` | Modified Julian Date derived directly from the representable Unix-microsecond instant. |
+| `chinese-time` | Exact traditional double-hour partition of local civil time; no geographic solar event required. |
+| `roman-temporal` | Unequal temporal hours between computed sunrise/sunset boundaries. Requires finite latitude/longitude and a real crossing; polar absence is unavailable. |
+| `japanese-temporal` | Edo seasonal unequal-hour model using computed solar boundaries. Requires finite latitude/longitude and a real crossing; polar absence is unavailable. |
+| `italian-hours` | Equal elapsed hours from computed sunset. Requires finite latitude/longitude and a valid sunset; otherwise unavailable. |
+| `babylonian-hours` | Calendar's documented later-European gnomonic convention of equal elapsed hours from computed sunrise. Requires finite latitude/longitude and a valid sunrise. |
+| `indian-ghati` | Ghaṭī count from computed sunrise. Requires finite latitude/longitude and a valid sunrise. |
+| `chinese-ke` | Exact hundred-kè partition of the civil day; no geographic solar event required. |
+| `nuremberg-hours` | Equal hours reset at computed sunrise and sunset. Requires finite latitude/longitude and valid solar boundaries; polar absence is unavailable. |
+
 ## Historical scope and continuation rules
 
 Historical names do not imply universal historical reconstruction. Where a system varied by locality, observation or era, Calendar documents the convention it computes and distinguishes that convention from historical universality.
