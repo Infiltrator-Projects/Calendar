@@ -112,7 +112,12 @@ var EventList = class EventList {
         this._no_events_timeout_id = 0;
         this._scroll_to_idle_id = 0;
         this._rows = [];
-        this._current_event_data_list_timestamp = 0;
+        /*
+         * A native snapshot revision identifies event-store contents, not a
+         * rendered agenda.  The selected day and 12/24-hour preference are
+         * presentation inputs as well, so keep the complete render identity.
+         */
+        this._current_event_cache_key = null;
         this._signals = new SignalBag();
         /*
          * PATH probing is process/environment state, not row state.  Resolve it
@@ -232,8 +237,11 @@ var EventList = class EventList {
         }
         this._cancelScroll();
 
-        if (snapshot !== null &&
-            snapshot.timestamp === this._current_event_data_list_timestamp) {
+        const use24h = this.desktop_settings.get_boolean("clock-use-24h");
+        const cacheKey = snapshot === null ? null :
+            `${snapshot.timestamp}:${this.selected_date.to_unix()}:${use24h ? 1 : 0}`;
+
+        if (snapshot !== null && cacheKey === this._current_event_cache_key) {
             for (const row of this._rows) {
                 row.update_variations();
             }
@@ -244,16 +252,15 @@ var EventList = class EventList {
         this._cancelEmptyDelay();
 
         if (snapshot === null) {
-            this._current_event_data_list_timestamp = 0;
+            this._current_event_cache_key = null;
             this._showEmptyState(Boolean(delayEmpty));
             return;
         }
 
         this.no_events_box.hide();
-        this._current_event_data_list_timestamp = snapshot.timestamp;
+        this._current_event_cache_key = cacheKey;
 
         let scrollTarget = null;
-        const use24h = this.desktop_settings.get_boolean("clock-use-24h");
         for (const event of snapshot.get_event_list()) {
             if (this._rows.length > 0) {
                 this.events_box.add_actor(_separatorActor());
