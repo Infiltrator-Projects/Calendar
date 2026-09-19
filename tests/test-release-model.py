@@ -438,6 +438,9 @@ def main() -> None:
     assert "infiltratr_size_multiply_checked" in read("src/adapters/event-store.c")
     assert "infiltratr_i64_floor_divmod" in read("src/adapters/clock-glib-adapter.c")
     assert "INFILTRATR_ARRAY_LENGTH(majors)" in read("src/core/icu-compat-bridge.c")
+    icu_bridge = read("src/core/icu-compat-bridge.c")
+    assert "ucal_setGregorianChange" in icu_bridge
+    assert "udat_setCalendar" in icu_bridge
     assert "++index->next_sequence" not in read("src/core/event-core.c")
     assert "infiltratr_u64_add_saturating" in read("src/core/event-core.c")
     assert "index->revision + 1" not in read("src/core/event-core.c")
@@ -452,8 +455,8 @@ def main() -> None:
     assert "Source: infiltrator-calendar" in control
     assert "Package: infiltrator-calendar" in control
     assert "Package: calendar-plus" not in control
-    assert "Breaks: calendar-plus (<< 1.0.17), cinnamon-calendar (<< 1.0.17)" in control
-    assert "Replaces: calendar-plus (<< 1.0.17), cinnamon-calendar (<< 1.0.17)" in control
+    assert "Breaks: calendar-plus, cinnamon-calendar" in control
+    assert "Replaces: calendar-plus, cinnamon-calendar" in control
     assert "$(PKG_CONFIG) --libs gobject-2.0)" in makefile
     assert "$(PKG_CONFIG) --libs glib-2.0)" in makefile
     assert "-DU_DISABLE_RENAMING=1" in makefile
