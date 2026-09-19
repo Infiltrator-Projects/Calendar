@@ -45,6 +45,7 @@ The documentation set deliberately separates product overview from engineering a
 - [Chronology, time and astronomy models](docs/MODELS.md) — evidence hierarchy, provenance, continuation rules, astronomical assumptions and model failure semantics.
 - [Portability](docs/PORTABILITY.md) — C/C++/JavaScript boundaries, representation rules, platform seams, locale and compatibility contracts.
 - [Validation](docs/VALIDATION.md) — automated, manual and environment-dependent evidence.
+- [Qualification](docs/QUALIFICATION.md) — exact-source live Cinnamon/location evidence and evidence boundaries.
 - [Roadmap](docs/ROADMAP.md) — current foundation and direction.
 - [Documentation index](docs/README.md) — document authority and maintenance rules.
 
