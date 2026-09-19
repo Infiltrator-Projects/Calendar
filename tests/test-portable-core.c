@@ -131,7 +131,7 @@ test_gregorian_proleptic_cutover(void)
     };
     const CalendarPlusCalendarProvider *provider =
         calendar_plus_calendar_provider_from_id("gregorian");
-    g_autoptr(CalendarPlusCalendarEngine) engine =
+    CalendarPlusCalendarEngine *engine =
         calendar_plus_calendar_engine_new("gregorian");
     const CalendarPlusDate selected = { 1582, 10, 10 };
     const CalendarPlusDate today = { 2026, 9, 19 };
@@ -196,6 +196,7 @@ test_gregorian_proleptic_cutover(void)
     }
     g_assert_true(found_selected);
     calendar_plus_calendar_grid_clear(&grid);
+    calendar_plus_calendar_engine_free(engine);
 }
 
 typedef struct
