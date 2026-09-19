@@ -229,12 +229,12 @@ jobs:
           set -euo pipefail
           version="$(sed -n 's/^VERSION := //p' Makefile)"
           dpkg-buildpackage -us -uc -b
-          deb="../cinnamon-calendar_${version}_amd64.deb"
+          deb="../infiltrator-calendar_${version}_amd64.deb"
           test -s "$deb"
           apt-get install -y --no-install-recommends "$deb"
-          test "$(dpkg-query -W -f='${Status}' cinnamon-calendar)" = "install ok installed"
+          test "$(dpkg-query -W -f='${Status}' infiltrator-calendar)" = "install ok installed"
           /usr/libexec/calendar-plus-about --print-metadata | grep -qx "version=$version"
           CALENDAR_PLUS_EXPECTED_VERSION="$version" gjs tests/smoke-typelib.js >/dev/null
-          apt-get purge -y cinnamon-calendar
-          ! dpkg-query -W cinnamon-calendar >/dev/null 2>&1
+          apt-get purge -y infiltrator-calendar
+          ! dpkg-query -W infiltrator-calendar >/dev/null 2>&1
           apt-get check
