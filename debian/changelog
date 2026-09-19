@@ -1,3 +1,17 @@
+infiltrator-calendar (1.0.17) trixie; urgency=medium
+
+  * Move the Debian source and binary package into the collision-resistant
+    infiltrator-calendar namespace while keeping the user-facing product name
+    Calendar unchanged.
+  * Break and replace the previous cinnamon-calendar and calendar-plus package
+    identities for direct upgrades.
+  * Keep the Cinnamon UUID, native ABI, typelib namespace, gettext domain,
+    executable helpers and public Calendar release filenames unchanged.
+  * Coordinate with the central APT repository so both previous package names
+    migrate automatically to infiltrator-calendar.
+
+ -- Shannon Smith <noreply@the-infiltratr.com>  Sat, 19 Sep 2026 12:15:00 +1000
+
 cinnamon-calendar (1.0.16) trixie; urgency=medium
 
   * Rename the installed Debian package from calendar-plus to cinnamon-calendar
