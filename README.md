@@ -6,7 +6,7 @@
 
 Calendar is a native Cinnamon panel clock and calendar with alternative clock modes, 30 selectable calendar systems and CalendarServer integration. Its installed Linux desktop identity, Cinnamon Applets manager entry and native About dialog use the project-owned neon Calendar icon.
 
-**Stable release:** 1.0.16.
+**Stable release:** 1.0.17.
 
 **Runtime:** Cinnamon 6.4, 6.6 and 6.7.
 
@@ -87,7 +87,7 @@ The installed `libcalendar-plus.so.0` and its versioned symbol map are a **runti
 
 ### Compatibility naming
 
-The user-facing application is **Calendar** and its Debian source/binary package is `cinnamon-calendar`. The plain Debian package name `calendar` is deliberately not used because Debian and Ubuntu already ship an unrelated package with that name. The retired `calendar-plus` Debian package name exists only as a repository-generated transitional package for upgrading installations older than 1.0.16. Runtime compatibility identifiers `CalendarPlus`, `CALENDAR_PLUS_*`, `libcalendar-plus.so.0`, `calendar-plus-about`, the gettext domain and `calendar-plus@the-infiltratr` remain unchanged so settings, GObject Introspection consumers and the published ABI do not break. Release asset filenames continue to use the user-facing `Calendar` name.
+The user-facing application is **Calendar** and its collision-resistant Debian source/binary package is `infiltrator-calendar`. The generic package name `calendar` is deliberately not used because Debian and Ubuntu already ship an unrelated package with that name. The previous `calendar-plus` and `cinnamon-calendar` package names are migration identities only; the central Infiltrator APT repository supplies transitional packages so existing installations move to `infiltrator-calendar` automatically. Runtime compatibility identifiers `CalendarPlus`, `CALENDAR_PLUS_*`, `libcalendar-plus.so.0`, `calendar-plus-about`, the gettext domain and `calendar-plus@the-infiltratr` remain unchanged so settings, GObject Introspection consumers and the published ABI do not break. Release asset filenames continue to use the user-facing `Calendar` name.
 
 ### Engineering contracts and invariants
 
