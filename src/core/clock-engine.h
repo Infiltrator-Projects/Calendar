@@ -103,7 +103,9 @@ void calendar_plus_clock_engine_free(CalendarPlusClockEngine *engine);
  * @engine: clock engine
  * @config: display/scheduling configuration
  *
- * Latitude is finite-clamped to -90..90 and longitude to -180..180.
+ * Coordinates required by the selected mode must be finite. Finite latitude
+ * is clamped to -90..90 and finite longitude to -180..180; non-finite values
+ * for coordinates ignored by the selected mode do not affect that mode.
  *
  * Returns: %TRUE only when the first timer was successfully armed.
  */
