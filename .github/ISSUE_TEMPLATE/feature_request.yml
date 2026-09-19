@@ -1,0 +1,72 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
+name: Feature request
+description: Propose an improvement to Calendar.
+title: "[Feature]: "
+labels: []
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Please describe the problem first. New calendars or clocks need a defensible authority, explicit model/range/continuation rules and a credible validation strategy.
+
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem to solve
+      description: What limitation or user need does this address?
+    validations:
+      required: true
+
+  - type: dropdown
+    id: area
+    attributes:
+      label: Area
+      options:
+        - Calendar system
+        - Clock / time system
+        - Astronomy / location model
+        - Events / CalendarServer
+        - Cinnamon UI / accessibility
+        - Localisation
+        - Portability / native architecture
+        - Packaging / release engineering
+        - Documentation
+        - Other
+    validations:
+      required: true
+
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed behaviour
+      description: Describe what Calendar should do.
+    validations:
+      required: true
+
+  - type: textarea
+    id: evidence
+    attributes:
+      label: Evidence or references
+      description: For a chronology, historical rule or astronomical model, include the strongest standard, primary source, maintained reference or scholarly source you know of.
+
+  - type: textarea
+    id: boundaries
+    attributes:
+      label: Range, continuation and failure behaviour
+      description: For a new model, describe its valid range, what happens outside historically defined scope, and when the result should be unavailable.
+
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives considered
+      description: Optional. Note other approaches or existing workarounds.
+
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: Checks
+      options:
+        - label: I searched existing issues for the same request.
+          required: true
+        - label: I understand that uncertain historical or astronomical behaviour should not be presented as known fact.
+          required: true
