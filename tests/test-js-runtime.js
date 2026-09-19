@@ -575,6 +575,20 @@ function testPanelClockDefensiveFormatting() {
     PanelClock.syncNativeClock(systemClock, unconfigured);
     assert.equal(observations.stops, 1);
 
+    const invalidConfiguredLocation = {
+        ...base,
+        mode: "sidereal",
+        locationConfigured: true,
+        longitude: Number.NaN,
+    };
+    assert.equal(
+        PanelClock.panelText(clock, systemClock, invalidConfiguredLocation),
+        "N/A LOC",
+        "invalid configured coordinates must remain unavailable"
+    );
+    PanelClock.syncNativeClock(systemClock, invalidConfiguredLocation);
+    assert.equal(observations.stops, 2);
+
     PanelClock.syncNativeClock(systemClock, base);
     assert.equal(observations.starts, 1);
 }
