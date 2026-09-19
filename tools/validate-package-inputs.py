@@ -202,15 +202,15 @@ def validate_version() -> None:
     version = match.group(1)
     build_mode = os.environ.get("CALENDAR_PLUS_BUILD_MODE", "generic")
     changelog_version_match = re.match(
-        r"^cinnamon-calendar \(([^)]+)\) ", changelog
+        r"^infiltrator-calendar \(([^)]+)\) ", changelog
     )
     assert changelog_version_match is not None, "invalid Debian changelog"
     changelog_version = changelog_version_match.group(1)
     control = (ROOT / "debian/control").read_text(encoding="utf-8")
-    assert re.search(r"^Source: cinnamon-calendar$", control, re.MULTILINE)
-    assert re.search(r"^Package: cinnamon-calendar$", control, re.MULTILINE)
-    assert "Breaks: calendar-plus (<< 1.0.16)" in control
-    assert "Replaces: calendar-plus (<< 1.0.16)" in control
+    assert re.search(r"^Source: infiltrator-calendar$", control, re.MULTILINE)
+    assert re.search(r"^Package: infiltrator-calendar$", control, re.MULTILINE)
+    assert "Breaks: calendar-plus (<< 1.0.17), cinnamon-calendar (<< 1.0.17)" in control
+    assert "Replaces: calendar-plus (<< 1.0.17), cinnamon-calendar (<< 1.0.17)" in control
     if build_mode == "generic":
         assert changelog_version == version, (
             "generic Debian package and source versions differ"
