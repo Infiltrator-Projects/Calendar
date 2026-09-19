@@ -138,14 +138,17 @@ static void
 apply_typography(void)
 {
     const InfiltratrTypography *typography = infiltratr_typography();
-    g_autofree gchar *css = NULL;
+    char css[512];
+    int written;
     GtkCssProvider *provider;
     GdkScreen *screen;
 
     if (typography == NULL || !load_gdk())
         return;
 
-    css = g_strdup_printf(
+    written = snprintf(
+        css,
+        sizeof css,
         "* { font-family: \"%s\"; font-weight: %u; }"
         ".title, .heading { font-family: \"%s\"; font-weight: %u; }"
         "button, button label { font-family: \"%s\"; font-weight: %u; }",
@@ -155,7 +158,7 @@ apply_typography(void)
         (unsigned int)typography->brand_weight,
         typography->ui_family,
         (unsigned int)typography->ui_bold_weight);
-    if (css == NULL)
+    if (written < 0 || (size_t)written >= sizeof css)
     {
         infiltratr_dynlib_close(&gdk_module);
         gdk_api = (Gdk3Api){ 0 };
