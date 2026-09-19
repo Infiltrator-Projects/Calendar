@@ -31,6 +31,8 @@ jobs:
               if not raw:
                   continue
               path = Path(raw.decode("utf-8"))
+              if path.as_posix().startswith(".github/workflows/"):
+                  continue
               try:
                   data = path.read_bytes()
               except OSError:
