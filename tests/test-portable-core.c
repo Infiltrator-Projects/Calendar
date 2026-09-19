@@ -119,6 +119,85 @@ test_calendar_reference_vectors(void)
     }
 }
 
+
+static void
+test_gregorian_proleptic_cutover(void)
+{
+    static const CalendarReferenceVector vectors[] = {
+        { "gregorian", 1500, 3, 1, 1500, 3, 1 },
+        { "gregorian", 1582, 10, 4, 1582, 10, 4 },
+        { "gregorian", 1582, 10, 10, 1582, 10, 10 },
+        { "gregorian", 1582, 10, 15, 1582, 10, 15 }
+    };
+    const CalendarPlusCalendarProvider *provider =
+        calendar_plus_calendar_provider_from_id("gregorian");
+    g_autoptr(CalendarPlusCalendarEngine) engine =
+        calendar_plus_calendar_engine_new("gregorian");
+    const CalendarPlusDate selected = { 1582, 10, 10 };
+    const CalendarPlusDate today = { 2026, 9, 19 };
+    CalendarPlusDate navigated = { 0 };
+    CalendarPlusCalendarGrid grid = { 0 };
+    gsize index;
+    gboolean found_selected = FALSE;
+
+    g_assert_nonnull(provider);
+    g_assert_nonnull(engine);
+
+    for (index = 0; index < G_N_ELEMENTS(vectors); index++)
+    {
+        const CalendarReferenceVector *vector = &vectors[index];
+        const gint64 jdn = calendar_plus_gregorian_to_jdn(
+            vector->gregorian_year,
+            vector->gregorian_month,
+            vector->gregorian_day);
+        CalendarPlusCalendarFields fields = { 0 };
+
+        g_assert_true(provider->fields_from_jdn(provider, jdn, &fields));
+        g_assert_cmpint(fields.year, ==, vector->year);
+        g_assert_cmpint(fields.month, ==, vector->month);
+        g_assert_cmpint(fields.day, ==, vector->day);
+    }
+
+    g_assert_true(calendar_plus_calendar_engine_period_start(
+        engine, &selected, &navigated));
+    g_assert_true(calendar_plus_date_same(
+        navigated.year, navigated.month, navigated.day,
+        1582, 10, 1));
+
+    g_assert_true(calendar_plus_calendar_engine_add_periods(
+        engine, &selected, 1, &navigated));
+    g_assert_true(calendar_plus_date_same(
+        navigated.year, navigated.month, navigated.day,
+        1582, 11, 10));
+
+    g_assert_true(calendar_plus_calendar_engine_add_years(
+        engine, &selected, -82, &navigated));
+    g_assert_true(calendar_plus_date_same(
+        navigated.year, navigated.month, navigated.day,
+        1500, 10, 10));
+
+    g_assert_true(calendar_plus_calendar_engine_build_grid(
+        engine, &selected, &today, 0, &grid));
+    for (index = 0;
+         index < CALENDAR_PLUS_CALENDAR_GRID_CELLS;
+         index++)
+    {
+        const CalendarPlusCalendarCell *cell = &grid.cells[index];
+
+        if (!cell->is_selected)
+            continue;
+
+        found_selected = TRUE;
+        g_assert_true(calendar_plus_date_same(
+            cell->date.year, cell->date.month, cell->date.day,
+            1582, 10, 10));
+        g_assert_cmpstr(cell->day_label, ==, "10");
+        break;
+    }
+    g_assert_true(found_selected);
+    calendar_plus_calendar_grid_clear(&grid);
+}
+
 typedef struct
 {
     gint64 now;
@@ -687,6 +766,8 @@ main(int argc,
     g_test_add_func("/portable/calendar-records", test_calendar_records);
     g_test_add_func("/portable/calendar-reference-vectors",
                     test_calendar_reference_vectors);
+    g_test_add_func("/portable/gregorian-proleptic-cutover",
+                    test_gregorian_proleptic_cutover);
     g_test_add_func("/portable/shared-calendar-helpers",
                     test_shared_calendar_helpers);
     g_test_add_func("/portable/event-source", test_event_source_and_snapshot);
