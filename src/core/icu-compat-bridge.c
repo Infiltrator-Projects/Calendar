@@ -62,6 +62,7 @@ typedef struct
                               UCalendarLimitType, UErrorCode *);
     UCalendarWeekdayType (*ucal_get_day_of_week_type)(
         const UCalendar *, UCalendarDaysOfWeek, UErrorCode *);
+    void (*ucal_set_gregorian_change)(UCalendar *, UDate, UErrorCode *);
 
     UDateFormat *(*udat_open_fn)(UDateFormatStyle, UDateFormatStyle,
                                  const char *, const UChar *, int32_t,
@@ -69,6 +70,7 @@ typedef struct
     void (*udat_close_fn)(UDateFormat *);
     int32_t (*udat_format_fn)(const UDateFormat *, UDate, UChar *, int32_t,
                               UFieldPosition *, UErrorCode *);
+    void (*udat_set_calendar_fn)(UDateFormat *, const UCalendar *);
 } IcuBridgeApi;
 
 static IcuBridgeApi bridge_api;
@@ -162,9 +164,11 @@ try_icu_major(const char *major,
     LOAD_I18N(ucal_set_fn, "ucal_set");
     LOAD_I18N(ucal_get_limit, "ucal_getLimit");
     LOAD_I18N(ucal_get_day_of_week_type, "ucal_getDayOfWeekType");
+    LOAD_I18N(ucal_set_gregorian_change, "ucal_setGregorianChange");
     LOAD_I18N(udat_open_fn, "udat_open");
     LOAD_I18N(udat_close_fn, "udat_close");
     LOAD_I18N(udat_format_fn, "udat_format");
+    LOAD_I18N(udat_set_calendar_fn, "udat_setCalendar");
 
 #undef LOAD_I18N
 #undef LOAD_UC
@@ -428,6 +432,20 @@ ucal_getDayOfWeekType(const UCalendar *calendar,
     return api->ucal_get_day_of_week_type(calendar, day_of_week, status);
 }
 
+void
+ucal_setGregorianChange(UCalendar *calendar,
+                        UDate date,
+                        UErrorCode *status)
+{
+    IcuBridgeApi *api = get_bridge();
+    if (api == NULL)
+    {
+        set_missing(status);
+        return;
+    }
+    api->ucal_set_gregorian_change(calendar, date, status);
+}
+
 UDateFormat *
 udat_open(UDateFormatStyle time_style,
           UDateFormatStyle date_style,
@@ -482,4 +500,13 @@ udat_format(const UDateFormat *format,
                                result_length,
                                position,
                                status);
+}
+
+void
+udat_setCalendar(UDateFormat *format,
+                 const UCalendar *calendar)
+{
+    IcuBridgeApi *api = get_bridge();
+    if (api != NULL)
+        api->udat_set_calendar_fn(format, calendar);
 }
