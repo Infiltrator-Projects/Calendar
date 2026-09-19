@@ -264,6 +264,8 @@ calendar_plus_time_delay_to_next_tick_at_location(CalendarPlusTimeMode mode,
     const TimeProvider *provider = time_provider_for_mode(mode);
     const gdouble safe_latitude = isfinite(latitude) ? infiltratr_clamp_double(latitude, -90.0, 90.0) : 0.0;
     const gdouble safe_longitude = isfinite(longitude) ? infiltratr_clamp_double(longitude, -180.0, 180.0) : 0.0;
+    if (provider == NULL)
+        return 1000;
     if (!location_is_valid_for_provider(provider, latitude, longitude))
         return 3600000U;
     return provider->next_tick(unix_microseconds, utc_offset_seconds, show_seconds,
