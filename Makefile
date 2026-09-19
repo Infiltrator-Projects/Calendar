@@ -168,10 +168,14 @@ COVERAGE_MIN_BRANCHES ?= 60
 DIST_FILES := \
 	.github \
 	.gitmodules \
+	CHANGELOG.md \
+	CONTRIBUTING.md \
 	LICENSE \
 	Makefile \
 	README.md \
+	SECURITY.md \
 	debian \
+	docs \
 	src \
 	tests \
 	tools
