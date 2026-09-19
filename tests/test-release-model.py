@@ -419,6 +419,19 @@ def main() -> None:
     for role, digest in typography_assets["file_sha256"].items():
         assert digest in makefile, f"Calendar package does not verify Common font hash {role}"
     assert "infiltratr_typography()" in read("src/app/about-dialog.c")
+    assert "infiltratr_design_metrics()" in read("src/app/about-dialog.c")
+    stylesheet_source = read("src/cinnamon/stylesheet.css")
+    assert "BEGIN GENERATED COMMON TYPOGRAPHY TOKENS" in stylesheet_source
+    assert "BEGIN GENERATED COMMON METRIC TOKENS" in stylesheet_source
+    common_metrics = common_design["metrics"]
+    assert f'border-radius: {common_metrics["panel_radius"]}px;' in stylesheet_source
+    assert f'spacing: {common_metrics["section_spacing"]}px;' in stylesheet_source
+    assert f'border-radius: {common_metrics["card_radius"]}px;' in stylesheet_source
+    assert f'border-radius: {common_metrics["control_radius"]}px;' in stylesheet_source
+    assert f'border-radius: {common_metrics["small_radius"]}px;' in stylesheet_source
+    assert f'border-radius: {common_metrics["control_radius"]}px;' in read(
+        "src/cinnamon/settings.py"
+    )
     assert "BEGIN GENERATED COMMON TYPOGRAPHY TOKENS" in read(
         "src/cinnamon/stylesheet.css"
     )

@@ -1,3 +1,15 @@
+infiltrator-calendar (1.0.24) trixie; urgency=medium
+
+  * Complete Calendar's consumption of Infiltratr Common 1.19.8 design data.
+  * Generate Cinnamon panel/card/control/small radii and section spacing from
+    Common's canonical structural metrics.
+  * Apply Common's control radius to the Cinnamon settings host.
+  * Consume infiltratr_design_metrics() in the native GTK About helper.
+  * Add release guards preventing Common-owned structural values from drifting
+    back into Calendar-local constants.
+
+ -- Shannon Smith <noreply@the-infiltratr.com>  Sun, 20 Sep 2026 00:55:00 +1000
+
 infiltrator-calendar (1.0.23) trixie; urgency=medium
 
   * Advance the exact shared dependency to Infiltratr Common 1.19.8.

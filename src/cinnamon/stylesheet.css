@@ -35,6 +35,34 @@
 }
 /* END GENERATED COMMON TYPOGRAPHY TOKENS */
 
+/* BEGIN GENERATED COMMON METRIC TOKENS */
+/*
+ * Generated from Infiltratr Common. Calendar keeps selectors local while
+ * Common owns product-family structural rhythm and corner geometry.
+ */
+.calendar-plus-popup {
+    border-radius: 18px;
+}
+
+.calendar-plus-popup .calendar-main-box {
+    spacing: 18px;
+}
+
+.calendar-plus-popup .calendar,
+.calendar-plus-popup .calendar-events-main-box {
+    border-radius: 12px;
+}
+
+.calendar-plus-popup .calendar-today-home-button,
+.calendar-plus-popup .calendar-today-home-button-enabled {
+    border-radius: 10px;
+}
+
+.calendar-plus-popup .calendar-day-base {
+    border-radius: 6px;
+}
+/* END GENERATED COMMON METRIC TOKENS */
+
 /*
  * Theme policy
  * ------------

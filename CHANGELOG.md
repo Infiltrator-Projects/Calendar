@@ -6,6 +6,14 @@ This changelog records user-visible, compatibility, architecture and validation 
 
 No unreleased changes.
 
+## 1.0.24 - 2026-09-20
+
+- Complete the Calendar-side adoption of Infiltratr Common 1.19.8 design contracts by consuming Common structural metrics as well as palette and typography data.
+- Apply Common panel/card/control/small radii and section spacing to Calendar's scoped Cinnamon stylesheet through the existing generated-token pipeline.
+- Apply Common's control radius to the Cinnamon settings host and consume the native `infiltratr_design_metrics()` API in the GTK About helper.
+- Strengthen release-model regression coverage so Common-owned structural values cannot silently drift back into Calendar-owned constants.
+- Keep calendar semantics, Cinnamon selectors, GTK integration and platform theme detection Calendar-owned.
+
 ## 1.0.23 - 2026-09-19
 
 - Advance the exact shared dependency to the published Infiltratr Common 1.19.8 release.

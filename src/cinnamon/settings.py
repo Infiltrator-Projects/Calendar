@@ -43,6 +43,9 @@ button, button label {
     font-family: "MB Corpo S Title WEB";
     font-weight: 700;
 }
+button {
+    border-radius: 10px;
+}
 """
 # END GENERATED COMMON TYPOGRAPHY TOKENS
 

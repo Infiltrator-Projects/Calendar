@@ -3,7 +3,7 @@
 """Project Common design tokens into Calendar's Cinnamon and GTK surfaces.
 
 Calendar owns Cinnamon/GTK selectors and widget mechanics. Infiltratr Common
-owns semantic theme values and typography identity. This generator keeps the
+owns semantic theme values, typography identity and structural metrics. This generator keeps the
 toolkit-specific source native while preventing a second private design truth
 from drifting away from the pinned Common release.
 """
@@ -24,6 +24,8 @@ SETTINGS_TYPOGRAPHY_BEGIN = "# BEGIN GENERATED COMMON TYPOGRAPHY TOKENS"
 SETTINGS_TYPOGRAPHY_END = "# END GENERATED COMMON TYPOGRAPHY TOKENS"
 THEME_BEGIN = "/* BEGIN GENERATED COMMON THEME TOKENS */"
 THEME_END = "/* END GENERATED COMMON THEME TOKENS */"
+METRICS_BEGIN = "/* BEGIN GENERATED COMMON METRIC TOKENS */"
+METRICS_END = "/* END GENERATED COMMON METRIC TOKENS */"
 
 
 def palette(data: dict, mode: str) -> dict[str, str]:
@@ -32,6 +34,10 @@ def palette(data: dict, mode: str) -> dict[str, str]:
 
 def typography(data: dict) -> dict:
     return data["typography"]
+
+
+def metrics(data: dict) -> dict:
+    return data["metrics"]
 
 
 def render_typography(data: dict) -> str:
@@ -90,9 +96,43 @@ button, button label {{
     font-family: "{ui}";
     font-weight: {bold};
 }}
+button {{
+    border-radius: {metrics(data)["control_radius"]}px;
+}}
 """
 {SETTINGS_TYPOGRAPHY_END}'''
 
+
+
+def render_metrics(data: dict) -> str:
+    metric_data = metrics(data)
+    return f"""{METRICS_BEGIN}
+/*
+ * Generated from Infiltratr Common. Calendar keeps selectors local while
+ * Common owns product-family structural rhythm and corner geometry.
+ */
+.calendar-plus-popup {{
+    border-radius: {metric_data["panel_radius"]}px;
+}}
+
+.calendar-plus-popup .calendar-main-box {{
+    spacing: {metric_data["section_spacing"]}px;
+}}
+
+.calendar-plus-popup .calendar,
+.calendar-plus-popup .calendar-events-main-box {{
+    border-radius: {metric_data["card_radius"]}px;
+}}
+
+.calendar-plus-popup .calendar-today-home-button,
+.calendar-plus-popup .calendar-today-home-button-enabled {{
+    border-radius: {metric_data["control_radius"]}px;
+}}
+
+.calendar-plus-popup .calendar-day-base {{
+    border-radius: {metric_data["small_radius"]}px;
+}}
+{METRICS_END}"""
 
 def render_theme(data: dict) -> str:
     day = palette(data, "day")
@@ -186,6 +226,13 @@ def desired_stylesheet(data: dict) -> str:
         TYPOGRAPHY_END,
         render_typography(data),
         "typography",
+    )
+    source = replace_block(
+        source,
+        METRICS_BEGIN,
+        METRICS_END,
+        render_metrics(data),
+        "metrics",
     )
     return replace_block(
         source,
