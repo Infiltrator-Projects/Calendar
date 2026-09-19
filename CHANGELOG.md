@@ -6,6 +6,15 @@ This changelog records user-visible, compatibility, architecture and validation 
 
 No unreleased changes.
 
+## 1.0.20 - 2026-09-19
+
+- Correct the agenda render-cache identity so changing the selected day or 12/24-hour preference cannot reuse stale rows from another presentation state.
+- Make forced queued reloads request authoritative CalendarServer data, and make same-range requests retry after transient failures without stale asynchronous completions corrupting newer request state.
+- Cover the retired `calendar-plus` and `cinnamon-calendar` package identities during migration, including the supplied 3.6.0 development package line.
+- Make ICU conversion, formatting and navigation consistently proleptic Gregorian before the October 1582 cutover while preserving the separately named Julian and historical providers.
+- Propagate ASan/UBSan instrumentation into the pinned Infiltratr Common archive and verify that instrumentation in the sanitizer gate.
+- Add regression coverage for the five confirmed functional defects, the sanitizer coverage gap and legacy package migration paths.
+
 ## 1.0.19 - 2026-09-19
 
 - Make the Calendar Debian package itself install the `infiltrator-calendar` Linux Mint Software Manager icon alias.
