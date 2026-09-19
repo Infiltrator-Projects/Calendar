@@ -1,3 +1,14 @@
+infiltrator-calendar (1.0.19) trixie; urgency=medium
+
+  * Install the project-owned Calendar icon under the package-name app-install
+    alias used by Linux Mint Software Manager.
+  * Keep Calendar solely responsible for its own artwork instead of relying on
+    a shared repository helper package.
+  * Add release and local-native package checks for the Software Manager icon
+    alias so packaging cannot regress silently.
+
+ -- Shannon Smith <noreply@the-infiltratr.com>  Sat, 19 Sep 2026 18:35:00 +1000
+
 infiltrator-calendar (1.0.18) trixie; urgency=medium
 
   * Harden location-dependent clock handling so invalid astronomical
