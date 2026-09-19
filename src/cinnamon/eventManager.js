@@ -139,6 +139,9 @@ var EventsManager = class EventsManager {
         this.current_range_start = null;
         this.current_range_end = null;
         this.current_selected_date = null;
+        this._range_request_generation = 0;
+        this._range_request_pending = false;
+        this._range_request_succeeded = false;
         this.last_update_timestamp = 0;
         this.event_store = CalendarPlus.EventStore.new();
 
@@ -255,6 +258,9 @@ var EventsManager = class EventsManager {
         }
         this.current_range_start = null;
         this.current_range_end = null;
+        this._range_request_generation += 1;
+        this._range_request_pending = false;
+        this._range_request_succeeded = false;
         this.last_update_timestamp = 0;
         this.emit("has-calendars-changed");
         this.emit("events-updated");
@@ -351,8 +357,14 @@ var EventsManager = class EventsManager {
          * from the removed EDS client.
          */
         this.event_store.clear();
-        this.current_range_start = null;
-        this.current_range_end = null;
+        /*
+         * Keep the grid-owned desired range.  A client-set change invalidates
+         * the result for that range, not the range itself, so the queued forced
+         * reload can immediately ask CalendarServer for the same cells again.
+         */
+        this._range_request_generation += 1;
+        this._range_request_pending = false;
+        this._range_request_succeeded = false;
         this.queue_reload(true);
         this.emit("events-updated");
     }
@@ -417,7 +429,9 @@ var EventsManager = class EventsManager {
 
         const changed = !_sameInstant(first, this.current_range_start) ||
             !_sameInstant(last, this.current_range_end);
-        if (!changed && !force) {
+        const needsRetry = !this._range_request_pending &&
+            !this._range_request_succeeded;
+        if (!changed && !force && !needsRetry) {
             return;
         }
 
@@ -426,12 +440,21 @@ var EventsManager = class EventsManager {
          * exactly its first and last Gregorian cells keeps event dots correct
          * for calendars whose natural period does not share Gregorian month
          * boundaries.  CalendarServer expects an inclusive Unix interval.
+         *
+         * "Current range" records the desired grid range, while the request
+         * state below records whether CalendarServer has actually supplied it.
+         * A failed request therefore remains retryable.  The generation also
+         * prevents an older asynchronous failure from dirtying a newer success.
          */
         this.current_range_start = first;
         this.current_range_end = last;
         if (changed) {
             this.event_store.clear();
         }
+
+        const requestGeneration = ++this._range_request_generation;
+        this._range_request_pending = true;
+        this._range_request_succeeded = false;
 
         const exclusiveEnd = last.add_days(1);
         this.last_update_timestamp = GLib.get_monotonic_time();
@@ -443,9 +466,19 @@ var EventsManager = class EventsManager {
             (server, result) => {
                 try {
                     server.call_set_time_range_finish(result);
+                    if (!this._destroyed &&
+                        requestGeneration === this._range_request_generation) {
+                        this._range_request_pending = false;
+                        this._range_request_succeeded = true;
+                    }
                 } catch (error) {
-                    if (!this._destroyed) {
-                        global.logError(`${APPLET_UUID}: event range request failed: ${error}`);
+                    if (!this._destroyed &&
+                        requestGeneration === this._range_request_generation) {
+                        this._range_request_pending = false;
+                        this._range_request_succeeded = false;
+                        global.logError(
+                            `${APPLET_UUID}: event range request failed: ${error}`
+                        );
                     }
                 }
             }
@@ -463,14 +496,32 @@ var EventsManager = class EventsManager {
         this._force_reload_pending = this._force_reload_pending || Boolean(force);
         this._reload_id = Mainloop.idle_add(() => {
             this._reload_id = 0;
+            const forceReload = this._force_reload_pending;
+            this._force_reload_pending = false;
+
             if (!this._destroyed) {
+                /*
+                 * A forced queued reload means authoritative server data, not
+                 * merely repainting the selected agenda from the local cache.
+                 * The calendar view still owns range calculation; reuse the
+                 * last range it supplied rather than inventing one here.
+                 */
+                if (forceReload &&
+                    this.current_range_start !== null &&
+                    this.current_range_end !== null) {
+                    this.set_visible_range(
+                        new Date(this.current_range_start.to_unix() * 1000),
+                        new Date(this.current_range_end.to_unix() * 1000),
+                        true
+                    );
+                }
+
                 const selectedDate = this.current_selected_date !== null &&
                     this.current_selected_date.to_unix() > 0 ?
                     new Date(this.current_selected_date.to_unix() * 1000) :
                     new Date();
-                this.select_date(selectedDate, this._force_reload_pending);
+                this.select_date(selectedDate, forceReload);
             }
-            this._force_reload_pending = false;
             return GLib.SOURCE_REMOVE;
         });
     }
@@ -547,6 +598,9 @@ var EventsManager = class EventsManager {
         this._destroyed = true;
         this._inited = false;
         this._calendar_server_generation += 1;
+        this._range_request_generation += 1;
+        this._range_request_pending = false;
+        this._range_request_succeeded = false;
         this._calendar_server_connecting = false;
 
         if (this._bus_watch_id > 0) {
