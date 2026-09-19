@@ -136,7 +136,11 @@ calendar_plus_clock_engine_start(CalendarPlusClockEngine *engine,
         return FALSE;
     if (config == NULL ||
         config->mode == CALENDAR_PLUS_TIME_MODE_INVALID ||
-        calendar_plus_time_mode_get_id(config->mode) == NULL)
+        calendar_plus_time_mode_get_id(config->mode) == NULL ||
+        (calendar_plus_time_mode_requires_latitude(config->mode) &&
+         !isfinite(config->latitude)) ||
+        (calendar_plus_time_mode_requires_longitude(config->mode) &&
+         !isfinite(config->longitude)))
     {
         calendar_plus_clock_engine_stop(engine);
         return FALSE;
