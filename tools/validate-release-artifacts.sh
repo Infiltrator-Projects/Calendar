@@ -31,7 +31,7 @@ done
     exit 1
 }
 
-[ "$(dpkg-deb -f "$DEB" Package)" = "cinnamon-calendar" ]
+[ "$(dpkg-deb -f "$DEB" Package)" = "infiltrator-calendar" ]
 [ "$(dpkg-deb -f "$DEB" Version)" = "$VERSION" ]
 [ "$(dpkg-deb -f "$DEB" Architecture)" = "$ARCH" ]
 dpkg-deb -x "$DEB" "$TMP/generic"
@@ -54,11 +54,11 @@ test -f \
 "$TMP/generic/usr/libexec/calendar-plus-about" --print-metadata |
     grep -qx "version=$VERSION"
 grep -q '^Build mode: generic amd64-compatible (Debian/Mint ICU runtime bridge)$' \
-    "$TMP/generic/usr/share/doc/cinnamon-calendar/BUILD-INFO"
+    "$TMP/generic/usr/share/doc/infiltrator-calendar/BUILD-INFO"
 grep -q "^Shared C library: Infiltratr Common ${COMMON_VERSION}$" \
-    "$TMP/generic/usr/share/doc/cinnamon-calendar/BUILD-INFO"
+    "$TMP/generic/usr/share/doc/infiltrator-calendar/BUILD-INFO"
 if grep -q -- '-march=native' \
-    "$TMP/generic/usr/share/doc/cinnamon-calendar/BUILD-INFO"; then
+    "$TMP/generic/usr/share/doc/infiltrator-calendar/BUILD-INFO"; then
     echo "Generic package contains native CPU tuning" >&2
     exit 1
 fi
