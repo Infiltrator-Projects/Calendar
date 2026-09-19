@@ -40,7 +40,7 @@ Changes should remain warning-clean and preserve architecture, ABI, translation,
 
 ## Documentation and comments
 
-Read `docs/README.md` for document authority. Architecture belongs in `docs/ARCHITECTURE.md`; rationale in `docs/DESIGN.md`; durable choices in `docs/DECISIONS.md`; direction in `docs/ROADMAP.md`; evidence in `docs/VALIDATION.md`.
+Read `docs/README.md` for document authority. Architecture belongs in `docs/ARCHITECTURE.md`; rationale in `docs/DESIGN.md`; durable choices in `docs/DECISIONS.md`; direction in `docs/ROADMAP.md`; validation evidence in `docs/VALIDATION.md`; chronology/clock/astronomy provenance and continuation rules in `docs/MODELS.md`; and cross-platform representation, language and compatibility boundaries in `docs/PORTABILITY.md`.
 
 Comments should capture information expensive to reconstruct: units, validity ranges, historical/astronomical authority, invariants, ownership, ABI constraints and deliberate deviations. Do not narrate obvious syntax.
 
