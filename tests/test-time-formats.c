@@ -11,6 +11,7 @@
 #include "julian-day.h" /* private engine invariants exercised by this test */
 #include "version.h"
 
+#include <math.h>
 #include <string.h>
 
 #define USECONDS(value) ((gint64)(value) * G_USEC_PER_SEC)
@@ -279,6 +280,55 @@ test_historical_and_scientific_times(void)
 }
 
 static void
+test_invalid_location_is_unavailable(void)
+{
+    const CalendarPlusTimeMode roman_mode =
+        calendar_plus_time_mode_from_string("roman-temporal");
+    const CalendarPlusTimeMode solar_mode =
+        calendar_plus_time_mode_from_string("solar");
+    g_autofree gchar *roman_invalid_latitude =
+        calendar_plus_format_time_at_location(
+            roman_mode, USECONDS(946728000), 0, FALSE, FALSE, NAN, 0.0);
+    g_autofree gchar *solar_invalid_longitude =
+        calendar_plus_format_time_at_location(
+            solar_mode, USECONDS(946728000), 0, TRUE, FALSE, 0.0, INFINITY);
+    g_autofree gchar *decimal_ignores_location =
+        calendar_plus_format_time_at_location(
+            CALENDAR_PLUS_TIME_MODE_DECIMAL,
+            USECONDS(0),
+            0,
+            TRUE,
+            FALSE,
+            NAN,
+            INFINITY);
+
+    g_assert_cmpstr(roman_invalid_latitude, ==, "");
+    g_assert_cmpstr(solar_invalid_longitude, ==, "");
+    g_assert_cmpstr(decimal_ignores_location, ==, "0:00:00");
+
+    g_assert_cmpuint(
+        calendar_plus_time_delay_to_next_tick_at_location(
+            roman_mode,
+            USECONDS(946728000),
+            0,
+            FALSE,
+            NAN,
+            0.0),
+        ==,
+        3600000U);
+    g_assert_cmpuint(
+        calendar_plus_time_delay_to_next_tick_at_location(
+            solar_mode,
+            USECONDS(946728000),
+            0,
+            TRUE,
+            0.0,
+            INFINITY),
+        ==,
+        3600000U);
+}
+
+static void
 test_tick_boundaries(void)
 {
     g_assert_cmpuint(
@@ -398,6 +448,10 @@ test_clock_lifecycle(void)
     current_time = calendar_plus_system_clock_get_time(clock);
     g_assert_true(g_str_has_prefix(current_time, "Hora") ||
                   g_str_has_prefix(current_time, "Vigilia"));
+
+    calendar_plus_system_clock_start_at_location(
+        clock, "roman-temporal", FALSE, FALSE, NAN, 0.0);
+    g_assert_false(calendar_plus_system_clock_is_running(clock));
 
     calendar_plus_system_clock_stop(clock);
     g_assert_false(calendar_plus_system_clock_is_running(clock));
@@ -1252,6 +1306,8 @@ main(int argc, char **argv)
                     test_astronomical_times);
     g_test_add_func("/time-formats/historical-scientific",
                     test_historical_and_scientific_times);
+    g_test_add_func("/time-formats/invalid-location",
+                    test_invalid_location_is_unavailable);
     g_test_add_func("/time-formats/tick-boundaries",
                     test_tick_boundaries);
     g_test_add_func("/time-formats/label-replacement",
