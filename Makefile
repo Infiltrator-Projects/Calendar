@@ -549,6 +549,8 @@ install: all
 		"$(DESTDIR)$(PREFIX)/libexec/$(ABOUT_BINARY)"
 	install -Dm644 "$(ICON_SRC)" \
 		"$(DESTDIR)$(PREFIX)/share/icons/hicolor/256x256/apps/$(ICON_NAME).png"
+	install -Dm644 "$(ICON_SRC)" \
+		"$(DESTDIR)$(PREFIX)/share/app-install/icons/infiltrator-calendar.png"
 	install -d \
 		"$(DESTDIR)$(PREFIX)/share/cinnamon/applets/$(UUID)"
 	install -m644 "$(ICON_SRC)" \
