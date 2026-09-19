@@ -41,8 +41,12 @@ def main() -> None:
     ]
     assert sorted(path.name for path in (ROOT / "docs").glob("*.md")) == [
         "ARCHITECTURE.md", "DECISIONS.md", "DESIGN.md", "MODELS.md",
-        "PORTABILITY.md", "README.md", "ROADMAP.md", "VALIDATION.md"
+        "PORTABILITY.md", "QUALIFICATION.md", "README.md", "ROADMAP.md", "VALIDATION.md"
     ]
+    assert (ROOT / ".github/ISSUE_TEMPLATE/bug_report.yml").is_file()
+    assert (ROOT / ".github/ISSUE_TEMPLATE/feature_request.yml").is_file()
+    assert "## Range and continuation matrix" in read("docs/MODELS.md")
+    assert "## Current development boundary" in read("docs/QUALIFICATION.md")
     assert (ROOT / "LICENSE").is_file()
     assert not (ROOT / "COPYING").exists()
     assert "DEVELOPING.md" not in makefile
