@@ -1,4 +1,4 @@
-Source: cinnamon-calendar
+Source: infiltrator-calendar
 Section: x11
 Priority: optional
 Maintainer: The Infiltratr <noreply@the-infiltratr.com>
@@ -20,10 +20,10 @@ Homepage: https://github.com/Infiltrator-Projects/Calendar
 Vcs-Browser: https://github.com/Infiltrator-Projects/Calendar
 Vcs-Git: https://github.com/Infiltrator-Projects/Calendar.git
 
-Package: cinnamon-calendar
+Package: infiltrator-calendar
 Architecture: any
-Breaks: calendar-plus (<< 1.0.16)
-Replaces: calendar-plus (<< 1.0.16)
+Breaks: calendar-plus (<< 1.0.17), cinnamon-calendar (<< 1.0.17)
+Replaces: calendar-plus (<< 1.0.17), cinnamon-calendar (<< 1.0.17)
 Depends:
  cinnamon (>= 6.4),
  python3,
