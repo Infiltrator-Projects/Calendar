@@ -15,7 +15,7 @@ These are distinct evidence classes. A hosted build does not become Cinnamon-ses
 
 ## Current development boundary
 
-The current `main` at version 1.0.18 contains the documented correctness and repository-hardening work released after 1.0.17. This ledger deliberately makes no claim that automated conformance substitutes for a separately recorded manual Cinnamon/location qualification.
+The current `main` at version 1.0.19 contains the documented correctness, repository-hardening and package-owned Software Manager icon work released after 1.0.17. This ledger deliberately makes no claim that automated conformance substitutes for a separately recorded manual Cinnamon/location qualification.
 
 Automated CI remains authoritative for automated conformance of each commit. A live Cinnamon step that is unavailable is shown as skipped, not converted into a pass.
 
