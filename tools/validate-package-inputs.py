@@ -209,8 +209,8 @@ def validate_version() -> None:
     control = (ROOT / "debian/control").read_text(encoding="utf-8")
     assert re.search(r"^Source: infiltrator-calendar$", control, re.MULTILINE)
     assert re.search(r"^Package: infiltrator-calendar$", control, re.MULTILINE)
-    assert "Breaks: calendar-plus (<< 1.0.17), cinnamon-calendar (<< 1.0.17)" in control
-    assert "Replaces: calendar-plus (<< 1.0.17), cinnamon-calendar (<< 1.0.17)" in control
+    assert "Breaks: calendar-plus, cinnamon-calendar" in control
+    assert "Replaces: calendar-plus, cinnamon-calendar" in control
     if build_mode == "generic":
         assert changelog_version == version, (
             "generic Debian package and source versions differ"
