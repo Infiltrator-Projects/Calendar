@@ -223,6 +223,16 @@ gboolean calendar_plus_time_mode_requires_latitude(CalendarPlusTimeMode mode)
     return provider != NULL && provider->requires_latitude;
 }
 
+static gboolean
+location_is_valid_for_provider(const TimeProvider *provider,
+                               gdouble latitude,
+                               gdouble longitude)
+{
+    return provider != NULL &&
+           (!provider->requires_latitude || isfinite(latitude)) &&
+           (!provider->requires_longitude || isfinite(longitude));
+}
+
 gchar *
 calendar_plus_format_time_at_location(CalendarPlusTimeMode mode, gint64 unix_microseconds,
                                       gint utc_offset_seconds, gboolean show_seconds,
@@ -231,7 +241,7 @@ calendar_plus_format_time_at_location(CalendarPlusTimeMode mode, gint64 unix_mic
     const TimeProvider *provider = time_provider_for_mode(mode);
     const gdouble safe_latitude = isfinite(latitude) ? infiltratr_clamp_double(latitude, -90.0, 90.0) : 0.0;
     const gdouble safe_longitude = isfinite(longitude) ? infiltratr_clamp_double(longitude, -180.0, 180.0) : 0.0;
-    if (provider == NULL)
+    if (!location_is_valid_for_provider(provider, latitude, longitude))
         return g_strdup("");
     return provider->format(unix_microseconds, utc_offset_seconds, show_seconds,
                             vertical, safe_latitude, safe_longitude);
@@ -254,8 +264,8 @@ calendar_plus_time_delay_to_next_tick_at_location(CalendarPlusTimeMode mode,
     const TimeProvider *provider = time_provider_for_mode(mode);
     const gdouble safe_latitude = isfinite(latitude) ? infiltratr_clamp_double(latitude, -90.0, 90.0) : 0.0;
     const gdouble safe_longitude = isfinite(longitude) ? infiltratr_clamp_double(longitude, -180.0, 180.0) : 0.0;
-    if (provider == NULL)
-        return 1000;
+    if (!location_is_valid_for_provider(provider, latitude, longitude))
+        return 3600000U;
     return provider->next_tick(unix_microseconds, utc_offset_seconds, show_seconds,
                                safe_latitude, safe_longitude);
 }
