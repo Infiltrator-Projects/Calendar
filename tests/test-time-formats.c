@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-// Copyright (C) 2026 Shannon Smith
+// Copyright (C) 2016-2026 Shannon Smith
 
 #include "system-clock.h"
 #include "time-formats.h"

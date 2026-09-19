@@ -1,6 +1,6 @@
 #!/usr/bin/make -f
 # SPDX-License-Identifier: GPL-3.0-or-later
-# Copyright (C) 2026 Shannon Smith
+# Copyright (C) 2016-2026 Shannon Smith
 
 CALENDAR_PLUS_BUILD_MODE ?= generic
 export CALENDAR_PLUS_BUILD_MODE
