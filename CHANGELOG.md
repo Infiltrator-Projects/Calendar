@@ -8,6 +8,10 @@ This changelog records user-visible, compatibility, architecture and validation 
 - Preserve invalid configured astronomical coordinates as unavailable instead of silently normalising non-finite values to Greenwich.
 - Include the canonical documentation set in local source payloads and Debian copyright coverage, and update release-model regression checks accordingly.
 - Documentation baseline aligned with the Infiltrator project family.
+- Add exact-source live Cinnamon/location qualification recording without overstating skipped environment checks.
+- Add Calendar-specific GitHub bug and feature request forms.
+- Centralise provider range and continuation contracts for all 30 calendars and 18 native time modes.
+- Align project-owned source copyright headers with the maintained 2016-2026 project span.
 
 ## Recording policy
 
