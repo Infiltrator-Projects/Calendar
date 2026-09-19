@@ -31,6 +31,7 @@ def main() -> None:
     artifact_validator = read("tools/validate-release-artifacts.sh")
     native_installer_smoke = read("tools/native-installer-smoke.sh")
     gitmodules = read(".gitmodules")
+    copyright_file = read("debian/copyright")
 
     assert sorted(path.name for path in ROOT.glob("*.md")) == [
         "CHANGELOG.md", "CONTRIBUTING.md", "README.md", "SECURITY.md"
@@ -93,8 +94,10 @@ def main() -> None:
     assert not (ROOT / "assets/fonts/mb-corpo-fonts.tar.xz").exists()
     assert not (ROOT / "tools/prepare-fonts.py").exists()
     assert "does not redistribute proprietary MB Corpo font binaries" in read("README.md")
-    assert "Files: src/cinnamon/settings-schema.json" in read("debian/copyright")
-    assert "Linux Mint Project and Cinnamon contributors" in read("debian/copyright")
+    assert "Files: src/cinnamon/settings-schema.json" in copyright_file
+    assert "Linux Mint Project and Cinnamon contributors" in copyright_file
+    assert "CHANGELOG.md CONTRIBUTING.md LICENSE Makefile README.md SECURITY.md docs/*" in copyright_file
+    assert "3.4.0" not in copyright_file
     assert "MB Corpo S Title WEB" in read("src/cinnamon/applet.js")
     assert "calendar-plus-popup" in read("src/cinnamon/applet.js")
     assert "external-configuration-app" in read("src/cinnamon/metadata.json")
