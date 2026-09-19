@@ -2,7 +2,7 @@
 
 # Portability
 
-Calendar is portable at its domain boundaries rather than by pretending that the current Cinnamon implementation is platform-neutral. Chronology, clock, astronomy and event semantics should remain testable without a running desktop; Cinnamon, GLib, ICU and platform integration stay behind explicit seams.
+Calendar is portable at its domain boundaries rather than by pretending that the current Cinnamon implementation is platform-neutral. Chronology, clock, astronomy and event semantics should remain testable without a running desktop. The core may use GLib foundational types, strings, containers and civil-time helpers; GObject/GVariant facades, Cinnamon presentation, desktop lifecycle and other platform integration stay behind explicit seams. ICU/CLDR is delegated only where its documented calendar/locale contract is authoritative.
 
 ## Language and interface policy
 
@@ -10,7 +10,7 @@ Project-owned native code may use C or C++ according to which gives the stronger
 
 Cinnamon integration necessarily uses JavaScript because that is the desktop platform boundary. Introducing another language or runtime requires a concrete technical advantage that the existing C/C++/JavaScript architecture cannot reasonably provide.
 
-Portable/domain interfaces must not expose Cinnamon actors, GJS objects, GTK widgets, file descriptors, D-Bus proxies or other platform-owned handles. Adapters translate those details into Calendar-owned values.
+Portable/domain interfaces must not expose Cinnamon actors, GJS objects, GObject presentation facades, GVariant transport schemas, GTK widgets, file descriptors, D-Bus proxies or other platform-owned handles. Adapters translate those details into Calendar-owned values.
 
 ## Platform boundary
 
