@@ -276,7 +276,7 @@ static const BuiltinCalendarProvider providers[] = {
     ARITHMETIC_PROVIDER(GREGORIAN, "gregorian", "Gregorian", "gregorian"),
     CUSTOM_PROVIDER(JULIAN, "julian", "Julian"),
     CUSTOM_PROVIDER(ISO_WEEK, "iso-week", "ISO week calendar"),
-    ICU_PROVIDER(HEBREW, "hebrew", "Hebrew", "hebrew"),
+    ARITHMETIC_PROVIDER(HEBREW, "hebrew", "Hebrew", "hebrew"),
     ICU_PROVIDER(ISLAMIC, "islamic", "Islamic (astronomical approximation)", "islamic"),
     ARITHMETIC_PROVIDER(ISLAMIC_CIVIL, "islamic-civil", "Islamic (civil/tabular)", "islamic-civil"),
     ICU_PROVIDER(ISLAMIC_UMM_AL_QURA, "islamic-umalqura", "Islamic (Umm al-Qura)", "islamic-umalqura"),
