@@ -8,6 +8,15 @@ This changelog records user-visible, compatibility, architecture and validation 
 
 No unreleased changes.
 
+## 1.0.30 - 2026-09-20
+
+- Debounce custom clock and tooltip format application by 500 ms so partially typed strftime tokens are not pushed through WallClock on every keystroke.
+- Preserve exact user-authored tooltip casing.
+- Install an offline strftime reference and route the format-help action to it.
+- In Follow system mode, defer to Cinnamon when a HighContrast theme is active; explicit Day/Night continue to use Common 1.19.10.
+- Expose today, selection, event presence, event time and event status semantically to assistive technology instead of relying on colour alone.
+- Add a 10,000-event native regression ceiling to catch accidental quadratic event-store behaviour while keeping Calendar a clock/calendar rather than a scheduling suite.
+
 ## 1.0.29 - 2026-09-20
 
 - Undo the 1.0.28 settings-host layout/card experiment that produced the oversized grey slabs visible in Night mode.
