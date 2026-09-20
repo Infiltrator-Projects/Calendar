@@ -91,60 +91,145 @@ def render_settings_typography(data: dict) -> str:
 window,
 window.background,
 .background,
-.view,
-viewport {{
+viewport,
+scrolledwindow {{
     background-color: {p["background"]};
     color: {p["text"]};
 }}
-headerbar {{
-    background-color: {p["titlebar"]};
-    color: {p["heading"]};
+toolbar.primary-toolbar {{
+    background-image: none;
+    background-color: {p["panel"]};
+    color: {p["text"]};
+    border-bottom: 1px solid {p["border"]};
+}}
+toolbar.primary-toolbar button {{
+    background-image: none;
+    background-color: {p["surface"]};
+    color: {p["title"]};
+    border: 1px solid {p["border"]};
+    box-shadow: none;
+}}
+toolbar.primary-toolbar button:hover {{
+    background-color: {p["card_hover"]};
+    border-color: {p["neutral_accent"]};
+}}
+frame.view {{
+    background-image: linear-gradient(to bottom right, {p["card"]}, {p["surface"]});
+    color: {p["text"]};
+    border: 1px solid {p["border"]};
+}}
+frame.view > border {{
     border-color: {p["border"]};
 }}
-headerbar label,
-headerbar .title {{
-    color: {p["heading"]};
+frame.view list,
+frame.view row {{
+    background-color: transparent;
+    color: {p["text"]};
 }}
-frame > border,
+frame.view row:hover {{
+    background-color: {p["card_hover"]};
+}}
+frame.view label {{
+    color: {p["text"]};
+}}
 separator {{
-    border-color: {p["border"]};
     background-color: {p["border"]};
+    color: {p["border"]};
+    min-height: 1px;
 }}
 entry,
-spinbutton,
-combobox button {{
+spinbutton {{
+    background-image: none;
     background-color: {p["input"]};
     color: {p["text"]};
-    border-color: {p["connection_border"]};
+    border: 1px solid {p["connection_border"]};
+    box-shadow: none;
 }}
-button {{
+button,
+combobox button {{
+    background-image: none;
     background-color: {p["operation"]};
     color: {p["text"]};
-    border-color: {p["border"]};
+    border: 1px solid {p["border"]};
+    box-shadow: none;
 }}
-button:hover {{
+button label,
+button image,
+combobox button label,
+combobox button image {{
+    color: {p["text"]};
+}}
+button:hover,
+combobox button:hover {{
     background-color: {p["operation_hover"]};
     border-color: {p["neutral_accent"]};
 }}
-switch {{
-    background-color: {p["surface"]};
+button:active,
+button:checked {{
+    background-color: {p["selection_background"]};
+    color: {p["selection_foreground"]};
+    border-color: {p["neutral_accent"]};
+}}
+button:disabled,
+combobox button:disabled {{
+    background-color: {p["input"]};
+    color: {p["subtle"]};
     border-color: {p["border"]};
+}}
+switch {{
+    background-image: none;
+    background-color: {p["surface"]};
+    border: 1px solid {p["status_border"]};
+    box-shadow: none;
+}}
+switch slider {{
+    background-image: none;
+    background-color: {p["button_background"]};
+    border: 1px solid {p["connection_border"]};
+    box-shadow: none;
 }}
 switch:checked {{
     background-color: {p["neutral_accent"]};
-    color: {p["accent_foreground"]};
+    border-color: {p["neutral_accent"]};
+}}
+switch:checked slider {{
+    background-color: {p["accent_foreground"]};
+    border-color: {p["accent_hover"]};
 }}
 row:selected,
 treeview.view:selected {{
     background-color: {p["selection_background"]};
     color: {p["selection_foreground"]};
 }}
+menu {{
+    background-color: {p["panel"]};
+    color: {p["text"]};
+    border: 1px solid {p["border"]};
+}}
+menuitem:hover {{
+    background-color: {p["surface_hover"]};
+}}
+tooltip {{
+    background-color: {p["card"]};
+    color: {p["title"]};
+    border: 1px solid {p["border"]};
+}}
+tooltip * {{
+    color: {p["title"]};
+}}
 .dim-label {{
     color: {p["summary"]};
+}}
+label:disabled {{
+    color: {p["subtle"]};
 }}
 """
 
     return f'''{SETTINGS_TYPOGRAPHY_BEGIN}
+SETTINGS_PAGE_MARGIN = {metric_data["screen_padding"]}
+SETTINGS_SECTION_SPACING = {metric_data["section_spacing"]}
+SETTINGS_CONTROL_SPACING = {metric_data["control_spacing"]}
+
 CSS = b"""
 * {{
     font-family: "{ui}";
@@ -158,8 +243,19 @@ button, button label {{
     font-family: "{ui}";
     font-weight: {bold};
 }}
-button {{
+button,
+combobox button,
+entry,
+spinbutton,
+switch {{
     border-radius: {metric_data["control_radius"]}px;
+}}
+switch slider {{
+    border-radius: {metric_data["small_radius"]}px;
+}}
+frame.view,
+tooltip {{
+    border-radius: {metric_data["card_radius"]}px;
 }}
 """
 THEME_CSS = {{
@@ -168,7 +264,7 @@ THEME_CSS = {{
 }}
 {SETTINGS_TYPOGRAPHY_END}'''
 
-def render_metrics(data: dict) -> str:
+def render_metrics(data: dict) -> str:def render_metrics(data: dict) -> str:
     metric_data = metrics(data)
     return f"""{METRICS_BEGIN}
 /*

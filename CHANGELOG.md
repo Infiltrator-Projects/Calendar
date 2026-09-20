@@ -6,6 +6,13 @@ This changelog records user-visible, compatibility, architecture and validation 
 
 No unreleased changes.
 
+## 1.0.28 - 2026-09-20
+
+- Rework the external Cinnamon settings window so it uses the same layered Common 1.19.10 visual language as System Monitor instead of leaving Cinnamon's default grey list rows on a black canvas.
+- Project Common panel, card, surface, input, border, hover, selection and accent roles into settings frames, rows, toolbar, menus, tooltips and controls.
+- Style switch tracks and sliders explicitly so the host GTK theme cannot leak a mismatched orange/default control treatment into Night mode.
+- Replace Cinnamon's oversized 80-pixel settings-page margins and 30-pixel section gaps with Common's shared screen-padding and section-spacing metrics.
+
 ## 1.0.27 - 2026-09-20
 
 - Install the user-approved Calendar artwork as the canonical application icon.

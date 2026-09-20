@@ -1,3 +1,13 @@
+infiltrator-calendar (1.0.28) trixie; urgency=medium
+
+  * Bring the Cinnamon settings window into the Common 1.19.10 visual system.
+  * Replace default grey list rows with layered card/surface styling and
+    explicit Common-owned control, hover, tooltip and menu colours.
+  * Style switch sliders explicitly to prevent host-theme colour leakage.
+  * Use Common screen-padding and section-spacing metrics for the settings UI.
+
+ -- Shannon Smith <noreply@the-infiltratr.com>  Sun, 20 Sep 2026 13:05:00 +1000
+
 infiltrator-calendar (1.0.27) trixie; urgency=medium
 
   * Install the user-approved Calendar icon artwork.

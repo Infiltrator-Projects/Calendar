@@ -140,17 +140,43 @@ def main() -> None:
     assert 'settings.listen("theme-mode", refresh)' in settings_source
     assert 'desktop.connect("changed::gtk-theme", refresh)' in settings_source
     assert "THEME_CSS[effective_theme()]" in settings_source
+    assert "frame.view {" in settings_source
+    assert "frame.view list," in settings_source
+    assert "frame.view row {" in settings_source
+    assert "switch slider {" in settings_source
+    assert "toolbar.primary-toolbar {" in settings_source
+    assert "tooltip {" in settings_source
+    assert "def tune_calendar_layout(widget)" in settings_source
+    assert "SETTINGS_PAGE_MARGIN = common_design[\"metrics\"][\"screen_padding\"]" not in settings_source
+    assert f'SETTINGS_PAGE_MARGIN = {common_design["metrics"]["screen_padding"]}' in settings_source
+    assert f'SETTINGS_SECTION_SPACING = {common_design["metrics"]["section_spacing"]}' in settings_source
+    assert f'SETTINGS_CONTROL_SPACING = {common_design["metrics"]["control_spacing"]}' in settings_source
+    assert "tune_calendar_layout(window.window)" in settings_source
     for mode in ("day", "night"):
         palette = common_design["theme"]["palettes"][mode]
         for role in (
             "background",
-            "titlebar",
-            "heading",
+            "panel",
+            "card",
+            "surface",
             "input",
-            "connection_border",
+            "border",
+            "text",
+            "title",
+            "subtle",
+            "button_background",
+            "selection_background",
+            "selection_foreground",
+            "card_hover",
+            "surface_hover",
             "operation",
             "operation_hover",
+            "connection_border",
+            "summary",
+            "status_border",
             "neutral_accent",
+            "accent_foreground",
+            "accent_hover",
         ):
             assert palette[role].lower() in settings_source.lower(), (
                 f"Calendar settings {mode} CSS does not consume Common role {role}"
