@@ -183,6 +183,13 @@ def validate_no_workspace_paths() -> None:
             continue
         if path == Path(__file__).resolve():
             continue
+        relative = path.relative_to(ROOT).as_posix()
+        if relative.startswith("src/vendor/infiltratr-common/tests/"):
+            # Common's test fixtures deliberately use absolute paths such as
+            # /tmp/ to exercise platform path handling. They are not Calendar
+            # runtime/package inputs and must not be mistaken for leaked build
+            # workspace paths.
+            continue
         if path.parts[-2:-1] in (("build",), ("dist",)):
             continue
         content = path.read_text(encoding="utf-8", errors="strict")
