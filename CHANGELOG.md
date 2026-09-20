@@ -6,6 +6,15 @@ This changelog records user-visible, compatibility, architecture and validation 
 
 No unreleased changes.
 
+## 1.0.35 - 2026-09-20
+
+- Make System Settings the default temporal authority for Calendar.
+- Add a single **Follow System Settings** switch covering clock mode, primary calendar, secondary calendar, seconds and geographic location together.
+- Read the shared version-2 temporal policy through Common 1.19.16 and react to policy-file changes while Calendar is running.
+- Retain Calendar's complete 21-clock and 30-calendar settings as local overrides when Follow System Settings is disabled.
+- Open Infiltrator System Settings from Calendar's Date and Time Settings menu entry.
+- Publish the complete system temporal policy getters in ABI 2.3.
+
 ## 1.0.34 - 2026-09-20
 
 - Advance Calendar to Infiltratr Common 1.19.14 and consume Common's shared decimal-10 formatter instead of retaining a second decimal clock implementation.
