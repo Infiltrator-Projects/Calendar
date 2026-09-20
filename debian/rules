@@ -3,7 +3,9 @@
 # Copyright (C) 1993-2026 Shannon Smith
 
 CALENDAR_PLUS_BUILD_MODE ?= generic
-export CALENDAR_PLUS_BUILD_MODE
+PGO_MODE ?= none
+PGO_DIR ?= $(CURDIR)/.pgo-data
+export CALENDAR_PLUS_BUILD_MODE PGO_MODE PGO_DIR
 
 ifeq ($(CALENDAR_PLUS_BUILD_MODE),native)
 DEB_BUILD_MAINT_OPTIONS := optimize=+lto
