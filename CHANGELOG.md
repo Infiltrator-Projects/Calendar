@@ -6,6 +6,13 @@ This changelog records user-visible, compatibility, architecture and validation 
 
 No unreleased changes.
 
+## 1.0.39 - 2026-09-21
+
+- Upgrade the released local `.run` installer from static native tuning alone to a two-pass hardware-native PGO pipeline.
+- Instrument Calendar and the pinned Infiltratr Common library with GCC profile generation, train representative calendar-grid/navigation, clock/tick, event-timing and automated-test paths on the actual machine, then rebuild with `-fprofile-use -fprofile-correction -fprofile-partial-training`.
+- Retain `-O3 -march=native -mtune=native -flto=auto` while deliberately excluding `-Ofast` and `-ffast-math` so chronology and astronomical calculations keep their existing correctness semantics.
+- Identify locally trained packages as `+nativepgo1` and record the PGO-trained profile in installed BUILD-INFO.
+
 ## 1.0.38 - 2026-09-21
 
 - Make Infiltrator System Settings an optional enrichment rather than a runtime requirement: a valid shared temporal policy enables the extended clock/calendar/location behaviour, while a missing or invalid policy falls back to native Mint/Cinnamon behaviour.
