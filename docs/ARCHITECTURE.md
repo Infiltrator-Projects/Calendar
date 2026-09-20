@@ -8,7 +8,7 @@ Calendar separates platform-neutral chronology, clock, astronomy and event seman
 
 Calendar begins with the behaviour that chronology, astronomy, historical evidence and time standards actually justify rather than treating an existing desktop calendar as the specification.
 
-First principles does not mean reimplementing every dependency. Cinnamon, ICU/CLDR, GLib and Infiltratr Common are appropriate where their documented contracts are the strongest engineering choice. The project owns the semantics that are specific to Calendar and delegates only the mechanisms or data for which another component is authoritative.
+First principles does not mean reimplementing every dependency. Cinnamon, GLib, ICU/CLDR where still required, and Infiltratr Common are appropriate where their documented contracts are the strongest engineering choice. The project owns the semantics that are specific to Calendar and delegates only the mechanisms or data for which another component is authoritative.
 
 A dependency is therefore chosen deliberately. Convenience, convention or similarity to another calendar application is not enough to transfer ownership of product behaviour.
 
@@ -49,7 +49,7 @@ src/
 
 The native core owns Calendar-specific chronology models, continuation rules, alternative clocks, astronomical calculations and event semantics. It deliberately uses GLib foundational facilities such as fixed-width types, strings, containers and civil-time helpers, but remains independent of GObject presentation facades, GVariant transport schemas, Cinnamon actors and desktop lifecycle APIs.
 
-Cinnamon owns panel integration, settings presentation, lifecycle and CalendarServer transport mechanics. ICU/CLDR owns the locale-sensitive calendar data that Calendar explicitly delegates to it. Common owns genuinely generic primitives whose contract is reusable across the software family. Calendar's Cinnamon surface projects the pinned Common design JSON into toolkit-specific CSS under generated, regression-checked markers rather than carrying independent typography values. Configuration uses Cinnamon's own xlet-settings renderer and About uses Cinnamon/St, eliminating Calendar-owned Python/GTK presentation shims.
+Cinnamon owns panel integration, settings presentation, lifecycle and CalendarServer transport mechanics. Calendar now owns deterministic arithmetic/navigation for the fixed-rule calendar families it can validate directly. ICU/CLDR remains authoritative only for the remaining astronomical/lunisolar providers and locale-sensitive formatting that Calendar still explicitly delegates. Common owns genuinely generic primitives whose contract is reusable across the software family. Calendar's Cinnamon surface projects the pinned Common design JSON into toolkit-specific CSS under generated, regression-checked markers rather than carrying independent typography values. Configuration uses Cinnamon's own xlet-settings renderer and About uses Cinnamon/St, eliminating Calendar-owned Python/GTK presentation shims.
 
 Ownership is visible at API boundaries. Caller-owned values, returned heap data, snapshots, compatibility ABI objects and adapter-owned platform state should not be inferred from accidental implementation detail.
 
@@ -89,7 +89,7 @@ Detailed model authority and continuation policy are defined in [MODELS.md](MODE
 
 Checked Common arithmetic is used when overflow means a chronology, astronomy or allocation result cannot be represented safely. Saturating arithmetic is used only where clamping is the explicit Calendar policy.
 
-ICU-derived allocation sizes are validated before allocation. Signed-overflow undefined behaviour is not an accepted failure mode. Arithmetic safety is part of chronology correctness because overflow can otherwise create a valid-looking but wrong date.
+Externally derived allocation sizes are validated before allocation. Signed-overflow undefined behaviour is not an accepted failure mode. Arithmetic safety is part of chronology correctness because overflow can otherwise create a valid-looking but wrong date.
 
 ## Failure model
 
