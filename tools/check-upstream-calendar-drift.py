@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # SPDX-License-Identifier: GPL-3.0-or-later
-# Copyright (C) 2000-2026 Shannon Smith
+# Copyright (C) 1993-2026 Shannon Smith
 
 """Report relevant Cinnamon calendar changes after the reviewed baseline.
 

@@ -1,6 +1,6 @@
 #!/usr/bin/python3
 # SPDX-License-Identifier: GPL-3.0-or-later
-# Copyright (C) 2000-2026 Shannon Smith
+# Copyright (C) 1993-2026 Shannon Smith
 """Calendar design host for Cinnamon's native xlet settings UI.
 
 Cinnamon's generic xlet-settings process is a separate GTK application, so it
