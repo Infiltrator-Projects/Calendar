@@ -9,7 +9,7 @@ G_IR_COMPILER ?= g-ir-compiler
 PREFIX ?= /usr
 DESTDIR ?=
 
-VERSION := 1.0.33
+VERSION := 1.0.34
 UUID := calendar-plus@the-infiltratr
 APPLET_SRC_DIR := src/cinnamon
 ICON_NAME := infiltratr-calendar
@@ -27,8 +27,8 @@ FONT_S_REGULAR := $(FONT_BUILD_DIR)/mb_corpo_s_regular.ttf
 FONT_FILES := $(FONT_A_COND_REGULAR) $(FONT_S_BOLD) $(FONT_S_REGULAR)
 INFILTRATR_COMMON_DIR := src/vendor/infiltratr-common
 INFILTRATR_COMMON_URL := https://github.com/Infiltrator-Projects/Infiltrator-Libraries.git
-INFILTRATR_COMMON_COMMIT := 33e69c0a462b56d388881d89c4eb49f72fa0b0fe
-INFILTRATR_COMMON_VERSION := 1.19.10
+INFILTRATR_COMMON_COMMIT := 5340059de8c1aad71c8224fb854a239c8218387a
+INFILTRATR_COMMON_VERSION := 1.19.14
 LIB_BASENAME := calendar-plus
 LIB_SONAME := lib$(LIB_BASENAME).so.0
 LIB_REALNAME := lib$(LIB_BASENAME).so.0.0.0
@@ -112,6 +112,7 @@ INFILTRATR_COMMON_HEADERS := \
 	$(INFILTRATR_COMMON_DIR)/include/infiltratr/core.h \
 	$(INFILTRATR_COMMON_DIR)/include/infiltratr/arithmetic.h \
 	$(INFILTRATR_COMMON_DIR)/include/infiltratr/timing.h \
+	$(INFILTRATR_COMMON_DIR)/include/infiltratr/temporal.h \
 	$(INFILTRATR_COMMON_DIR)/include/infiltratr/dynlib.h \
 	$(INFILTRATR_COMMON_DIR)/include/infiltratr/design.h \
 	$(INFILTRATR_COMMON_DIR)/include/infiltratr/utf8.h
