@@ -544,13 +544,13 @@ var Calendar = class Calendar {
             `${this.getCalendarName()}: ${this.formatDate(date, "full")}`,
         ];
         if (isToday) {
-            accessibleParts.push(CP_("Today"));
+            accessibleParts.push(_("Today"));
         }
         if (isSelected) {
-            accessibleParts.push(CP_("Selected"));
+            accessibleParts.push(_("Selected"));
         }
         if (eventColors.length > 0) {
-            accessibleParts.push(CP_("Calendar events"));
+            accessibleParts.push(_("Calendar events"));
         }
 
         const group = new Cinnamon.Stack();
