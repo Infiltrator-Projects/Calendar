@@ -12,6 +12,8 @@
 
 #include "time-formats-internal.h"
 
+#include <infiltratr/temporal.h>
+
 gchar *
 format_decimal_provider(gint64 unix_microseconds,
                         gint utc_offset_seconds,
@@ -20,21 +22,31 @@ format_decimal_provider(gint64 unix_microseconds,
                         gdouble latitude G_GNUC_UNUSED,
                         gdouble longitude)
 {
-    const gint64 local =
-        local_microseconds_of_day(unix_microseconds, utc_offset_seconds);
-    const guint ticks_per_day = show_seconds ? DECIMAL_SECONDS_PER_DAY : 1000;
-    const guint ticks = fractional_day_tick(local, ticks_per_day);
-    const gchar *separator = vertical ? "\n" : ":";
+    gchar text[32];
+    gchar *cursor;
 
     (void)longitude;
-    if (show_seconds)
+    if (!infiltratr_temporal_format_clock(
+            INFILTRATR_CLOCK_PROFILE_DECIMAL_10,
+            unix_microseconds,
+            utc_offset_seconds,
+            show_seconds,
+            text,
+            sizeof(text),
+            NULL))
     {
-        return g_strdup_printf("%u%s%02u%s%02u",
-                               ticks / 10000, separator,
-                               (ticks / 100) % 100, separator, ticks % 100);
+        return g_strdup("");
     }
 
-    return g_strdup_printf("%u%s%02u", ticks / 100, separator, ticks % 100);
+    if (vertical)
+    {
+        for (cursor = text; *cursor != '\0'; cursor++)
+        {
+            if (*cursor == ':')
+                *cursor = '\n';
+        }
+    }
+    return g_strdup(text);
 }
 
 guint
