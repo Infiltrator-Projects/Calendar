@@ -63,8 +63,8 @@ body:
   - type: textarea
     id: configuration
     attributes:
-      label: Relevant Calendar configuration
-      description: Include selected primary/secondary calendar, clock mode, seconds setting, and whether Geographic location is enabled. Do not publish precise coordinates unless they are necessary and you are comfortable doing so.
+      label: Relevant configuration
+      description: Include relevant Calendar-specific settings and, for clock/date issues, the temporal choices selected in Infiltrator System Settings. Do not publish precise coordinates unless they are necessary and you are comfortable doing so.
 
   - type: textarea
     id: problem
