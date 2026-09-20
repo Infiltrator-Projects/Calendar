@@ -418,7 +418,7 @@ var Calendar = class Calendar {
         const key = event.get_key_symbol();
         const state = typeof event.get_state === "function" ?
             event.get_state() : 0;
-        const control = (state & Clutter.ModifierType.CONTROL_MASK) !== 0;
+        const shift = (state & Clutter.ModifierType.SHIFT_MASK) !== 0;
 
         if (key === Clutter.KEY_Left) {
             this._queueKeyboardDate(this._dateByDays(date, -1));
@@ -430,10 +430,10 @@ var Calendar = class Calendar {
             this._queueKeyboardDate(this._dateByDays(date, 7));
         } else if (key === Clutter.KEY_Page_Up) {
             this._focusAfterUpdate = new Date(date.getTime());
-            this._browse(control ? -1 : 0, control ? 0 : -1, date, true);
+            this._browse(shift ? -1 : 0, shift ? 0 : -1, date, true);
         } else if (key === Clutter.KEY_Page_Down) {
             this._focusAfterUpdate = new Date(date.getTime());
-            this._browse(control ? 1 : 0, control ? 0 : 1, date, true);
+            this._browse(shift ? 1 : 0, shift ? 0 : 1, date, true);
         } else if (key === Clutter.KEY_Home || key === Clutter.KEY_End) {
             const logical = (date.getDay() - this._weekStart + 7) % 7;
             const delta = key === Clutter.KEY_Home ? -logical : 6 - logical;
@@ -556,14 +556,18 @@ var Calendar = class Calendar {
         const group = new Cinnamon.Stack();
         const button = new St.Button({
             label: dayLabel,
-            can_focus: true,
+            /*
+             * Roving focus keeps exactly one day in the Tab sequence. Arrow,
+             * Home/End and Page keys move that focus spatially inside the grid.
+             */
+            can_focus: isSelected,
             accessible_name: accessibleParts.join(", "),
         });
-        button.connect("clicked", () => {
-            if (this.events_enabled) {
-                this.setDate(date, false);
-            }
-        });
+        /*
+         * Date selection belongs to Calendar, not to CalendarServer. Event
+         * transport may be unavailable or disabled without disabling the grid.
+         */
+        button.connect("clicked", () => this.setDate(date, false));
         button.connect("key-press-event", (actor, event) => {
             return this._onDayKeyPress(date, event);
         });
