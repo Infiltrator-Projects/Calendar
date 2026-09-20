@@ -8,7 +8,7 @@
 
 Calendar is a native Cinnamon panel clock and calendar with alternative clock modes, 30 selectable calendar systems and CalendarServer integration. Its installed Linux desktop identity, Cinnamon Applets manager entry, Linux Mint Software Manager package-name alias and Cinnamon-native About dialog all use the project-owned Calendar icon. The Calendar package owns and installs that artwork itself; no shared icon-helper package is required.
 
-**Stable release:** 1.0.38  
+**Stable release:** 1.0.39  
 **Runtime:** Cinnamon 6.4, 6.6 and 6.7  
 **Build-tested bases:** Debian 13, Linux Mint 22 and Ubuntu 24.04  
 **Shared foundation:** pinned Infiltratr Common 1.19.18, including canonical theme, typography and structural-metric contracts
@@ -140,7 +140,7 @@ Numbered releases publish two project-owned artifacts:
 | File | Purpose |
 | --- | --- |
 | `calendar_<version>_amd64.deb` | Generic amd64 Debian package; package identity is `infiltrator-calendar` |
-| `calendar-<version>-local-folder.run` | Verified local hardware-native builder |
+| `calendar-<version>-local-folder.run` | Verified local hardware-native PGO builder (`-O3 -march=native -mtune=native`, LTO, representative profile training, profile-use rebuild) |
 
 Install the generic package with:
 
@@ -148,12 +148,14 @@ Install the generic package with:
 sudo apt install ./calendar_<version>_amd64.deb
 ```
 
-Or use the native builder:
+Or use the native PGO builder:
 
 ```bash
 chmod +x calendar-<version>-local-folder.run
 ./calendar-<version>-local-folder.run
 ```
+
+The `.run` performs a two-pass local build. Pass 1 instruments Calendar and the pinned Common library with GCC profile generation, runs Calendar's automated tests plus a representative clock/calendar/event workload on the actual machine, then pass 2 rebuilds with the measured profile using `-fprofile-use -fprofile-correction -fprofile-partial-training`. The resulting Debian-managed package is therefore tuned to the local CPU rather than being a generic repository build. The correctness-preserving profile deliberately does not use `-Ofast` or `-ffast-math`.
 
 After installation, add **Calendar** from **System Settings → Applets**.
 
