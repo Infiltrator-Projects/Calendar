@@ -556,6 +556,57 @@ test_event_source_and_snapshot(void)
 }
 
 static void
+test_event_index_scale(void)
+{
+    enum { EVENT_COUNT = 10000 };
+    g_autoptr(GDateTime) midday =
+        g_date_time_new_local(2026, 9, 20, 12, 0, 0.0);
+    CalendarPlusEventIndex *index = calendar_plus_event_index_new();
+    CalendarPlusEventSnapshot *snapshot;
+    const gint64 day = g_date_time_to_unix(midday);
+    gdouble elapsed;
+    guint item;
+
+    g_assert_nonnull(midday);
+    g_assert_nonnull(index);
+
+    g_test_timer_start();
+    for (item = 0; item < EVENT_COUNT; item++)
+    {
+        gchar id[48];
+        CalendarPlusEventInput input = {
+            id,
+            "#00ADEF",
+            "Scale event",
+            FALSE,
+            day + (gint64)(item % 21600),
+            day + (gint64)(item % 21600) + 60,
+            (gint64)item,
+            1
+        };
+
+        g_snprintf(id, sizeof(id), "scale-%u", item);
+        g_assert_true(calendar_plus_event_index_upsert(index, &input));
+    }
+
+    snapshot = calendar_plus_event_index_snapshot(index, day, day);
+    g_assert_nonnull(snapshot);
+    g_assert_cmpuint(snapshot->length, ==, EVENT_COUNT);
+    elapsed = g_test_timer_elapsed();
+    g_test_message("10k event upsert + snapshot: %.3f s", elapsed);
+
+    /*
+     * Regression ceiling, not a benchmark contest. Ten thousand same-day
+     * records is deliberately extreme for a panel calendar, and five seconds
+     * leaves sanitizer/CI headroom while catching an accidental quadratic path.
+     */
+    g_assert_cmpfloat(elapsed, <, 5.0);
+
+    calendar_plus_event_snapshot_free(snapshot);
+    calendar_plus_event_index_free(index);
+}
+
+static void
 test_shared_calendar_helpers(void)
 {
     g_assert_cmpint(calendar_plus_gregorian_month_length(2000, 2), ==, 29);
@@ -772,6 +823,7 @@ main(int argc,
     g_test_add_func("/portable/shared-calendar-helpers",
                     test_shared_calendar_helpers);
     g_test_add_func("/portable/event-source", test_event_source_and_snapshot);
+    g_test_add_func("/portable/event-scale", test_event_index_scale);
     g_test_add_func("/portable/time-catalogue", test_time_catalogue);
     g_test_add_func("/portable/swedish-historical-boundaries",
                     test_swedish_historical_boundaries);
