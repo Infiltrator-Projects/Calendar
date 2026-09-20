@@ -105,27 +105,57 @@ gboolean calendar_plus_system_clock_is_running(
 gchar *calendar_plus_system_clock_get_system_mode(
     CalendarPlusSystemClock *self);
 
-/** Return the system-wide primary calendar identifier. */
+/**
+ * calendar_plus_system_clock_get_system_primary_calendar:
+ * @self: a multi-system clock
+ *
+ * Returns: (transfer full): the system-wide primary calendar identifier
+ */
 gchar *calendar_plus_system_clock_get_system_primary_calendar(
     CalendarPlusSystemClock *self);
 
-/** Return the system-wide secondary calendar identifier. */
+/**
+ * calendar_plus_system_clock_get_system_secondary_calendar:
+ * @self: a multi-system clock
+ *
+ * Returns: (transfer full): the system-wide secondary calendar identifier
+ */
 gchar *calendar_plus_system_clock_get_system_secondary_calendar(
     CalendarPlusSystemClock *self);
 
-/** Return whether the system-wide policy requests seconds/finer units. */
+/**
+ * calendar_plus_system_clock_get_system_show_seconds:
+ * @self: a multi-system clock
+ *
+ * Returns: whether the system-wide policy requests seconds or a finer unit
+ */
 gboolean calendar_plus_system_clock_get_system_show_seconds(
     CalendarPlusSystemClock *self);
 
-/** Return whether a system-wide geographic location is configured. */
+/**
+ * calendar_plus_system_clock_get_system_location_configured:
+ * @self: a multi-system clock
+ *
+ * Returns: whether a system-wide geographic location is configured
+ */
 gboolean calendar_plus_system_clock_get_system_location_configured(
     CalendarPlusSystemClock *self);
 
-/** Return system-wide latitude in degrees north. */
+/**
+ * calendar_plus_system_clock_get_system_latitude:
+ * @self: a multi-system clock
+ *
+ * Returns: system-wide latitude in degrees north
+ */
 gdouble calendar_plus_system_clock_get_system_latitude(
     CalendarPlusSystemClock *self);
 
-/** Return system-wide longitude in degrees east. */
+/**
+ * calendar_plus_system_clock_get_system_longitude:
+ * @self: a multi-system clock
+ *
+ * Returns: system-wide longitude in degrees east
+ */
 gdouble calendar_plus_system_clock_get_system_longitude(
     CalendarPlusSystemClock *self);
 
