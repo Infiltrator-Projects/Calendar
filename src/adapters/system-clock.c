@@ -65,7 +65,8 @@ calendar_plus_system_clock_dispose(GObject *object)
         g_file_monitor_cancel(self->policy_monitor);
         g_clear_object(&self->policy_monitor);
     }
-    g_clear_pointer(&self->policy_path, g_free);
+    g_free(self->policy_path);
+    self->policy_path = NULL;
     calendar_plus_clock_engine_free(self->engine);
     self->engine = NULL;
     G_OBJECT_CLASS(calendar_plus_system_clock_parent_class)->dispose(object); // NOLINT(bugprone-casting-through-void)
