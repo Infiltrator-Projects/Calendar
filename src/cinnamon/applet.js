@@ -202,6 +202,11 @@ class CalendarPlusApplet extends Applet.Applet {
             "tick",
             () => this._updatePanelClock()
         );
+        this._signals.connect(
+            this.system_clock,
+            "policy-changed",
+            () => this._onSettingsChanged()
+        );
 
         this.event_list = new EventView.EventList(
             this.settings,
@@ -465,7 +470,8 @@ class CalendarPlusApplet extends Applet.Applet {
          * so restarting recalculates the next visible boundary from current
          * civil time rather than firing with a stale pre-suspend remainder.
          */
-        if (PanelClock.isNativeClockMode(this.clock_mode) && this.system_clock) {
+        const config = this._clockConfig();
+        if (PanelClock.isNativeClockMode(config.mode) && this.system_clock) {
             this.system_clock.stop();
             this._syncSystemClock();
         }
@@ -559,8 +565,21 @@ class CalendarPlusApplet extends Applet.Applet {
     }
 
     _clockConfig() {
+        let effectiveMode = this.clock_mode;
+        if (effectiveMode === PanelClock.CLOCK_MODE_STANDARD &&
+            this.system_clock) {
+            try {
+                const systemMode = this.system_clock.get_system_mode();
+                if (typeof systemMode === "string" && systemMode.length > 0) {
+                    effectiveMode = systemMode;
+                }
+            } catch (error) {
+                global.logError(error);
+            }
+        }
+
         return {
-            mode: this.clock_mode,
+            mode: effectiveMode,
             showSeconds: this.show_seconds,
             locationConfigured: this.location_configured,
             latitude: this.latitude,
