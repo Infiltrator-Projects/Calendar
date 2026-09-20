@@ -33,6 +33,8 @@ arithmetic_mode_supported(CalendarPlusCalendarMode mode)
     switch (mode)
     {
         case CALENDAR_PLUS_CALENDAR_MODE_GREGORIAN:
+        case CALENDAR_PLUS_CALENDAR_MODE_BUDDHIST:
+        case CALENDAR_PLUS_CALENDAR_MODE_MINGUO:
         case CALENDAR_PLUS_CALENDAR_MODE_ISLAMIC_CIVIL:
         case CALENDAR_PLUS_CALENDAR_MODE_COPTIC:
         case CALENDAR_PLUS_CALENDAR_MODE_ETHIOPIAN:
@@ -66,6 +68,16 @@ signed_year_from_fields(CalendarPlusCalendarMode mode,
         case CALENDAR_PLUS_CALENDAR_MODE_ETHIOPIC_AMETE_ALEM:
             return calendar_plus_i64_subtract_saturating(
                 fields->year, ETHIOPIC_AMETE_ALEM_OFFSET);
+
+        case CALENDAR_PLUS_CALENDAR_MODE_BUDDHIST:
+            return calendar_plus_i64_subtract_saturating(fields->year, 543);
+
+        case CALENDAR_PLUS_CALENDAR_MODE_MINGUO:
+            return fields->auxiliary == 0 ?
+                calendar_plus_i64_subtract_saturating(
+                    1912, fields->year) :
+                calendar_plus_i64_add_saturating(
+                    fields->year, 1911);
 
         default:
             return fields->year;
@@ -112,6 +124,27 @@ set_signed_year(CalendarPlusCalendarMode mode,
             fields->year = calendar_plus_i64_add_saturating(
                 signed_year, ETHIOPIC_AMETE_ALEM_OFFSET);
             fields->auxiliary = 0;
+            break;
+
+        case CALENDAR_PLUS_CALENDAR_MODE_BUDDHIST:
+            fields->year = calendar_plus_i64_add_saturating(
+                signed_year, 543);
+            fields->auxiliary = 0;
+            break;
+
+        case CALENDAR_PLUS_CALENDAR_MODE_MINGUO:
+            if (signed_year >= 1912)
+            {
+                fields->year = calendar_plus_i64_subtract_saturating(
+                    signed_year, 1911);
+                fields->auxiliary = 1;
+            }
+            else
+            {
+                fields->year = calendar_plus_i64_subtract_saturating(
+                    1912, signed_year);
+                fields->auxiliary = 0;
+            }
             break;
 
         default:
@@ -421,6 +454,8 @@ month_length(CalendarPlusCalendarMode mode,
     switch (mode)
     {
         case CALENDAR_PLUS_CALENDAR_MODE_GREGORIAN:
+        case CALENDAR_PLUS_CALENDAR_MODE_BUDDHIST:
+        case CALENDAR_PLUS_CALENDAR_MODE_MINGUO:
             return calendar_plus_gregorian_month_length(
                 year, fields->month);
 
@@ -450,6 +485,8 @@ fields_to_jdn(CalendarPlusCalendarMode mode,
     switch (mode)
     {
         case CALENDAR_PLUS_CALENDAR_MODE_GREGORIAN:
+        case CALENDAR_PLUS_CALENDAR_MODE_BUDDHIST:
+        case CALENDAR_PLUS_CALENDAR_MODE_MINGUO:
             return calendar_plus_gregorian_to_jdn(
                 year, fields->month, fields->day);
 
@@ -498,6 +535,8 @@ calendar_plus_arithmetic_fields_from_jdn(
     switch (mode)
     {
         case CALENDAR_PLUS_CALENDAR_MODE_GREGORIAN:
+        case CALENDAR_PLUS_CALENDAR_MODE_BUDDHIST:
+        case CALENDAR_PLUS_CALENDAR_MODE_MINGUO:
             calendar_plus_jdn_to_gregorian(jdn, &year, &month, &day);
             fields->month = month;
             fields->day = day;
