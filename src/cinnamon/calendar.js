@@ -537,11 +537,27 @@ var Calendar = class Calendar {
         ] = record;
 
         const date = _localDate(year, month, day);
+        const eventColors = this.events_enabled
+            ? this.events_manager.get_colors_for_date(date)
+            : [];
+        const accessibleParts = [
+            `${this.getCalendarName()}: ${this.formatDate(date, "full")}`,
+        ];
+        if (isToday) {
+            accessibleParts.push(CP_("Today"));
+        }
+        if (isSelected) {
+            accessibleParts.push(CP_("Selected"));
+        }
+        if (eventColors.length > 0) {
+            accessibleParts.push(CP_("Calendar events"));
+        }
+
         const group = new Cinnamon.Stack();
         const button = new St.Button({
             label: dayLabel,
             can_focus: true,
-            accessible_name: `${this.getCalendarName()}: ${this.formatDate(date, "full")}`,
+            accessible_name: accessibleParts.join(", "),
         });
         button.connect("clicked", () => {
             if (this.events_enabled) {
@@ -595,7 +611,7 @@ var Calendar = class Calendar {
         if (!this.events_enabled) {
             return;
         }
-        for (const color of this.events_manager.get_colors_for_date(date)) {
+        for (const color of eventColors) {
             dotBox.add_actor(new St.Bin({
                 style_class: "calendar-day-event-dot",
                 style: `background-color: ${color};`,
