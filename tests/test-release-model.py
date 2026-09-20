@@ -506,8 +506,8 @@ def main() -> None:
     assert "Package: calendar-plus" not in control
     assert "Breaks: calendar-plus, cinnamon-calendar" in control
     assert "Replaces: calendar-plus, cinnamon-calendar" in control
-    assert "$(PKG_CONFIG) --libs gobject-2.0)" in makefile
-    assert "$(PKG_CONFIG) --libs glib-2.0)" in makefile
+    assert "$(PKG_CONFIG) --cflags gio-2.0 gobject-2.0 icu-i18n)" in makefile
+    assert "$(PKG_CONFIG) --libs gio-2.0 gobject-2.0)" in makefile
     assert "-DU_DISABLE_RENAMING=1" in makefile
     assert "src/core/icu-compat-bridge.c" in makefile
     assert "ICU_BRIDGE_LIBS = $(DYNLIB_LIBS) -pthread" in makefile
