@@ -1384,6 +1384,11 @@ calendar_plus_arithmetic_add_months(
         (gint)calendar_plus_positive_modulo(serial, period_count) + 1;
 
     set_signed_year(mode, year, &fields);
+    if (mode == CALENDAR_PLUS_CALENDAR_MODE_ISLAMIC_UMM_AL_QURA &&
+        (year < UMM_AL_QURA_FIRST_YEAR || year > UMM_AL_QURA_LAST_YEAR))
+    {
+        return jdn;
+    }
     fields.month = target_month;
     fields.day = MIN(fields.day, month_length(mode, &fields));
     return fields_to_jdn(mode, &fields);
@@ -1417,6 +1422,11 @@ calendar_plus_arithmetic_add_years(
 
     year = calendar_plus_i64_add_saturating(
         signed_year_from_fields(mode, &fields), amount);
+    if (mode == CALENDAR_PLUS_CALENDAR_MODE_ISLAMIC_UMM_AL_QURA &&
+        (year < UMM_AL_QURA_FIRST_YEAR || year > UMM_AL_QURA_LAST_YEAR))
+    {
+        return jdn;
+    }
     set_signed_year(mode, year, &fields);
     fields.day = MIN(fields.day, month_length(mode, &fields));
     return fields_to_jdn(mode, &fields);
