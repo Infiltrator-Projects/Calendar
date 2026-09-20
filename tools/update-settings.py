@@ -133,7 +133,7 @@ def generated_schema() -> str:
     )
 
     conventional = OrderedDict([
-        ("Standard time (follow Mint setting)", "standard"),
+        ("Standard time (OS locale)", "standard"),
         ("Standard time (24-hour)", "standard-24"),
         ("Standard time (12-hour)", "standard-12"),
     ])
