@@ -43,9 +43,6 @@ msgstr ""
 msgid "Ahekan"
 msgstr ""
 
-msgid "Apparent solar time"
-msgstr ""
-
 msgid "April"
 msgstr ""
 
@@ -64,13 +61,7 @@ msgstr ""
 msgid "Aristotle"
 msgstr ""
 
-msgid "Armenian traditional (365-day)"
-msgstr ""
-
 msgid "Asmá’"
-msgstr ""
-
-msgid "Astronomical Julian Date (JD)"
 msgstr ""
 
 msgid "August"
@@ -85,28 +76,13 @@ msgstr ""
 msgid "Ayyám-i-Há"
 msgstr ""
 
-msgid "Babylonian hours (from sunrise)"
-msgstr ""
-
 msgid "Bahá"
-msgstr ""
-
-msgid "Bahá’í (Badíʿ)"
 msgstr ""
 
 msgid "Bichat"
 msgstr ""
 
-msgid "Binary clock"
-msgstr ""
-
 msgid "Brumaire"
-msgstr ""
-
-msgid "Buddhist"
-msgstr ""
-
-msgid "Byzantine (Anno Mundi)"
 msgstr ""
 
 msgid "Caesar"
@@ -124,16 +100,7 @@ msgstr ""
 msgid "Check this to show week numbers in the calendar."
 msgstr ""
 
-msgid "Chinese hundred-kè time"
-msgstr ""
-
-msgid "Chinese traditional"
-msgstr ""
-
 msgid "Choiak"
-msgstr ""
-
-msgid "Coptic"
 msgstr ""
 
 msgid ""
@@ -141,9 +108,6 @@ msgid ""
 "\n"
 "This program comes with absolutely no warranty.\n"
 "See the GNU GPL v3+ License for details."
-msgstr ""
-
-msgid "Dangi (traditional Korean)"
 msgstr ""
 
 msgid "Dante"
@@ -161,22 +125,10 @@ msgstr ""
 msgid "Display"
 msgstr ""
 
-msgid "Edo Japanese seasonal time"
-msgstr ""
-
-msgid "Egyptian civil (Nabonassar era)"
-msgstr ""
-
 msgid "Epagomenal days"
 msgstr ""
 
 msgid "Epiphi"
-msgstr ""
-
-msgid "Ethiopian"
-msgstr ""
-
-msgid "Ethiopic (Amete Alem)"
 msgstr ""
 
 msgid "Februarius"
@@ -203,12 +155,6 @@ msgstr ""
 msgid "Frederick"
 msgstr ""
 
-msgid "French Republican"
-msgstr ""
-
-msgid "French Republican decimal time (10-hour day)"
-msgstr ""
-
 msgid "Frimaire"
 msgstr ""
 
@@ -218,19 +164,10 @@ msgstr ""
 msgid "Germinal"
 msgstr ""
 
-msgid "Gregorian"
-msgstr ""
-
 msgid "Gutenberg"
 msgstr ""
 
 msgid "Hathyr"
-msgstr ""
-
-msgid "Hebrew"
-msgstr ""
-
-msgid "Hexadecimal time (0000 to FFFF)"
 msgstr ""
 
 msgid "Homer"
@@ -242,37 +179,7 @@ msgstr ""
 msgid "Hroticʿ"
 msgstr ""
 
-msgid "ISO week calendar"
-msgstr ""
-
 msgid "Ianuarius"
-msgstr ""
-
-msgid "Indian National (Saka)"
-msgstr ""
-
-msgid "Indian ghaṭī time (from sunrise)"
-msgstr ""
-
-msgid "International Fixed"
-msgstr ""
-
-msgid "Internet Time (@000 to @999)"
-msgstr ""
-
-msgid "Islamic (Umm al-Qura)"
-msgstr ""
-
-msgid "Islamic (astronomical approximation)"
-msgstr ""
-
-msgid "Islamic (civil/tabular)"
-msgstr ""
-
-msgid "Islamic (tabular, astronomical epoch)"
-msgstr ""
-
-msgid "Italian hours (from sunset)"
 msgstr ""
 
 msgid "Iulius"
@@ -288,12 +195,6 @@ msgid "Jamál"
 msgstr ""
 
 msgid "January"
-msgstr ""
-
-msgid "Japanese imperial era"
-msgstr ""
-
-msgid "Julian"
 msgstr ""
 
 msgid "July"
@@ -320,12 +221,6 @@ msgstr ""
 msgid "Leapyear Day"
 msgstr ""
 
-msgid "Local mean solar time"
-msgstr ""
-
-msgid "Local sidereal time"
-msgstr ""
-
 msgid "Maius"
 msgstr ""
 
@@ -350,9 +245,6 @@ msgstr ""
 msgid "May"
 msgstr ""
 
-msgid "Mayan Long Count"
-msgstr ""
-
 msgid "Mecheir"
 msgstr ""
 
@@ -363,12 +255,6 @@ msgid "Mesore"
 msgstr ""
 
 msgid "Messidor"
-msgstr ""
-
-msgid "Minguo (Republic of China)"
-msgstr ""
-
-msgid "Modified Julian Date (MJD)"
 msgstr ""
 
 msgid "Moses"
@@ -395,9 +281,6 @@ msgstr ""
 msgid "November"
 msgstr ""
 
-msgid "Nuremberg hours (sunrise/sunset reset)"
-msgstr ""
-
 msgid "Núr"
 msgstr ""
 
@@ -416,9 +299,6 @@ msgstr ""
 msgid "Payni"
 msgstr ""
 
-msgid "Persian (Solar Hijri)"
-msgstr ""
-
 msgid "Phamenoth"
 msgstr ""
 
@@ -429,9 +309,6 @@ msgid "Pharmouthi"
 msgstr ""
 
 msgid "Pluviôse"
-msgstr ""
-
-msgid "Positivist"
 msgstr ""
 
 msgid "Prairial"
@@ -450,15 +327,6 @@ msgid "Qudrat"
 msgstr ""
 
 msgid "Raḥmat"
-msgstr ""
-
-msgid "Revised Julian"
-msgstr ""
-
-msgid "Roman"
-msgstr ""
-
-msgid "Roman temporal time"
 msgstr ""
 
 msgid "Sahmi"
@@ -500,9 +368,6 @@ msgstr ""
 msgid "Sulṭán"
 msgstr ""
 
-msgid "Swedish historical (1700–1753)"
-msgstr ""
-
 msgid "The Cinnamon clock and calendar with multiple time and calendar systems"
 msgstr ""
 
@@ -515,9 +380,6 @@ msgstr ""
 msgid "Thoth"
 msgstr ""
 
-msgid "Traditional Chinese double-hours"
-msgstr ""
-
 msgid "Trē"
 msgstr ""
 
@@ -526,9 +388,6 @@ msgstr ""
 
 #, c-format
 msgid "Uinal %d"
-msgstr ""
-
-msgid "Unix time (epoch seconds)"
 msgstr ""
 
 msgid "Vendémiaire"
@@ -542,9 +401,6 @@ msgstr ""
 
 #, c-format
 msgid "Week %02d"
-msgstr ""
-
-msgid "World Calendar"
 msgstr ""
 
 msgid "Worldsday"

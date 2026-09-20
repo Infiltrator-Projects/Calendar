@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Calendar 3.9.18\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-09-01 04:58+0000\n"
+"POT-Creation-Date: 2026-09-01 09:25+0000\n"
 "PO-Revision-Date: 2026-09-01 03:05+0000\n"
 "Last-Translator: Calendar contributors\n"
 "Language-Team: ru\n"
@@ -42,9 +42,6 @@ msgstr "О Calendar"
 msgid "Ahekan"
 msgstr "Ahekan"
 
-msgid "Apparent solar time"
-msgstr "Истинное солнечное время"
-
 msgid "April"
 msgstr "Апрель"
 
@@ -63,14 +60,8 @@ msgstr "Areg"
 msgid "Aristotle"
 msgstr "Aristotle"
 
-msgid "Armenian traditional (365-day)"
-msgstr "Традиционный армянский (365 дней)"
-
 msgid "Asmá’"
 msgstr "Asmá’"
-
-msgid "Astronomical Julian Date (JD)"
-msgstr "Астрономическая юлианская дата (JD)"
 
 msgid "August"
 msgstr "Август"
@@ -84,29 +75,14 @@ msgstr "Aweleacʿ"
 msgid "Ayyám-i-Há"
 msgstr "Ayyám-i-Há"
 
-msgid "Babylonian hours (from sunrise)"
-msgstr "Вавилонские часы (от восхода солнца)"
-
 msgid "Bahá"
 msgstr "Bahá"
-
-msgid "Bahá’í (Badíʿ)"
-msgstr "Bahá’í (Badíʿ)"
 
 msgid "Bichat"
 msgstr "Bichat"
 
-msgid "Binary clock"
-msgstr "Двоичные часы"
-
 msgid "Brumaire"
 msgstr "Brumaire"
-
-msgid "Buddhist"
-msgstr "Буддийский"
-
-msgid "Byzantine (Anno Mundi)"
-msgstr "Византийский (Anno Mundi)"
 
 msgid "Caesar"
 msgstr "Caesar"
@@ -114,14 +90,8 @@ msgstr "Caesar"
 msgid "Calendar"
 msgstr "Calendar"
 
-msgid "Calendar systems"
-msgstr "Календарные системы"
-
 msgid "Charlemagne"
 msgstr "Charlemagne"
-
-msgid "Check this to define a custom format for the date in the calendar applet."
-msgstr "Отметьте, чтобы задать собственный формат даты в апплете календаря."
 
 msgid "Check this to display events in the calendar."
 msgstr "Отметьте, чтобы показывать события в календаре."
@@ -129,26 +99,8 @@ msgstr "Отметьте, чтобы показывать события в ка
 msgid "Check this to show week numbers in the calendar."
 msgstr "Отметьте, чтобы показывать номера недель в календаре."
 
-msgid "Chinese hundred-kè time"
-msgstr "Китайское время ста кэ"
-
-msgid "Chinese traditional"
-msgstr "Традиционный китайский"
-
 msgid "Choiak"
 msgstr "Choiak"
-
-msgid "Click this button to know more about the syntax for date formats."
-msgstr "Нажмите, чтобы узнать больше о синтаксисе форматов даты."
-
-msgid "Clock"
-msgstr "Часы"
-
-msgid "Clock mode"
-msgstr "Режим часов"
-
-msgid "Coptic"
-msgstr "Коптский"
 
 msgid ""
 "Copyright © 1993-2026 Shannon Smith\n"
@@ -164,17 +116,8 @@ msgstr ""
 "This program comes with absolutely no warranty.\n"
 "See the GNU GPL v3+ License for details."
 
-msgid "Dangi (traditional Korean)"
-msgstr "Танги (традиционный корейский)"
-
 msgid "Dante"
 msgstr "Dante"
-
-msgid "Date format"
-msgstr "Формат даты"
-
-msgid "Date format for tooltip"
-msgstr "Формат даты во всплывающей подсказке"
 
 msgid "Day"
 msgstr "День"
@@ -188,23 +131,11 @@ msgstr "Descartes"
 msgid "Display"
 msgstr "Отображение"
 
-msgid "Edo Japanese seasonal time"
-msgstr "Японское сезонное время эпохи Эдо"
-
-msgid "Egyptian civil (Nabonassar era)"
-msgstr "Египетский гражданский календарь (эра Набонассара)"
-
 msgid "Epagomenal days"
 msgstr "Эпагоменальные дни"
 
 msgid "Epiphi"
 msgstr "Epiphi"
-
-msgid "Ethiopian"
-msgstr "Эфиопский"
-
-msgid "Ethiopic (Amete Alem)"
-msgstr "Эфиопский (Amete Alem)"
 
 msgid "Februarius"
 msgstr "Februarius"
@@ -230,38 +161,20 @@ msgstr "Использовать текущую тему Cinnamon или при�
 msgid "Frederick"
 msgstr "Frederick"
 
-msgid "French Republican"
-msgstr "Французский республиканский"
-
-msgid "French Republican decimal time (10-hour day)"
-msgstr "Французское республиканское десятичное время (10-часовой день)"
-
 msgid "Frimaire"
 msgstr "Frimaire"
 
 msgid "Fructidor"
 msgstr "Fructidor"
 
-msgid "Geographic location"
-msgstr "Географическое положение"
-
 msgid "Germinal"
 msgstr "Germinal"
-
-msgid "Gregorian"
-msgstr "Григорианский"
 
 msgid "Gutenberg"
 msgstr "Gutenberg"
 
 msgid "Hathyr"
 msgstr "Hathyr"
-
-msgid "Hebrew"
-msgstr "Еврейский"
-
-msgid "Hexadecimal time (0000 to FFFF)"
-msgstr "Шестнадцатеричное время (0000–FFFF)"
 
 msgid "Homer"
 msgstr "Homer"
@@ -272,38 +185,8 @@ msgstr "Hoṙi"
 msgid "Hroticʿ"
 msgstr "Hroticʿ"
 
-msgid "ISO week calendar"
-msgstr "Календарь недель ISO"
-
 msgid "Ianuarius"
 msgstr "Ianuarius"
-
-msgid "Indian National (Saka)"
-msgstr "Индийский национальный (Сака)"
-
-msgid "Indian ghaṭī time (from sunrise)"
-msgstr "Индийское время гхати (от восхода солнца)"
-
-msgid "International Fixed"
-msgstr "Международный фиксированный"
-
-msgid "Internet Time (@000 to @999)"
-msgstr "Интернет-время (@000–@999)"
-
-msgid "Islamic (Umm al-Qura)"
-msgstr "Исламский (Умм аль-Кура)"
-
-msgid "Islamic (astronomical approximation)"
-msgstr "Исламский (астрономическое приближение)"
-
-msgid "Islamic (civil/tabular)"
-msgstr "Исламский (гражданский/табличный)"
-
-msgid "Islamic (tabular, astronomical epoch)"
-msgstr "Исламский (табличный, астрономическая эпоха)"
-
-msgid "Italian hours (from sunset)"
-msgstr "Итальянские часы (от заката)"
 
 msgid "Iulius"
 msgstr "Iulius"
@@ -319,12 +202,6 @@ msgstr "Jamál"
 
 msgid "January"
 msgstr "Январь"
-
-msgid "Japanese imperial era"
-msgstr "Японская императорская эра"
-
-msgid "Julian"
-msgstr "Юлианский"
 
 msgid "July"
 msgstr "Июль"
@@ -344,23 +221,11 @@ msgstr "Сочетания клавиш"
 msgid "Kʿałocʿ"
 msgstr "Kʿałocʿ"
 
-msgid "Latitude in degrees"
-msgstr "Широта в градусах"
-
 msgid "Leap Day"
 msgstr "Вставной день"
 
 msgid "Leapyear Day"
 msgstr "День високосного года"
-
-msgid "Local mean solar time"
-msgstr "Местное среднее солнечное время"
-
-msgid "Local sidereal time"
-msgstr "Местное звёздное время"
-
-msgid "Longitude in degrees"
-msgstr "Долгота в градусах"
 
 msgid "Maius"
 msgstr "Maius"
@@ -386,9 +251,6 @@ msgstr "Masá’il"
 msgid "May"
 msgstr "Май"
 
-msgid "Mayan Long Count"
-msgstr "Длинный счёт майя"
-
 msgid "Mecheir"
 msgstr "Mecheir"
 
@@ -400,12 +262,6 @@ msgstr "Mesore"
 
 msgid "Messidor"
 msgstr "Messidor"
-
-msgid "Minguo (Republic of China)"
-msgstr "Миньго (Китайская Республика)"
-
-msgid "Modified Julian Date (MJD)"
-msgstr "Модифицированная юлианская дата (MJD)"
 
 msgid "Moses"
 msgstr "Moses"
@@ -428,14 +284,8 @@ msgstr "Ночь"
 msgid "Nivôse"
 msgstr "Nivôse"
 
-msgid "None"
-msgstr "Нет"
-
 msgid "November"
 msgstr "Ноябрь"
-
-msgid "Nuremberg hours (sunrise/sunset reset)"
-msgstr "Нюрнбергские часы (сброс на восходе и закате)"
 
 msgid "Núr"
 msgstr "Núr"
@@ -455,9 +305,6 @@ msgstr "Pachons"
 msgid "Payni"
 msgstr "Payni"
 
-msgid "Persian (Solar Hijri)"
-msgstr "Персидский (солнечная хиджра)"
-
 msgid "Phamenoth"
 msgstr "Phamenoth"
 
@@ -470,9 +317,6 @@ msgstr "Pharmouthi"
 msgid "Pluviôse"
 msgstr "Pluviôse"
 
-msgid "Positivist"
-msgstr "Позитивистский"
-
 msgid "Prairial"
 msgstr "Prairial"
 
@@ -481,9 +325,6 @@ msgstr "Предыдущий месяц"
 
 msgid "Previous year"
 msgstr "Предыдущий год"
-
-msgid "Primary calendar"
-msgstr "Основной календарь"
 
 msgid "Qawl"
 msgstr "Qawl"
@@ -494,15 +335,6 @@ msgstr "Qudrat"
 msgid "Raḥmat"
 msgstr "Raḥmat"
 
-msgid "Revised Julian"
-msgstr "Новоюлианский"
-
-msgid "Roman"
-msgstr "Римский"
-
-msgid "Roman temporal time"
-msgstr "Римское темпоральное время"
-
 msgid "Sahmi"
 msgstr "Sahmi"
 
@@ -512,20 +344,11 @@ msgstr "Saint Paul"
 msgid "Sans-culottides"
 msgstr "Sans-culottides"
 
-msgid "Secondary date"
-msgstr "Дополнительная дата"
-
 msgid "September"
 msgstr "Сентябрь"
 
 msgid "Set keybinding(s) to show the calendar."
 msgstr "Задайте сочетания клавиш для показа календаря."
-
-msgid "Set your custom format here."
-msgstr "Задайте здесь собственный формат."
-
-msgid "Set your custom tooltip format here."
-msgstr "Задайте здесь собственный формат подсказки."
 
 msgid "Shakespeare"
 msgstr "Shakespeare"
@@ -539,12 +362,6 @@ msgstr "Показать календарь"
 msgid "Show calendar events"
 msgstr "Показывать события календаря"
 
-msgid "Show information on date format syntax"
-msgstr "Показывать сведения о синтаксисе формата даты"
-
-msgid "Show seconds"
-msgstr "Показывать секунды"
-
 msgid "Show today"
 msgstr "Показать сегодня"
 
@@ -554,20 +371,8 @@ msgstr "Показывать номера недель в календаре"
 msgid "Sol"
 msgstr "Sol"
 
-msgid "Standard time (12-hour)"
-msgstr "Обычное время (12 часов)"
-
-msgid "Standard time (24-hour)"
-msgstr "Обычное время (24 часа)"
-
-msgid "Standard time (OS locale)"
-msgstr "Стандартное время (локаль ОС)"
-
 msgid "Sulṭán"
 msgstr "Sulṭán"
-
-msgid "Swedish historical (1700–1753)"
-msgstr "Шведский исторический (1700–1753)"
 
 msgid "The Cinnamon clock and calendar with multiple time and calendar systems"
 msgstr "Часы и календарь Cinnamon с несколькими системами времени и календарями"
@@ -581,9 +386,6 @@ msgstr "Thermidor"
 msgid "Thoth"
 msgstr "Thoth"
 
-msgid "Traditional Chinese double-hours"
-msgstr "Традиционные китайские двойные часы"
-
 msgid "Trē"
 msgstr "Trē"
 
@@ -593,18 +395,6 @@ msgstr "Tybi"
 #, c-format
 msgid "Uinal %d"
 msgstr "Uinal %d"
-
-msgid "Unix time (epoch seconds)"
-msgstr "Время Unix (секунды от эпохи)"
-
-msgid "Use a custom date format"
-msgstr "Использовать собственный формат даты"
-
-msgid "Used by Roman temporal, Edo Japanese seasonal, Italian, Babylonian and Nuremberg hours, and Indian ghaṭī time. Enter north latitudes as positive and south latitudes as negative."
-msgstr "Используется для римского темпорального времени, японского сезонного времени Эдо, итальянских, вавилонских и нюрнбергских часов и индийского времени гхати. Северную широту вводите положительной, южную — отрицательной."
-
-msgid "Used by local sidereal, solar and location-dependent historical time. Enter east longitudes as positive and west longitudes as negative."
-msgstr "Используется для местного звёздного, солнечного и исторического времени, зависящего от местоположения. Восточную долготу вводите положительной, западную — отрицательной."
 
 msgid "Vendémiaire"
 msgstr "Vendémiaire"
@@ -618,9 +408,6 @@ msgstr "Неделя"
 #, c-format
 msgid "Week %02d"
 msgstr "Week %02d"
-
-msgid "World Calendar"
-msgstr "Всемирный календарь"
 
 msgid "Worldsday"
 msgstr "Worldsday"

@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Calendar 3.9.18\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-09-01 04:58+0000\n"
+"POT-Creation-Date: 2026-09-01 09:25+0000\n"
 "PO-Revision-Date: 2026-09-01 00:00+1000\n"
 "Last-Translator: Shannon Smith\n"
 "Language-Team: German\n"
@@ -42,9 +42,6 @@ msgstr "Über Calendar"
 msgid "Ahekan"
 msgstr "Ahekan"
 
-msgid "Apparent solar time"
-msgstr "Wahre Sonnenzeit"
-
 msgid "April"
 msgstr "April"
 
@@ -63,14 +60,8 @@ msgstr "Areg"
 msgid "Aristotle"
 msgstr "Aristotle"
 
-msgid "Armenian traditional (365-day)"
-msgstr "Armenischer traditioneller Kalender (365 Tage)"
-
 msgid "Asmá’"
 msgstr "Asmá’"
-
-msgid "Astronomical Julian Date (JD)"
-msgstr "Astronomisches julianisches Datum (JD)"
 
 msgid "August"
 msgstr "August"
@@ -84,29 +75,14 @@ msgstr "Aweleacʿ"
 msgid "Ayyám-i-Há"
 msgstr "Ayyám-i-Há"
 
-msgid "Babylonian hours (from sunrise)"
-msgstr "Babylonische Stunden (ab Sonnenaufgang)"
-
 msgid "Bahá"
 msgstr "Bahá"
-
-msgid "Bahá’í (Badíʿ)"
-msgstr "Bahá’í (Badíʿ)"
 
 msgid "Bichat"
 msgstr "Bichat"
 
-msgid "Binary clock"
-msgstr "Binäruhr"
-
 msgid "Brumaire"
 msgstr "Brumaire"
-
-msgid "Buddhist"
-msgstr "Buddhistisch"
-
-msgid "Byzantine (Anno Mundi)"
-msgstr "Byzantinisch (Anno Mundi)"
 
 msgid "Caesar"
 msgstr "Caesar"
@@ -123,17 +99,8 @@ msgstr "Aktivieren, um Termine im Kalender anzuzeigen."
 msgid "Check this to show week numbers in the calendar."
 msgstr "Aktivieren, um Kalenderwochen im Kalender anzuzeigen."
 
-msgid "Chinese hundred-kè time"
-msgstr "Chinesische Hundert-kè-Zeit"
-
-msgid "Chinese traditional"
-msgstr "Traditionell chinesisch"
-
 msgid "Choiak"
 msgstr "Choiak"
-
-msgid "Coptic"
-msgstr "Koptisch"
 
 msgid ""
 "Copyright © 1993-2026 Shannon Smith\n"
@@ -145,9 +112,6 @@ msgstr ""
 "\n"
 "Dieses Programm wird ohne jegliche Gewährleistung bereitgestellt.\n"
 "Einzelheiten finden Sie in der GNU GPL v3+ Lizenz."
-
-msgid "Dangi (traditional Korean)"
-msgstr "Dangi (traditionell koreanisch)"
 
 msgid "Dante"
 msgstr "Dante"
@@ -164,23 +128,11 @@ msgstr "Descartes"
 msgid "Display"
 msgstr "Anzeige"
 
-msgid "Edo Japanese seasonal time"
-msgstr "Japanische saisonale Edo-Zeit"
-
-msgid "Egyptian civil (Nabonassar era)"
-msgstr "Ägyptischer Zivilkalender (Ära des Nabonassar)"
-
 msgid "Epagomenal days"
 msgstr "Epagomenale Tage"
 
 msgid "Epiphi"
 msgstr "Epiphi"
-
-msgid "Ethiopian"
-msgstr "Äthiopisch"
-
-msgid "Ethiopic (Amete Alem)"
-msgstr "Äthiopisch (Amete Alem)"
 
 msgid "Februarius"
 msgstr "Februarius"
@@ -206,12 +158,6 @@ msgstr "Dem aktuellen Cinnamon-Design folgen oder Calendar zwingen, sein helles 
 msgid "Frederick"
 msgstr "Frederick"
 
-msgid "French Republican"
-msgstr "Französisch-republikanisch"
-
-msgid "French Republican decimal time (10-hour day)"
-msgstr "Französische republikanische Dezimalzeit (10-Stunden-Tag)"
-
 msgid "Frimaire"
 msgstr "Frimaire"
 
@@ -221,20 +167,11 @@ msgstr "Fructidor"
 msgid "Germinal"
 msgstr "Germinal"
 
-msgid "Gregorian"
-msgstr "Gregorianisch"
-
 msgid "Gutenberg"
 msgstr "Gutenberg"
 
 msgid "Hathyr"
 msgstr "Hathyr"
-
-msgid "Hebrew"
-msgstr "Hebräisch"
-
-msgid "Hexadecimal time (0000 to FFFF)"
-msgstr "Hexadezimalzeit (0000 bis FFFF)"
 
 msgid "Homer"
 msgstr "Homer"
@@ -245,38 +182,8 @@ msgstr "Hoṙi"
 msgid "Hroticʿ"
 msgstr "Hroticʿ"
 
-msgid "ISO week calendar"
-msgstr "ISO-Wochenkalender"
-
 msgid "Ianuarius"
 msgstr "Ianuarius"
-
-msgid "Indian National (Saka)"
-msgstr "Indischer Nationalkalender (Saka)"
-
-msgid "Indian ghaṭī time (from sunrise)"
-msgstr "Indische Ghaṭī-Zeit (ab Sonnenaufgang)"
-
-msgid "International Fixed"
-msgstr "Internationaler Fixkalender"
-
-msgid "Internet Time (@000 to @999)"
-msgstr "Internetzeit (@000 bis @999)"
-
-msgid "Islamic (Umm al-Qura)"
-msgstr "Islamisch (Umm al-Qura)"
-
-msgid "Islamic (astronomical approximation)"
-msgstr "Islamisch (astronomische Näherung)"
-
-msgid "Islamic (civil/tabular)"
-msgstr "Islamisch (bürgerlich/tabellarisch)"
-
-msgid "Islamic (tabular, astronomical epoch)"
-msgstr "Islamisch (tabellarisch, astronomische Epoche)"
-
-msgid "Italian hours (from sunset)"
-msgstr "Italienische Stunden (ab Sonnenuntergang)"
 
 msgid "Iulius"
 msgstr "Iulius"
@@ -292,12 +199,6 @@ msgstr "Jamál"
 
 msgid "January"
 msgstr "Januar"
-
-msgid "Japanese imperial era"
-msgstr "Japanische Kaiserära"
-
-msgid "Julian"
-msgstr "Julianisch"
 
 msgid "July"
 msgstr "Juli"
@@ -323,12 +224,6 @@ msgstr "Schalttag"
 msgid "Leapyear Day"
 msgstr "Schaltjahrestag"
 
-msgid "Local mean solar time"
-msgstr "Lokale mittlere Sonnenzeit"
-
-msgid "Local sidereal time"
-msgstr "Lokale Sternzeit"
-
 msgid "Maius"
 msgstr "Maius"
 
@@ -353,9 +248,6 @@ msgstr "Masá’il"
 msgid "May"
 msgstr "Mai"
 
-msgid "Mayan Long Count"
-msgstr "Maya-Langzählung"
-
 msgid "Mecheir"
 msgstr "Mecheir"
 
@@ -367,12 +259,6 @@ msgstr "Mesore"
 
 msgid "Messidor"
 msgstr "Messidor"
-
-msgid "Minguo (Republic of China)"
-msgstr "Minguo (Republik China)"
-
-msgid "Modified Julian Date (MJD)"
-msgstr "Modifiziertes julianisches Datum (MJD)"
 
 msgid "Moses"
 msgstr "Moses"
@@ -398,9 +284,6 @@ msgstr "Nivôse"
 msgid "November"
 msgstr "November"
 
-msgid "Nuremberg hours (sunrise/sunset reset)"
-msgstr "Nürnberger Stunden (Neustart bei Sonnenauf- und -untergang)"
-
 msgid "Núr"
 msgstr "Núr"
 
@@ -419,9 +302,6 @@ msgstr "Pachons"
 msgid "Payni"
 msgstr "Payni"
 
-msgid "Persian (Solar Hijri)"
-msgstr "Persisch (Solar-Hidschra)"
-
 msgid "Phamenoth"
 msgstr "Phamenoth"
 
@@ -433,9 +313,6 @@ msgstr "Pharmouthi"
 
 msgid "Pluviôse"
 msgstr "Pluviôse"
-
-msgid "Positivist"
-msgstr "Positivistisch"
 
 msgid "Prairial"
 msgstr "Prairial"
@@ -454,15 +331,6 @@ msgstr "Qudrat"
 
 msgid "Raḥmat"
 msgstr "Raḥmat"
-
-msgid "Revised Julian"
-msgstr "Revidierter Julianischer Kalender"
-
-msgid "Roman"
-msgstr "Römisch"
-
-msgid "Roman temporal time"
-msgstr "Römische Temporalzeit"
 
 msgid "Sahmi"
 msgstr "Sahmi"
@@ -503,9 +371,6 @@ msgstr "Sol"
 msgid "Sulṭán"
 msgstr "Sulṭán"
 
-msgid "Swedish historical (1700–1753)"
-msgstr "Schwedischer historischer Kalender (1700–1753)"
-
 msgid "The Cinnamon clock and calendar with multiple time and calendar systems"
 msgstr "Cinnamon-Uhr und -Kalender mit mehreren Zeit- und Kalendersystemen"
 
@@ -518,9 +383,6 @@ msgstr "Thermidor"
 msgid "Thoth"
 msgstr "Thoth"
 
-msgid "Traditional Chinese double-hours"
-msgstr "Traditionelle chinesische Doppelstunden"
-
 msgid "Trē"
 msgstr "Trē"
 
@@ -530,9 +392,6 @@ msgstr "Tybi"
 #, c-format
 msgid "Uinal %d"
 msgstr "Uinal %d"
-
-msgid "Unix time (epoch seconds)"
-msgstr "Unix-Zeit (Epochen-Sekunden)"
 
 msgid "Vendémiaire"
 msgstr "Vendémiaire"
@@ -546,9 +405,6 @@ msgstr "Woche"
 #, c-format
 msgid "Week %02d"
 msgstr "Woche %02d"
-
-msgid "World Calendar"
-msgstr "Weltkalender"
 
 msgid "Worldsday"
 msgstr "Welttag"

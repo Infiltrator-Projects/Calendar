@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Calendar 3.9.18\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-09-01 04:58+0000\n"
+"POT-Creation-Date: 2026-09-01 09:25+0000\n"
 "PO-Revision-Date: 2026-09-01 03:05+0000\n"
 "Last-Translator: Calendar contributors\n"
 "Language-Team: ja\n"
@@ -42,9 +42,6 @@ msgstr "Calendar について"
 msgid "Ahekan"
 msgstr "Ahekan"
 
-msgid "Apparent solar time"
-msgstr "視太陽時"
-
 msgid "April"
 msgstr "4月"
 
@@ -63,14 +60,8 @@ msgstr "Areg"
 msgid "Aristotle"
 msgstr "Aristotle"
 
-msgid "Armenian traditional (365-day)"
-msgstr "アルメニア伝統暦（365日）"
-
 msgid "Asmá’"
 msgstr "Asmá’"
-
-msgid "Astronomical Julian Date (JD)"
-msgstr "天文ユリウス日 (JD)"
 
 msgid "August"
 msgstr "8月"
@@ -84,29 +75,14 @@ msgstr "Aweleacʿ"
 msgid "Ayyám-i-Há"
 msgstr "Ayyám-i-Há"
 
-msgid "Babylonian hours (from sunrise)"
-msgstr "バビロニア式時刻（日の出起点）"
-
 msgid "Bahá"
 msgstr "Bahá"
-
-msgid "Bahá’í (Badíʿ)"
-msgstr "Bahá’í (Badíʿ)"
 
 msgid "Bichat"
 msgstr "Bichat"
 
-msgid "Binary clock"
-msgstr "二進時計"
-
 msgid "Brumaire"
 msgstr "Brumaire"
-
-msgid "Buddhist"
-msgstr "仏暦"
-
-msgid "Byzantine (Anno Mundi)"
-msgstr "ビザンツ暦（世界創造紀元）"
 
 msgid "Caesar"
 msgstr "Caesar"
@@ -114,14 +90,8 @@ msgstr "Caesar"
 msgid "Calendar"
 msgstr "Calendar"
 
-msgid "Calendar systems"
-msgstr "暦システム"
-
 msgid "Charlemagne"
 msgstr "Charlemagne"
-
-msgid "Check this to define a custom format for the date in the calendar applet."
-msgstr "カレンダーアプレットの日付に独自の書式を使用する場合に選択します。"
 
 msgid "Check this to display events in the calendar."
 msgstr "カレンダーに予定を表示する場合に選択します。"
@@ -129,26 +99,8 @@ msgstr "カレンダーに予定を表示する場合に選択します。"
 msgid "Check this to show week numbers in the calendar."
 msgstr "カレンダーに週番号を表示する場合に選択します。"
 
-msgid "Chinese hundred-kè time"
-msgstr "中国百刻制"
-
-msgid "Chinese traditional"
-msgstr "中国伝統暦"
-
 msgid "Choiak"
 msgstr "Choiak"
-
-msgid "Click this button to know more about the syntax for date formats."
-msgstr "日付書式の構文について詳しく表示します。"
-
-msgid "Clock"
-msgstr "時計"
-
-msgid "Clock mode"
-msgstr "時計モード"
-
-msgid "Coptic"
-msgstr "コプト暦"
 
 msgid ""
 "Copyright © 1993-2026 Shannon Smith\n"
@@ -164,17 +116,8 @@ msgstr ""
 "This program comes with absolutely no warranty.\n"
 "See the GNU GPL v3+ License for details."
 
-msgid "Dangi (traditional Korean)"
-msgstr "檀紀（朝鮮伝統）"
-
 msgid "Dante"
 msgstr "Dante"
-
-msgid "Date format"
-msgstr "日付の書式"
-
-msgid "Date format for tooltip"
-msgstr "ツールチップの日付書式"
 
 msgid "Day"
 msgstr "昼"
@@ -188,23 +131,11 @@ msgstr "Descartes"
 msgid "Display"
 msgstr "表示"
 
-msgid "Edo Japanese seasonal time"
-msgstr "江戸時代の季節時刻"
-
-msgid "Egyptian civil (Nabonassar era)"
-msgstr "エジプト民用暦（ナボナッサル紀元）"
-
 msgid "Epagomenal days"
 msgstr "エパゴメナル日"
 
 msgid "Epiphi"
 msgstr "Epiphi"
-
-msgid "Ethiopian"
-msgstr "エチオピア暦"
-
-msgid "Ethiopic (Amete Alem)"
-msgstr "エチオピア暦（アメテ・アレム）"
 
 msgid "Februarius"
 msgstr "Februarius"
@@ -230,38 +161,20 @@ msgstr "現在の Cinnamon テーマに従うか、Calendar の Infiltrator 外�
 msgid "Frederick"
 msgstr "Frederick"
 
-msgid "French Republican"
-msgstr "フランス革命暦"
-
-msgid "French Republican decimal time (10-hour day)"
-msgstr "フランス革命暦十進時刻（1日10時間）"
-
 msgid "Frimaire"
 msgstr "Frimaire"
 
 msgid "Fructidor"
 msgstr "Fructidor"
 
-msgid "Geographic location"
-msgstr "地理的位置"
-
 msgid "Germinal"
 msgstr "Germinal"
-
-msgid "Gregorian"
-msgstr "グレゴリオ暦"
 
 msgid "Gutenberg"
 msgstr "Gutenberg"
 
 msgid "Hathyr"
 msgstr "Hathyr"
-
-msgid "Hebrew"
-msgstr "ヘブライ暦"
-
-msgid "Hexadecimal time (0000 to FFFF)"
-msgstr "十六進時刻（0000～FFFF）"
 
 msgid "Homer"
 msgstr "Homer"
@@ -272,38 +185,8 @@ msgstr "Hoṙi"
 msgid "Hroticʿ"
 msgstr "Hroticʿ"
 
-msgid "ISO week calendar"
-msgstr "ISO週暦"
-
 msgid "Ianuarius"
 msgstr "Ianuarius"
-
-msgid "Indian National (Saka)"
-msgstr "インド国定暦（サカ）"
-
-msgid "Indian ghaṭī time (from sunrise)"
-msgstr "インドのガティー時刻（日の出起点）"
-
-msgid "International Fixed"
-msgstr "国際固定暦"
-
-msgid "Internet Time (@000 to @999)"
-msgstr "インターネット時刻（@000～@999）"
-
-msgid "Islamic (Umm al-Qura)"
-msgstr "イスラム暦（ウンム・アルクラー）"
-
-msgid "Islamic (astronomical approximation)"
-msgstr "イスラム暦（天文学的近似）"
-
-msgid "Islamic (civil/tabular)"
-msgstr "イスラム暦（民用・表形式）"
-
-msgid "Islamic (tabular, astronomical epoch)"
-msgstr "イスラム暦（表形式・天文学的紀元）"
-
-msgid "Italian hours (from sunset)"
-msgstr "イタリア式時刻（日没起点）"
 
 msgid "Iulius"
 msgstr "Iulius"
@@ -319,12 +202,6 @@ msgstr "Jamál"
 
 msgid "January"
 msgstr "1月"
-
-msgid "Japanese imperial era"
-msgstr "和暦"
-
-msgid "Julian"
-msgstr "ユリウス暦"
 
 msgid "July"
 msgstr "7月"
@@ -344,23 +221,11 @@ msgstr "キーボードショートカット"
 msgid "Kʿałocʿ"
 msgstr "Kʿałocʿ"
 
-msgid "Latitude in degrees"
-msgstr "緯度（度）"
-
 msgid "Leap Day"
 msgstr "閏日"
 
 msgid "Leapyear Day"
 msgstr "閏年日"
-
-msgid "Local mean solar time"
-msgstr "地方平均太陽時"
-
-msgid "Local sidereal time"
-msgstr "地方恒星時"
-
-msgid "Longitude in degrees"
-msgstr "経度（度）"
 
 msgid "Maius"
 msgstr "Maius"
@@ -386,9 +251,6 @@ msgstr "Masá’il"
 msgid "May"
 msgstr "5月"
 
-msgid "Mayan Long Count"
-msgstr "マヤ長期暦"
-
 msgid "Mecheir"
 msgstr "Mecheir"
 
@@ -400,12 +262,6 @@ msgstr "Mesore"
 
 msgid "Messidor"
 msgstr "Messidor"
-
-msgid "Minguo (Republic of China)"
-msgstr "民国紀元（中華民国）"
-
-msgid "Modified Julian Date (MJD)"
-msgstr "修正ユリウス日 (MJD)"
 
 msgid "Moses"
 msgstr "Moses"
@@ -428,14 +284,8 @@ msgstr "夜"
 msgid "Nivôse"
 msgstr "Nivôse"
 
-msgid "None"
-msgstr "なし"
-
 msgid "November"
 msgstr "11月"
-
-msgid "Nuremberg hours (sunrise/sunset reset)"
-msgstr "ニュルンベルク時刻（日の出・日没でリセット）"
 
 msgid "Núr"
 msgstr "Núr"
@@ -455,9 +305,6 @@ msgstr "Pachons"
 msgid "Payni"
 msgstr "Payni"
 
-msgid "Persian (Solar Hijri)"
-msgstr "ペルシャ暦（太陽ヒジュラ）"
-
 msgid "Phamenoth"
 msgstr "Phamenoth"
 
@@ -470,9 +317,6 @@ msgstr "Pharmouthi"
 msgid "Pluviôse"
 msgstr "Pluviôse"
 
-msgid "Positivist"
-msgstr "実証暦"
-
 msgid "Prairial"
 msgstr "Prairial"
 
@@ -481,9 +325,6 @@ msgstr "前の月"
 
 msgid "Previous year"
 msgstr "前の年"
-
-msgid "Primary calendar"
-msgstr "主暦"
 
 msgid "Qawl"
 msgstr "Qawl"
@@ -494,15 +335,6 @@ msgstr "Qudrat"
 msgid "Raḥmat"
 msgstr "Raḥmat"
 
-msgid "Revised Julian"
-msgstr "修正ユリウス暦"
-
-msgid "Roman"
-msgstr "ローマ暦"
-
-msgid "Roman temporal time"
-msgstr "ローマ式不定時法"
-
 msgid "Sahmi"
 msgstr "Sahmi"
 
@@ -512,20 +344,11 @@ msgstr "Saint Paul"
 msgid "Sans-culottides"
 msgstr "Sans-culottides"
 
-msgid "Secondary date"
-msgstr "副日付"
-
 msgid "September"
 msgstr "9月"
 
 msgid "Set keybinding(s) to show the calendar."
 msgstr "カレンダーを表示するキー割り当てを設定します。"
-
-msgid "Set your custom format here."
-msgstr "独自の書式をここに設定します。"
-
-msgid "Set your custom tooltip format here."
-msgstr "独自のツールチップ書式をここに設定します。"
 
 msgid "Shakespeare"
 msgstr "Shakespeare"
@@ -539,12 +362,6 @@ msgstr "カレンダーを表示"
 msgid "Show calendar events"
 msgstr "カレンダーの予定を表示"
 
-msgid "Show information on date format syntax"
-msgstr "日付書式の構文情報を表示"
-
-msgid "Show seconds"
-msgstr "秒を表示"
-
 msgid "Show today"
 msgstr "今日を表示"
 
@@ -554,20 +371,8 @@ msgstr "カレンダーに週番号を表示"
 msgid "Sol"
 msgstr "Sol"
 
-msgid "Standard time (12-hour)"
-msgstr "標準時刻（12時間制）"
-
-msgid "Standard time (24-hour)"
-msgstr "標準時刻（24時間制）"
-
-msgid "Standard time (OS locale)"
-msgstr "標準時刻（OS ロケール）"
-
 msgid "Sulṭán"
 msgstr "Sulṭán"
-
-msgid "Swedish historical (1700–1753)"
-msgstr "スウェーデン歴史暦（1700–1753）"
 
 msgid "The Cinnamon clock and calendar with multiple time and calendar systems"
 msgstr "複数の時刻体系と暦に対応する Cinnamon の時計とカレンダー"
@@ -581,9 +386,6 @@ msgstr "Thermidor"
 msgid "Thoth"
 msgstr "Thoth"
 
-msgid "Traditional Chinese double-hours"
-msgstr "中国伝統の十二時辰"
-
 msgid "Trē"
 msgstr "Trē"
 
@@ -593,18 +395,6 @@ msgstr "Tybi"
 #, c-format
 msgid "Uinal %d"
 msgstr "Uinal %d"
-
-msgid "Unix time (epoch seconds)"
-msgstr "Unix 時刻（エポック秒）"
-
-msgid "Use a custom date format"
-msgstr "独自の日付書式を使用"
-
-msgid "Used by Roman temporal, Edo Japanese seasonal, Italian, Babylonian and Nuremberg hours, and Indian ghaṭī time. Enter north latitudes as positive and south latitudes as negative."
-msgstr "ローマ式不定時法、江戸時代の季節時刻、イタリア式・バビロニア式・ニュルンベルク時刻、およびインドのガティー時刻で使用します。北緯は正、南緯は負の値で入力します。"
-
-msgid "Used by local sidereal, solar and location-dependent historical time. Enter east longitudes as positive and west longitudes as negative."
-msgstr "地方恒星時、太陽時、および位置依存の歴史的時刻で使用します。東経は正、西経は負の値で入力します。"
 
 msgid "Vendémiaire"
 msgstr "Vendémiaire"
@@ -618,9 +408,6 @@ msgstr "週"
 #, c-format
 msgid "Week %02d"
 msgstr "Week %02d"
-
-msgid "World Calendar"
-msgstr "世界暦"
 
 msgid "Worldsday"
 msgstr "Worldsday"
