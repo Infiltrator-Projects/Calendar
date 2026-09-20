@@ -1,6 +1,6 @@
 /*
  * SPDX-License-Identifier: GPL-3.0-or-later
- * Copyright (C) 2000-2026 Shannon Smith
+ * Copyright (C) 1993-2026 Shannon Smith
  *
  * Private algorithms for non-ICU calendar systems.
  */

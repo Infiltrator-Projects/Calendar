@@ -1,6 +1,6 @@
 /*
  * SPDX-License-Identifier: GPL-3.0-or-later
- * Copyright (C) 2000-2026 Shannon Smith
+ * Copyright (C) 1993-2026 Shannon Smith
  *
  * Integer date arithmetic on a midnight-based Julian Day Number axis.
  * Gregorian and Julian years use astronomical numbering, including year 0.
