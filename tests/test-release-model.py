@@ -292,7 +292,12 @@ def main() -> None:
     assert '`calendar-plus-popup calendar-plus-theme-${effectiveTheme}`' in applet
     assert 'setCustomStyleClass("calendar-background")' not in applet
     assert "new ModalDialog.ModalDialog()" in applet
-    assert "new Dialog.MessageDialogContent" in applet
+    assert "new Dialog.MessageDialogContent" not in applet
+    assert 'icon_name: "infiltratr-calendar"' in applet
+    assert 'style_class: "calendar-plus-about"' in applet
+    assert 'style_class: "calendar-plus-about-title"' in applet
+    assert 'style_class: "calendar-plus-about-version"' in applet
+    assert 'style_class: "calendar-plus-about-author"' in applet
     assert 'Util.spawnCommandLine("/usr/libexec/calendar-plus-about")' not in applet
     assert "getCurrentExtension" in applet
     assert 'return require("./runtimeSupport")' in applet
