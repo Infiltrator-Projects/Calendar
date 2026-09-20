@@ -1,3 +1,13 @@
+infiltrator-calendar (1.0.32) trixie; urgency=medium
+
+  * Remove Calendar's project-owned Python/GTK settings host and use
+    Cinnamon's native xlet-settings renderer.
+  * Move the user-facing About dialog into Cinnamon/St.
+  * Drop direct runtime python3 and GTK 3 package dependencies.
+  * Remove the build-time ripgrep dependency and use platform grep.
+
+ -- Shannon Smith <noreply@the-infiltratr.com>  Sun, 20 Sep 2026 18:31:00 +1000
+
 infiltrator-calendar (1.0.31) trixie; urgency=medium
 
   * Keep date-grid selection working when events are hidden or CalendarServer
