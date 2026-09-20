@@ -202,8 +202,8 @@ calendar_plus_system_clock_is_running(CalendarPlusSystemClock *self)
 
 
 static gboolean
-load_system_temporal_policy(CalendarPlusSystemClock *self,
-                            InfiltratrTemporalPolicyV3 *policy)
+load_persisted_temporal_policy(CalendarPlusSystemClock *self,
+                               InfiltratrTemporalPolicyV3 *policy)
 {
     g_autofree gchar *contents = NULL;
 
@@ -213,11 +213,28 @@ load_system_temporal_policy(CalendarPlusSystemClock *self,
     if (!infiltratr_temporal_policy_v3_default(policy))
         return FALSE;
 
+    /*
+     * A valid Infiltrator policy is an optional enrichment layer, not a hard
+     * runtime dependency on System Settings.  Missing or malformed policy
+     * means "use Cinnamon's native temporal preferences", so Calendar remains
+     * a drop-in replacement for the stock Mint applet.
+     */
     if (self->policy_path == NULL ||
         !g_file_get_contents(self->policy_path, &contents, NULL, NULL))
-        return TRUE;
+    {
+        return FALSE;
+    }
 
     return infiltratr_temporal_policy_v3_parse(contents, policy);
+}
+
+static gboolean
+cinnamon_show_seconds(void)
+{
+    g_autoptr(GSettings) settings =
+        g_settings_new("org.cinnamon.desktop.interface");
+
+    return g_settings_get_boolean(settings, "clock-show-seconds");
 }
 
 gchar *
@@ -225,7 +242,7 @@ calendar_plus_system_clock_get_system_mode(CalendarPlusSystemClock *self)
 {
     InfiltratrTemporalPolicyV3 policy;
 
-    if (!load_system_temporal_policy(self, &policy))
+    if (!load_persisted_temporal_policy(self, &policy))
         return g_strdup("standard");
     return g_strdup(policy.clock_mode);
 }
@@ -235,7 +252,7 @@ calendar_plus_system_clock_get_system_calendar(CalendarPlusSystemClock *self)
 {
     InfiltratrTemporalPolicyV3 policy;
 
-    if (!load_system_temporal_policy(self, &policy))
+    if (!load_persisted_temporal_policy(self, &policy))
         return g_strdup("gregorian");
     return g_strdup(policy.calendar);
 }
@@ -246,8 +263,9 @@ calendar_plus_system_clock_get_system_show_seconds(
 {
     InfiltratrTemporalPolicyV3 policy;
 
-    return load_system_temporal_policy(self, &policy) &&
-           policy.show_seconds;
+    if (!load_persisted_temporal_policy(self, &policy))
+        return cinnamon_show_seconds();
+    return policy.show_seconds;
 }
 
 gboolean
@@ -256,7 +274,7 @@ calendar_plus_system_clock_get_system_location_configured(
 {
     InfiltratrTemporalPolicyV3 policy;
 
-    return load_system_temporal_policy(self, &policy) &&
+    return load_persisted_temporal_policy(self, &policy) &&
            policy.location_configured;
 }
 
@@ -266,7 +284,7 @@ calendar_plus_system_clock_get_system_latitude(
 {
     InfiltratrTemporalPolicyV3 policy;
 
-    if (!load_system_temporal_policy(self, &policy))
+    if (!load_persisted_temporal_policy(self, &policy))
         return 0.0;
     return policy.latitude;
 }
@@ -277,7 +295,7 @@ calendar_plus_system_clock_get_system_longitude(
 {
     InfiltratrTemporalPolicyV3 policy;
 
-    if (!load_system_temporal_policy(self, &policy))
+    if (!load_persisted_temporal_policy(self, &policy))
         return 0.0;
     return policy.longitude;
 }
