@@ -107,7 +107,7 @@ Install the development dependencies on Debian 13, Linux Mint 22 or Ubuntu 24.04
 ```bash
 sudo apt install build-essential clang debhelper gettext gobject-introspection gjs \
     gir1.2-glib-2.0-dev libglib2.0-dev libicu-dev nodejs pkg-config \
-    python3 ripgrep shellcheck git
+    python3 shellcheck git
 ```
 
 Clone recursively because Calendar pins Infiltratr Common:
