@@ -23,10 +23,12 @@ const CalendarPlus = imports.gi.CalendarPlus;
 const CinnamonDesktop = imports.gi.CinnamonDesktop;
 const Clutter = imports.gi.Clutter;
 const Gio = imports.gi.Gio;
+const GLib = imports.gi.GLib;
 const Pango = imports.gi.Pango;
 const St = imports.gi.St;
 const Gettext = imports.gettext;
 const Main = imports.ui.main;
+const Mainloop = imports.mainloop;
 const PopupMenu = imports.ui.popupMenu;
 const Settings = imports.ui.settings;
 const Util = imports.misc.util;
@@ -141,6 +143,7 @@ class CalendarPlusApplet extends Applet.Applet {
         this._popupBody = null;
         this._calendarColumn = null;
         this._resume_source = null;
+        this._format_debounce_id = 0;
 
         this._signals = new SignalBag();
         this._eventSignals = new SignalBag();
@@ -324,12 +327,12 @@ class CalendarPlusApplet extends Applet.Applet {
         this.settings.bind(
             "custom-format",
             "custom_format",
-            this._onSettingsChanged
+            this._onFormatSettingsChanged
         );
         this.settings.bind(
             "custom-tooltip-format",
             "custom_tooltip_format",
-            this._onSettingsChanged
+            this._onFormatSettingsChanged
         );
         this.settings.bind("keyOpen", "keyOpen", this._setKeybinding);
         this._setKeybinding();
@@ -363,17 +366,25 @@ class CalendarPlusApplet extends Applet.Applet {
         }
     }
 
-    _systemPrefersDark() {
+    _systemThemeName() {
         if (!this.desktop_settings) {
-            return false;
+            return "";
         }
         try {
             const theme = this.desktop_settings.get_string("gtk-theme");
-            return typeof theme === "string" &&
-                theme.toLowerCase().includes("dark");
+            return typeof theme === "string" ? theme.toLowerCase() : "";
         } catch (error) {
-            return false;
+            return "";
         }
+    }
+
+    _systemPrefersDark() {
+        return this._systemThemeName().includes("dark");
+    }
+
+    _systemUsesHighContrast() {
+        const theme = this._systemThemeName().replace(/[-_ ]/g, "");
+        return theme.includes("highcontrast");
     }
 
     _watchPointerAndMenu() {
@@ -470,6 +481,10 @@ class CalendarPlusApplet extends Applet.Applet {
             effectiveTheme = "system";
         }
         if (effectiveTheme === "system") {
+            if (this._systemUsesHighContrast()) {
+                this.menu.setCustomStyleClass("calendar-plus-popup");
+                return;
+            }
             effectiveTheme = this._systemPrefersDark() ? "night" : "day";
         }
 
@@ -496,6 +511,26 @@ class CalendarPlusApplet extends Applet.Applet {
         this._syncSystemClock();
         this._updateClockAndDate();
         this._syncEventVisibility(true);
+    }
+
+    _cancelFormatDebounce() {
+        if (this._format_debounce_id > 0) {
+            Mainloop.source_remove(this._format_debounce_id);
+            this._format_debounce_id = 0;
+        }
+    }
+
+    _onFormatSettingsChanged() {
+        if (this._destroyed) {
+            return;
+        }
+
+        this._cancelFormatDebounce();
+        this._format_debounce_id = Mainloop.timeout_add(500, () => {
+            this._format_debounce_id = 0;
+            this._onSettingsChanged();
+            return GLib.SOURCE_REMOVE;
+        });
     }
 
     _syncCalendarSystems() {
@@ -796,9 +831,10 @@ class CalendarPlusApplet extends Applet.Applet {
     }
 
     on_custom_format_button_pressed() {
-        Util.spawnCommandLine(
-            "xdg-open https://cinnamon-spices.linuxmint.com/strftime.php"
-        );
+        Util.trySpawn([
+            "xdg-open",
+            "/usr/share/doc/infiltrator-calendar/strftime-format.html",
+        ], false);
     }
 
     on_applet_clicked() {
@@ -855,6 +891,7 @@ class CalendarPlusApplet extends Applet.Applet {
         this._added_to_panel = false;
 
         this._removeKeybinding();
+        this._cancelFormatDebounce();
         this._resumeSignals.disconnectAll();
         this._eventSignals.disconnectAll();
         this._signals.disconnectAll();
