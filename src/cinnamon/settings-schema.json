@@ -3,12 +3,17 @@
         "type": "section",
         "description": "Clock"
     },
+    "follow-system-temporal": {
+        "type": "switch",
+        "default": true,
+        "description": "Follow System Settings",
+        "tooltip": "Use the system-wide clock, calendar, seconds and geographic-location policy from Infiltrator System Settings. Turn this off to use the local Calendar overrides below."
+    },
     "clock-mode": {
         "type": "combobox",
         "default": "standard",
         "description": "Clock mode",
         "options": {
-            "Standard time (follow Mint setting)": "standard",
             "Standard time (24-hour)": "standard-24",
             "Standard time (12-hour)": "standard-12",
             "Internet Time (@000 to @999)": "internet",
@@ -28,15 +33,16 @@
             "Italian hours (from sunset)": "italian-hours",
             "Babylonian hours (from sunrise)": "babylonian-hours",
             "Indian ghaṭī time (from sunrise)": "indian-ghati",
-            "Nuremberg hours (sunrise/sunset reset)": "nuremberg-hours"
+            "Nuremberg hours (sunrise/sunset reset)": "nuremberg-hours",
+            "Standard time (OS locale)": "standard"
         },
-        "tooltip": "Choose the time system displayed in the Cinnamon panel."
+        "tooltip": "Local Calendar clock override used only when Follow System Settings is off."
     },
     "show-seconds": {
         "type": "switch",
         "default": false,
         "description": "Show seconds",
-        "tooltip": "Show seconds or the closest finer unit supported by the selected time system. Modes with fixed historical or epoch precision ignore this setting."
+        "tooltip": "Local Calendar seconds override used only when Follow System Settings is off."
     },
     "location-section": {
         "type": "section",
@@ -45,7 +51,8 @@
     "location-configured": {
         "type": "switch",
         "default": false,
-        "description": "Geographic location"
+        "description": "Geographic location",
+        "tooltip": "Local Calendar geographic-location override used only when Follow System Settings is off."
     },
     "latitude": {
         "type": "spinbutton",
@@ -107,7 +114,7 @@
             "World Calendar": "world",
             "Positivist": "positivist"
         },
-        "tooltip": "Controls the popup calendar grid, date heading and calendar navigation. Events remain attached to their original dates."
+        "tooltip": "Local Calendar primary-calendar override used only when Follow System Settings is off."
     },
     "secondary-calendar": {
         "type": "combobox",
@@ -146,7 +153,7 @@
             "World Calendar": "world",
             "Positivist": "positivist"
         },
-        "tooltip": "Optionally shows the same day in another calendar beneath the primary date."
+        "tooltip": "Local Calendar secondary-calendar override used only when Follow System Settings is off."
     },
     "section1": {
         "type": "section",
