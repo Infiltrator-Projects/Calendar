@@ -114,8 +114,6 @@ class CalendarPlusApplet extends Applet.Applet {
         this._destroyed = false;
         this._added_to_panel = false;
         this._keybinding_set = false;
-        this._is_entered = false;
-
         this.show_events = true;
         this.theme_mode = "system";
         this.keyOpen = "";
@@ -324,20 +322,6 @@ class CalendarPlusApplet extends Applet.Applet {
     }
 
     _watchPointerAndMenu() {
-        /*
-         * WallClock chooses its wake-up cadence from the format string.  While
-         * the pointer is over the panel label the tooltip format may require a
-         * finer cadence than the visible label, so both formats participate.
-         */
-        this._signals.connect(this.actor, "enter-event", () => {
-            this._is_entered = true;
-            this._configureWallClock();
-        });
-        this._signals.connect(this.actor, "leave-event", () => {
-            this._is_entered = false;
-            this._configureWallClock();
-        });
-
         this._signals.connect(this.menu, "open-state-changed", (menu, open) => {
             if (!open || this._destroyed) {
                 return;
@@ -520,10 +504,6 @@ class CalendarPlusApplet extends Applet.Applet {
             locationConfigured: temporal.locationConfigured,
             latitude: temporal.latitude,
             longitude: temporal.longitude,
-            useCustomFormat: false,
-            customFormat: "",
-            customTooltipFormat: "",
-            pointerInside: this._is_entered,
             vertical: this._isVerticalPanel(),
             desktopSettings: this.desktop_settings,
             primaryCalendar: temporal.calendar,
