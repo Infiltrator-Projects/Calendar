@@ -33,6 +33,7 @@ def main() -> None:
     gitmodules = read(".gitmodules")
     copyright_file = read("debian/copyright")
     control = read("debian/control")
+    system_clock_source = read("src/adapters/system-clock.c")
 
     assert sorted(path.name for path in ROOT.glob("*.md")) == [
         "CHANGELOG.md", "CONTRIBUTING.md", "README.md", "SECURITY.md"
@@ -154,6 +155,11 @@ def main() -> None:
     ):
         assert temporal_key not in settings_schema
     assert "get_system_calendar" in applet
+    assert "load_persisted_temporal_policy" in system_clock_source
+    assert '"org.cinnamon.desktop.interface"' in system_clock_source
+    assert '"clock-show-seconds"' in system_clock_source
+    assert 'GLib.find_program_in_path("system-settings")' in applet
+    assert 'Util.spawnCommandLine("cinnamon-settings calendar")' in applet
     assert "get_system_primary_calendar" not in applet
     assert "get_system_secondary_calendar" not in applet
     assert not (ROOT / "src/cinnamon/settings.py").exists()
