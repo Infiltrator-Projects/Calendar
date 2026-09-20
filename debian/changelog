@@ -1,3 +1,16 @@
+infiltrator-calendar (1.0.38) trixie; urgency=medium
+
+  * Keep System Settings optional at runtime: use a valid Infiltrator temporal
+    policy when present and fall back to native Mint/Cinnamon temporal
+    preferences when it is absent or invalid.
+  * Mirror Cinnamon's clock-show-seconds preference in Mint-only mode.
+  * Watch Cinnamon seconds changes live without restoring Calendar-local
+    temporal settings.
+  * Open Infiltrator System Settings when available, otherwise open Cinnamon's
+    native Date & Time settings panel.
+
+ -- Shannon Smith <noreply@the-infiltratr.com>  Mon, 21 Sep 2026 08:20:00 +1000
+
 infiltrator-calendar (1.0.37) trixie; urgency=medium
 
   * Make Infiltrator System Settings the sole temporal authority.
