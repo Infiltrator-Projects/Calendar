@@ -139,9 +139,6 @@ msgstr ""
 msgid "Choiak"
 msgstr ""
 
-msgid "Choose the time system displayed in the Cinnamon panel."
-msgstr ""
-
 msgid "Click this button to know more about the syntax for date formats."
 msgstr ""
 
@@ -149,9 +146,6 @@ msgid "Clock"
 msgstr ""
 
 msgid "Clock mode"
-msgstr ""
-
-msgid "Controls the popup calendar grid, date heading and calendar navigation. Events remain attached to their original dates."
 msgstr ""
 
 msgid "Coptic"
@@ -219,6 +213,9 @@ msgid "Festival of Holy Women"
 msgstr ""
 
 msgid "Floréal"
+msgstr ""
+
+msgid "Follow System Settings"
 msgstr ""
 
 msgid "Follow system"
@@ -353,6 +350,21 @@ msgstr ""
 msgid "Leapyear Day"
 msgstr ""
 
+msgid "Local Calendar clock override used only when Follow System Settings is off."
+msgstr ""
+
+msgid "Local Calendar geographic-location override used only when Follow System Settings is off."
+msgstr ""
+
+msgid "Local Calendar primary-calendar override used only when Follow System Settings is off."
+msgstr ""
+
+msgid "Local Calendar secondary-calendar override used only when Follow System Settings is off."
+msgstr ""
+
+msgid "Local Calendar seconds override used only when Follow System Settings is off."
+msgstr ""
+
 msgid "Local mean solar time"
 msgstr ""
 
@@ -447,9 +459,6 @@ msgid "Open Calendar"
 msgstr ""
 
 msgid "Open selected date in Calendar"
-msgstr ""
-
-msgid "Optionally shows the same day in another calendar beneath the primary date."
 msgstr ""
 
 msgid "Pachons"
@@ -548,9 +557,6 @@ msgstr ""
 msgid "Show seconds"
 msgstr ""
 
-msgid "Show seconds or the closest finer unit supported by the selected time system. Modes with fixed historical or epoch precision ignore this setting."
-msgstr ""
-
 msgid "Show today"
 msgstr ""
 
@@ -566,7 +572,7 @@ msgstr ""
 msgid "Standard time (24-hour)"
 msgstr ""
 
-msgid "Standard time (follow Mint setting)"
+msgid "Standard time (OS locale)"
 msgstr ""
 
 msgid "Sulṭán"
@@ -604,6 +610,9 @@ msgid "Unix time (epoch seconds)"
 msgstr ""
 
 msgid "Use a custom date format"
+msgstr ""
+
+msgid "Use the system-wide clock, calendar, seconds and geographic-location policy from Infiltrator System Settings. Turn this off to use the local Calendar overrides below."
 msgstr ""
 
 msgid "Used by Roman temporal, Edo Japanese seasonal, Italian, Babylonian and Nuremberg hours, and Indian ghaṭī time. Enter north latitudes as positive and south latitudes as negative."
