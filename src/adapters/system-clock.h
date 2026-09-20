@@ -96,9 +96,9 @@ gboolean calendar_plus_system_clock_is_running(
  * calendar_plus_system_clock_get_system_mode:
  * @self: a multi-system clock
  *
- * Resolves the Infiltrator system temporal policy to a Calendar clock mode.
- * Missing, invalid or platform-default policy resolves to "standard", which
- * preserves Cinnamon's conventional clock preference.
+ * Resolves an installed Infiltrator temporal policy to a Calendar clock mode.
+ * Missing or invalid policy resolves to "standard", leaving Cinnamon's native
+ * locale and 12/24-hour preference authoritative.
  *
  * Returns: (transfer full): a newly allocated Calendar clock-mode identifier
  */
@@ -109,7 +109,10 @@ gchar *calendar_plus_system_clock_get_system_mode(
  * calendar_plus_system_clock_get_system_calendar:
  * @self: a multi-system clock
  *
- * Returns: (transfer full): the system-wide calendar identifier
+ * Missing or invalid Infiltrator policy resolves to Gregorian, matching the
+ * stock Cinnamon month view.
+ *
+ * Returns: (transfer full): the effective system-wide calendar identifier
  */
 gchar *calendar_plus_system_clock_get_system_calendar(
     CalendarPlusSystemClock *self);
@@ -118,7 +121,11 @@ gchar *calendar_plus_system_clock_get_system_calendar(
  * calendar_plus_system_clock_get_system_show_seconds:
  * @self: a multi-system clock
  *
- * Returns: whether the system-wide policy requests seconds or a finer unit
+ * A valid Infiltrator policy is authoritative. Without one, this mirrors
+ * Cinnamon's clock-show-seconds preference so Calendar remains a drop-in Mint
+ * replacement without System Settings.
+ *
+ * Returns: whether the effective system policy requests seconds or a finer unit
  */
 gboolean calendar_plus_system_clock_get_system_show_seconds(
     CalendarPlusSystemClock *self);
