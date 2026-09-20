@@ -146,6 +146,12 @@ def main() -> None:
     assert "this.show_seconds" not in applet_source
     assert "this.latitude =" not in applet_source
     assert "this.longitude =" not in applet_source
+    assert "useCustomFormat" not in applet_source
+    assert "customFormat" not in applet_source
+    assert "customTooltipFormat" not in applet_source
+    assert "useCustomFormat" not in panel_clock_source
+    assert "customFormat" not in panel_clock_source
+    assert "customTooltipFormat" not in panel_clock_source
     assert "CalendarPlus.SystemClock.new()" in applet_source
     assert "this.system_clock.get_system_calendar()" in applet_source
     assert "this._calendar.setCalendarSystem(temporal.calendar)" in applet_source
@@ -160,10 +166,10 @@ def main() -> None:
     assert "this._calendarSystem.add_years_parts(" in calendar_source
     assert "this._calendarSystem.build_grid(" in calendar_source
     assert "CalendarPlus.DatePart.DAY" in calendar_source
-    assert "CalendarPlus.DatePart.SHORT" in applet_source
+    assert "CalendarPlus.DatePart.SHORT" in panel_clock_source
     assert "CalendarPlus.DatePart.FULL" in panel_clock_source
     assert ".format_date_part(" in calendar_source
-    assert ".format_date_part(" in applet_source
+    assert ".format_date_part(" not in applet_source
     assert ".format_date_part(" in panel_clock_source
     assert ".format_date(" not in calendar_source
     assert ".format_date(" not in applet_source
