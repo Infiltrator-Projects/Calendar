@@ -8,10 +8,10 @@
 
 Calendar is a native Cinnamon panel clock and calendar with alternative clock modes, 30 selectable calendar systems and CalendarServer integration. Its installed Linux desktop identity, Cinnamon Applets manager entry, Linux Mint Software Manager package-name alias and Cinnamon-native About dialog all use the project-owned Calendar icon. The Calendar package owns and installs that artwork itself; no shared icon-helper package is required.
 
-**Stable release:** 1.0.34  
+**Stable release:** 1.0.35  
 **Runtime:** Cinnamon 6.4, 6.6 and 6.7  
 **Build-tested bases:** Debian 13, Linux Mint 22 and Ubuntu 24.04  
-**Shared foundation:** pinned Infiltratr Common 1.19.14, including canonical theme, typography and structural-metric contracts
+**Shared foundation:** pinned Infiltratr Common 1.19.16, including canonical theme, typography and structural-metric contracts
 
 ## Engineering ethos
 
@@ -22,6 +22,10 @@ Historical evidence, international standards, maintained reference data, mature 
 Calendar owns the behaviour for which it is responsible. Historical rules, continuation policies, epochs, units, astronomical assumptions, failure states and compatibility boundaries should be explicit, testable and explainable. A plausible-looking date or clock value is not considered sufficient evidence of correctness.
 
 The same principle applies across the wider software family: study what is known now, preserve proven ideas that still deserve to survive, replace assumptions that no longer do, and prove the result in real use.
+
+## System temporal authority
+
+Calendar follows Infiltrator System Settings by default for clock system, primary calendar, secondary calendar, seconds and geographic location. Its own settings retain the same controls only as local overrides when **Follow System Settings** is turned off. The panel watches the shared temporal policy and updates while running.
 
 ## Capabilities
 
