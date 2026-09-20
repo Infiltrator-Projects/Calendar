@@ -413,7 +413,14 @@ def main() -> None:
     assert "openAbout()" in applet_source
     assert "this._onAbout();" in applet_source
     assert "new ModalDialog.ModalDialog()" in applet_source
-    assert "new Dialog.MessageDialogContent" in applet_source
+    assert "new Dialog.MessageDialogContent" not in applet_source
+    assert 'icon_name: "infiltratr-calendar"' in applet_source
+    assert 'style_class: "calendar-plus-about"' in applet_source
+    assert 'style_class: "calendar-plus-about-title"' in applet_source
+    assert 'style_class: "calendar-plus-about-version"' in applet_source
+    assert 'style_class: "calendar-plus-about-author"' in applet_source
+    assert 'text: "Shannon Smith"' in applet_source
+    assert 'text: "GPL-3.0-or-later"' in applet_source
     assert 'Util.spawnCommandLine("/usr/libexec/calendar-plus-about")' not in applet_source
     assert "xlet-about-dialog" not in applet_source
     assert 'CP_("Open selected date in Calendar")' in event_source
