@@ -138,9 +138,24 @@ def main() -> None:
     applet = read("src/cinnamon/applet.js")
     assert "FONT_PANEL_CLOCK" not in applet
     assert "_applyTypography(" not in applet
-    assert "follow-system-temporal" in read("src/cinnamon/settings-schema.json")
-    assert "get_system_primary_calendar" in applet
-    assert "get_system_secondary_calendar" in applet
+    settings_schema = read("src/cinnamon/settings-schema.json")
+    for temporal_key in (
+        "follow-system-temporal",
+        "clock-mode",
+        "show-seconds",
+        "location-configured",
+        "latitude",
+        "longitude",
+        "primary-calendar",
+        "secondary-calendar",
+        "use-custom-format",
+        "custom-format",
+        "custom-tooltip-format",
+    ):
+        assert temporal_key not in settings_schema
+    assert "get_system_calendar" in applet
+    assert "get_system_primary_calendar" not in applet
+    assert "get_system_secondary_calendar" not in applet
     assert not (ROOT / "src/cinnamon/settings.py").exists()
     assert "super.configureApplet(tab);" in applet
     about_source = read("src/app/about-dialog.c")
@@ -157,9 +172,9 @@ def main() -> None:
     assert "src/vendor/infiltratr-common" in makefile
     assert (
         "INFILTRATR_COMMON_COMMIT := "
-        "eb2cd6a5501a0e27f6e4370120d4e497b1eff52c"
+        "af4942ab03ceac4b9a3c46519c5670f18344cb8e"
     ) in makefile
-    assert "INFILTRATR_COMMON_VERSION := 1.19.16" in makefile
+    assert "INFILTRATR_COMMON_VERSION := 1.19.18" in makefile
     assert "normal `make` automatically retrieves" in read("README.md")
     assert "common-bootstrap: common-check" in makefile
     assert "common-test: $(INFILTRATR_COMMON_ARCHIVE)" in makefile
@@ -391,7 +406,7 @@ def main() -> None:
     # Validate Calendar's actual Common calls against Common's complete public
     # header surface. Do not duplicate Common's private source membership here.
     common = ROOT / "src/vendor/infiltratr-common"
-    assert (common / "VERSION").read_text(encoding="utf-8").strip() == "1.19.16"
+    assert (common / "VERSION").read_text(encoding="utf-8").strip() == "1.19.18"
     assert (common / "LICENSE").is_file()
     common_include = common / "include/infiltratr"
     for public_header in (
