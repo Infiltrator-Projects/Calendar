@@ -6,7 +6,7 @@ set -eu
 
 VERSION="@VERSION@"
 NATIVE_REVISION="1"
-NATIVE_VERSION="${VERSION}+native${NATIVE_REVISION}"
+NATIVE_VERSION="${VERSION}+nativepgo${NATIVE_REVISION}"
 PAYLOAD_SHA256="@PAYLOAD_SHA256@"
 PAYLOAD_ROOT="Calendar-${VERSION}"
 BUILD_ONLY=0
@@ -15,7 +15,7 @@ OUTPUT_DIR=$PWD
 
 usage() {
     cat <<EOF
-Calendar ${VERSION} local hardware-native builder
+Calendar ${VERSION} local hardware-native PGO builder
 
 Usage: $(basename "$0") [OPTIONS]
 
@@ -24,9 +24,10 @@ Usage: $(basename "$0") [OPTIONS]
   --verify-only        Verify the embedded source payload and exit
   -h, --help           Show this help
 
-With no options, the builder installs missing build dependencies, compiles
-Calendar for this machine, creates a Debian-managed package and installs
-it through APT.
+With no options, the builder installs missing build dependencies, performs a
+hardware-native profile-generate build, trains it with Calendar\'s representative
+workload and tests, rebuilds with profile-use, creates a Debian-managed package
+and installs it through APT.
 EOF
 }
 
@@ -128,7 +129,7 @@ if ! command -v dpkg-checkbuilddeps >/dev/null 2>&1 ||
     install_build_dependencies
 fi
 
-for command_name in dpkg-buildpackage dpkg-deb dpkg-architecture sed install; do
+for command_name in dpkg-buildpackage dpkg-deb dpkg-architecture sed install make find getconf; do
     command -v "$command_name" >/dev/null 2>&1 || {
         echo "Required build command is missing: $command_name" >&2
         exit 1
@@ -137,6 +138,14 @@ done
 
 ARCH=$(dpkg-architecture -qDEB_HOST_ARCH)
 MULTIARCH=$(dpkg-architecture -qDEB_HOST_MULTIARCH)
+JOBS=$(getconf _NPROCESSORS_ONLN 2>/dev/null || printf '1\n')
+case "$JOBS" in
+    ''|*[!0-9]*) JOBS=1 ;;
+    0) JOBS=1 ;;
+esac
+PGO_DIR="$WORK_DIR/pgo-data"
+mkdir -p "$PGO_DIR"
+
 sed -i \
     "1s/infiltrator-calendar (${VERSION})/infiltrator-calendar (${NATIVE_VERSION})/" \
     "$SOURCE_DIR/debian/changelog"
@@ -148,11 +157,35 @@ grep -q "^infiltrator-calendar (${NATIVE_VERSION}) " \
 
 printf 'Building Calendar %s for local architecture %s.\n' \
     "$NATIVE_VERSION" "$ARCH"
-printf 'Native optimisation: -O3 -march=native -mtune=native -flto=auto\n'
+printf 'CPU: %s\n' "$(awk -F: '/model name/ { sub(/^[[:space:]]+/, "", $2); print $2; exit }' /proc/cpuinfo 2>/dev/null || true)"
+printf 'Compiler: %s\n' "$(cc --version 2>/dev/null | sed -n '1p')"
+printf 'Native optimisation: -O3 -march=native -mtune=native -flto=auto + PGO\n'
+printf 'PGO pass 1: instrument Calendar and pinned Common, then train representative paths.\n'
 
 (
     cd "$SOURCE_DIR"
+    make clean
+    make -j"$JOBS" \
+        BUILD_MODE=native PGO_MODE=generate PGO_DIR="$PGO_DIR" \
+        all test
+    make BUILD_MODE=native PGO_MODE=generate PGO_DIR="$PGO_DIR" pgo-train
+)
+
+PROFILE_COUNT=$(find "$PGO_DIR" -type f -name '*.gcda' -print | wc -l | tr -d ' ')
+[ "$PROFILE_COUNT" -gt 0 ] || {
+    echo "PGO training produced no profile data" >&2
+    exit 1
+}
+printf 'PGO training collected %s profile data files.\n' "$PROFILE_COUNT"
+printf 'PGO pass 2: rebuild Calendar and pinned Common using measured profiles.\n'
+
+(
+    cd "$SOURCE_DIR"
+    make clean
     CALENDAR_PLUS_BUILD_MODE=native \
+    PGO_MODE=use \
+    PGO_DIR="$PGO_DIR" \
+    DEB_BUILD_OPTIONS="parallel=$JOBS" \
         dpkg-buildpackage -us -uc -b
 )
 
@@ -167,7 +200,7 @@ BUILT_DEB="$WORK_DIR/infiltrator-calendar_${NATIVE_VERSION}_${ARCH}.deb"
 
 PACKAGE_ROOT="$WORK_DIR/package-root"
 dpkg-deb -x "$BUILT_DEB" "$PACKAGE_ROOT"
-grep -q '^Build mode: local hardware-native ' \
+grep -q '^Build mode: local hardware-native PGO-trained ' \
     "$PACKAGE_ROOT/usr/share/doc/infiltrator-calendar/BUILD-INFO"
 test -f "$PACKAGE_ROOT/usr/lib/$MULTIARCH/libcalendar-plus.so.0.0.0"
 test -f \
