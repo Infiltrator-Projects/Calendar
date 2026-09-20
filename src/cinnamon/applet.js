@@ -19,7 +19,6 @@
  */
 
 const Applet = imports.ui.applet;
-const Dialog = imports.ui.dialog;
 const CalendarPlus = imports.gi.CalendarPlus;
 const CinnamonDesktop = imports.gi.CinnamonDesktop;
 const Clutter = imports.gi.Clutter;
