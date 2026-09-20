@@ -684,6 +684,10 @@ test_arithmetic_calendar_engines(void)
         {
             CALENDAR_PLUS_CALENDAR_MODE_MINGUO,
             2419403, 1, 1, 1, 1
+        },
+        {
+            CALENDAR_PLUS_CALENDAR_MODE_PERSIAN,
+            2461121, 1405, 1, 1, 0
         }
     };
     gsize index;
