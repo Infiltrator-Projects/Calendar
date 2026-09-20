@@ -6,6 +6,12 @@ This changelog records user-visible, compatibility, architecture and validation 
 
 No unreleased changes.
 
+## 1.0.27 - 2026-09-20
+
+- Replace the Calendar artwork with the exact user-approved System Monitor-family icon asset.
+- Keep that one canonical PNG as the source for Cinnamon, the native About dialog, hicolor desktop identity and Linux Mint Software Manager alias.
+- Pin the approved 256×256 RGBA asset by SHA-256 so substituted artwork cannot silently return.
+
 ## 1.0.26 - 2026-09-20
 
 - Restore the intended Calendar neon artwork from the previously staged canonical Git blob; the 1.0.15 repair had pinned a different image instead.

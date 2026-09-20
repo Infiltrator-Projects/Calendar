@@ -1,3 +1,12 @@
+infiltrator-calendar (1.0.27) trixie; urgency=medium
+
+  * Install the exact user-approved Calendar icon artwork.
+  * Keep the approved image as the single package-owned source for Cinnamon,
+    hicolor, Software Manager and the native About dialog.
+  * Pin the approved 256x256 RGBA icon SHA-256 in release validation.
+
+ -- Shannon Smith <noreply@the-infiltratr.com>  Sun, 20 Sep 2026 10:25:00 +1000
+
 infiltrator-calendar (1.0.26) trixie; urgency=medium
 
   * Restore the intended Calendar neon artwork from the previously staged
