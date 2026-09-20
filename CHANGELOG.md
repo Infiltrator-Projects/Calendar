@@ -6,6 +6,14 @@ This changelog records user-visible, compatibility, architecture and validation 
 
 No unreleased changes.
 
+## 1.0.36 - 2026-09-20
+
+- Repair the Calendar About surface regression introduced when the GTK About dialog was replaced in 1.0.32.
+- Replace the bare Cinnamon message box with a branded Cinnamon/St About card using the installed Calendar icon.
+- Restore clear product hierarchy: Calendar name, version, author, concise description, GPL identity and legal information.
+- Keep Website and Close actions native to Cinnamon while retaining the no-GTK-runtime architecture.
+- Add scoped MB Corpo About styling and update release tests so CI rejects a return to the generic MessageDialogContent layout.
+
 ## 1.0.35 - 2026-09-20
 
 - Make System Settings the default temporal authority for Calendar.
