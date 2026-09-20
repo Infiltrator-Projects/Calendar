@@ -16,6 +16,7 @@
 
 #include "calendar-registry.h"
 
+#include "calendar-arithmetic.h"
 #include "calendar-custom.h"
 #include "calendar-swedish.h"
 #include "icu-calendar.h"
@@ -88,6 +89,48 @@ icu_add_years(const CalendarPlusCalendarProvider *provider,
 
     return calendar_plus_icu_add_years(
         builtin->icu_keyword, jdn, amount);
+}
+
+static gboolean
+arithmetic_fields(const CalendarPlusCalendarProvider *provider,
+                  gint64 jdn,
+                  CalendarPlusCalendarFields *fields)
+{
+    const BuiltinCalendarProvider *builtin = builtin_provider(provider);
+
+    return calendar_plus_arithmetic_fields_from_jdn(
+        builtin->mode, jdn, fields);
+}
+
+static gint64
+arithmetic_period_start(const CalendarPlusCalendarProvider *provider,
+                        gint64 jdn)
+{
+    const BuiltinCalendarProvider *builtin = builtin_provider(provider);
+
+    return calendar_plus_arithmetic_month_start(builtin->mode, jdn);
+}
+
+static gint64
+arithmetic_add_periods(const CalendarPlusCalendarProvider *provider,
+                       gint64 jdn,
+                       gint amount)
+{
+    const BuiltinCalendarProvider *builtin = builtin_provider(provider);
+
+    return calendar_plus_arithmetic_add_months(
+        builtin->mode, jdn, amount);
+}
+
+static gint64
+arithmetic_add_years(const CalendarPlusCalendarProvider *provider,
+                     gint64 jdn,
+                     gint amount)
+{
+    const BuiltinCalendarProvider *builtin = builtin_provider(provider);
+
+    return calendar_plus_arithmetic_add_years(
+        builtin->mode, jdn, amount);
 }
 
 static gboolean
@@ -204,6 +247,15 @@ swedish_add_years(const CalendarPlusCalendarProvider *provider,
         CALENDAR_PLUS_CALENDAR_MODE_##mode_, keyword_ \
     }
 
+#define ARITHMETIC_PROVIDER(mode_, id_, name_, keyword_) \
+    [CALENDAR_PLUS_CALENDAR_MODE_##mode_] = { \
+        PROVIDER_INTERFACE(id_, name_, \
+                           arithmetic_fields, icu_format, \
+                           arithmetic_period_start, arithmetic_add_periods, \
+                           arithmetic_add_years), \
+        CALENDAR_PLUS_CALENDAR_MODE_##mode_, keyword_ \
+    }
+
 #define CUSTOM_PROVIDER(mode_, id_, name_) \
     [CALENDAR_PLUS_CALENDAR_MODE_##mode_] = { \
         PROVIDER_INTERFACE(id_, name_, \
@@ -221,18 +273,18 @@ swedish_add_years(const CalendarPlusCalendarProvider *provider,
     }
 
 static const BuiltinCalendarProvider providers[] = {
-    ICU_PROVIDER(GREGORIAN, "gregorian", "Gregorian", "gregorian"),
+    ARITHMETIC_PROVIDER(GREGORIAN, "gregorian", "Gregorian", "gregorian"),
     CUSTOM_PROVIDER(JULIAN, "julian", "Julian"),
     CUSTOM_PROVIDER(ISO_WEEK, "iso-week", "ISO week calendar"),
     ICU_PROVIDER(HEBREW, "hebrew", "Hebrew", "hebrew"),
     ICU_PROVIDER(ISLAMIC, "islamic", "Islamic (astronomical approximation)", "islamic"),
-    ICU_PROVIDER(ISLAMIC_CIVIL, "islamic-civil", "Islamic (civil/tabular)", "islamic-civil"),
+    ARITHMETIC_PROVIDER(ISLAMIC_CIVIL, "islamic-civil", "Islamic (civil/tabular)", "islamic-civil"),
     ICU_PROVIDER(ISLAMIC_UMM_AL_QURA, "islamic-umalqura", "Islamic (Umm al-Qura)", "islamic-umalqura"),
     ICU_PROVIDER(PERSIAN, "persian", "Persian (Solar Hijri)", "persian"),
     ICU_PROVIDER(CHINESE, "chinese", "Chinese traditional", "chinese"),
-    ICU_PROVIDER(INDIAN, "indian", "Indian National (Saka)", "indian"),
-    ICU_PROVIDER(COPTIC, "coptic", "Coptic", "coptic"),
-    ICU_PROVIDER(ETHIOPIAN, "ethiopian", "Ethiopian", "ethiopic"),
+    ARITHMETIC_PROVIDER(INDIAN, "indian", "Indian National (Saka)", "indian"),
+    ARITHMETIC_PROVIDER(COPTIC, "coptic", "Coptic", "coptic"),
+    ARITHMETIC_PROVIDER(ETHIOPIAN, "ethiopian", "Ethiopian", "ethiopic"),
     ICU_PROVIDER(BUDDHIST, "buddhist", "Buddhist", "buddhist"),
     ICU_PROVIDER(JAPANESE, "japanese", "Japanese imperial era", "japanese"),
     ICU_PROVIDER(MINGUO, "minguo", "Minguo (Republic of China)", "roc"),
@@ -248,10 +300,10 @@ static const BuiltinCalendarProvider providers[] = {
     CUSTOM_PROVIDER(EGYPTIAN_NABONASSAR, "egyptian-nabonassar",
                     "Egyptian civil (Nabonassar era)"),
     ICU_PROVIDER(DANGI, "dangi", "Dangi (traditional Korean)", "dangi"),
-    ICU_PROVIDER(ETHIOPIC_AMETE_ALEM, "ethiopic-amete-alem",
-                 "Ethiopic (Amete Alem)", "ethiopic-amete-alem"),
-    ICU_PROVIDER(ISLAMIC_TBLA, "islamic-tbla",
-                 "Islamic (tabular, astronomical epoch)", "islamic-tbla"),
+    ARITHMETIC_PROVIDER(ETHIOPIC_AMETE_ALEM, "ethiopic-amete-alem",
+                        "Ethiopic (Amete Alem)", "ethiopic-amete-alem"),
+    ARITHMETIC_PROVIDER(ISLAMIC_TBLA, "islamic-tbla",
+                    "Islamic (tabular, astronomical epoch)", "islamic-tbla"),
     CUSTOM_PROVIDER(ARMENIAN_TRADITIONAL, "armenian-traditional",
                     "Armenian traditional (365-day)"),
     SWEDISH_PROVIDER(SWEDISH_HISTORICAL, "swedish-historical",
