@@ -92,6 +92,19 @@ gchar *calendar_plus_system_clock_get_time(CalendarPlusSystemClock *self);
 gboolean calendar_plus_system_clock_is_running(
     CalendarPlusSystemClock *self);
 
+/**
+ * calendar_plus_system_clock_get_system_mode:
+ * @self: a multi-system clock
+ *
+ * Resolves the Infiltrator system temporal policy to a Calendar clock mode.
+ * Missing, invalid or platform-default policy resolves to "standard", which
+ * preserves Cinnamon's conventional clock preference.
+ *
+ * Returns: (transfer full): a newly allocated Calendar clock-mode identifier
+ */
+gchar *calendar_plus_system_clock_get_system_mode(
+    CalendarPlusSystemClock *self);
+
 G_END_DECLS
 
 #endif
