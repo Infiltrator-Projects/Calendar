@@ -285,7 +285,7 @@ function todayDisplay(clock, primaryCalendarSystem, config) {
         const formattedTooltip =
             clockForFormat(clock, config.customTooltipFormat);
         if (formattedTooltip !== null) {
-            tooltip = formattedTooltip.capitalize();
+            tooltip = formattedTooltip;
         } else {
             global.logError(
                 "calendar-plus@the-infiltratr: invalid tooltip time format."
