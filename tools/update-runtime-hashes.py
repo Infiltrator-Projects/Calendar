@@ -4,8 +4,8 @@
 """Generate or verify the small runtime integrity manifest.
 
 The manifest deliberately covers files loaded directly by Cinnamon or by the
-Calendar settings host before or alongside the native library: JavaScript,
-runtime JSON, the applet stylesheet and the thin settings launcher. Source,
+Calendar applet before or alongside the native library: JavaScript, runtime
+JSON and the applet stylesheet. Source,
 tests and packaging are covered by the immutable Git tag and GitHub source
 archives.
 Discovering JavaScript files here prevents a newly split module from being
@@ -29,7 +29,6 @@ def runtime_files() -> list[Path]:
         for name in (
             "metadata.json",
             "settings-schema.json",
-            "settings.py",
             "stylesheet.css",
         )
     )

@@ -39,7 +39,7 @@ test -f \
     "$TMP/native/usr/lib/$MULTIARCH/girepository-1.0/CalendarPlus-1.0.typelib"
 test -x "$TMP/native/usr/libexec/calendar-plus-about"
 test -f "$TMP/native/usr/share/cinnamon/applets/calendar-plus@the-infiltratr/stylesheet.css"
-test -x "$TMP/native/usr/share/cinnamon/applets/calendar-plus@the-infiltratr/settings.py"
+test ! -e "$TMP/native/usr/share/cinnamon/applets/calendar-plus@the-infiltratr/settings.py"
 test -f "$TMP/native/usr/share/fonts/truetype/infiltrator-calendar/mb_corpo_a_cond_regular.ttf"
 test -f "$TMP/native/usr/share/fonts/truetype/infiltrator-calendar/mb_corpo_s_bold.ttf"
 test -f "$TMP/native/usr/share/fonts/truetype/infiltrator-calendar/mb_corpo_s_regular.ttf"

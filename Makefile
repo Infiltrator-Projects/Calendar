@@ -313,8 +313,8 @@ $(BUILD_DIR)/$(ABOUT_BINARY): src/app/about-dialog.c src/app/project-info.c \
 	@mkdir -p "$(BUILD_DIR)"
 	$(CC) $(CPPFLAGS) $(CFLAGS) \
 		-frandom-seed=$(REPRO_SEED_PREFIX)-about-dialog \
-		$(GLIB_CFLAGS) src/app/about-dialog.c src/app/project-info.c \
-		$(INFILTRATR_COMMON_ARCHIVE) -o $@ $(LDFLAGS) $(DYNLIB_LIBS) $(MATH_LIBS)
+		src/app/about-dialog.c src/app/project-info.c \
+		$(INFILTRATR_COMMON_ARCHIVE) -o $@ $(LDFLAGS) $(MATH_LIBS)
 	chmod 0755 $@
 
 prepare-fonts:
@@ -604,8 +604,6 @@ install: all
 	install -m644 "$(APPLET_SRC_DIR)"/*.js "$(APPLET_SRC_DIR)"/*.json \
 		"$(APPLET_SRC_DIR)"/*.css \
 		"$(DESTDIR)$(PREFIX)/share/cinnamon/applets/$(UUID)/"
-	install -m755 "$(APPLET_SRC_DIR)/settings.py" \
-		"$(DESTDIR)$(PREFIX)/share/cinnamon/applets/$(UUID)/settings.py"
 	@while IFS= read -r language; do \
 		case "$$language" in ''|'#'*) continue ;; esac; \
 		install -Dm644 \

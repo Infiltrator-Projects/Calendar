@@ -1,11 +1,12 @@
 #!/usr/bin/env python3
 # SPDX-License-Identifier: GPL-3.0-or-later
-"""Project Common design tokens into Calendar's Cinnamon and GTK surfaces.
+"""Project Common design tokens into Calendar's Cinnamon surface.
 
-Calendar owns Cinnamon/GTK selectors and widget mechanics. Infiltratr Common
-owns semantic theme values, typography identity and structural metrics. Common 1.19.10 also carries the complete Linux MBLINK Night reference roles. This generator keeps the
-toolkit-specific source native while preventing a second private design truth
-from drifting away from the pinned Common release.
+Calendar owns Cinnamon selectors and widget mechanics. Infiltratr Common owns
+semantic theme values, typography identity and structural metrics. Common
+1.19.10 also carries the complete Linux MBLINK Night reference roles. This
+generator keeps the toolkit-specific source native while preventing a second
+private design truth from drifting away from the pinned Common release.
 """
 from __future__ import annotations
 
@@ -16,12 +17,9 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 COMMON_DESIGN = ROOT / "src/vendor/infiltratr-common/design/infiltrator-design-v1.json"
 STYLESHEET = ROOT / "src/cinnamon/stylesheet.css"
-SETTINGS = ROOT / "src/cinnamon/settings.py"
 
 TYPOGRAPHY_BEGIN = "/* BEGIN GENERATED COMMON TYPOGRAPHY TOKENS */"
 TYPOGRAPHY_END = "/* END GENERATED COMMON TYPOGRAPHY TOKENS */"
-SETTINGS_TYPOGRAPHY_BEGIN = "# BEGIN GENERATED COMMON TYPOGRAPHY TOKENS"
-SETTINGS_TYPOGRAPHY_END = "# END GENERATED COMMON TYPOGRAPHY TOKENS"
 THEME_BEGIN = "/* BEGIN GENERATED COMMON THEME TOKENS */"
 THEME_END = "/* END GENERATED COMMON THEME TOKENS */"
 METRICS_BEGIN = "/* BEGIN GENERATED COMMON METRIC TOKENS */"
@@ -74,99 +72,6 @@ def render_typography(data: dict) -> str:
 }}
 {TYPOGRAPHY_END}"""
 
-
-def render_settings_typography(data: dict) -> str:
-    type_data = typography(data)
-    ui = type_data["ui_family"]
-    brand = type_data["brand_family"]
-    regular = type_data["ui_regular_weight"]
-    bold = type_data["ui_bold_weight"]
-    brand_weight = type_data["brand_weight"]
-    control_radius = metrics(data)["control_radius"]
-    day = palette(data, "day")
-    night = palette(data, "night")
-
-    def gtk_theme(p: dict[str, str]) -> str:
-        return f"""
-window,
-window.background,
-.background,
-.view,
-viewport {{
-    background-color: {p["background"]};
-    color: {p["text"]};
-}}
-headerbar {{
-    background-color: {p["titlebar"]};
-    color: {p["heading"]};
-    border-color: {p["border"]};
-}}
-headerbar label,
-headerbar .title {{
-    color: {p["heading"]};
-}}
-frame > border,
-separator {{
-    border-color: {p["border"]};
-    background-color: {p["border"]};
-}}
-entry,
-spinbutton,
-combobox button {{
-    background-color: {p["input"]};
-    color: {p["text"]};
-    border-color: {p["connection_border"]};
-}}
-button {{
-    background-color: {p["operation"]};
-    color: {p["text"]};
-    border-color: {p["border"]};
-}}
-button:hover {{
-    background-color: {p["operation_hover"]};
-    border-color: {p["neutral_accent"]};
-}}
-switch {{
-    background-color: {p["surface"]};
-    border-color: {p["border"]};
-}}
-switch:checked {{
-    background-color: {p["neutral_accent"]};
-    color: {p["accent_foreground"]};
-}}
-row:selected,
-treeview.view:selected {{
-    background-color: {p["selection_background"]};
-    color: {p["selection_foreground"]};
-}}
-.dim-label {{
-    color: {p["summary"]};
-}}
-"""
-
-    return f'''{SETTINGS_TYPOGRAPHY_BEGIN}
-CSS = b"""
-* {{
-    font-family: "{ui}";
-    font-weight: {regular};
-}}
-headerbar .title {{
-    font-family: "{brand}";
-    font-weight: {brand_weight};
-}}
-button, button label {{
-    font-family: "{ui}";
-    font-weight: {bold};
-}}
-button {{
-    border-radius: {control_radius}px;
-}}
-"""
-THEME_CSS = {{
-    "day": b"""{gtk_theme(day)}""",
-    "night": b"""{gtk_theme(night)}""",
-}}
-{SETTINGS_TYPOGRAPHY_END}'''
 
 def render_metrics(data: dict) -> str:
     metric_data = metrics(data)
@@ -303,17 +208,6 @@ def desired_stylesheet(data: dict) -> str:
     )
 
 
-def desired_settings(data: dict) -> str:
-    source = SETTINGS.read_text(encoding="utf-8")
-    return replace_block(
-        source,
-        SETTINGS_TYPOGRAPHY_BEGIN,
-        SETTINGS_TYPOGRAPHY_END,
-        render_settings_typography(data),
-        "settings typography",
-    )
-
-
 def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--check", action="store_true")
@@ -321,17 +215,13 @@ def main() -> int:
 
     data = json.loads(COMMON_DESIGN.read_text(encoding="utf-8"))
     desired_css = desired_stylesheet(data)
-    desired_settings_source = desired_settings(data)
 
     if args.check:
         if STYLESHEET.read_text(encoding="utf-8") != desired_css:
             raise SystemExit("Calendar design CSS is stale; run make update-theme")
-        if SETTINGS.read_text(encoding="utf-8") != desired_settings_source:
-            raise SystemExit("Calendar settings typography is stale; run make update-theme")
         return 0
 
     STYLESHEET.write_text(desired_css, encoding="utf-8")
-    SETTINGS.write_text(desired_settings_source, encoding="utf-8")
     return 0
 
 

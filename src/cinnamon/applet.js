@@ -19,6 +19,7 @@
  */
 
 const Applet = imports.ui.applet;
+const Dialog = imports.ui.dialog;
 const CalendarPlus = imports.gi.CalendarPlus;
 const CinnamonDesktop = imports.gi.CinnamonDesktop;
 const Clutter = imports.gi.Clutter;
@@ -29,6 +30,7 @@ const St = imports.gi.St;
 const Gettext = imports.gettext;
 const Main = imports.ui.main;
 const Mainloop = imports.mainloop;
+const ModalDialog = imports.ui.modalDialog;
 const PopupMenu = imports.ui.popupMenu;
 const Settings = imports.ui.settings;
 const Util = imports.misc.util;
@@ -142,6 +144,7 @@ class CalendarPlusApplet extends Applet.Applet {
         this._calendar = null;
         this._popupBody = null;
         this._calendarColumn = null;
+        this._aboutDialog = null;
         this._resume_source = null;
         this._format_debounce_id = 0;
 
@@ -807,27 +810,58 @@ class CalendarPlusApplet extends Applet.Applet {
     }
 
     /*
-     * Cinnamon normally launches its generic xlet-settings process here.
-     * That process is outside this applet's St theme tree, so it cannot
-     * inherit Calendar typography. Route Configure through the bundled
-     * thin GTK host instead; it reuses Cinnamon's own settings renderer and
-     * persistence while applying the same MB Corpo family before widgets are
-     * constructed.
+     * Keep settings inside Cinnamon's own xlet-settings surface. Calendar
+     * contributes only the JSON schema and applet behaviour; it no longer
+     * ships a Python/GTK settings host of its own.
      */
     configureApplet(tab = 0) {
-        if (typeof tab !== "number" || !Number.isFinite(tab)) {
-            tab = 0;
-        }
-        const command = `/usr/share/cinnamon/applets/${UUID}/settings.py ` +
-            `--instance ${this.instance_id} --tab ${Math.trunc(tab)}`;
-        Util.spawnCommandLine(command);
+        super.configureApplet(tab);
     }
 
     _onAbout() {
         if (this.menu) {
             this.menu.close();
         }
-        Util.spawnCommandLine("/usr/libexec/calendar-plus-about");
+
+        if (!this._aboutDialog) {
+            const dialog = new ModalDialog.ModalDialog();
+            const description =
+                CP_("A native C-backed Cinnamon clock and calendar authored " +
+                    "by Shannon Smith, with multiple time and calendar systems.") +
+                "\n\n" +
+                CP_("Copyright © 1993-2026 Shannon Smith\n\n" +
+                    "This program comes with absolutely no warranty.\n" +
+                    "See the GNU GPL v3+ License for details.");
+
+            dialog.contentLayout.add_child(new Dialog.MessageDialogContent({
+                title: `${CP_("Calendar")} ${CalendarPlus.get_version()}`,
+                description,
+            }));
+            dialog.setButtons([
+                {
+                    label: _("Website"),
+                    action: () => {
+                        try {
+                            Gio.app_info_launch_default_for_uri(
+                                "https://github.com/Infiltrator-Projects/Calendar",
+                                global.create_app_launch_context()
+                            );
+                        } catch (error) {
+                            global.logError(error);
+                        }
+                    },
+                },
+                {
+                    label: _("Close"),
+                    action: () => dialog.close(),
+                    key: Clutter.KEY_Escape,
+                    default: true,
+                },
+            ]);
+            this._aboutDialog = dialog;
+        }
+
+        this._aboutDialog.open();
     }
 
     on_custom_format_button_pressed() {
@@ -895,6 +929,15 @@ class CalendarPlusApplet extends Applet.Applet {
         this._resumeSignals.disconnectAll();
         this._eventSignals.disconnectAll();
         this._signals.disconnectAll();
+
+        if (this._aboutDialog) {
+            try {
+                this._aboutDialog.destroy();
+            } catch (error) {
+                global.logError(error);
+            }
+            this._aboutDialog = null;
+        }
 
         if (this.system_clock) {
             try {

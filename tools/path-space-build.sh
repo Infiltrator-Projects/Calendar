@@ -47,6 +47,6 @@ test -f "$STAGE/usr/lib/$MULTIARCH/libcalendar-plus.so.0.0.0"
 test -f "$STAGE/usr/lib/$MULTIARCH/girepository-1.0/CalendarPlus-1.0.typelib"
 test -f "$STAGE/usr/share/cinnamon/applets/calendar-plus@the-infiltratr/applet.js"
 test -f "$STAGE/usr/share/cinnamon/applets/calendar-plus@the-infiltratr/stylesheet.css"
-test -x "$STAGE/usr/share/cinnamon/applets/calendar-plus@the-infiltratr/settings.py"
+test ! -e "$STAGE/usr/share/cinnamon/applets/calendar-plus@the-infiltratr/settings.py"
 
 printf 'Path-with-spaces build/install smoke test passed: %s\n' "$TARGET"
