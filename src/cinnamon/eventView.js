@@ -456,7 +456,15 @@ class EventRow {
             this.is_current_or_next = startsToday && !this.event.all_day;
         }
 
-        this.event_time.set_text(this._rangeText(today, selected));
+        const rangeText = this._rangeText(today, selected);
+        this.event_time.set_text(rangeText);
+
+        const accessibleParts = [this.event.summary, rangeText];
+        const statusText = this.countdown_label.get_text();
+        if (statusText) {
+            accessibleParts.push(statusText);
+        }
+        this.actor.set_accessible_name(accessibleParts.join(", "));
     }
 
     _resetStateStyles() {
