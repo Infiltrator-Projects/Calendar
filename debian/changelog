@@ -1,3 +1,14 @@
+infiltrator-calendar (1.0.35) trixie; urgency=medium
+
+  * Follow System Settings by default for clock mode, primary and secondary
+    calendars, seconds and geographic location as one temporal policy.
+  * Advance the exact shared foundation to Infiltratr Common 1.19.16.
+  * Keep Calendar's complete clock/calendar controls as explicit local
+    overrides when Follow System Settings is disabled.
+  * Open Infiltrator System Settings from the Date and Time Settings menu.
+
+ -- Shannon Smith <noreply@the-infiltratr.com>  Sun, 20 Sep 2026 21:45:00 +1000
+
 infiltrator-calendar (1.0.34) trixie; urgency=medium
 
   * Follow the system-wide Infiltrator temporal presentation policy from
