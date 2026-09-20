@@ -976,8 +976,7 @@ class CalendarPlusApplet extends Applet.Applet {
             this.settings = null;
         }
 
-        this._primary_calendar_system = null;
-        this._secondary_calendar_system = null;
+        this._calendar_system = null;
         this.desktop_settings = null;
         this.clock = null;
         this.menu = null;
@@ -988,7 +987,6 @@ class CalendarPlusApplet extends Applet.Applet {
         this.go_home_button = null;
         this._day = null;
         this._date = null;
-        this._secondary_date = null;
         this._today_box = null;
     }
 }
