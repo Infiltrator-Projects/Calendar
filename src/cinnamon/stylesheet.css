@@ -186,3 +186,65 @@
 }
 
 /* END GENERATED COMMON THEME TOKENS */
+
+
+/*
+ * About surface
+ * -------------
+ * Keep this native to Cinnamon/St, but restore the visual hierarchy and
+ * application identity that were lost when the GTK About dialog was removed.
+ */
+.calendar-plus-about,
+.calendar-plus-about * {
+    font-family: "MB Corpo S Title WEB";
+}
+
+.calendar-plus-about {
+    spacing: 16px;
+    min-width: 470px;
+    max-width: 560px;
+    padding: 8px 6px;
+}
+
+.calendar-plus-about-header {
+    spacing: 18px;
+}
+
+.calendar-plus-about-icon {
+    margin: 2px 4px 2px 0;
+}
+
+.calendar-plus-about-identity {
+    spacing: 4px;
+}
+
+.calendar-plus-about-title {
+    font-family: "MB Corpo S Title WEB";
+    font-weight: 700;
+    font-size: 2em;
+}
+
+.calendar-plus-about-version {
+    font-size: 1.05em;
+    opacity: 0.86;
+}
+
+.calendar-plus-about-author {
+    font-weight: 700;
+    opacity: 0.92;
+}
+
+.calendar-plus-about-description {
+    max-width: 520px;
+    font-size: 1.02em;
+}
+
+.calendar-plus-about-license {
+    font-weight: 700;
+}
+
+.calendar-plus-about-legal {
+    max-width: 520px;
+    font-size: 0.92em;
+    opacity: 0.78;
+}
