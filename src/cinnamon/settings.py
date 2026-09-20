@@ -192,14 +192,21 @@ def install_calendar_style(window) -> None:
     provider = Gtk.CssProvider()
     desktop = Gio.Settings.new("org.cinnamon.desktop.interface")
 
-    def system_prefers_dark() -> bool:
+    def system_theme_name() -> str:
         try:
             theme = desktop.get_string("gtk-theme")
         except Exception:
-            return False
-        return isinstance(theme, str) and "dark" in theme.lower()
+            return ""
+        return theme.lower() if isinstance(theme, str) else ""
 
-    def effective_theme() -> str:
+    def system_prefers_dark() -> bool:
+        return "dark" in system_theme_name()
+
+    def system_uses_high_contrast() -> bool:
+        compact = system_theme_name().replace("-", "").replace("_", "").replace(" ", "")
+        return "highcontrast" in compact
+
+    def effective_theme():
         mode = "system"
         try:
             if window.selected_instance is not None:
@@ -209,11 +216,14 @@ def install_calendar_style(window) -> None:
         if mode not in ("system", "day", "night"):
             mode = "system"
         if mode == "system":
+            if system_uses_high_contrast():
+                return None
             return "night" if system_prefers_dark() else "day"
         return mode
 
     def refresh(*_args) -> None:
-        provider.load_from_data(CSS + THEME_CSS[effective_theme()])
+        theme = effective_theme()
+        provider.load_from_data(CSS if theme is None else CSS + THEME_CSS[theme])
 
     Gtk.StyleContext.add_provider_for_screen(
         screen,
