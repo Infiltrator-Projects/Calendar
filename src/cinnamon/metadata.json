@@ -10,7 +10,7 @@
         "6.6",
         "6.7"
     ],
-    "version": "1.0.32",
+    "version": "1.0.33",
     "gettext-domain": "calendar-plus@the-infiltratr",
     "website": "https://github.com/Infiltrator-Projects/Calendar",
     "license": "GPL-3.0-or-later"
