@@ -14,6 +14,7 @@
         "default": "standard",
         "description": "Clock mode",
         "options": {
+            "Standard time (OS locale)": "standard",
             "Standard time (24-hour)": "standard-24",
             "Standard time (12-hour)": "standard-12",
             "Internet Time (@000 to @999)": "internet",
@@ -33,8 +34,7 @@
             "Italian hours (from sunset)": "italian-hours",
             "Babylonian hours (from sunrise)": "babylonian-hours",
             "Indian ghaṭī time (from sunrise)": "indian-ghati",
-            "Nuremberg hours (sunrise/sunset reset)": "nuremberg-hours",
-            "Standard time (OS locale)": "standard"
+            "Nuremberg hours (sunrise/sunset reset)": "nuremberg-hours"
         },
         "tooltip": "Local Calendar clock override used only when Follow System Settings is off."
     },
