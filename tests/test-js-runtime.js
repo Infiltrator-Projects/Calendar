@@ -487,6 +487,22 @@ function evaluateCalendar() {
             prototype.emit = function() {};
         },
     };
+    const Clutter = {
+        KEY_Left: 1,
+        KEY_Right: 2,
+        KEY_Up: 3,
+        KEY_Down: 4,
+        KEY_Page_Up: 5,
+        KEY_Page_Down: 6,
+        KEY_Home: 7,
+        KEY_End: 8,
+        EVENT_PROPAGATE: 0,
+        EVENT_STOP: 1,
+        ModifierType: {
+            SHIFT_MASK: 1 << 0,
+            CONTROL_MASK: 1 << 1,
+        },
+    };
 
     const context = {
         console,
@@ -512,7 +528,7 @@ function evaluateCalendar() {
         },
         imports: {
             gi: {
-                Clutter: {},
+                Clutter,
                 Gio: { Settings: DesktopSettings },
                 GLib: { SOURCE_REMOVE: false },
                 St: { Table },
@@ -565,6 +581,7 @@ function evaluateCalendar() {
 
     return {
         Calendar: context.__Calendar,
+        Clutter,
         settings,
         eventsManager,
         observations,
@@ -845,6 +862,68 @@ function testCalendarLifecycle() {
     assert.equal(calendar._destroyed, true);
 }
 
+function testCalendarKeyboardNavigation() {
+    const { Calendar, Clutter } = evaluateCalendar();
+    const calendar = Object.create(Calendar.prototype);
+    const calls = [];
+    const date = new Date(2026, 8, 20, 12, 0, 0);
+
+    calendar._focusAfterUpdate = null;
+    calendar._weekStart = 0;
+    calendar._browse = (yearDelta, periodDelta, baseDate, focus) => {
+        calls.push([yearDelta, periodDelta, baseDate, focus]);
+    };
+    calendar._queueKeyboardDate = () => {
+        throw new Error("Page navigation must use the native period browser.");
+    };
+
+    function keyEvent(key, state = 0) {
+        return {
+            get_key_symbol() { return key; },
+            get_state() { return state; },
+        };
+    }
+
+    assert.equal(
+        calendar._onDayKeyPress(date, keyEvent(Clutter.KEY_Page_Up)),
+        Clutter.EVENT_STOP
+    );
+    assert.deepEqual(
+        calls.pop().slice(0, 2),
+        [0, -1],
+        "Page Up must move by one calendar period"
+    );
+
+    assert.equal(
+        calendar._onDayKeyPress(
+            date,
+            keyEvent(
+                Clutter.KEY_Page_Down,
+                Clutter.ModifierType.SHIFT_MASK
+            )
+        ),
+        Clutter.EVENT_STOP
+    );
+    assert.deepEqual(
+        calls.pop().slice(0, 2),
+        [1, 0],
+        "Shift+Page Down must move by one calendar year"
+    );
+
+    calendar._onDayKeyPress(
+        date,
+        keyEvent(
+            Clutter.KEY_Page_Up,
+            Clutter.ModifierType.CONTROL_MASK
+        )
+    );
+    assert.deepEqual(
+        calls.pop().slice(0, 2),
+        [0, -1],
+        "Control must not silently replace the standard Shift year modifier"
+    );
+}
+
 function testVisibleEventRange() {
     const { EventsManager, observations } = evaluateEventsManager();
     const manager = new EventsManager({ getValue() { return true; } }, {});
@@ -1123,6 +1202,7 @@ testLocationMigration();
 testConstructorAtomicity();
 testModuleLoaderCompatibility();
 testCalendarLifecycle();
+testCalendarKeyboardNavigation();
 testEventListCacheIdentity();
 testVisibleEventRange();
 testVisibleEventRangeFailureRecovery();
