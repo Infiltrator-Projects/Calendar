@@ -119,6 +119,7 @@ class CalendarPlusApplet extends Applet.Applet {
         this._keybinding_set = false;
         this._is_entered = false;
 
+        this.follow_system_temporal = true;
         this.clock_mode = PanelClock.CLOCK_MODE_STANDARD;
         this.show_seconds = false;
         this.location_configured = false;
@@ -308,6 +309,11 @@ class CalendarPlusApplet extends Applet.Applet {
     _bindSettings() {
         this.settings.bind("show-events", "show_events", this._onSettingsChanged);
         this.settings.bind("theme-mode", "theme_mode", this._onSettingsChanged);
+        this.settings.bind(
+            "follow-system-temporal",
+            "follow_system_temporal",
+            this._onSettingsChanged
+        );
         this.settings.bind("clock-mode", "clock_mode", this._onSettingsChanged);
         this.settings.bind("show-seconds", "show_seconds", this._onSettingsChanged);
         this.settings.bind(
@@ -542,55 +548,102 @@ class CalendarPlusApplet extends Applet.Applet {
         });
     }
 
+    _systemTemporalPolicy() {
+        if (!this.follow_system_temporal || !this.system_clock) {
+            return null;
+        }
+
+        try {
+            const mode = this.system_clock.get_system_mode();
+            const primary =
+                this.system_clock.get_system_primary_calendar();
+            const secondary =
+                this.system_clock.get_system_secondary_calendar();
+
+            if (typeof mode !== "string" || mode.length === 0 ||
+                typeof primary !== "string" || primary.length === 0 ||
+                typeof secondary !== "string" || secondary.length === 0) {
+                return null;
+            }
+
+            return {
+                mode,
+                showSeconds:
+                    this.system_clock.get_system_show_seconds(),
+                locationConfigured:
+                    this.system_clock.get_system_location_configured(),
+                latitude:
+                    this.system_clock.get_system_latitude(),
+                longitude:
+                    this.system_clock.get_system_longitude(),
+                primaryCalendar: primary,
+                secondaryCalendar: secondary,
+            };
+        } catch (error) {
+            global.logError(error);
+            return null;
+        }
+    }
+
+    _effectiveTemporalPolicy() {
+        const system = this._systemTemporalPolicy();
+        if (system) {
+            return system;
+        }
+
+        return {
+            mode: this.clock_mode,
+            showSeconds: this.show_seconds,
+            locationConfigured: this.location_configured,
+            latitude: this.latitude,
+            longitude: this.longitude,
+            primaryCalendar: this.primary_calendar,
+            secondaryCalendar: this.secondary_calendar,
+        };
+    }
+
     _syncCalendarSystems() {
+        const temporal = this._effectiveTemporalPolicy();
+
         if (!this._primary_calendar_system ||
-            this._primary_calendar_system.get_id() !== this.primary_calendar) {
-            const candidate = CalendarPlus.CalendarSystem.new(this.primary_calendar);
+            this._primary_calendar_system.get_id() !== temporal.primaryCalendar) {
+            const candidate =
+                CalendarPlus.CalendarSystem.new(temporal.primaryCalendar);
             if (candidate) {
                 this._primary_calendar_system = candidate;
-                this._calendar.setCalendarSystem(this.primary_calendar);
+                this._calendar.setCalendarSystem(temporal.primaryCalendar);
             }
         }
 
-        if (this.secondary_calendar === "none") {
+        if (temporal.secondaryCalendar === "none") {
             this._secondary_calendar_system = null;
             return;
         }
 
         if (!this._secondary_calendar_system ||
-            this._secondary_calendar_system.get_id() !== this.secondary_calendar) {
+            this._secondary_calendar_system.get_id() !==
+                temporal.secondaryCalendar) {
             this._secondary_calendar_system =
-                CalendarPlus.CalendarSystem.new(this.secondary_calendar);
+                CalendarPlus.CalendarSystem.new(temporal.secondaryCalendar);
         }
     }
 
     _clockConfig() {
-        let effectiveMode = this.clock_mode;
-        if (effectiveMode === PanelClock.CLOCK_MODE_STANDARD &&
-            this.system_clock) {
-            try {
-                const systemMode = this.system_clock.get_system_mode();
-                if (typeof systemMode === "string" && systemMode.length > 0) {
-                    effectiveMode = systemMode;
-                }
-            } catch (error) {
-                global.logError(error);
-            }
-        }
+        const temporal = this._effectiveTemporalPolicy();
 
         return {
-            mode: effectiveMode,
-            showSeconds: this.show_seconds,
-            locationConfigured: this.location_configured,
-            latitude: this.latitude,
-            longitude: this.longitude,
+            mode: temporal.mode,
+            showSeconds: temporal.showSeconds,
+            locationConfigured: temporal.locationConfigured,
+            latitude: temporal.latitude,
+            longitude: temporal.longitude,
             useCustomFormat: this.use_custom_format,
             customFormat: this.custom_format,
             customTooltipFormat: this.custom_tooltip_format,
             pointerInside: this._is_entered,
             vertical: this._isVerticalPanel(),
             desktopSettings: this.desktop_settings,
-            primaryCalendar: this.primary_calendar,
+            primaryCalendar: temporal.primaryCalendar,
         };
     }
 
@@ -821,7 +874,7 @@ class CalendarPlusApplet extends Applet.Applet {
         if (this.menu) {
             this.menu.close();
         }
-        Util.spawnCommandLine("cinnamon-settings calendar");
+        Util.spawnCommandLine("system-settings");
     }
 
     /*
