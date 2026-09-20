@@ -11,7 +11,7 @@ permissions:
   contents: read
 
 concurrency:
-  group: build-and-test-v3-${{ github.ref }}
+  group: build-and-test-v4-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
