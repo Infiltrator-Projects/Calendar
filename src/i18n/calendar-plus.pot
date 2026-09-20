@@ -7,7 +7,7 @@
 #, fuzzy
 msgid ""
 msgstr ""
-"Project-Id-Version: Calendar 1.0.36\n"
+"Project-Id-Version: Calendar 1.0.37\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2026-09-01 09:25+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
@@ -115,13 +115,7 @@ msgstr ""
 msgid "Calendar"
 msgstr ""
 
-msgid "Calendar systems"
-msgstr ""
-
 msgid "Charlemagne"
-msgstr ""
-
-msgid "Check this to define a custom format for the date in the calendar applet."
 msgstr ""
 
 msgid "Check this to display events in the calendar."
@@ -139,15 +133,6 @@ msgstr ""
 msgid "Choiak"
 msgstr ""
 
-msgid "Click this button to know more about the syntax for date formats."
-msgstr ""
-
-msgid "Clock"
-msgstr ""
-
-msgid "Clock mode"
-msgstr ""
-
 msgid "Coptic"
 msgstr ""
 
@@ -162,12 +147,6 @@ msgid "Dangi (traditional Korean)"
 msgstr ""
 
 msgid "Dante"
-msgstr ""
-
-msgid "Date format"
-msgstr ""
-
-msgid "Date format for tooltip"
 msgstr ""
 
 msgid "Day"
@@ -215,9 +194,6 @@ msgstr ""
 msgid "Floréal"
 msgstr ""
 
-msgid "Follow System Settings"
-msgstr ""
-
 msgid "Follow system"
 msgstr ""
 
@@ -237,9 +213,6 @@ msgid "Frimaire"
 msgstr ""
 
 msgid "Fructidor"
-msgstr ""
-
-msgid "Geographic location"
 msgstr ""
 
 msgid "Germinal"
@@ -341,37 +314,16 @@ msgstr ""
 msgid "Kʿałocʿ"
 msgstr ""
 
-msgid "Latitude in degrees"
-msgstr ""
-
 msgid "Leap Day"
 msgstr ""
 
 msgid "Leapyear Day"
 msgstr ""
 
-msgid "Local Calendar clock override used only when Follow System Settings is off."
-msgstr ""
-
-msgid "Local Calendar geographic-location override used only when Follow System Settings is off."
-msgstr ""
-
-msgid "Local Calendar primary-calendar override used only when Follow System Settings is off."
-msgstr ""
-
-msgid "Local Calendar secondary-calendar override used only when Follow System Settings is off."
-msgstr ""
-
-msgid "Local Calendar seconds override used only when Follow System Settings is off."
-msgstr ""
-
 msgid "Local mean solar time"
 msgstr ""
 
 msgid "Local sidereal time"
-msgstr ""
-
-msgid "Longitude in degrees"
 msgstr ""
 
 msgid "Maius"
@@ -440,9 +392,6 @@ msgstr ""
 msgid "Nivôse"
 msgstr ""
 
-msgid "None"
-msgstr ""
-
 msgid "November"
 msgstr ""
 
@@ -494,9 +443,6 @@ msgstr ""
 msgid "Previous year"
 msgstr ""
 
-msgid "Primary calendar"
-msgstr ""
-
 msgid "Qawl"
 msgstr ""
 
@@ -524,19 +470,10 @@ msgstr ""
 msgid "Sans-culottides"
 msgstr ""
 
-msgid "Secondary date"
-msgstr ""
-
 msgid "September"
 msgstr ""
 
 msgid "Set keybinding(s) to show the calendar."
-msgstr ""
-
-msgid "Set your custom format here."
-msgstr ""
-
-msgid "Set your custom tooltip format here."
 msgstr ""
 
 msgid "Shakespeare"
@@ -551,12 +488,6 @@ msgstr ""
 msgid "Show calendar events"
 msgstr ""
 
-msgid "Show information on date format syntax"
-msgstr ""
-
-msgid "Show seconds"
-msgstr ""
-
 msgid "Show today"
 msgstr ""
 
@@ -564,15 +495,6 @@ msgid "Show week numbers in calendar"
 msgstr ""
 
 msgid "Sol"
-msgstr ""
-
-msgid "Standard time (12-hour)"
-msgstr ""
-
-msgid "Standard time (24-hour)"
-msgstr ""
-
-msgid "Standard time (OS locale)"
 msgstr ""
 
 msgid "Sulṭán"
@@ -607,18 +529,6 @@ msgid "Uinal %d"
 msgstr ""
 
 msgid "Unix time (epoch seconds)"
-msgstr ""
-
-msgid "Use a custom date format"
-msgstr ""
-
-msgid "Use the system-wide clock, calendar, seconds and geographic-location policy from Infiltrator System Settings. Turn this off to use the local Calendar overrides below."
-msgstr ""
-
-msgid "Used by Roman temporal, Edo Japanese seasonal, Italian, Babylonian and Nuremberg hours, and Indian ghaṭī time. Enter north latitudes as positive and south latitudes as negative."
-msgstr ""
-
-msgid "Used by local sidereal, solar and location-dependent historical time. Enter east longitudes as positive and west longitudes as negative."
 msgstr ""
 
 msgid "Vendémiaire"
