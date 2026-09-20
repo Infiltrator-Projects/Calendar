@@ -264,7 +264,7 @@ THEME_CSS = {{
 }}
 {SETTINGS_TYPOGRAPHY_END}'''
 
-def render_metrics(data: dict) -> str:def render_metrics(data: dict) -> str:
+def render_metrics(data: dict) -> str:
     metric_data = metrics(data)
     return f"""{METRICS_BEGIN}
 /*
