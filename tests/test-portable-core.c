@@ -650,6 +650,10 @@ test_arithmetic_calendar_engines(void)
             1948440, 1, 1, 1, 0
         },
         {
+            CALENDAR_PLUS_CALENDAR_MODE_ISLAMIC_UMM_AL_QURA,
+            2408762, 1300, 1, 1, 0
+        },
+        {
             CALENDAR_PLUS_CALENDAR_MODE_ISLAMIC_TBLA,
             1948439, 1, 1, 1, 0
         },
@@ -752,6 +756,40 @@ test_arithmetic_calendar_engines(void)
         g_assert_cmpint(fields.year, ==, 2019);
         g_assert_cmpint(fields.month, ==, 1);
         g_assert_cmpint(fields.day, ==, 1);
+    }
+
+    {
+        CalendarPlusCalendarFields fields = { 0 };
+        const gint64 first = G_GINT64_CONSTANT(2408762);
+        const gint64 last_boundary =
+            calendar_plus_i64_add_saturating(first, 106665);
+        const gint64 last_year = calendar_plus_i64_add_saturating(
+            first, 106311);
+
+        g_assert_false(calendar_plus_arithmetic_fields_from_jdn(
+            CALENDAR_PLUS_CALENDAR_MODE_ISLAMIC_UMM_AL_QURA,
+            first - 1,
+            &fields));
+        g_assert_false(calendar_plus_arithmetic_fields_from_jdn(
+            CALENDAR_PLUS_CALENDAR_MODE_ISLAMIC_UMM_AL_QURA,
+            last_boundary,
+            &fields));
+
+        g_assert_true(calendar_plus_arithmetic_fields_from_jdn(
+            CALENDAR_PLUS_CALENDAR_MODE_ISLAMIC_UMM_AL_QURA,
+            last_year,
+            &fields));
+        g_assert_cmpint(fields.year, ==, 1600);
+        g_assert_cmpint(fields.month, ==, 1);
+        g_assert_cmpint(fields.day, ==, 1);
+
+        g_assert_cmpint(
+            calendar_plus_arithmetic_add_years(
+                CALENDAR_PLUS_CALENDAR_MODE_ISLAMIC_UMM_AL_QURA,
+                last_year,
+                1),
+            ==,
+            last_year);
     }
 }
 
