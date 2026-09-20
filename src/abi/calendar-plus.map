@@ -122,10 +122,13 @@ CALENDAR_PLUS_2.2 {
 
 CALENDAR_PLUS_2.3 {
     global:
-        calendar_plus_system_clock_get_system_primary_calendar;
-        calendar_plus_system_clock_get_system_secondary_calendar;
         calendar_plus_system_clock_get_system_show_seconds;
         calendar_plus_system_clock_get_system_location_configured;
         calendar_plus_system_clock_get_system_latitude;
         calendar_plus_system_clock_get_system_longitude;
 } CALENDAR_PLUS_2.2;
+
+CALENDAR_PLUS_2.4 {
+    global:
+        calendar_plus_system_clock_get_system_calendar;
+} CALENDAR_PLUS_2.3;
