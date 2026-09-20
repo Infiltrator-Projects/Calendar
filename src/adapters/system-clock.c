@@ -8,16 +8,22 @@
 #include "clock-engine.h"
 #include "clock-glib-adapter.h"
 
+#include <gio/gio.h>
+#include <infiltratr/temporal.h>
+
 struct _CalendarPlusSystemClock
 {
     GObject parent_instance;
 
     CalendarPlusClockEngine *engine;
+    gchar *policy_path;
+    GFileMonitor *policy_monitor;
 };
 
 enum
 {
     SIGNAL_TICK,
+    SIGNAL_POLICY_CHANGED,
     SIGNAL_COUNT
 };
 
@@ -38,10 +44,28 @@ on_engine_tick(gpointer user_data)
 }
 
 static void
+on_policy_file_changed(GFileMonitor *monitor G_GNUC_UNUSED,
+                       GFile *file G_GNUC_UNUSED,
+                       GFile *other_file G_GNUC_UNUSED,
+                       GFileMonitorEvent event_type G_GNUC_UNUSED,
+                       gpointer user_data)
+{
+    CalendarPlusSystemClock *self = CALENDAR_PLUS_SYSTEM_CLOCK(user_data);
+
+    g_signal_emit(self, signals[SIGNAL_POLICY_CHANGED], 0);
+}
+
+static void
 calendar_plus_system_clock_dispose(GObject *object)
 {
     CalendarPlusSystemClock *self = CALENDAR_PLUS_SYSTEM_CLOCK(object);
 
+    if (self->policy_monitor != NULL)
+    {
+        g_file_monitor_cancel(self->policy_monitor);
+        g_clear_object(&self->policy_monitor);
+    }
+    g_clear_pointer(&self->policy_path, g_free);
     calendar_plus_clock_engine_free(self->engine);
     self->engine = NULL;
     G_OBJECT_CLASS(calendar_plus_system_clock_parent_class)->dispose(object); // NOLINT(bugprone-casting-through-void)
@@ -63,6 +87,16 @@ calendar_plus_system_clock_class_init(CalendarPlusSystemClockClass *klass)
                      NULL,
                      G_TYPE_NONE,
                      0);
+    signals[SIGNAL_POLICY_CHANGED] =
+        g_signal_new("policy-changed",
+                     G_TYPE_FROM_CLASS(klass),
+                     G_SIGNAL_RUN_LAST,
+                     0,
+                     NULL,
+                     NULL,
+                     NULL,
+                     G_TYPE_NONE,
+                     0);
 }
 
 static void
@@ -76,6 +110,28 @@ calendar_plus_system_clock_init(CalendarPlusSystemClock *self)
                                                   &scheduler,
                                                   on_engine_tick,
                                                   self);
+
+    self->policy_path = g_build_filename(g_get_user_config_dir(),
+                                         "infiltrator",
+                                         "presentation.conf",
+                                         NULL);
+    if (self->policy_path != NULL)
+    {
+        g_autoptr(GFile) policy_file = g_file_new_for_path(self->policy_path);
+        g_autoptr(GError) error = NULL;
+
+        self->policy_monitor = g_file_monitor_file(policy_file,
+                                                   G_FILE_MONITOR_NONE,
+                                                   NULL,
+                                                   &error);
+        if (self->policy_monitor != NULL)
+        {
+            g_signal_connect(self->policy_monitor,
+                             "changed",
+                             G_CALLBACK(on_policy_file_changed),
+                             self);
+        }
+    }
 }
 
 CalendarPlusSystemClock *
@@ -139,4 +195,35 @@ calendar_plus_system_clock_is_running(CalendarPlusSystemClock *self)
 {
     g_return_val_if_fail(CALENDAR_PLUS_IS_SYSTEM_CLOCK(self), FALSE);
     return calendar_plus_clock_engine_is_running(self->engine);
+}
+
+
+gchar *
+calendar_plus_system_clock_get_system_mode(CalendarPlusSystemClock *self)
+{
+    g_autofree gchar *contents = NULL;
+    InfiltratrTemporalPolicy policy;
+
+    g_return_val_if_fail(CALENDAR_PLUS_IS_SYSTEM_CLOCK(self),
+                         g_strdup("standard"));
+
+    if (self->policy_path == NULL ||
+        !g_file_get_contents(self->policy_path, &contents, NULL, NULL) ||
+        !infiltratr_temporal_policy_parse(contents, &policy))
+    {
+        return g_strdup("standard");
+    }
+
+    switch (policy.clock_profile)
+    {
+        case INFILTRATR_CLOCK_PROFILE_CONVENTIONAL_12:
+            return g_strdup("standard-12");
+        case INFILTRATR_CLOCK_PROFILE_CONVENTIONAL_24:
+            return g_strdup("standard-24");
+        case INFILTRATR_CLOCK_PROFILE_DECIMAL_10:
+            return g_strdup("decimal");
+        case INFILTRATR_CLOCK_PROFILE_SYSTEM:
+        default:
+            return g_strdup("standard");
+    }
 }
