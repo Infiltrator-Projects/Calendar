@@ -4,7 +4,9 @@ This changelog records user-visible, compatibility, architecture and validation 
 
 ## Unreleased
 
-No unreleased changes.
+- Move Gregorian, Hebrew, Persian, Buddhist, Minguo, Japanese, Indian National, Coptic, Ethiopic, Islamic civil/tabular, Umm al-Qura and Ethiopic Amete Alem calendar arithmetic and navigation out of ICU into Calendar-owned deterministic engines.
+- Replace ICU weekend queries with a compact Calendar-owned CLDR weekData projection for locale-aware workday styling.
+- Keep ICU only for the remaining astronomical/lunisolar providers and locale-sensitive calendar formatting while those final contracts are migrated without reducing chronology or localisation fidelity.
 
 ## 1.0.32 - 2026-09-20
 
