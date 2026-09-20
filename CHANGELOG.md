@@ -6,6 +6,13 @@ This changelog records user-visible, compatibility, architecture and validation 
 
 No unreleased changes.
 
+## 1.0.34 - 2026-09-20
+
+- Advance Calendar to Infiltratr Common 1.19.14 and consume Common's shared decimal-10 formatter instead of retaining a second decimal clock implementation.
+- Make Calendar's existing Standard clock mode follow the system-wide Infiltrator temporal presentation policy while preserving Cinnamon's normal 12/24-hour behaviour when no extended policy is selected.
+- Monitor the shared temporal policy so an open Calendar can resynchronise its panel clock when System Settings changes the clock profile.
+- Preserve every explicit Calendar clock mode as an application-local override of the system presentation policy.
+
 ## 1.0.33 - 2026-09-20
 
 - Move Gregorian, Hebrew, Persian, Buddhist, Minguo, Japanese, Indian National, Coptic, Ethiopic, Islamic civil/tabular, Umm al-Qura and Ethiopic Amete Alem calendar arithmetic and navigation out of ICU into Calendar-owned deterministic engines.
