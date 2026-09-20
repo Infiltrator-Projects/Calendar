@@ -6,6 +6,17 @@ This changelog records user-visible, compatibility, architecture and validation 
 
 No unreleased changes.
 
+## 1.0.37 - 2026-09-20
+
+- Make System Settings the sole temporal authority for Calendar.
+- Remove Calendar's clock-mode, seconds, geographic-location, calendar-system and custom date/time format controls.
+- Remove the obsolete Follow System Settings switch; Calendar now follows the system temporal policy unconditionally.
+- Remove the retired secondary-calendar model and secondary-date rendering completely.
+- Move Calendar to Common 1.19.18 temporal policy v3 with one authoritative calendar.
+- Replace the old primary/secondary native policy getters with one package-internal system-calendar getter.
+- Keep Calendar-specific settings only: appearance, events, week numbers and keyboard shortcut.
+- Preserve the branded Cinnamon-native About repair introduced in 1.0.36.
+
 ## 1.0.36 - 2026-09-20
 
 - Repair the Calendar About surface regression introduced when the GTK About dialog was replaced in 1.0.32.
