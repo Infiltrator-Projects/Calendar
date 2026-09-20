@@ -467,8 +467,8 @@ def main() -> None:
     assert "accessible_role: Atk.Role.LIST_ITEM" in event_source
     assert "accessible_name:" in calendar_source
 
-    # Calendar cells provide spatial keyboard navigation instead of forcing
-    # keyboard users to Tab linearly through all 42 cells.
+    # Calendar cells use a roving focus target: only the selected day enters
+    # the Tab sequence, while spatial keys navigate inside the 42-cell grid.
     for key_name in (
         "KEY_Left", "KEY_Right", "KEY_Up", "KEY_Down",
         "KEY_Page_Up", "KEY_Page_Down", "KEY_Home", "KEY_End",
@@ -476,6 +476,13 @@ def main() -> None:
         assert f"Clutter.{key_name}" in calendar_source
     assert '"key-press-event"' in calendar_source
     assert "grab_key_focus()" in calendar_source
+    assert "can_focus: isSelected" in calendar_source
+    assert "Clutter.ModifierType.SHIFT_MASK" in calendar_source
+    assert 'button.connect("clicked", () => this.setDate(date, false));' in calendar_source
+    assert (
+        'if (this.events_enabled) {\n                this.setDate(date, false);'
+        not in calendar_source
+    )
 
     metadata = json.loads(
         (APPLET_DIR / "metadata.json").read_text(encoding="utf-8")
