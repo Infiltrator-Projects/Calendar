@@ -81,7 +81,7 @@ def main() -> None:
     assert "-fprofile-partial-training" in makefile
     assert "pgo-train: $(BUILD_DIR)/pgo-train" in makefile
     assert (ROOT / "tools/pgo-train.c").is_file()
-    assert "override CFLAGS += $(NATIVE_CFLAGS) $(CALENDAR_CFLAGS)" in makefile
+    assert "override CFLAGS += $(NATIVE_CFLAGS) $(PGO_CFLAGS) $(CALENDAR_CFLAGS)" in makefile
     assert "Calendar-$(VERSION)-local-source.tar.gz" in makefile
     assert "Calendar-$(VERSION)-local-source.zip" not in makefile
     assert "TZ=UTC zip -X -9 -q" not in makefile
@@ -569,7 +569,7 @@ def main() -> None:
     assert "metadata.version" in applet
 
     subprocess.run(
-        ["dpkg", "--compare-versions", f"{version}+native1", "gt", version],
+        ["dpkg", "--compare-versions", f"{version}+nativepgo1", "gt", version],
         check=True,
     )
     subprocess.run(
