@@ -15,7 +15,7 @@
 #include "calendar-custom.h"
 #include "calendar-internal.h"
 #include "calendar-registry.h"
-#include "icu-calendar.h"
+#include "locale-weekend.h"
 #include "julian-day.h"
 
 struct _CalendarPlusCalendarEngine
@@ -80,16 +80,14 @@ iso_weekday_is_work_day_for_locale(gint iso_weekday,
                                    const gchar *locale)
 {
     gboolean locale_known = FALSE;
-    const gboolean locale_workday = locale != NULL ?
-        calendar_plus_icu_is_work_day_for_locale(locale,
-                                                 iso_weekday,
-                                                 &locale_known) :
-        calendar_plus_icu_is_work_day(iso_weekday, &locale_known);
+    const gboolean locale_workday =
+        calendar_plus_locale_is_work_day(locale,
+                                         iso_weekday,
+                                         &locale_known);
 
     /*
-     * ICU/CLDR is authoritative for locale weekend policy.  The fallback is
-     * deliberately conventional rather than guessed from country codes so a
-     * missing ICU locale never produces an invented regional rule.
+     * Calendar carries the small CLDR weekData projection it actually needs.
+     * The fallback remains Monday-Friday if the input itself is invalid.
      */
     return locale_known ? locale_workday :
            iso_weekday >= 1 && iso_weekday <= 5;
