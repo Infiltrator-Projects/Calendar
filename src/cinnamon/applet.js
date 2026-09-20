@@ -607,10 +607,17 @@ class CalendarPlusApplet extends Applet.Applet {
             return;
         }
 
+        const config = this._clockConfig();
+        if (this._effectiveClockMode !== config.mode) {
+            this._effectiveClockMode = config.mode;
+            PanelClock.configureWallClock(this.clock, config);
+            PanelClock.syncNativeClock(this.system_clock, config);
+        }
+
         const text = PanelClock.panelText(
             this.clock,
             this.system_clock,
-            this._clockConfig()
+            config
         );
         if (text) {
             this._clockLabel.set_text(text);
