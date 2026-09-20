@@ -606,12 +606,6 @@ msgstr "Tybi"
 msgid "Uinal %d"
 msgstr "Uinal %d"
 
-msgid "Unable to load GTK 3"
-msgstr "Не удалось загрузить GTK 3"
-
-msgid "Unable to open a graphical display."
-msgstr "Не удалось открыть графический дисплей."
-
 msgid "Unix time (epoch seconds)"
 msgstr "Время Unix (секунды от эпохи)"
 
@@ -629,9 +623,6 @@ msgstr "Vendémiaire"
 
 msgid "Ventôse"
 msgstr "Ventôse"
-
-msgid "Website"
-msgstr "Веб-сайт"
 
 msgid "Week"
 msgstr "Неделя"

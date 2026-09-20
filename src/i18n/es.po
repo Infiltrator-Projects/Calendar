@@ -603,12 +603,6 @@ msgstr "Tybi"
 msgid "Uinal %d"
 msgstr "Uinal %d"
 
-msgid "Unable to load GTK 3"
-msgstr "No se puede cargar GTK 3"
-
-msgid "Unable to open a graphical display."
-msgstr "No se puede abrir una pantalla gráfica."
-
 msgid "Unix time (epoch seconds)"
 msgstr "Hora Unix (segundos desde la época)"
 
@@ -626,9 +620,6 @@ msgstr "Vendémiaire"
 
 msgid "Ventôse"
 msgstr "Ventôse"
-
-msgid "Website"
-msgstr "Sitio web"
 
 msgid "Week"
 msgstr "Semana"

@@ -600,12 +600,6 @@ msgstr ""
 msgid "Uinal %d"
 msgstr ""
 
-msgid "Unable to load GTK 3"
-msgstr ""
-
-msgid "Unable to open a graphical display."
-msgstr ""
-
 msgid "Unix time (epoch seconds)"
 msgstr ""
 
@@ -622,9 +616,6 @@ msgid "Vendémiaire"
 msgstr ""
 
 msgid "Ventôse"
-msgstr ""
-
-msgid "Website"
 msgstr ""
 
 msgid "Week"

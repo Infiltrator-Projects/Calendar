@@ -192,7 +192,7 @@ def main() -> None:
             "--output", str(cleaned.relative_to(ROOT)),
             str(language_path.relative_to(ROOT)))
         cleaned.replace(language_path)
-        run("msgmerge", "--update", "--backup=none",
+        run("msgmerge", "--update", "--backup=none", "--no-obsolete",
             "--no-fuzzy-matching", "--no-wrap", "--sort-output",
             str(language_path.relative_to(ROOT)),
             str(output.relative_to(ROOT)))
