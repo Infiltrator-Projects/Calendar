@@ -23,6 +23,7 @@ const CalendarPlus = imports.gi.CalendarPlus;
 const CinnamonDesktop = imports.gi.CinnamonDesktop;
 const Clutter = imports.gi.Clutter;
 const Gio = imports.gi.Gio;
+const GLib = imports.gi.GLib;
 const Pango = imports.gi.Pango;
 const St = imports.gi.St;
 const Gettext = imports.gettext;
@@ -291,7 +292,12 @@ class CalendarPlusApplet extends Applet.Applet {
     }
 
     _watchDesktopPreferences() {
-        for (const key of ["clock-use-24h", "clock-show-date", "gtk-theme"]) {
+        for (const key of [
+            "clock-use-24h",
+            "clock-show-date",
+            "clock-show-seconds",
+            "gtk-theme",
+        ]) {
             this._signals.connect(
                 this.desktop_settings,
                 `changed::${key}`,
@@ -722,7 +728,18 @@ class CalendarPlusApplet extends Applet.Applet {
         if (this.menu) {
             this.menu.close();
         }
-        Util.spawnCommandLine("system-settings");
+
+        /*
+         * System Settings enriches Calendar when installed, but Calendar must
+         * remain a first-class Mint replacement without it.  Open our unified
+         * settings front door when available; otherwise use Cinnamon's native
+         * Date & Time panel, exactly as the stock applet does.
+         */
+        if (GLib.find_program_in_path("system-settings")) {
+            Util.spawnCommandLine("system-settings");
+        } else {
+            Util.spawnCommandLine("cinnamon-settings calendar");
+        }
     }
 
     /*
