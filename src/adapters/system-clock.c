@@ -203,27 +203,27 @@ calendar_plus_system_clock_is_running(CalendarPlusSystemClock *self)
 
 static gboolean
 load_system_temporal_policy(CalendarPlusSystemClock *self,
-                            InfiltratrTemporalPolicyV2 *policy)
+                            InfiltratrTemporalPolicyV3 *policy)
 {
     g_autofree gchar *contents = NULL;
 
     g_return_val_if_fail(CALENDAR_PLUS_IS_SYSTEM_CLOCK(self), FALSE);
     g_return_val_if_fail(policy != NULL, FALSE);
 
-    if (!infiltratr_temporal_policy_v2_default(policy))
+    if (!infiltratr_temporal_policy_v3_default(policy))
         return FALSE;
 
     if (self->policy_path == NULL ||
         !g_file_get_contents(self->policy_path, &contents, NULL, NULL))
         return TRUE;
 
-    return infiltratr_temporal_policy_v2_parse(contents, policy);
+    return infiltratr_temporal_policy_v3_parse(contents, policy);
 }
 
 gchar *
 calendar_plus_system_clock_get_system_mode(CalendarPlusSystemClock *self)
 {
-    InfiltratrTemporalPolicyV2 policy;
+    InfiltratrTemporalPolicyV3 policy;
 
     if (!load_system_temporal_policy(self, &policy))
         return g_strdup("standard");
@@ -231,32 +231,20 @@ calendar_plus_system_clock_get_system_mode(CalendarPlusSystemClock *self)
 }
 
 gchar *
-calendar_plus_system_clock_get_system_primary_calendar(
-    CalendarPlusSystemClock *self)
+calendar_plus_system_clock_get_system_calendar(CalendarPlusSystemClock *self)
 {
-    InfiltratrTemporalPolicyV2 policy;
+    InfiltratrTemporalPolicyV3 policy;
 
     if (!load_system_temporal_policy(self, &policy))
         return g_strdup("gregorian");
-    return g_strdup(policy.primary_calendar);
-}
-
-gchar *
-calendar_plus_system_clock_get_system_secondary_calendar(
-    CalendarPlusSystemClock *self)
-{
-    InfiltratrTemporalPolicyV2 policy;
-
-    if (!load_system_temporal_policy(self, &policy))
-        return g_strdup("none");
-    return g_strdup(policy.secondary_calendar);
+    return g_strdup(policy.calendar);
 }
 
 gboolean
 calendar_plus_system_clock_get_system_show_seconds(
     CalendarPlusSystemClock *self)
 {
-    InfiltratrTemporalPolicyV2 policy;
+    InfiltratrTemporalPolicyV3 policy;
 
     return load_system_temporal_policy(self, &policy) &&
            policy.show_seconds;
@@ -266,7 +254,7 @@ gboolean
 calendar_plus_system_clock_get_system_location_configured(
     CalendarPlusSystemClock *self)
 {
-    InfiltratrTemporalPolicyV2 policy;
+    InfiltratrTemporalPolicyV3 policy;
 
     return load_system_temporal_policy(self, &policy) &&
            policy.location_configured;
@@ -276,7 +264,7 @@ gdouble
 calendar_plus_system_clock_get_system_latitude(
     CalendarPlusSystemClock *self)
 {
-    InfiltratrTemporalPolicyV2 policy;
+    InfiltratrTemporalPolicyV3 policy;
 
     if (!load_system_temporal_policy(self, &policy))
         return 0.0;
@@ -287,7 +275,7 @@ gdouble
 calendar_plus_system_clock_get_system_longitude(
     CalendarPlusSystemClock *self)
 {
-    InfiltratrTemporalPolicyV2 policy;
+    InfiltratrTemporalPolicyV3 policy;
 
     if (!load_system_temporal_policy(self, &policy))
         return 0.0;
