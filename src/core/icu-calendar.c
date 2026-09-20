@@ -4,8 +4,8 @@
  *
  * ICU/CLDR calendar adapter.
  *
- * ICU owns field conversion, leap-month rules, era data and locale-sensitive
- * formatting for established calendars.  Calendar always opens these
+ * ICU owns the remaining delegated calendar conversion, era/lunisolar data
+ * and locale-sensitive formatting. Calendar always opens those calendars
  * calendars in UTC and places the JDN at UTC noon.  Noon avoids any midnight
  * ambiguity while UTC ensures that host timezone and daylight-saving changes
  * cannot alter a date-only conversion.
@@ -88,55 +88,6 @@ open_icu_calendar(const gchar *calendar_keyword,
     }
 
     return calendar;
-}
-
-gboolean
-calendar_plus_icu_is_work_day_for_locale(const gchar *locale,
-                                         gint iso_weekday,
-                                         gboolean *known)
-{
-    UErrorCode status = U_ZERO_ERROR;
-    UCalendar *calendar;
-    UCalendarDaysOfWeek day_of_week;
-    UCalendarWeekdayType type;
-
-    if (known != NULL)
-        *known = FALSE;
-    if (locale == NULL || *locale == '\0' ||
-        iso_weekday < 1 || iso_weekday > 7)
-    {
-        return FALSE;
-    }
-
-    calendar = ucal_open(utc_zone, 3, locale, UCAL_DEFAULT, &status);
-    if (U_FAILURE(status) || calendar == NULL)
-        return FALSE;
-
-    day_of_week = iso_weekday == 7 ?
-        UCAL_SUNDAY : (UCalendarDaysOfWeek)(iso_weekday + 1);
-    type = ucal_getDayOfWeekType(calendar, day_of_week, &status);
-    ucal_close(calendar);
-
-    if (U_FAILURE(status))
-        return FALSE;
-    if (known != NULL)
-        *known = TRUE;
-
-    /*
-     * A locale with a non-midnight weekend transition gets an onset/cease
-     * classification from ICU. For a whole-day calendar cell, treating any
-     * weekend participation as non-work is less misleading than styling the
-     * entire day as an ordinary weekday.
-     */
-    return type == UCAL_WEEKDAY;
-}
-
-gboolean
-calendar_plus_icu_is_work_day(gint iso_weekday,
-                              gboolean *known)
-{
-    return calendar_plus_icu_is_work_day_for_locale(
-        uloc_getDefault(), iso_weekday, known);
 }
 
 static UDate
