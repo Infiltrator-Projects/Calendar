@@ -31,13 +31,13 @@ Calendar does not own temporal presentation preferences. Infiltrator System Sett
 
 Clock modes include normal 12/24-hour time, French Republican decimal time, Internet Time, Unix time, hexadecimal and binary time, sidereal time, apparent and mean solar time, Julian/MJD, traditional Chinese double-hours and hundred-kè time, Roman temporal time, Edo Japanese seasonal time, Italian hours from sunset, the historical European gnomonic convention known as Babylonian hours from sunrise, Indian ghaṭī time from sunrise, and Nuremberg equal hours resetting at sunrise and sunset.
 
-Primary and optional secondary dates include Gregorian, Julian, ISO week, Hebrew, four Islamic variants, Persian, Chinese, Dangi, Indian National, Coptic, Ethiopic Amete Mihret and Amete Alem, Buddhist, Japanese, Minguo, French Republican, Roman, Mayan Long Count with Tzolk’in/Haab Calendar Round, Badíʿ, International Fixed, World, Positivist, Revised Julian, Byzantine Anno Mundi, Egyptian civil (Nabonassar era), traditional Armenian, and Sweden's historical 1700–1753 civil calendar including 30 February 1712.
+Calendar systems available through System Settings include Gregorian, Julian, ISO week, Hebrew, four Islamic variants, Persian, Chinese, Dangi, Indian National, Coptic, Ethiopic Amete Mihret and Amete Alem, Buddhist, Japanese, Minguo, French Republican, Roman, Mayan Long Count with Tzolk’in/Haab Calendar Round, Badíʿ, International Fixed, World, Positivist, Revised Julian, Byzantine Anno Mundi, Egyptian civil (Nabonassar era), traditional Armenian, and Sweden's historical 1700–1753 civil calendar including 30 February 1712.
 
-The applet has its own seconds preference, can coexist with Cinnamon's stock Calendar applet and installs no project-owned daemon, polling service or autostart entry.
+The applet can coexist with Cinnamon's stock Calendar applet and installs no project-owned daemon, polling service or autostart entry. Clock/calendar/seconds/location presentation comes exclusively from System Settings.
 
-Calendar bundles and installs the MB Corpo font set used by the project: MB Corpo S Regular, MB Corpo S Bold and MB Corpo A Condensed Regular. The package installs them under `/usr/share/fonts/truetype/infiltrator-calendar`. Typography identity, role weights, filenames and immutable asset hashes are taken from the pinned Common 1.19.10 design contract; Cinnamon selector mechanics remain Calendar-owned. Generated Cinnamon CSS is regression-checked against the same Common source. Configuration and About presentation now stay inside Cinnamon itself, so Calendar no longer carries a project-owned Python settings host or a direct GTK runtime dependency. Normal Cinnamon font fallback remains only as an operating-system fallback if font discovery fails.
+Calendar bundles and installs the MB Corpo font set used by the project: MB Corpo S Regular, MB Corpo S Bold and MB Corpo A Condensed Regular. The package installs them under `/usr/share/fonts/truetype/infiltrator-calendar`. Typography identity, role weights, filenames and immutable asset hashes are taken from the pinned Common 1.19.18 design contract; Cinnamon selector mechanics remain Calendar-owned. Generated Cinnamon CSS is regression-checked against the same Common source. Configuration and About presentation now stay inside Cinnamon itself, so Calendar no longer carries a project-owned Python settings host or a direct GTK runtime dependency. Normal Cinnamon font fallback remains only as an operating-system fallback if font discovery fails.
 
-Location-dependent clocks do not silently assume Greenwich. They show `N/A LOC` until **Geographic location** is enabled and coordinates are supplied.
+Location-dependent clocks do not silently assume Greenwich. They show `N/A LOC` until geographic location is configured in **System Settings → Date & Time**.
 
 Calendar workday styling follows ICU/CLDR weekend data for the active locale, including regions whose weekend is not Saturday/Sunday. If locale weekend data is unavailable, Calendar falls back to Monday-Friday workdays.
 
@@ -70,7 +70,7 @@ portable Calendar domain contracts
                     ↓
 chronology / clocks / astronomy / event semantics
 
-Calendar native arithmetic    Infiltratr Common 1.19.10
+Calendar native arithmetic    Infiltratr Common 1.19.18
      ↓                                  ↓
 fixed-rule chronology         generic checked arithmetic /
                                formatting / timing / loading /
@@ -164,9 +164,8 @@ GitHub supplies the standard source ZIP and tarball for each immutable release t
 ## Troubleshooting
 
 - **No events:** confirm Cinnamon CalendarServer/Evolution Data Server is available; Calendar reconnects automatically after service restarts.
-- **Alternative clock shows `N/A LOC`:** enable **Geographic location** in the applet settings and enter latitude/longitude.
+- **Alternative clock shows `N/A LOC`:** configure geographic location in **System Settings → Date & Time**.
 - **Applet refuses to load after an upgrade:** a stale native library is rejected deliberately when its version differs from the installed applet; reinstall the matching package.
-- **Custom format is invalid:** Calendar falls back safely instead of passing a null format result into the native library.
 - **Installed-state verification:** run `tools/cinnamon-smoke.sh` from a matching source checkout inside the Cinnamon session.
 
 ## Translations
