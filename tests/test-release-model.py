@@ -74,6 +74,13 @@ def main() -> None:
     assert "BUILD_MODE ?= generic" in makefile
     assert "-O2 -g" in makefile
     assert "-O3 -g -march=native -mtune=native -flto=auto" in makefile
+    assert "PGO_MODE ?= none" in makefile
+    assert "-fprofile-generate=$(PGO_DIR)" in makefile
+    assert "-fprofile-use=$(PGO_DIR)" in makefile
+    assert "-fprofile-correction" in makefile
+    assert "-fprofile-partial-training" in makefile
+    assert "pgo-train: $(BUILD_DIR)/pgo-train" in makefile
+    assert (ROOT / "tools/pgo-train.c").is_file()
     assert "override CFLAGS += $(NATIVE_CFLAGS) $(CALENDAR_CFLAGS)" in makefile
     assert "Calendar-$(VERSION)-local-source.tar.gz" in makefile
     assert "Calendar-$(VERSION)-local-source.zip" not in makefile
@@ -223,8 +230,11 @@ def main() -> None:
     assert 'infiltratr_string_equal(calendar_keyword, "gregorian")' in icu_source
     assert 'g_strcmp0(calendar_keyword, "gregorian")' not in icu_source
 
-    assert 'NATIVE_VERSION="${VERSION}+native${NATIVE_REVISION}"' in installer
+    assert 'NATIVE_VERSION="${VERSION}+nativepgo${NATIVE_REVISION}"' in installer
     assert "CALENDAR_PLUS_BUILD_MODE=native" in installer
+    assert "PGO_MODE=generate" in installer
+    assert "PGO_MODE=use" in installer
+    assert "pgo-train" in installer
     assert "dpkg-buildpackage -us -uc -b" in installer
     assert "apt-get install -y --allow-downgrades \"$OUTPUT_DEB\"" in installer
     assert "--build-only" in installer
