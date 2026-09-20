@@ -301,7 +301,11 @@ hebrew_start_of_year(gint64 year)
             fraction_days, HEBREW_DAY_PARTS));
     gint weekday = (gint)calendar_plus_positive_modulo(day, 7);
 
-    if (weekday == 2 || weekday == 4 || weekday == 6)
+    if (weekday == 2 || weekday == 4 || weekday == 6 ||
+        (weekday == 0 &&
+         fraction >= 21 * HEBREW_HOUR_PARTS + 589 &&
+         hebrew_is_leap(
+             calendar_plus_i64_subtract_saturating(year, 1))))
     {
         day = calendar_plus_i64_add_saturating(day, 1);
     }
@@ -310,13 +314,6 @@ hebrew_start_of_year(gint64 year)
              !hebrew_is_leap(year))
     {
         day = calendar_plus_i64_add_saturating(day, 2);
-    }
-    else if (weekday == 0 &&
-             fraction >= 21 * HEBREW_HOUR_PARTS + 589 &&
-             hebrew_is_leap(
-                 calendar_plus_i64_subtract_saturating(year, 1)))
-    {
-        day = calendar_plus_i64_add_saturating(day, 1);
     }
 
     return day;
