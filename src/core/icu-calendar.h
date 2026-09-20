@@ -9,14 +9,6 @@
 
 G_BEGIN_DECLS
 
-gboolean calendar_plus_icu_is_work_day(
-    gint iso_weekday,
-    gboolean *known);
-gboolean calendar_plus_icu_is_work_day_for_locale(
-    const gchar *locale,
-    gint iso_weekday,
-    gboolean *known);
-
 gboolean calendar_plus_icu_fields_from_jdn(
     const gchar *calendar_keyword,
     gint64 jdn,
