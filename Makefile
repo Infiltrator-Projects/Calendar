@@ -45,6 +45,7 @@ CORE_SOURCES := \
 	src/core/calendar-registry.c \
 	src/core/calendar-arithmetic.c \
 	src/core/calendar-helpers.c \
+	src/core/locale-weekend.c \
 	src/core/icu-calendar.c \
 	src/core/icu-compat-bridge.c \
 	src/core/calendar-ancient.c \
@@ -96,7 +97,8 @@ CORE_HEADERS := \
 	src/core/event-core.h \
 	src/core/event-source.h \
 	src/core/integer-math.h \
-	src/core/calendar-helpers.h
+	src/core/calendar-helpers.h \
+	src/core/locale-weekend.h
 PRIVATE_HEADERS := \
 	src/app/project-info.h \
 	src/adapters/clock-glib-adapter.h \
