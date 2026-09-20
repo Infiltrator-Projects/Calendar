@@ -192,10 +192,15 @@ def main() -> None:
             "--output", str(cleaned.relative_to(ROOT)),
             str(language_path.relative_to(ROOT)))
         cleaned.replace(language_path)
-        run("msgmerge", "--update", "--backup=none", "--no-obsolete",
+        run("msgmerge", "--update", "--backup=none",
             "--no-fuzzy-matching", "--no-wrap", "--sort-output",
             str(language_path.relative_to(ROOT)),
             str(output.relative_to(ROOT)))
+        no_obsolete = PO_DIR / f".{language}.no-obsolete.po"
+        run("msgattrib", "--no-obsolete", "--no-wrap", "--sort-output",
+            "--output", str(no_obsolete.relative_to(ROOT)),
+            str(language_path.relative_to(ROOT)))
+        no_obsolete.replace(language_path)
 
         # A maintained catalogue must be genuinely translated, not merely
         # structurally merged. msgfmt's statistics understand multiline PO
