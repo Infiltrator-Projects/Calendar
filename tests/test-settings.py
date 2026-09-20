@@ -25,6 +25,9 @@ def main() -> None:
     runtime_source = (APPLET_DIR / "runtimeSupport.js").read_text(encoding="utf-8")
     panel_clock_source = (APPLET_DIR / "panelClock.js").read_text(encoding="utf-8")
     settings_source = (APPLET_DIR / "settings.py").read_text(encoding="utf-8")
+    format_help = (
+        PROJECT_ROOT / "docs/strftime-format.html"
+    ).read_text(encoding="utf-8")
 
     clock_modes = schema["clock-mode"]["options"]
     expected_modes = [
@@ -67,6 +70,9 @@ def main() -> None:
     assert 'changed::${key}' in applet_source
     assert '"gtk-theme"' in applet_source
     assert 'this._systemPrefersDark() ? "night" : "day"' in applet_source
+    assert "this._systemUsesHighContrast()" in applet_source
+    assert "system_uses_high_contrast()" in settings_source
+    assert "CSS if theme is None else CSS + THEME_CSS[theme]" in settings_source
     assert 'this.menu.setCustomStyleClass("calendar-plus-popup");' in applet_source
     assert '`calendar-plus-popup calendar-plus-theme-${effectiveTheme}`' in applet_source
     assert 'setCustomStyleClass("calendar-background")' not in applet_source
@@ -139,7 +145,7 @@ def main() -> None:
     assert "def install_calendar_style(window)" in settings_source
     assert 'settings.listen("theme-mode", refresh)' in settings_source
     assert 'desktop.connect("changed::gtk-theme", refresh)' in settings_source
-    assert "THEME_CSS[effective_theme()]" in settings_source
+    assert "THEME_CSS[effective_theme()]" not in settings_source
     # Calendar deliberately leaves Cinnamon's page/row geometry native.
     # The 1.0.28 frame/list/layout overrides produced oversized slab rows and
     # must not return; only typography, colour roles and control radius belong
@@ -412,7 +418,18 @@ def main() -> None:
     assert "class EventList" not in event_manager_source
     assert "class EventRow" not in event_manager_source
     assert "var EventList = class EventList" in event_source
+    assert 'CP_("Calendar events")' in calendar_source
+    assert 'accessible_name: accessibleParts.join(", ")' in calendar_source
+    assert 'this.actor.set_accessible_name(accessibleParts.join(", "));' in event_source
     assert "class EventRow" in event_source
+    assert '"custom-format",\n            "custom_format",\n            this._onFormatSettingsChanged' in applet_source
+    assert '"custom-tooltip-format",\n            "custom_tooltip_format",\n            this._onFormatSettingsChanged' in applet_source
+    assert "Mainloop.timeout_add(500" in applet_source
+    assert "this._cancelFormatDebounce();" in applet_source
+    assert "/usr/share/doc/infiltrator-calendar/strftime-format.html" in applet_source
+    assert "https://cinnamon-spices.linuxmint.com/strftime.php" not in applet_source
+    assert "%Y" in format_help and "%H" in format_help and "%M" in format_help
+    assert "formattedTooltip.capitalize()" not in panel_clock_source
     assert "new EventManager.EventsManager(" in applet_source
 
     # Calendar-owned interface text uses its own installed gettext domain;
