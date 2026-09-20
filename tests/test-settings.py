@@ -418,7 +418,7 @@ def main() -> None:
     assert "class EventList" not in event_manager_source
     assert "class EventRow" not in event_manager_source
     assert "var EventList = class EventList" in event_source
-    assert 'CP_("Calendar events")' in calendar_source
+    assert '_("Calendar events")' in calendar_source
     assert 'accessible_name: accessibleParts.join(", ")' in calendar_source
     assert 'this.actor.set_accessible_name(accessibleParts.join(", "));' in event_source
     assert "class EventRow" in event_source
