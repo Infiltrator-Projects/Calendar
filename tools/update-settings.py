@@ -80,7 +80,7 @@ CALENDAR_OPTION_ORDER = (
 def calendar_options() -> OrderedDict[str, str]:
     source = (ROOT / "src/core/calendar-registry.c").read_text(encoding="utf-8")
     pattern = re.compile(
-        r"(?:ICU|CUSTOM|SWEDISH)_PROVIDER\(\s*[A-Z0-9_]+\s*,\s*"
+        r"(?:ICU|ARITHMETIC|CUSTOM|SWEDISH)_PROVIDER\(\s*[A-Z0-9_]+\s*,\s*"
         r'"([^"]+)"\s*,\s*"([^"]+)"'
     )
     discovered = {ident: name for ident, name in pattern.findall(source)}
