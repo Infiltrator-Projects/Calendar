@@ -1,3 +1,16 @@
+infiltrator-calendar (1.0.39) trixie; urgency=medium
+
+  * Upgrade the local .run installer to a two-pass hardware-native PGO build.
+  * Instrument Calendar and the pinned Common library with GCC profile
+    generation, train representative calendar, clock and event paths plus the
+    automated test workload, then rebuild with profile-use and correction.
+  * Keep correctness-preserving optimisation boundaries: -O3, -march=native,
+    -mtune=native and LTO remain enabled; -Ofast and -ffast-math remain excluded.
+  * Mark locally built packages as +nativepgo1 and record the PGO-trained build
+    profile in installed BUILD-INFO.
+
+ -- Shannon Smith <noreply@the-infiltratr.com>  Mon, 21 Sep 2026 09:42:00 +1000
+
 infiltrator-calendar (1.0.38) trixie; urgency=medium
 
   * Keep System Settings optional at runtime: use a valid Infiltrator temporal
