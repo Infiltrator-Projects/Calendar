@@ -69,7 +69,11 @@ calendar_plus_system_clock_dispose(GObject *object)
     }
     g_free(self->policy_path);
     self->policy_path = NULL;
-    g_clear_object(&self->cinnamon_interface_settings);
+    if (self->cinnamon_interface_settings != NULL)
+    {
+        g_object_unref(self->cinnamon_interface_settings);
+        self->cinnamon_interface_settings = NULL;
+    }
     calendar_plus_clock_engine_free(self->engine);
     self->engine = NULL;
     G_OBJECT_CLASS(calendar_plus_system_clock_parent_class)->dispose(object); // NOLINT(bugprone-casting-through-void)
