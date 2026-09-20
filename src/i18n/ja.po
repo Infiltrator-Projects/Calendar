@@ -221,9 +221,6 @@ msgstr "Festival of Holy Women"
 msgid "Floréal"
 msgstr "Floréal"
 
-msgid "Follow System Settings"
-msgstr "システム設定に従う"
-
 msgid "Follow system"
 msgstr "システムに従う"
 
@@ -355,21 +352,6 @@ msgstr "閏日"
 
 msgid "Leapyear Day"
 msgstr "閏年日"
-
-msgid "Local Calendar clock override used only when Follow System Settings is off."
-msgstr "「システム設定に従う」がオフの場合にのみ使用される Calendar のローカル時計設定です。"
-
-msgid "Local Calendar geographic-location override used only when Follow System Settings is off."
-msgstr "「システム設定に従う」がオフの場合にのみ使用される Calendar のローカル地理的位置設定です。"
-
-msgid "Local Calendar primary-calendar override used only when Follow System Settings is off."
-msgstr "「システム設定に従う」がオフの場合にのみ使用される Calendar のローカル主カレンダー設定です。"
-
-msgid "Local Calendar secondary-calendar override used only when Follow System Settings is off."
-msgstr "「システム設定に従う」がオフの場合にのみ使用される Calendar のローカル副カレンダー設定です。"
-
-msgid "Local Calendar seconds override used only when Follow System Settings is off."
-msgstr "「システム設定に従う」がオフの場合にのみ使用される Calendar のローカル秒表示設定です。"
 
 msgid "Local mean solar time"
 msgstr "地方平均太陽時"
@@ -617,9 +599,6 @@ msgstr "Unix 時刻（エポック秒）"
 
 msgid "Use a custom date format"
 msgstr "独自の日付書式を使用"
-
-msgid "Use the system-wide clock, calendar, seconds and geographic-location policy from Infiltrator System Settings. Turn this off to use the local Calendar overrides below."
-msgstr "Infiltrator System Settings のシステム全体の時計、カレンダー、秒表示、地理的位置の設定を使用します。Calendar のローカル設定を使用するには、これをオフにしてください。"
 
 msgid "Used by Roman temporal, Edo Japanese seasonal, Italian, Babylonian and Nuremberg hours, and Indian ghaṭī time. Enter north latitudes as positive and south latitudes as negative."
 msgstr "ローマ式不定時法、江戸時代の季節時刻、イタリア式・バビロニア式・ニュルンベルク時刻、およびインドのガティー時刻で使用します。北緯は正、南緯は負の値で入力します。"
