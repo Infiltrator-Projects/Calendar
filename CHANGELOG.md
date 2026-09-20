@@ -4,6 +4,10 @@ This changelog records user-visible, compatibility, architecture and validation 
 
 ## Unreleased
 
+No unreleased changes.
+
+## 1.0.38 - 2026-09-21
+
 - Make Infiltrator System Settings an optional enrichment rather than a runtime requirement: a valid shared temporal policy enables the extended clock/calendar/location behaviour, while a missing or invalid policy falls back to native Mint/Cinnamon behaviour.
 - Mirror Cinnamon's `clock-show-seconds` preference when no Infiltrator temporal policy exists, alongside the existing native 12/24-hour, locale and date-format path.
 - Open Infiltrator System Settings from Calendar when installed, otherwise fall back to Cinnamon's native `cinnamon-settings calendar` Date & Time panel.
