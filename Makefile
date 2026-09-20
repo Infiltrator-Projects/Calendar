@@ -168,8 +168,8 @@ endif
 REPRO_SEED_PREFIX ?= calendar-plus-$(VERSION)
 LDFLAGS += -Wl,-z,relro,-z,now -Wl,--as-needed
 SHARED_LDFLAGS = $(LDFLAGS) -Wl,--version-script=src/abi/calendar-plus.map
-GLIB_CFLAGS = $(shell $(PKG_CONFIG) --cflags gobject-2.0 icu-i18n)
-GLIB_LIBS = $(shell $(PKG_CONFIG) --libs gobject-2.0)
+GLIB_CFLAGS = $(shell $(PKG_CONFIG) --cflags gio-2.0 gobject-2.0 icu-i18n)
+GLIB_LIBS = $(shell $(PKG_CONFIG) --libs gio-2.0 gobject-2.0)
 CORE_CFLAGS = $(shell $(PKG_CONFIG) --cflags glib-2.0 icu-i18n)
 CORE_LIBS = $(shell $(PKG_CONFIG) --libs glib-2.0)
 DYNLIB_LIBS = -ldl
@@ -254,6 +254,8 @@ check-deps: common-check
 		echo "Missing build dependency: g-ir-scanner" >&2; exit 1; }
 	@$(G_IR_COMPILER) --version >/dev/null 2>&1 || { \
 		echo "Missing build dependency: g-ir-compiler" >&2; exit 1; }
+	@$(PKG_CONFIG) --exists gio-2.0 || { \
+		echo "Missing build dependency: libglib2.0-dev (gio-2.0)" >&2; exit 1; }
 	@$(PKG_CONFIG) --exists gobject-2.0 || { \
 		echo "Missing build dependency: libglib2.0-dev" >&2; exit 1; }
 	@$(PKG_CONFIG) --exists glib-2.0 || { \
