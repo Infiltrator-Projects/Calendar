@@ -615,7 +615,7 @@ install: all
 	install -Dm644 LICENSE \
 		"$(DESTDIR)$(PREFIX)/share/licenses/infiltrator-calendar/LICENSE"
 	install -d "$(DESTDIR)$(PREFIX)/share/doc/infiltrator-calendar"
-	install -m644 README.md \
+	install -m644 README.md docs/strftime-format.html \
 		"$(DESTDIR)$(PREFIX)/share/doc/infiltrator-calendar/"
 	printf 'Calendar source version: %s\nBuild mode: %s\nShared C library: Infiltratr Common %s\n' \
 		"$(VERSION)" "$(BUILD_DESCRIPTION)" "$(INFILTRATR_COMMON_VERSION)" \
