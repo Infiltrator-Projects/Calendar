@@ -404,8 +404,8 @@ hebrew_from_jdn(gint64 jdn,
     gint64 day_of_year = calendar_plus_i64_subtract_saturating(
         d, hebrew_start_of_year(year));
     gint month_index = 0;
-    const gint type;
-    const gboolean leap;
+    gint type;
+    gboolean leap;
 
     while (day_of_year < 1)
     {
