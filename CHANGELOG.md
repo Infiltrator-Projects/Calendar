@@ -6,6 +6,12 @@ This changelog records user-visible, compatibility, architecture and validation 
 
 No unreleased changes.
 
+## 1.0.29 - 2026-09-20
+
+- Undo the 1.0.28 settings-host layout/card experiment that produced the oversized grey slabs visible in Night mode.
+- Restore the cleaner Cinnamon-native settings geometry from 1.0.27 while retaining Common 1.19.10 typography and System/Day/Night colours.
+- Keep Calendar styling focused on titlebar, controls, selection and switches instead of overriding Cinnamon's page/section layout.
+
 ## 1.0.28 - 2026-09-20
 
 - Rework the external Cinnamon settings window so it uses the same layered Common 1.19.10 visual language as System Monitor instead of leaving Cinnamon's default grey list rows on a black canvas.
