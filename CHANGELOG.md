@@ -4,12 +4,18 @@ This changelog records user-visible, compatibility, architecture and validation 
 
 ## Unreleased
 
-- Standardise Calendar artwork on the canonical non-automotive Infiltrator icon family: graphite tile and `#00ADEF` linework, with the same verified source bytes still feeding Cinnamon, hicolor and Mint app-install metadata.
-
 No unreleased changes.
+
+## 1.0.31 - 2026-09-20
+
+- Keep calendar-day selection available when events are hidden or CalendarServer is unavailable; the date grid no longer depends on event transport to select a day.
+- Use a roving keyboard-focus target so only the selected day participates in the Tab sequence while arrow, Home/End and Page keys retain spatial navigation inside the grid.
+- Align year navigation with the standard date-grid convention: Page Up/Down moves one native calendar period and Shift+Page Up/Down moves one native calendar year.
+- Add JavaScript and static regression coverage for the corrected keyboard and selection semantics.
 
 ## 1.0.30 - 2026-09-20
 
+- Standardise Calendar artwork on the canonical non-automotive Infiltrator icon family: graphite tile and `#00ADEF` linework, with the same verified source bytes feeding Cinnamon, hicolor and Mint app-install metadata.
 - Debounce custom clock and tooltip format application by 500 ms so partially typed strftime tokens are not pushed through WallClock on every keystroke.
 - Preserve exact user-authored tooltip casing.
 - Install an offline strftime reference and route the format-help action to it.
