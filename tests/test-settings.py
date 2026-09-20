@@ -24,41 +24,33 @@ def main() -> None:
     event_manager_source = (APPLET_DIR / "eventManager.js").read_text(encoding="utf-8")
     runtime_source = (APPLET_DIR / "runtimeSupport.js").read_text(encoding="utf-8")
     panel_clock_source = (APPLET_DIR / "panelClock.js").read_text(encoding="utf-8")
-    format_help = (
-        PROJECT_ROOT / "docs/strftime-format.html"
-    ).read_text(encoding="utf-8")
-
-    clock_modes = schema["clock-mode"]["options"]
-    expected_modes = [
-        "standard",
-        "standard-24",
-        "standard-12",
-        "internet",
-        "unix",
-        "binary",
-        "hexadecimal",
-        "julian",
-        "modified-julian",
-        "sidereal",
-        "solar",
-        "mean-solar",
-        "decimal",
-        "chinese-time",
-        "chinese-ke",
-        "roman-temporal",
-        "japanese-temporal",
-        "italian-hours",
-        "babylonian-hours",
-        "indian-ghati",
-        "nuremberg-hours",
-    ]
-    assert list(clock_modes.values()) == expected_modes
-    assert clock_modes["Astronomical Julian Date (JD)"] == "julian"
-    assert clock_modes["Modified Julian Date (MJD)"] == "modified-julian"
-
-    seconds = schema["show-seconds"]
-    assert seconds["type"] == "switch"
-    assert seconds["default"] is False
+    forbidden_temporal_settings = {
+        "clock-section",
+        "follow-system-temporal",
+        "clock-mode",
+        "show-seconds",
+        "location-section",
+        "location-configured",
+        "latitude",
+        "longitude",
+        "calendar-section",
+        "primary-calendar",
+        "secondary-calendar",
+        "use-custom-format",
+        "custom-format",
+        "custom-tooltip-format",
+        "format-button",
+    }
+    assert not forbidden_temporal_settings.intersection(schema)
+    assert "get_system_mode()" in applet_source
+    assert "get_system_calendar()" in applet_source
+    assert "get_system_show_seconds()" in applet_source
+    assert "get_system_location_configured()" in applet_source
+    assert "get_system_latitude()" in applet_source
+    assert "get_system_longitude()" in applet_source
+    assert "follow_system_temporal" not in applet_source
+    assert "secondary_calendar" not in applet_source
+    assert "_secondary_date" not in applet_source
 
     theme = schema["theme-mode"]
     assert theme["type"] == "combobox"
@@ -143,94 +135,25 @@ def main() -> None:
     assert "configureApplet(tab = 0)" in applet_source
     assert "super.configureApplet(tab);" in applet_source
 
-    location_configured = schema["location-configured"]
-    assert location_configured["type"] == "switch"
-    assert location_configured["default"] is False
-
-    latitude = schema["latitude"]
-    assert latitude["type"] == "spinbutton"
-    assert latitude["default"] == 0.0
-    assert latitude["min"] == -90.0
-    assert latitude["max"] == 90.0
-    assert latitude["dependency"] == "location-configured"
-
-    longitude = schema["longitude"]
-    assert longitude["type"] == "spinbutton"
-    assert longitude["default"] == 0.0
-    assert longitude["min"] == -180.0
-    assert longitude["max"] == 180.0
-    assert longitude["dependency"] == "location-configured"
-
-    assert '"location-configured"' in applet_source
-    assert '"location_configured"' in applet_source
-    assert "this._migrateLocationSetting();" in applet_source
-    assert "locationConfigured: this.location_configured" in applet_source
+    # Calendar has no local temporal authority. System Settings owns clock,
+    # calendar, seconds and location; the native facade supplies those values.
+    assert 'this.settings.bind("show-seconds"' not in applet_source
+    assert 'this.settings.bind("latitude"' not in applet_source
+    assert 'this.settings.bind("longitude"' not in applet_source
+    assert '"primary-calendar"' not in applet_source
+    assert '"secondary-calendar"' not in applet_source
+    assert "this.clock_mode" not in applet_source
+    assert "this.show_seconds" not in applet_source
+    assert "this.latitude =" not in applet_source
+    assert "this.longitude =" not in applet_source
+    assert "CalendarPlus.SystemClock.new()" in applet_source
+    assert "this.system_clock.get_system_calendar()" in applet_source
+    assert "this._calendar.setCalendarSystem(temporal.calendar)" in applet_source
+    assert "systemClock.start_at_location(" in panel_clock_source
     assert "time_mode_requires_longitude(" in panel_clock_source
     assert "time_mode_requires_latitude(" in panel_clock_source
     assert '"N/A LOC"' in panel_clock_source
 
-    assert (
-        'this.settings.bind("show-seconds", "show_seconds", '
-        "this._onSettingsChanged);"
-    ) in applet_source
-    assert (
-        'this.settings.bind("latitude", "latitude", '
-        "this._onSettingsChanged);"
-    ) in applet_source
-    assert (
-        'this.settings.bind("longitude", "longitude", '
-        "this._onSettingsChanged);"
-    ) in applet_source
-    assert "systemClock.start_at_location(" in panel_clock_source
-    assert "@${latitude.toFixed(4)}" not in panel_clock_source
-    assert "this.clock_mode" in applet_source
-    assert "this.show_seconds" in applet_source
-    assert "this.latitude" in applet_source
-    assert "this.longitude" in applet_source
-    assert "CalendarPlus.SystemClock.new()" in applet_source
-
-    expected_calendars = [
-    "gregorian",
-    "iso-week",
-    "julian",
-    "revised-julian",
-    "hebrew",
-    "islamic-umalqura",
-    "islamic-civil",
-    "islamic-tbla",
-    "islamic",
-    "persian",
-    "bahai",
-    "buddhist",
-    "coptic",
-    "ethiopian",
-    "ethiopic-amete-alem",
-    "chinese",
-    "dangi",
-    "indian",
-    "japanese",
-    "minguo",
-    "roman",
-    "byzantine",
-    "egyptian-nabonassar",
-    "armenian-traditional",
-    "mayan",
-    "french-republican",
-    "swedish-historical",
-    "international-fixed",
-    "world",
-    "positivist",
-]
-    assert list(schema["primary-calendar"]["options"].values()) == expected_calendars
-    assert list(schema["secondary-calendar"]["options"].values()) == [
-        "none",
-        *expected_calendars,
-    ]
-    assert schema["primary-calendar"]["default"] == "gregorian"
-    assert schema["secondary-calendar"]["default"] == "none"
-    assert '"primary-calendar"' in applet_source
-    assert '"secondary-calendar"' in applet_source
-    assert "CalendarPlus.CalendarSystem.new(" in applet_source
     assert "CalendarPlus.CalendarSystem.new(" in calendar_source
     assert "this._calendar.setCalendarSystem(" in applet_source
     assert "this._calendarSystem.add_months_parts(" in calendar_source
@@ -279,9 +202,10 @@ def main() -> None:
     assert "class EventDataList" not in event_manager_source
     assert "this.events_by_date" not in event_manager_source
 
-    # The applet owns this preference; it must not silently fall back to the
-    # separate system-wide seconds switch again.
+    # Seconds are owned by System Settings, not Calendar or Cinnamon's
+    # independent clock-show-seconds preference.
     assert 'get_boolean("clock-show-seconds")' not in applet_source
+    assert "get_system_show_seconds()" in applet_source
 
     # Standard horizontal clocks need all combinations of date, 12/24-hour
     # mode and seconds while retaining Cinnamon's locale-aware formatting.
@@ -383,13 +307,10 @@ def main() -> None:
     assert 'accessible_name: accessibleParts.join(", ")' in calendar_source
     assert 'this.actor.set_accessible_name(accessibleParts.join(", "));' in event_source
     assert "class EventRow" in event_source
-    assert '"custom-format",\n            "custom_format",\n            this._onFormatSettingsChanged' in applet_source
-    assert '"custom-tooltip-format",\n            "custom_tooltip_format",\n            this._onFormatSettingsChanged' in applet_source
-    assert "Mainloop.timeout_add(500" in applet_source
-    assert "this._cancelFormatDebounce();" in applet_source
-    assert "/usr/share/doc/infiltrator-calendar/strftime-format.html" in applet_source
-    assert "https://cinnamon-spices.linuxmint.com/strftime.php" not in applet_source
-    assert "%Y" in format_help and "%H" in format_help and "%M" in format_help
+    assert "use_custom_format" not in applet_source
+    assert "custom_tooltip_format" not in applet_source
+    assert "_onFormatSettingsChanged" not in applet_source
+    assert "_cancelFormatDebounce" not in applet_source
     assert "formattedTooltip.capitalize()" not in panel_clock_source
     assert "new EventManager.EventsManager(" in applet_source
 
