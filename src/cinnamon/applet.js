@@ -904,18 +904,71 @@ class CalendarPlusApplet extends Applet.Applet {
 
         if (!this._aboutDialog) {
             const dialog = new ModalDialog.ModalDialog();
-            const description =
-                CP_("A native C-backed Cinnamon clock and calendar authored " +
-                    "by Shannon Smith, with multiple time and calendar systems.") +
-                "\n\n" +
-                CP_("Copyright © 1993-2026 Shannon Smith\n\n" +
+            const card = new St.BoxLayout({
+                vertical: true,
+                style_class: "calendar-plus-about",
+            });
+            const header = new St.BoxLayout({
+                vertical: false,
+                style_class: "calendar-plus-about-header",
+            });
+            const icon = new St.Icon({
+                icon_name: "infiltratr-calendar",
+                icon_size: 96,
+                style_class: "calendar-plus-about-icon",
+            });
+            const identity = new St.BoxLayout({
+                vertical: true,
+                style_class: "calendar-plus-about-identity",
+            });
+            const title = new St.Label({
+                text: CP_("Calendar"),
+                style_class: "calendar-plus-about-title",
+            });
+            const version = new St.Label({
+                text: `v${CalendarPlus.get_version()}`,
+                style_class: "calendar-plus-about-version",
+            });
+            const author = new St.Label({
+                text: "Shannon Smith",
+                style_class: "calendar-plus-about-author",
+            });
+            const description = new St.Label({
+                text: CP_(
+                    "A native C-backed Cinnamon clock and calendar authored " +
+                    "by Shannon Smith, with multiple time and calendar systems."
+                ),
+                style_class: "calendar-plus-about-description",
+            });
+            const license = new St.Label({
+                text: "GPL-3.0-or-later",
+                style_class: "calendar-plus-about-license",
+            });
+            const legal = new St.Label({
+                text: CP_(
+                    "Copyright © 1993-2026 Shannon Smith\n\n" +
                     "This program comes with absolutely no warranty.\n" +
-                    "See the GNU GPL v3+ License for details.");
+                    "See the GNU GPL v3+ License for details."
+                ),
+                style_class: "calendar-plus-about-legal",
+            });
 
-            dialog.contentLayout.add_child(new Dialog.MessageDialogContent({
-                title: `${CP_("Calendar")} ${CalendarPlus.get_version()}`,
-                description,
-            }));
+            for (const label of [description, legal]) {
+                label.clutter_text.line_wrap = true;
+                label.clutter_text.line_wrap_mode = Pango.WrapMode.WORD_CHAR;
+            }
+
+            identity.add_child(title);
+            identity.add_child(version);
+            identity.add_child(author);
+            header.add_child(icon);
+            header.add_child(identity);
+            card.add_child(header);
+            card.add_child(description);
+            card.add_child(license);
+            card.add_child(legal);
+            dialog.contentLayout.add_child(card);
+
             dialog.setButtons([
                 {
                     label: _("Website"),
