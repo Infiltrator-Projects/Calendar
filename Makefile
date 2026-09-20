@@ -9,7 +9,7 @@ G_IR_COMPILER ?= g-ir-compiler
 PREFIX ?= /usr
 DESTDIR ?=
 
-VERSION := 1.0.38
+VERSION := 1.0.39
 UUID := calendar-plus@the-infiltratr
 APPLET_SRC_DIR := src/cinnamon
 ICON_NAME := infiltratr-calendar
@@ -137,6 +137,26 @@ CPPFLAGS += -Isrc/app -Isrc/core -Isrc/adapters -I$(INFILTRATR_COMMON_DIR)/inclu
 BUILD_MODE ?= generic
 GENERIC_CFLAGS := -O2 -g
 NATIVE_CFLAGS := -O3 -g -march=native -mtune=native -flto=auto
+PGO_MODE ?= none
+PGO_DIR ?= $(abspath .pgo-data)
+PGO_GENERATE_CFLAGS := -fprofile-generate=$(PGO_DIR)
+PGO_USE_CFLAGS := -fprofile-use=$(PGO_DIR) -fprofile-correction -fprofile-partial-training
+PGO_GENERATE_LDFLAGS := -fprofile-generate=$(PGO_DIR)
+PGO_USE_LDFLAGS := -fprofile-use=$(PGO_DIR) -fprofile-correction
+
+ifeq ($(PGO_MODE),none)
+PGO_CFLAGS :=
+PGO_LDFLAGS :=
+else ifeq ($(PGO_MODE),generate)
+PGO_CFLAGS := $(PGO_GENERATE_CFLAGS)
+PGO_LDFLAGS := $(PGO_GENERATE_LDFLAGS)
+else ifeq ($(PGO_MODE),use)
+PGO_CFLAGS := $(PGO_USE_CFLAGS)
+PGO_LDFLAGS := $(PGO_USE_LDFLAGS)
+else
+$(error Unsupported PGO_MODE '$(PGO_MODE)'; use none, generate or use)
+endif
+
 INFILTRATR_COMMON_EXTRA_CFLAGS ?=
 SANITIZER_CFLAGS := -fsanitize=address,undefined -fno-omit-frame-pointer
 REPRODUCIBLE_CFLAGS := \
@@ -156,11 +176,17 @@ INFILTRATR_COMMON_CFLAGS := $(GENERIC_CFLAGS) -fstack-protector-strong \
 BUILD_DESCRIPTION := generic amd64-compatible (Debian/Mint ICU runtime bridge)
 else ifeq ($(BUILD_MODE),native)
 CFLAGS ?=
-override CFLAGS += $(NATIVE_CFLAGS) $(CALENDAR_CFLAGS)
-INFILTRATR_COMMON_CFLAGS := $(NATIVE_CFLAGS) -fstack-protector-strong \
+override CFLAGS += $(NATIVE_CFLAGS) $(PGO_CFLAGS) $(CALENDAR_CFLAGS)
+INFILTRATR_COMMON_CFLAGS := $(NATIVE_CFLAGS) $(PGO_CFLAGS) -fstack-protector-strong \
 	-fno-common $(REPRODUCIBLE_CFLAGS) $(INFILTRATR_COMMON_EXTRA_CFLAGS)
-LDFLAGS += -flto=auto
+LDFLAGS += -flto=auto $(PGO_LDFLAGS)
+ifeq ($(PGO_MODE),use)
+BUILD_DESCRIPTION := local hardware-native PGO-trained (-O3 -march=native -mtune=native -flto=auto -fprofile-use)
+else ifeq ($(PGO_MODE),generate)
+BUILD_DESCRIPTION := local hardware-native PGO-instrumented (-O3 -march=native -mtune=native -flto=auto -fprofile-generate)
+else
 BUILD_DESCRIPTION := local hardware-native (-O3 -march=native -mtune=native -flto=auto)
+endif
 else
 $(error Unsupported BUILD_MODE '$(BUILD_MODE)'; use generic or native)
 endif
@@ -197,7 +223,7 @@ DIST_FILES := \
 	tools
 
 .PHONY: all check check-deps clean common-bootstrap common-build common-check common-test core-check coverage install package-source \
-	package-local-installer \
+	package-local-installer pgo-train \
 	sanitize static-analysis test validate-architecture validate-js validate-package-inputs \
 	validate-sources validate-exports validate-abi validate-runtime-deps validate-release-model smoke-gjs \
 	path-space-smoke release-check \
@@ -312,6 +338,19 @@ $(BUILD_DIR)/$(LIB_REALNAME): $(OBJECTS) $(INFILTRATR_COMMON_ARCHIVE) \
 		$(ICU_BRIDGE_LIBS) $(MATH_LIBS)
 	ln -sfn "$(LIB_REALNAME)" "$(BUILD_DIR)/$(LIB_SONAME)"
 	ln -sfn "$(LIB_SONAME)" "$(BUILD_DIR)/lib$(LIB_BASENAME).so"
+
+$(BUILD_DIR)/pgo-train: tools/pgo-train.c $(BUILD_DIR)/$(LIB_REALNAME)
+	$(CC) -O2 -g -std=c11 -Isrc/core -Isrc/adapters $(GLIB_CFLAGS) \
+		tools/pgo-train.c -L"$(abspath $(BUILD_DIR))" -l$(LIB_BASENAME) \
+		$(GLIB_LIBS) $(MATH_LIBS) -o $@
+
+pgo-train: $(BUILD_DIR)/pgo-train
+	@test "$(BUILD_MODE)" = "native" || { \
+		echo "PGO training requires BUILD_MODE=native." >&2; exit 1; }
+	@test "$(PGO_MODE)" = "generate" || { \
+		echo "PGO training requires PGO_MODE=generate." >&2; exit 1; }
+	LD_LIBRARY_PATH="$(abspath $(BUILD_DIR))${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}" \
+		./$(BUILD_DIR)/pgo-train
 
 $(BUILD_DIR)/$(ABOUT_BINARY): src/app/about-dialog.c src/app/project-info.c \
 		src/app/project-info.h $(INFILTRATR_COMMON_ARCHIVE)
