@@ -582,7 +582,7 @@ def main() -> None:
         } and path.name not in {"Makefile", "changelog", "control", "copyright"}:
             continue
         content = path.read_text(encoding="utf-8")
-        stale_copyright = "Copyright (C) " + "2000-2026 Shannon Smith"
+        stale_copyright = "Copyright (C) " + "2026 Shannon Smith"
         assert stale_copyright not in content, (
             f"stale project copyright span: {path.relative_to(ROOT)}"
         )
