@@ -576,7 +576,7 @@ def main() -> None:
         [
             "dpkg", "--compare-versions",
             ".".join([*version.split(".")[:-1], str(int(version.split(".")[-1]) + 1)]),
-            "gt", f"{version}+native1"
+            "gt", f"{version}+nativepgo1"
         ],
         check=True,
     )
