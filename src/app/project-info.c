@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-// Copyright (C) 2000-2026 Shannon Smith
+// Copyright (C) 1993-2026 Shannon Smith
 
 #include "project-info.h"
 
@@ -36,7 +36,7 @@ calendar_plus_project_info(void)
                        "by Shannon Smith, with multiple time and calendar "
                        "systems."),
         .icon_name = "infiltratr-calendar",
-        .copyright_text = N_("Copyright © 2000-2026 Shannon Smith\n\n"
+        .copyright_text = N_("Copyright © 1993-2026 Shannon Smith\n\n"
                              "This program comes with absolutely no warranty.\n"
                              "See the GNU GPL v3+ License for details.")
     };
