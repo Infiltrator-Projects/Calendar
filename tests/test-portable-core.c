@@ -692,6 +692,10 @@ test_arithmetic_calendar_engines(void)
         {
             CALENDAR_PLUS_CALENDAR_MODE_HEBREW,
             2461296, 5787, 1, 1, 0
+        },
+        {
+            CALENDAR_PLUS_CALENDAR_MODE_JAPANESE,
+            2458605, 1, 5, 1, 236
         }
     };
     gsize index;

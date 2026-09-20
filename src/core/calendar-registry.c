@@ -286,7 +286,7 @@ static const BuiltinCalendarProvider providers[] = {
     ARITHMETIC_PROVIDER(COPTIC, "coptic", "Coptic", "coptic"),
     ARITHMETIC_PROVIDER(ETHIOPIAN, "ethiopian", "Ethiopian", "ethiopic"),
     ARITHMETIC_PROVIDER(BUDDHIST, "buddhist", "Buddhist", "buddhist"),
-    ICU_PROVIDER(JAPANESE, "japanese", "Japanese imperial era", "japanese"),
+    ARITHMETIC_PROVIDER(JAPANESE, "japanese", "Japanese imperial era", "japanese"),
     ARITHMETIC_PROVIDER(MINGUO, "minguo", "Minguo (Republic of China)", "roc"),
     CUSTOM_PROVIDER(FRENCH_REPUBLICAN, "french-republican", "French Republican"),
     CUSTOM_PROVIDER(ROMAN, "roman", "Roman"),

@@ -28,6 +28,132 @@ enum
 #define ETHIOPIC_AMETE_ALEM_OFFSET G_GINT64_CONSTANT(5500)
 #define INDIAN_GREGORIAN_OFFSET G_GINT64_CONSTANT(78)
 
+typedef struct
+{
+    gint code;
+    gint start_year;
+    gint start_month;
+    gint start_day;
+} JapaneseEra;
+
+/*
+ * CLDR's modern Japanese era boundary data. CLDR 49 / ICU 79 removes the
+ * pre-Meiji era sequence, so Calendar owns the stable modern boundary that
+ * current ICU itself converges on instead of inheriting version-dependent
+ * historical-era tables from the host.
+ */
+static const JapaneseEra japanese_eras[] = {
+    { 232, 1868, 10, 23 }, /* Meiji */
+    { 233, 1912, 7, 30 },  /* Taisho */
+    { 234, 1926, 12, 25 }, /* Showa */
+    { 235, 1989, 1, 8 },   /* Heisei */
+    { 236, 2019, 5, 1 }    /* Reiwa */
+};
+
+static gboolean
+japanese_date_on_or_after(gint year,
+                          gint month,
+                          gint day,
+                          const JapaneseEra *era)
+{
+    if (year != era->start_year)
+        return year > era->start_year;
+    if (month != era->start_month)
+        return month > era->start_month;
+    return day >= era->start_day;
+}
+
+static const JapaneseEra *
+japanese_era_by_code(gint64 code)
+{
+    gsize index;
+
+    for (index = 0; index < G_N_ELEMENTS(japanese_eras); index++)
+    {
+        if (code == japanese_eras[index].code)
+            return &japanese_eras[index];
+    }
+    return NULL;
+}
+
+static gint64
+japanese_signed_year_from_fields(const CalendarPlusCalendarFields *fields)
+{
+    const JapaneseEra *era;
+
+    if (fields->auxiliary == 0)
+        return calendar_plus_i64_subtract_saturating(1, fields->year);
+    if (fields->auxiliary == 1)
+        return fields->year;
+
+    era = japanese_era_by_code(fields->auxiliary);
+    if (era == NULL)
+        return fields->year;
+
+    return calendar_plus_i64_add_saturating(
+        era->start_year,
+        calendar_plus_i64_subtract_saturating(fields->year, 1));
+}
+
+static void
+japanese_set_year_for_gregorian(gint64 gregorian_year,
+                                CalendarPlusCalendarFields *fields)
+{
+    gsize index;
+
+    if (gregorian_year < 1)
+    {
+        fields->year =
+            calendar_plus_i64_subtract_saturating(1, gregorian_year);
+        fields->auxiliary = 0;
+        return;
+    }
+
+    fields->year = gregorian_year;
+    fields->auxiliary = 1;
+    for (index = 0; index < G_N_ELEMENTS(japanese_eras); index++)
+    {
+        if (gregorian_year < japanese_eras[index].start_year)
+            break;
+        fields->year = calendar_plus_i64_add_saturating(
+            calendar_plus_i64_subtract_saturating(
+                gregorian_year, japanese_eras[index].start_year),
+            1);
+        fields->auxiliary = japanese_eras[index].code;
+    }
+}
+
+static void
+japanese_from_jdn(gint64 jdn,
+                  CalendarPlusCalendarFields *fields)
+{
+    gint year;
+    gint month;
+    gint day;
+    gsize index;
+
+    calendar_plus_jdn_to_gregorian(jdn, &year, &month, &day);
+    fields->year = year >= 1 ? year :
+        calendar_plus_i64_subtract_saturating(1, year);
+    fields->month = month;
+    fields->day = day;
+    fields->auxiliary = year >= 1 ? 1 : 0;
+    fields->special = FALSE;
+
+    for (index = 0; index < G_N_ELEMENTS(japanese_eras); index++)
+    {
+        const JapaneseEra *era = &japanese_eras[index];
+
+        if (!japanese_date_on_or_after(year, month, day, era))
+            break;
+
+        fields->year = calendar_plus_i64_add_saturating(
+            calendar_plus_i64_subtract_saturating(year, era->start_year),
+            1);
+        fields->auxiliary = era->code;
+    }
+}
+
 static gboolean
 arithmetic_mode_supported(CalendarPlusCalendarMode mode)
 {
@@ -38,6 +164,7 @@ arithmetic_mode_supported(CalendarPlusCalendarMode mode)
         case CALENDAR_PLUS_CALENDAR_MODE_MINGUO:
         case CALENDAR_PLUS_CALENDAR_MODE_PERSIAN:
         case CALENDAR_PLUS_CALENDAR_MODE_HEBREW:
+        case CALENDAR_PLUS_CALENDAR_MODE_JAPANESE:
         case CALENDAR_PLUS_CALENDAR_MODE_ISLAMIC_CIVIL:
         case CALENDAR_PLUS_CALENDAR_MODE_COPTIC:
         case CALENDAR_PLUS_CALENDAR_MODE_ETHIOPIAN:
@@ -81,6 +208,9 @@ signed_year_from_fields(CalendarPlusCalendarMode mode,
                     1912, fields->year) :
                 calendar_plus_i64_add_saturating(
                     fields->year, 1911);
+
+        case CALENDAR_PLUS_CALENDAR_MODE_JAPANESE:
+            return japanese_signed_year_from_fields(fields);
 
         default:
             return fields->year;
@@ -148,6 +278,10 @@ set_signed_year(CalendarPlusCalendarMode mode,
                     1912, signed_year);
                 fields->auxiliary = 0;
             }
+            break;
+
+        case CALENDAR_PLUS_CALENDAR_MODE_JAPANESE:
+            japanese_set_year_for_gregorian(signed_year, fields);
             break;
 
         default:
@@ -865,6 +999,7 @@ month_length(CalendarPlusCalendarMode mode,
         case CALENDAR_PLUS_CALENDAR_MODE_GREGORIAN:
         case CALENDAR_PLUS_CALENDAR_MODE_BUDDHIST:
         case CALENDAR_PLUS_CALENDAR_MODE_MINGUO:
+        case CALENDAR_PLUS_CALENDAR_MODE_JAPANESE:
             return calendar_plus_gregorian_month_length(
                 year, fields->month);
 
@@ -902,6 +1037,7 @@ fields_to_jdn(CalendarPlusCalendarMode mode,
         case CALENDAR_PLUS_CALENDAR_MODE_GREGORIAN:
         case CALENDAR_PLUS_CALENDAR_MODE_BUDDHIST:
         case CALENDAR_PLUS_CALENDAR_MODE_MINGUO:
+        case CALENDAR_PLUS_CALENDAR_MODE_JAPANESE:
             return calendar_plus_gregorian_to_jdn(
                 year, fields->month, fields->day);
 
@@ -963,6 +1099,10 @@ calendar_plus_arithmetic_fields_from_jdn(
             fields->day = day;
             fields->special = FALSE;
             set_signed_year(mode, year, fields);
+            return TRUE;
+
+        case CALENDAR_PLUS_CALENDAR_MODE_JAPANESE:
+            japanese_from_jdn(jdn, fields);
             return TRUE;
 
         case CALENDAR_PLUS_CALENDAR_MODE_ISLAMIC_CIVIL:
