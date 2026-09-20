@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-// Copyright (C) 2000-2026 Shannon Smith
+// Copyright (C) 1993-2026 Shannon Smith
 
 #ifndef CALENDAR_PLUS_CALENDAR_SYSTEM_PRIVATE_H
 #define CALENDAR_PLUS_CALENDAR_SYSTEM_PRIVATE_H
