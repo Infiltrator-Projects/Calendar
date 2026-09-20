@@ -4,9 +4,9 @@
 /*
  * Panel-clock presentation policy.
  *
- * This module has no actor ownership.  It translates Calendar settings
- * and Cinnamon desktop preferences into WallClock formatting, native timer
- * configuration and the final panel/date strings.  Keeping those decisions
+ * This module has no actor ownership. It translates the system temporal
+ * policy and Cinnamon desktop integration state into WallClock formatting,
+ * native timer configuration and the final panel/date strings. Keeping those decisions
  * out of applet.js leaves the applet controller responsible for lifecycle and
  * wiring rather than clock-format policy.
  *
@@ -164,12 +164,7 @@ function configureWallClock(clock, config) {
     }
 
     let format;
-    if (config.useCustomFormat) {
-        format = config.customFormat;
-        if (config.pointerInside) {
-            format += config.customTooltipFormat;
-        }
-    } else if (config.vertical) {
+    if (config.vertical) {
         const hour = uses24HourClock(config.mode, config.desktopSettings)
             ? "%H"
             : "%l";
@@ -219,12 +214,7 @@ function nativePanelText(clock, systemClock, config) {
         return nativeTime;
     }
 
-    const requestedText = config.useCustomFormat && config.pointerInside
-        ? clockForFormat(clock, config.customFormat)
-        : clock.get_clock();
-    const shellText = typeof requestedText === "string"
-        ? requestedText
-        : clock.get_clock();
+    const shellText = clock.get_clock();
     if (typeof shellText !== "string") {
         return nativeTime;
     }
@@ -252,13 +242,8 @@ function panelText(clock, systemClock, config) {
     if (isNativeClockMode(config.mode)) {
         return systemClock ? nativePanelText(clock, systemClock, config) : null;
     }
-    if (config.useCustomFormat && config.pointerInside) {
-        const formatted = clockForFormat(clock, config.customFormat);
-        return formatted !== null ? formatted : clock.get_clock();
-    }
-
     const text = clock.get_clock();
-    return config.useCustomFormat ? text : text.capitalize();
+    return typeof text === "string" ? text.capitalize() : text;
 }
 
 function todayDisplay(clock, primaryCalendarSystem, config) {
@@ -279,18 +264,6 @@ function todayDisplay(clock, primaryCalendarSystem, config) {
             ...args,
             CalendarPlus.DatePart.FULL
         );
-    }
-
-    if (config.useCustomFormat) {
-        const formattedTooltip =
-            clockForFormat(clock, config.customTooltipFormat);
-        if (formattedTooltip !== null) {
-            tooltip = formattedTooltip;
-        } else {
-            global.logError(
-                "calendar-plus@the-infiltratr: invalid tooltip time format."
-            );
-        }
     }
 
     return { today, args, shortDate, tooltip };
