@@ -1,3 +1,14 @@
+infiltrator-calendar (1.0.34) trixie; urgency=medium
+
+  * Follow the system-wide Infiltrator temporal presentation policy from
+    Calendar's Standard clock mode.
+  * Consume Common 1.19.14 for the shared decimal 10-hour formatter instead
+    of keeping a duplicate decimal-clock implementation.
+  * Refresh the panel clock when the shared temporal policy changes while
+    preserving explicit Calendar clock modes as local overrides.
+
+ -- Shannon Smith <noreply@the-infiltratr.com>  Sun, 20 Sep 2026 20:51:00 +1000
+
 infiltrator-calendar (1.0.33) trixie; urgency=medium
 
   * Move fixed-rule calendar arithmetic and navigation from ICU into
