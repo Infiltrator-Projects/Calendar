@@ -105,6 +105,30 @@ gboolean calendar_plus_system_clock_is_running(
 gchar *calendar_plus_system_clock_get_system_mode(
     CalendarPlusSystemClock *self);
 
+/** Return the system-wide primary calendar identifier. */
+gchar *calendar_plus_system_clock_get_system_primary_calendar(
+    CalendarPlusSystemClock *self);
+
+/** Return the system-wide secondary calendar identifier. */
+gchar *calendar_plus_system_clock_get_system_secondary_calendar(
+    CalendarPlusSystemClock *self);
+
+/** Return whether the system-wide policy requests seconds/finer units. */
+gboolean calendar_plus_system_clock_get_system_show_seconds(
+    CalendarPlusSystemClock *self);
+
+/** Return whether a system-wide geographic location is configured. */
+gboolean calendar_plus_system_clock_get_system_location_configured(
+    CalendarPlusSystemClock *self);
+
+/** Return system-wide latitude in degrees north. */
+gdouble calendar_plus_system_clock_get_system_latitude(
+    CalendarPlusSystemClock *self);
+
+/** Return system-wide longitude in degrees east. */
+gdouble calendar_plus_system_clock_get_system_longitude(
+    CalendarPlusSystemClock *self);
+
 G_END_DECLS
 
 #endif
