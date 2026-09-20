@@ -261,8 +261,6 @@ check-deps: common-check
 		echo "Missing test dependency: python3" >&2; exit 1; }
 	@command -v node >/dev/null || { \
 		echo "Missing test dependency: nodejs" >&2; exit 1; }
-	@command -v rg >/dev/null || { \
-		echo "Missing test dependency: ripgrep" >&2; exit 1; }
 	@command -v gjs >/dev/null || { \
 		echo "Missing test dependency: gjs" >&2; exit 1; }
 	@command -v xz >/dev/null || { \
