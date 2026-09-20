@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Calendar custom date and time formats</title>
+<style>
+body { font-family: sans-serif; max-width: 52rem; margin: 2rem auto; padding: 0 1rem; line-height: 1.45; }
+code { font-family: monospace; }
+table { border-collapse: collapse; width: 100%; }
+th, td { text-align: left; padding: .45rem .6rem; border-bottom: 1px solid #8886; vertical-align: top; }
+</style>
+</head>
+<body>
+<h1>Calendar custom date and time formats</h1>
+<p>Calendar uses the platform <code>strftime</code>-style date and time syntax. This reference is installed with Calendar so format help remains available offline.</p>
+<table>
+<thead><tr><th>Token</th><th>Meaning</th></tr></thead>
+<tbody>
+<tr><td><code>%Y</code></td><td>four-digit year</td></tr>
+<tr><td><code>%y</code></td><td>two-digit year</td></tr>
+<tr><td><code>%m</code></td><td>month number</td></tr>
+<tr><td><code>%B</code></td><td>full month name</td></tr>
+<tr><td><code>%b</code></td><td>abbreviated month name</td></tr>
+<tr><td><code>%d</code></td><td>day of month, zero padded</td></tr>
+<tr><td><code>%-e</code></td><td>day of month without leading padding</td></tr>
+<tr><td><code>%A</code></td><td>full weekday name</td></tr>
+<tr><td><code>%a</code></td><td>abbreviated weekday name</td></tr>
+<tr><td><code>%H</code></td><td>hour, 24-hour clock</td></tr>
+<tr><td><code>%-l</code></td><td>hour, 12-hour clock without leading padding</td></tr>
+<tr><td><code>%M</code></td><td>minute</td></tr>
+<tr><td><code>%S</code></td><td>second</td></tr>
+<tr><td><code>%p</code></td><td>locale AM/PM marker</td></tr>
+<tr><td><code>%R</code></td><td>24-hour hour and minute</td></tr>
+<tr><td><code>%n</code></td><td>line break</td></tr>
+<tr><td><code>%%</code></td><td>literal percent sign</td></tr>
+</tbody>
+</table>
+<p>Names, ordering and AM/PM text follow the active locale. Custom text is displayed as entered; Calendar does not force capitalisation.</p>
+</body>
+</html>
