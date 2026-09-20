@@ -180,3 +180,6 @@ Development is performed on `main`. Published tags and release assets are immuta
 Copyright © 1993-2026 Shannon Smith.
 
 Calendar is GPL-3.0-or-later. The pinned Infiltratr Common dependency uses the same licence. The complete project licence is in `LICENSE`; Debian packaging provenance is recorded in `debian/copyright`.
+
+
+The packaged Calendar icon follows the non-automotive Infiltrator desktop family: graphite tile with canonical `#00ADEF` linework. One verified source asset feeds Cinnamon, the desktop icon theme and Mint app-install metadata.

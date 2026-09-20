@@ -4,6 +4,8 @@ This changelog records user-visible, compatibility, architecture and validation 
 
 ## Unreleased
 
+- Standardise Calendar artwork on the canonical non-automotive Infiltrator icon family: graphite tile and `#00ADEF` linework, with the same verified source bytes still feeding Cinnamon, hicolor and Mint app-install metadata.
+
 No unreleased changes.
 
 ## 1.0.29 - 2026-09-20
