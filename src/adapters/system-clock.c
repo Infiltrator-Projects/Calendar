@@ -231,9 +231,22 @@ load_persisted_temporal_policy(CalendarPlusSystemClock *self,
 static gboolean
 cinnamon_show_seconds(void)
 {
-    g_autoptr(GSettings) settings =
-        g_settings_new("org.cinnamon.desktop.interface");
+    GSettingsSchemaSource *source = g_settings_schema_source_get_default();
+    g_autoptr(GSettingsSchema) schema = NULL;
+    g_autoptr(GSettings) settings = NULL;
 
+    if (source == NULL)
+        return FALSE;
+
+    schema = g_settings_schema_source_lookup(
+        source, "org.cinnamon.desktop.interface", TRUE);
+    if (schema == NULL ||
+        !g_settings_schema_has_key(schema, "clock-show-seconds"))
+    {
+        return FALSE;
+    }
+
+    settings = g_settings_new_full(schema, NULL, NULL);
     return g_settings_get_boolean(settings, "clock-show-seconds");
 }
 
