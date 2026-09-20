@@ -218,9 +218,6 @@ msgstr "Festival de las Mujeres Santas"
 msgid "Floréal"
 msgstr "Floréal"
 
-msgid "Follow System Settings"
-msgstr "Seguir Configuración del sistema"
-
 msgid "Follow system"
 msgstr "Seguir el sistema"
 
@@ -352,21 +349,6 @@ msgstr "Día intercalar"
 
 msgid "Leapyear Day"
 msgstr "Día de año bisiesto"
-
-msgid "Local Calendar clock override used only when Follow System Settings is off."
-msgstr "Anulación local del reloj de Calendar; solo se usa cuando Seguir Configuración del sistema está desactivado."
-
-msgid "Local Calendar geographic-location override used only when Follow System Settings is off."
-msgstr "Anulación local de la ubicación geográfica de Calendar; solo se usa cuando Seguir Configuración del sistema está desactivado."
-
-msgid "Local Calendar primary-calendar override used only when Follow System Settings is off."
-msgstr "Anulación local del calendario principal de Calendar; solo se usa cuando Seguir Configuración del sistema está desactivado."
-
-msgid "Local Calendar secondary-calendar override used only when Follow System Settings is off."
-msgstr "Anulación local del calendario secundario de Calendar; solo se usa cuando Seguir Configuración del sistema está desactivado."
-
-msgid "Local Calendar seconds override used only when Follow System Settings is off."
-msgstr "Anulación local de los segundos de Calendar; solo se usa cuando Seguir Configuración del sistema está desactivado."
 
 msgid "Local mean solar time"
 msgstr "Hora solar media local"
@@ -614,9 +596,6 @@ msgstr "Hora Unix (segundos desde la época)"
 
 msgid "Use a custom date format"
 msgstr "Usar un formato de fecha personalizado"
-
-msgid "Use the system-wide clock, calendar, seconds and geographic-location policy from Infiltrator System Settings. Turn this off to use the local Calendar overrides below."
-msgstr "Usa la política global de reloj, calendario, segundos y ubicación geográfica de Infiltrator System Settings. Desactive esta opción para usar las anulaciones locales de Calendar."
 
 msgid "Used by Roman temporal, Edo Japanese seasonal, Italian, Babylonian and Nuremberg hours, and Indian ghaṭī time. Enter north latitudes as positive and south latitudes as negative."
 msgstr "Se usa para las horas temporales romanas, la hora estacional japonesa de Edo, las horas italianas, babilónicas y de Núremberg, y la hora india ghaṭī. Introduzca latitudes norte como positivas y sur como negativas."
