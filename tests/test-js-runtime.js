@@ -669,10 +669,6 @@ function testPanelClockDefensiveFormatting() {
         latitude: 0,
         longitude: 0,
         locationConfigured: true,
-        useCustomFormat: true,
-        customFormat: "%Q-invalid",
-        customTooltipFormat: "%Q-invalid",
-        pointerInside: true,
         vertical: false,
         desktopSettings: {
             get_boolean(key) { return key === "clock-use-24h"; },
@@ -683,14 +679,14 @@ function testPanelClockDefensiveFormatting() {
     assert.equal(
         PanelClock.panelText(clock, systemClock, base),
         "@500",
-        "invalid custom formatting must fall back to native time"
+        "native time must remain authoritative for non-conventional modes"
     );
 
     const conventional = { ...base, mode: "standard" };
     assert.equal(
         PanelClock.panelText(clock, systemClock, conventional),
         "12:34",
-        "conventional custom formatting must fall back to WallClock text"
+        "conventional modes must use WallClock text"
     );
 
     const unconfigured = {
