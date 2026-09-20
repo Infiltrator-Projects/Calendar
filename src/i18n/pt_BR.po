@@ -138,9 +138,6 @@ msgstr "Chinês tradicional"
 msgid "Choiak"
 msgstr "Choiak"
 
-msgid "Choose the time system displayed in the Cinnamon panel."
-msgstr "Escolha o sistema de horário exibido no painel do Cinnamon."
-
 msgid "Click this button to know more about the syntax for date formats."
 msgstr "Clique neste botão para saber mais sobre a sintaxe dos formatos de data."
 
@@ -149,9 +146,6 @@ msgstr "Relógio"
 
 msgid "Clock mode"
 msgstr "Modo do relógio"
-
-msgid "Controls the popup calendar grid, date heading and calendar navigation. Events remain attached to their original dates."
-msgstr "Controla a grade do calendário, o cabeçalho de data e a navegação. Os eventos permanecem associados às datas originais."
 
 msgid "Coptic"
 msgstr "Copta"
@@ -226,6 +220,9 @@ msgstr "Festival of Holy Women"
 
 msgid "Floréal"
 msgstr "Floréal"
+
+msgid "Follow System Settings"
+msgstr "Seguir Configurações do Sistema"
 
 msgid "Follow system"
 msgstr "Seguir o sistema"
@@ -359,6 +356,21 @@ msgstr "Dia intercalar"
 msgid "Leapyear Day"
 msgstr "Dia de ano bissexto"
 
+msgid "Local Calendar clock override used only when Follow System Settings is off."
+msgstr "Substituição local do relógio do Calendar, usada somente quando Seguir Configurações do Sistema está desativado."
+
+msgid "Local Calendar geographic-location override used only when Follow System Settings is off."
+msgstr "Substituição local da localização geográfica do Calendar, usada somente quando Seguir Configurações do Sistema está desativado."
+
+msgid "Local Calendar primary-calendar override used only when Follow System Settings is off."
+msgstr "Substituição local do calendário principal do Calendar, usada somente quando Seguir Configurações do Sistema está desativado."
+
+msgid "Local Calendar secondary-calendar override used only when Follow System Settings is off."
+msgstr "Substituição local do calendário secundário do Calendar, usada somente quando Seguir Configurações do Sistema está desativado."
+
+msgid "Local Calendar seconds override used only when Follow System Settings is off."
+msgstr "Substituição local dos segundos do Calendar, usada somente quando Seguir Configurações do Sistema está desativado."
+
 msgid "Local mean solar time"
 msgstr "Hora solar média local"
 
@@ -454,9 +466,6 @@ msgstr "Abrir Calendário"
 
 msgid "Open selected date in Calendar"
 msgstr "Abrir a data selecionada no Calendário"
-
-msgid "Optionally shows the same day in another calendar beneath the primary date."
-msgstr "Opcionalmente mostra o mesmo dia em outro calendário abaixo da data principal."
 
 msgid "Pachons"
 msgstr "Pachons"
@@ -554,9 +563,6 @@ msgstr "Mostrar informações sobre a sintaxe do formato de data"
 msgid "Show seconds"
 msgstr "Mostrar segundos"
 
-msgid "Show seconds or the closest finer unit supported by the selected time system. Modes with fixed historical or epoch precision ignore this setting."
-msgstr "Mostra os segundos ou a unidade mais precisa compatível com o sistema de horário selecionado. Modos com precisão histórica ou de época fixa ignoram esta configuração."
-
 msgid "Show today"
 msgstr "Mostrar hoje"
 
@@ -572,8 +578,8 @@ msgstr "Hora padrão (12 horas)"
 msgid "Standard time (24-hour)"
 msgstr "Hora padrão (24 horas)"
 
-msgid "Standard time (follow Mint setting)"
-msgstr "Hora padrão (seguir configuração do Mint)"
+msgid "Standard time (OS locale)"
+msgstr "Hora padrão (localidade do sistema operacional)"
 
 msgid "Sulṭán"
 msgstr "Sulṭán"
@@ -611,6 +617,9 @@ msgstr "Tempo Unix (segundos desde a época)"
 
 msgid "Use a custom date format"
 msgstr "Usar formato de data personalizado"
+
+msgid "Use the system-wide clock, calendar, seconds and geographic-location policy from Infiltrator System Settings. Turn this off to use the local Calendar overrides below."
+msgstr "Usa a política global de relógio, calendários, segundos e localização geográfica do Infiltrator System Settings. Desative esta opção para usar as substituições locais do Calendar."
 
 msgid "Used by Roman temporal, Edo Japanese seasonal, Italian, Babylonian and Nuremberg hours, and Indian ghaṭī time. Enter north latitudes as positive and south latitudes as negative."
 msgstr "Usado para a hora temporal romana, a hora sazonal japonesa Edo, as horas italianas, babilônicas e de Nuremberg e a hora indiana ghaṭī. Insira latitudes norte como positivas e sul como negativas."
