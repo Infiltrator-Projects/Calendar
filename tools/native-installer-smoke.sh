@@ -9,7 +9,7 @@ VERSION=$(sed -n 's/^VERSION := //p' "$ROOT/Makefile")
 RUN=${1:-"$ROOT/dist/calendar-${VERSION}-local-folder.run"}
 ARCH=$(dpkg-architecture -qDEB_HOST_ARCH)
 MULTIARCH=$(dpkg-architecture -qDEB_HOST_MULTIARCH)
-NATIVE_VERSION="${VERSION}+native1"
+NATIVE_VERSION="${VERSION}+nativepgo1"
 TMP=$(mktemp -d)
 trap 'rm -rf "$TMP"' EXIT HUP INT TERM
 mkdir -p "$TMP/output"
@@ -23,6 +23,11 @@ cat "$TMP/native-build.log"
 for native_flag in -O3 -march=native -mtune=native -flto=auto; do
     grep -Eq "^cc .* ${native_flag}( |$)" "$TMP/native-build.log"
 done
+grep -Fq "PGO pass 1:" "$TMP/native-build.log"
+grep -Fq "PGO pass 2:" "$TMP/native-build.log"
+grep -Fq -- "-fprofile-generate=" "$TMP/native-build.log"
+grep -Fq -- "-fprofile-use=" "$TMP/native-build.log"
+grep -Fq "Calendar representative PGO training workload completed." "$TMP/native-build.log"
 
 DEB="$TMP/output/calendar_${NATIVE_VERSION}_${ARCH}.deb"
 [ -s "$DEB" ]
@@ -32,7 +37,7 @@ DEB="$TMP/output/calendar_${NATIVE_VERSION}_${ARCH}.deb"
 dpkg --compare-versions "$NATIVE_VERSION" gt "$VERSION"
 
 dpkg-deb -x "$DEB" "$TMP/native"
-grep -q '^Build mode: local hardware-native ' \
+grep -q '^Build mode: local hardware-native PGO-trained ' \
     "$TMP/native/usr/share/doc/infiltrator-calendar/BUILD-INFO"
 test -f "$TMP/native/usr/lib/$MULTIARCH/libcalendar-plus.so.0.0.0"
 test -f \
