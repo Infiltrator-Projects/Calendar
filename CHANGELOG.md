@@ -4,7 +4,9 @@ This changelog records user-visible, compatibility, architecture and validation 
 
 ## Unreleased
 
-No unreleased changes.
+- Remove Calendar's project-owned Python/GTK settings host and delegate settings presentation to Cinnamon's native `xlet-settings` path while retaining the same schema and persisted values.
+- Move the user-facing About surface into Cinnamon/St and reduce the installed `calendar-plus-about` helper to a metadata probe for package qualification.
+- Drop Calendar's direct runtime `python3` and GTK 3 package dependencies; Cinnamon/GJS remains the platform UI boundary and ICU remains the calendar-data dependency.
 
 ## 1.0.31 - 2026-09-20
 

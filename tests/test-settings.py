@@ -24,7 +24,6 @@ def main() -> None:
     event_manager_source = (APPLET_DIR / "eventManager.js").read_text(encoding="utf-8")
     runtime_source = (APPLET_DIR / "runtimeSupport.js").read_text(encoding="utf-8")
     panel_clock_source = (APPLET_DIR / "panelClock.js").read_text(encoding="utf-8")
-    settings_source = (APPLET_DIR / "settings.py").read_text(encoding="utf-8")
     format_help = (
         PROJECT_ROOT / "docs/strftime-format.html"
     ).read_text(encoding="utf-8")
@@ -71,8 +70,8 @@ def main() -> None:
     assert '"gtk-theme"' in applet_source
     assert 'this._systemPrefersDark() ? "night" : "day"' in applet_source
     assert "this._systemUsesHighContrast()" in applet_source
-    assert "system_uses_high_contrast()" in settings_source
-    assert "CSS if theme is None else CSS + THEME_CSS[theme]" in settings_source
+    assert "super.configureApplet(tab);" in applet_source
+    assert not (APPLET_DIR / "settings.py").exists()
     assert 'this.menu.setCustomStyleClass("calendar-plus-popup");' in applet_source
     assert '`calendar-plus-popup calendar-plus-theme-${effectiveTheme}`' in applet_source
     assert 'setCustomStyleClass("calendar-background")' not in applet_source
@@ -101,11 +100,7 @@ def main() -> None:
     assert f'font-family: "{ui_family}";' in stylesheet
     assert f"font-weight: {ui_regular_weight};" in stylesheet
     assert f"font-weight: {ui_bold_weight};" in stylesheet
-    assert f'font-family: "{ui_family}";' in settings_source
-    assert f'font-family: "{brand_family}";' in settings_source
-    assert f"font-weight: {brand_weight};" in settings_source
     assert "BEGIN GENERATED COMMON TYPOGRAPHY TOKENS" in stylesheet
-    assert "BEGIN GENERATED COMMON TYPOGRAPHY TOKENS" in settings_source
     assert "FONT_UI_REGULAR" not in applet_source
     assert "FONT_UI_BOLD" not in applet_source
     assert "FONT_PANEL_CLOCK" not in applet_source
@@ -141,46 +136,12 @@ def main() -> None:
                 f"Calendar {mode} CSS does not consume Common role {role}"
             )
 
-    assert "THEME_CSS = {" in settings_source
-    assert "def install_calendar_style(window)" in settings_source
-    assert 'settings.listen("theme-mode", refresh)' in settings_source
-    assert 'desktop.connect("changed::gtk-theme", refresh)' in settings_source
-    assert "THEME_CSS[effective_theme()]" not in settings_source
-    # Calendar deliberately leaves Cinnamon's page/row geometry native.
-    # The 1.0.28 frame/list/layout overrides produced oversized slab rows and
-    # must not return; only typography, colour roles and control radius belong
-    # to the settings host.
-    assert "frame.view {" not in settings_source
-    assert "frame.view list," not in settings_source
-    assert "frame.view row {" not in settings_source
-    assert "toolbar.primary-toolbar {" not in settings_source
-    assert "def tune_calendar_layout(widget)" not in settings_source
-    assert "SETTINGS_PAGE_MARGIN" not in settings_source
-    assert "SETTINGS_SECTION_SPACING" not in settings_source
-    assert "SETTINGS_CONTROL_SPACING" not in settings_source
-    assert "tune_calendar_layout(window.window)" not in settings_source
-    assert f'border-radius: {common_design["metrics"]["control_radius"]}px;' in settings_source
-    for mode in ("day", "night"):
-        palette = common_design["theme"]["palettes"][mode]
-        for role in (
-            "background",
-            "surface",
-            "input",
-            "border",
-            "text",
-            "heading",
-            "operation",
-            "operation_hover",
-            "connection_border",
-            "selection_background",
-            "selection_foreground",
-            "summary",
-            "neutral_accent",
-            "accent_foreground",
-        ):
-            assert palette[role].lower() in settings_source.lower(), (
-                f"Calendar settings {mode} CSS does not consume Common role {role}"
-            )
+    # Configuration is rendered by Cinnamon's own xlet-settings process.
+    # Calendar contributes schema/behaviour only, eliminating its Python/GTK
+    # runtime host while preserving every setting.
+    assert "external-configuration-app" not in METADATA
+    assert "configureApplet(tab = 0)" in applet_source
+    assert "super.configureApplet(tab);" in applet_source
 
     location_configured = schema["location-configured"]
     assert location_configured["type"] == "switch"
@@ -447,11 +408,13 @@ def main() -> None:
         assert f'CP_("{label}")' in calendar_source
     assert 'CP_("Show today")' in applet_source
     assert 'CP_("About Calendar")' in applet_source
-    # Cinnamon's automatic right-click About item must use the same native
-    # Calendar dialog as the popup item, never xlet-about-dialog.
+    # Every About entry point uses the same Cinnamon/St dialog. Calendar no
+    # longer launches a GTK helper solely to display About information.
     assert "openAbout()" in applet_source
     assert "this._onAbout();" in applet_source
-    assert 'Util.spawnCommandLine("/usr/libexec/calendar-plus-about")' in applet_source
+    assert "new ModalDialog.ModalDialog()" in applet_source
+    assert "new Dialog.MessageDialogContent" in applet_source
+    assert 'Util.spawnCommandLine("/usr/libexec/calendar-plus-about")' not in applet_source
     assert "xlet-about-dialog" not in applet_source
     assert 'CP_("Open selected date in Calendar")' in event_source
     assert 'CP_("Open Calendar")' in event_source
@@ -488,6 +451,7 @@ def main() -> None:
         (APPLET_DIR / "metadata.json").read_text(encoding="utf-8")
     )
     assert metadata["cinnamon-version"] == ["6.4", "6.6", "6.7"]
+    assert "external-configuration-app" not in metadata
 
 
 if __name__ == "__main__":

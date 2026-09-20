@@ -6,7 +6,7 @@
 
 [![Build and test](https://github.com/Infiltrator-Projects/Calendar/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/Infiltrator-Projects/Calendar/actions/workflows/ci.yml?query=branch%3Amain)
 
-Calendar is a native Cinnamon panel clock and calendar with alternative clock modes, 30 selectable calendar systems and CalendarServer integration. Its installed Linux desktop identity, Cinnamon Applets manager entry, Linux Mint Software Manager package-name alias and native About dialog all use the project-owned Calendar icon. The Calendar package owns and installs that artwork itself; no shared icon-helper package is required.
+Calendar is a native Cinnamon panel clock and calendar with alternative clock modes, 30 selectable calendar systems and CalendarServer integration. Its installed Linux desktop identity, Cinnamon Applets manager entry, Linux Mint Software Manager package-name alias and Cinnamon-native About dialog all use the project-owned Calendar icon. The Calendar package owns and installs that artwork itself; no shared icon-helper package is required.
 
 **Stable release:** 1.0.31  
 **Runtime:** Cinnamon 6.4, 6.6 and 6.7  
@@ -31,7 +31,7 @@ Primary and optional secondary dates include Gregorian, Julian, ISO week, Hebrew
 
 The applet has its own seconds preference, can coexist with Cinnamon's stock Calendar applet and installs no project-owned daemon, polling service or autostart entry.
 
-Calendar bundles and installs the MB Corpo font set used by the project: MB Corpo S Regular, MB Corpo S Bold and MB Corpo A Condensed Regular. The package installs them under `/usr/share/fonts/truetype/infiltrator-calendar`. Typography identity, role weights, filenames and immutable asset hashes are taken from the pinned Common 1.19.10 design contract; Cinnamon/GTK selector mechanics remain Calendar-owned. The native About dialog consumes Common's C typography API directly, while generated Cinnamon/settings projections are regression-checked against the same Common source. Normal Cinnamon/GTK fallback remains only as an operating-system fallback if font discovery fails.
+Calendar bundles and installs the MB Corpo font set used by the project: MB Corpo S Regular, MB Corpo S Bold and MB Corpo A Condensed Regular. The package installs them under `/usr/share/fonts/truetype/infiltrator-calendar`. Typography identity, role weights, filenames and immutable asset hashes are taken from the pinned Common 1.19.10 design contract; Cinnamon selector mechanics remain Calendar-owned. Generated Cinnamon CSS is regression-checked against the same Common source. Configuration and About presentation now stay inside Cinnamon itself, so Calendar no longer carries a project-owned Python settings host or a direct GTK runtime dependency. Normal Cinnamon font fallback remains only as an operating-system fallback if font discovery fails.
 
 Location-dependent clocks do not silently assume Greenwich. They show `N/A LOC` until **Geographic location** is enabled and coordinates are supplied.
 

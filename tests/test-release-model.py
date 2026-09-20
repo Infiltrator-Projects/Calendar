@@ -111,7 +111,7 @@ def main() -> None:
     assert "3.4.0" not in copyright_file
     assert "MB Corpo S Title WEB" not in read("src/cinnamon/applet.js")
     assert "calendar-plus-popup" in read("src/cinnamon/applet.js")
-    assert "external-configuration-app" in read("src/cinnamon/metadata.json")
+    assert "external-configuration-app" not in read("src/cinnamon/metadata.json")
     metadata_icon = json.loads(read("src/cinnamon/metadata.json"))["icon"]
     assert metadata_icon == "infiltratr-calendar"
     assert (ROOT / "src/assets/infiltratr-calendar.png").is_file()
@@ -138,18 +138,13 @@ def main() -> None:
     applet = read("src/cinnamon/applet.js")
     assert "FONT_PANEL_CLOCK" not in applet
     assert "_applyTypography(" not in applet
-    settings_source = read("src/cinnamon/settings.py")
-    assert "BEGIN GENERATED COMMON TYPOGRAPHY TOKENS" in settings_source
-    assert "THEME_CSS = {" in settings_source
-    assert "def install_calendar_style(window)" in settings_source
-    assert 'settings.listen("theme-mode", refresh)' in settings_source
-    assert 'desktop.connect("changed::gtk-theme", refresh)' in settings_source
-    assert "xlet-settings.py" in settings_source
+    assert not (ROOT / "src/cinnamon/settings.py").exists()
+    assert "super.configureApplet(tab);" in applet
     about_source = read("src/app/about-dialog.c")
-    assert "#include <infiltratr/design.h>" in about_source
-    assert "infiltratr_typography()" in about_source
-    assert "MB Corpo S Title WEB" not in about_source
-    assert "MB Corpo A Title Cond WEB" not in about_source
+    assert "infiltratr_project_info_print" in about_source
+    assert "gtk_" not in about_source
+    assert "infiltratr_dynlib_" not in about_source
+    assert "<infiltratr/design.h>" not in about_source
     assert "fontconfig," not in control
     assert "Breaks: calendar-plus, cinnamon-calendar" in control
     assert "Replaces: calendar-plus, cinnamon-calendar" in control
@@ -197,10 +192,9 @@ def main() -> None:
     assert 'BUILD_DIR="$(INFILTRATR_COMMON_BUILD_DIR)"' in makefile
 
     about_source = read("src/app/about-dialog.c")
-    assert "infiltratr_build_profile_label" in about_source
-    assert "build_label(" not in about_source
-    assert "infiltratr_dynlib_bind_symbols" in about_source
-    assert "LOAD_GTK" not in about_source
+    assert "infiltratr_project_info_print" in about_source
+    assert "infiltratr_dynlib_bind_symbols" not in about_source
+    assert "gtk_" not in about_source
     icu_source = read("src/core/icu-calendar.c")
     assert 'infiltratr_string_equal(calendar_keyword, "gregorian")' in icu_source
     assert 'g_strcmp0(calendar_keyword, "gregorian")' not in icu_source
@@ -294,7 +288,9 @@ def main() -> None:
     assert 'this.menu.setCustomStyleClass("calendar-plus-popup");' in applet
     assert '`calendar-plus-popup calendar-plus-theme-${effectiveTheme}`' in applet
     assert 'setCustomStyleClass("calendar-background")' not in applet
-    assert 'Util.spawnCommandLine("/usr/libexec/calendar-plus-about")' in applet
+    assert "new ModalDialog.ModalDialog()" in applet
+    assert "new Dialog.MessageDialogContent" in applet
+    assert 'Util.spawnCommandLine("/usr/libexec/calendar-plus-about")' not in applet
     assert "getCurrentExtension" in applet
     assert 'return require("./runtimeSupport")' in applet
     assert 'RuntimeSupport.loadLocalModule("calendar")' in applet
@@ -303,7 +299,8 @@ def main() -> None:
     assert 'RuntimeSupport.loadLocalModule("panelClock")' in applet
     assert "class CalendarPlusApplet extends Applet.Applet" in applet
     assert "configureApplet(tab = 0)" in applet
-    assert "/settings.py " in applet
+    assert "super.configureApplet(tab);" in applet
+    assert "/settings.py " not in applet
 
     runtime = read("src/cinnamon/runtimeSupport.js")
     assert "return require(`./${name}`)" in runtime
@@ -425,8 +422,6 @@ def main() -> None:
         assert filename in makefile, f"Calendar package does not use Common font file {role}"
     for role, digest in typography_assets["file_sha256"].items():
         assert digest in makefile, f"Calendar package does not verify Common font hash {role}"
-    assert "infiltratr_typography()" in read("src/app/about-dialog.c")
-    assert "infiltratr_design_metrics()" in read("src/app/about-dialog.c")
     stylesheet_source = read("src/cinnamon/stylesheet.css")
     assert "BEGIN GENERATED COMMON TYPOGRAPHY TOKENS" in stylesheet_source
     assert "BEGIN GENERATED COMMON METRIC TOKENS" in stylesheet_source
@@ -436,14 +431,8 @@ def main() -> None:
     assert f'border-radius: {common_metrics["card_radius"]}px;' in stylesheet_source
     assert f'border-radius: {common_metrics["control_radius"]}px;' in stylesheet_source
     assert f'border-radius: {common_metrics["small_radius"]}px;' in stylesheet_source
-    assert f'border-radius: {common_metrics["control_radius"]}px;' in read(
-        "src/cinnamon/settings.py"
-    )
     assert "BEGIN GENERATED COMMON TYPOGRAPHY TOKENS" in read(
         "src/cinnamon/stylesheet.css"
-    )
-    assert "BEGIN GENERATED COMMON TYPOGRAPHY TOKENS" in read(
-        "src/cinnamon/settings.py"
     )
 
     # Keep generic mechanics in Common and one Calendar-owned shim/helper layer.
@@ -508,7 +497,10 @@ def main() -> None:
     assert "cinnamon (>= 6.4)" in control
     for icu_major in range(72, 81):
         assert f"libicu{icu_major}" in control
-    assert "libgtk-3-0," in control
+    binary_stanza = control.split("\nPackage: infiltrator-calendar\n", 1)[1]
+    runtime_control = binary_stanza.split("Description:", 1)[0]
+    assert "libgtk-3-0," not in runtime_control
+    assert "\n python3," not in runtime_control
     assert "Source: infiltrator-calendar" in control
     assert "Package: infiltrator-calendar" in control
     assert "Package: calendar-plus" not in control
