@@ -218,9 +218,6 @@ msgstr "Festival of Holy Women"
 msgid "Floréal"
 msgstr "Floréal"
 
-msgid "Follow System Settings"
-msgstr "Follow System Settings"
-
 msgid "Follow system"
 msgstr "Follow system"
 
@@ -352,21 +349,6 @@ msgstr "Leap Day"
 
 msgid "Leapyear Day"
 msgstr "Leapyear Day"
-
-msgid "Local Calendar clock override used only when Follow System Settings is off."
-msgstr "Local Calendar clock override used only when Follow System Settings is off."
-
-msgid "Local Calendar geographic-location override used only when Follow System Settings is off."
-msgstr "Local Calendar geographic-location override used only when Follow System Settings is off."
-
-msgid "Local Calendar primary-calendar override used only when Follow System Settings is off."
-msgstr "Local Calendar primary-calendar override used only when Follow System Settings is off."
-
-msgid "Local Calendar secondary-calendar override used only when Follow System Settings is off."
-msgstr "Local Calendar secondary-calendar override used only when Follow System Settings is off."
-
-msgid "Local Calendar seconds override used only when Follow System Settings is off."
-msgstr "Local Calendar seconds override used only when Follow System Settings is off."
 
 msgid "Local mean solar time"
 msgstr "Local mean solar time"
@@ -614,9 +596,6 @@ msgstr "Unix time (epoch seconds)"
 
 msgid "Use a custom date format"
 msgstr "Use a custom date format"
-
-msgid "Use the system-wide clock, calendar, seconds and geographic-location policy from Infiltrator System Settings. Turn this off to use the local Calendar overrides below."
-msgstr "Use the system-wide clock, calendar, seconds and geographic-location policy from Infiltrator System Settings. Turn this off to use the local Calendar overrides below."
 
 msgid "Used by Roman temporal, Edo Japanese seasonal, Italian, Babylonian and Nuremberg hours, and Indian ghaṭī time. Enter north latitudes as positive and south latitudes as negative."
 msgstr "Used by Roman temporal, Edo Japanese seasonal, Italian, Babylonian and Nuremberg hours, and Indian ghaṭī time. Enter north latitudes as positive and south latitudes as negative."
