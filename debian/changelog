@@ -1,4 +1,4 @@
-calendar-plus (1.0.36) trixie; urgency=medium
+infiltrator-calendar (1.0.36) trixie; urgency=medium
 
   * Restore a branded Cinnamon-native About surface with the Calendar icon.
   * Separate product name, version, author, description, GPL identity and
