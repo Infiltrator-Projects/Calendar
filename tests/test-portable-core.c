@@ -7,6 +7,7 @@
  * GObject, GVariant, GJS or a GLib main loop.
  */
 
+#include "calendar-arithmetic.h"
 #include "calendar-core.h"
 #include "calendar-helpers.h"
 #include "calendar-registry.h"
@@ -627,6 +628,114 @@ test_shared_calendar_helpers(void)
 }
 
 static void
+test_arithmetic_calendar_engines(void)
+{
+    typedef struct
+    {
+        CalendarPlusCalendarMode mode;
+        gint64 jdn;
+        gint64 year;
+        gint month;
+        gint day;
+        gint auxiliary;
+    } ArithmeticVector;
+
+    static const ArithmeticVector vectors[] = {
+        {
+            CALENDAR_PLUS_CALENDAR_MODE_GREGORIAN,
+            1721060, 1, 1, 1, 0
+        },
+        {
+            CALENDAR_PLUS_CALENDAR_MODE_ISLAMIC_CIVIL,
+            1948440, 1, 1, 1, 0
+        },
+        {
+            CALENDAR_PLUS_CALENDAR_MODE_ISLAMIC_TBLA,
+            1948439, 1, 1, 1, 0
+        },
+        {
+            CALENDAR_PLUS_CALENDAR_MODE_COPTIC,
+            1825030, 1, 1, 1, 1
+        },
+        {
+            CALENDAR_PLUS_CALENDAR_MODE_COPTIC,
+            1825029, 1, 13, 5, 0
+        },
+        {
+            CALENDAR_PLUS_CALENDAR_MODE_ETHIOPIAN,
+            1724221, 1, 1, 1, 1
+        },
+        {
+            CALENDAR_PLUS_CALENDAR_MODE_ETHIOPIAN,
+            1724220, 5500, 13, 5, 0
+        },
+        {
+            CALENDAR_PLUS_CALENDAR_MODE_ETHIOPIC_AMETE_ALEM,
+            1724221, 5501, 1, 1, 0
+        },
+        {
+            CALENDAR_PLUS_CALENDAR_MODE_INDIAN,
+            2461122, 1948, 1, 1, 0
+        }
+    };
+    gsize index;
+
+    for (index = 0; index < G_N_ELEMENTS(vectors); index++)
+    {
+        CalendarPlusCalendarFields fields = { 0 };
+
+        g_assert_true(calendar_plus_arithmetic_fields_from_jdn(
+            vectors[index].mode, vectors[index].jdn, &fields));
+        g_assert_cmpint(fields.year, ==, vectors[index].year);
+        g_assert_cmpint(fields.month, ==, vectors[index].month);
+        g_assert_cmpint(fields.day, ==, vectors[index].day);
+        g_assert_cmpint(fields.auxiliary, ==, vectors[index].auxiliary);
+        g_assert_false(fields.special);
+    }
+
+    {
+        const gint64 leap_day =
+            calendar_plus_gregorian_to_jdn(2024, 2, 29);
+        const gint64 next_year = calendar_plus_arithmetic_add_years(
+            CALENDAR_PLUS_CALENDAR_MODE_GREGORIAN, leap_day, 1);
+
+        g_assert_cmpint(
+            next_year,
+            ==,
+            calendar_plus_gregorian_to_jdn(2025, 2, 28));
+    }
+
+    {
+        CalendarPlusCalendarFields fields = { 0 };
+        const gint64 next_month = calendar_plus_arithmetic_add_months(
+            CALENDAR_PLUS_CALENDAR_MODE_ISLAMIC_CIVIL, 1948440, 1);
+
+        g_assert_true(calendar_plus_arithmetic_fields_from_jdn(
+            CALENDAR_PLUS_CALENDAR_MODE_ISLAMIC_CIVIL,
+            next_month,
+            &fields));
+        g_assert_cmpint(fields.year, ==, 1);
+        g_assert_cmpint(fields.month, ==, 2);
+        g_assert_cmpint(fields.day, ==, 1);
+    }
+
+    {
+        CalendarPlusCalendarFields fields = { 0 };
+        const gint64 date = calendar_plus_gregorian_to_jdn(2026, 9, 20);
+        const gint64 month_start = calendar_plus_arithmetic_month_start(
+            CALENDAR_PLUS_CALENDAR_MODE_ETHIOPIAN, date);
+
+        g_assert_true(calendar_plus_arithmetic_fields_from_jdn(
+            CALENDAR_PLUS_CALENDAR_MODE_ETHIOPIAN,
+            month_start,
+            &fields));
+        g_assert_cmpint(fields.year, ==, 2019);
+        g_assert_cmpint(fields.month, ==, 1);
+        g_assert_cmpint(fields.day, ==, 1);
+    }
+}
+
+static void
 test_swedish_historical_boundaries(void)
 {
     CalendarPlusCalendarFields fields = { 0 };
@@ -822,6 +931,8 @@ main(int argc,
                     test_gregorian_proleptic_cutover);
     g_test_add_func("/portable/shared-calendar-helpers",
                     test_shared_calendar_helpers);
+    g_test_add_func("/portable/arithmetic-calendar-engines",
+                    test_arithmetic_calendar_engines);
     g_test_add_func("/portable/event-source", test_event_source_and_snapshot);
     g_test_add_func("/portable/event-scale", test_event_index_scale);
     g_test_add_func("/portable/time-catalogue", test_time_catalogue);
