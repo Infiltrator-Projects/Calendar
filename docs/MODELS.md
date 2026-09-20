@@ -21,7 +21,8 @@ A familiar name, convenient formula, plausible output or another desktop applica
 
 Calendar currently combines several kinds of model:
 
-- ICU/CLDR-backed calendars whose locale data and supported variants are delegated to ICU;
+- Calendar-owned arithmetic calendars whose conversion/navigation rules are implemented locally;
+- ICU/CLDR-backed astronomical/lunisolar calendars and locale formatting still delegated where Calendar has not yet replaced the authoritative data/model;
 - deterministic native calendar algorithms owned by Calendar;
 - exact partitioning clocks defined by integer or rational division;
 - astronomical clocks whose output depends on a documented solar, sidereal or equinox model and configured coordinates;
@@ -34,7 +35,8 @@ These classes have different authorities and should not be described as though t
 | Area | Authority / model |
 | --- | --- |
 | Conventional panel time and Gregorian locale presentation | CinnamonDesktop.WallClock |
-| Hebrew, Islamic, Persian, Chinese, Dangi, Indian, Coptic, Ethiopic, Buddhist, Japanese and Minguo calendars | ICU/CLDR calendar data |
+| Gregorian, Hebrew, Persian, Indian, Coptic, Ethiopic, Buddhist, Japanese, Minguo, Islamic civil/tabular and Umm al-Qura arithmetic/navigation | Calendar deterministic native algorithms, with locale-sensitive formatting still delegated to ICU/CLDR |
+| Computational Islamic, Chinese and Dangi lunisolar conversion/navigation | ICU/CLDR calendar implementations |
 | Julian, ISO week, French Republican, Roman, Mayan, Badíʿ, International Fixed, World, Positivist, Revised Julian, Byzantine Anno Mundi, Egyptian civil (Nabonassar era) and traditional Armenian calendars | Calendar deterministic native algorithms |
 | French Republican decimal, Internet, Unix, hexadecimal, binary and Chinese hundred-kè clocks | Exact integer/rational partitioning |
 | Sidereal, solar, Roman temporal, Edo seasonal, Italian, Babylonian-hour, Indian ghaṭī and Nuremberg clocks | Calendar astronomical models using configured coordinates |
@@ -49,21 +51,21 @@ The registry contains 30 calendar providers and 18 native time providers. The ta
 
 | Provider id | Range / continuation contract |
 | --- | --- |
-| `gregorian` | ICU-backed proleptic Gregorian conversion where the installed ICU implementation succeeds; Calendar does not invent a second fallback model. |
+| `gregorian` | Calendar-owned proleptic Gregorian arithmetic across the representable civil-date domain; locale-sensitive formatting remains ICU/CLDR-backed. |
 | `julian` | Proleptic Julian arithmetic across Calendar's representable civil-date domain. |
 | `iso-week` | ISO week arithmetic derived from the proleptic Gregorian civil-date domain. |
-| `hebrew` | ICU-backed; effective supported range and calendar data are those established by the installed ICU implementation. |
+| `hebrew` | Calendar-owned deterministic Hebrew arithmetic with the 19-year cycle and postponement rules; locale-sensitive formatting remains ICU/CLDR-backed. |
 | `islamic` | ICU computational Islamic model; not local crescent observation. Effective supported range is ICU-defined. |
-| `islamic-civil` | ICU civil/tabular Islamic model; effective supported range is ICU-defined. |
-| `islamic-umalqura` | ICU Umm al-Qura model; outside ICU's supported result Calendar reports failure rather than inventing a continuation. |
-| `persian` | ICU Solar Hijri model; effective supported range is ICU-defined. |
+| `islamic-civil` | Calendar-owned civil/tabular Islamic arithmetic using the Friday epoch. |
+| `islamic-umalqura` | Calendar-owned Umm al-Qura month table for 1300–1600 AH; outside that maintained table Calendar reports unavailable rather than inventing a continuation. |
+| `persian` | Calendar-owned Solar Hijri arithmetic compatible with the maintained ICU rule/correction set; locale-sensitive formatting remains ICU/CLDR-backed. |
 | `chinese` | ICU traditional Chinese calendar; effective supported range and cyclical fields are ICU-defined. |
-| `indian` | ICU Indian National/Saka calendar; effective supported range is ICU-defined. |
-| `coptic` | ICU Coptic calendar; effective supported range is ICU-defined. |
-| `ethiopian` | ICU Ethiopic Amete Mihret calendar; effective supported range is ICU-defined. |
-| `buddhist` | ICU Buddhist calendar; effective supported range is ICU-defined. |
-| `japanese` | ICU Japanese imperial-era data; era availability follows the installed ICU data rather than a Calendar-owned era table. |
-| `minguo` | ICU Republic of China calendar; effective supported range is ICU-defined. |
+| `indian` | Calendar-owned Indian National/Saka arithmetic derived from the proleptic Gregorian year. |
+| `coptic` | Calendar-owned Coptic arithmetic with its 13-month leap cycle. |
+| `ethiopian` | Calendar-owned Ethiopic Amete Mihret arithmetic with its 13-month leap cycle. |
+| `buddhist` | Calendar-owned Gregorian-derived Buddhist year arithmetic; locale-sensitive formatting remains ICU/CLDR-backed. |
+| `japanese` | Calendar-owned modern Japanese era boundaries (Meiji through Reiwa) and Gregorian-derived arithmetic; locale-sensitive formatting remains ICU/CLDR-backed. |
+| `minguo` | Calendar-owned Republic of China/Minguo year arithmetic over the proleptic Gregorian calendar. |
 | `french-republican` | Historical epoch at JDN 2375840 with Calendar's explicit Romme-style arithmetic continuation using the shifted Gregorian 4/100/400 rule outside the historical republican era. |
 | `roman` | Roman date naming over the proleptic Julian calendar; not a separate absolute chronology. |
 | `mayan` | Arithmetic Long Count over kin using the Goodman–Martínez–Thompson correlation JDN 584283; dates before the epoch remain reversible through floor-division arithmetic. |
@@ -75,8 +77,8 @@ The registry contains 30 calendar providers and 18 native time providers. The ta
 | `byzantine` | Julian month/day with a 1 September year boundary and Constantinopolitan Anno Mundi era; continued arithmetically using astronomical year numbering internally. |
 | `egyptian-nabonassar` | Wandering 365-day Egyptian civil year anchored at 1 Thoth year 1 = JDN 1448638; arithmetic continuation in both directions. |
 | `dangi` | ICU Dangi calendar; effective supported range and cyclical data are ICU-defined. |
-| `ethiopic-amete-alem` | ICU Ethiopic Amete Alem calendar; effective supported range is ICU-defined. |
-| `islamic-tbla` | ICU tabular Islamic calendar using the astronomical epoch variant; effective supported range is ICU-defined. |
+| `ethiopic-amete-alem` | Calendar-owned Ethiopic Amete Alem arithmetic using the maintained 5500-year era offset. |
+| `islamic-tbla` | Calendar-owned tabular Islamic arithmetic using the astronomical Thursday epoch. |
 | `armenian-traditional` | Traditional 365-day wandering year anchored to 11 July 552 Julian, with twelve 30-day months plus five epagomenal days and no leap day; arithmetic continuation in both directions. |
 | `swedish-historical` | Actual Swedish civil transitions are modelled for 1700–1753, including 30 February 1712 and the 1753 omission. Earlier dates use Julian labels; dates from March 1753 onward use Gregorian labels rather than inventing a proleptic Swedish system. |
 
