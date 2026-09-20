@@ -383,11 +383,11 @@ def main() -> None:
     # Validate Calendar's actual Common calls against Common's complete public
     # header surface. Do not duplicate Common's private source membership here.
     common = ROOT / "src/vendor/infiltratr-common"
-    assert (common / "VERSION").read_text(encoding="utf-8").strip() == "1.19.10"
+    assert (common / "VERSION").read_text(encoding="utf-8").strip() == "1.19.14"
     assert (common / "LICENSE").is_file()
     common_include = common / "include/infiltratr"
     for public_header in (
-        "core.h", "arithmetic.h", "timing.h", "dynlib.h", "design.h", "utf8.h"
+        "core.h", "arithmetic.h", "timing.h", "temporal.h", "dynlib.h", "design.h", "utf8.h"
     ):
         assert (common_include / public_header).is_file()
     public_api = "\n".join(
