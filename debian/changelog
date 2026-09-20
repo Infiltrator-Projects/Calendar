@@ -1,3 +1,12 @@
+calendar-plus (1.0.36) trixie; urgency=medium
+
+  * Restore a branded Cinnamon-native About surface with the Calendar icon.
+  * Separate product name, version, author, description, GPL identity and
+    legal information instead of presenting one generic message-dialog blob.
+  * Keep the GTK-free Cinnamon/St runtime architecture introduced in 1.0.32.
+
+ -- Shannon Smith <noreply@the-infiltratr.com>  Sun, 20 Sep 2026 22:33:00 +1000
+
 infiltrator-calendar (1.0.35) trixie; urgency=medium
 
   * Follow System Settings by default for clock mode, primary and secondary
