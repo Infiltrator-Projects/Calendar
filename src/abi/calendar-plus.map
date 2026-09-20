@@ -112,3 +112,9 @@ CALENDAR_PLUS_2.1 {
         calendar_plus_time_delay_to_next_tick_at_location;
         calendar_plus_time_mode_requires_latitude;
 } CALENDAR_PLUS_2.0;
+
+
+CALENDAR_PLUS_2.2 {
+    global:
+        calendar_plus_system_clock_get_system_mode;
+} CALENDAR_PLUS_2.1;
