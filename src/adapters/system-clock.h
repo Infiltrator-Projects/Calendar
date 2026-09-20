@@ -106,21 +106,12 @@ gchar *calendar_plus_system_clock_get_system_mode(
     CalendarPlusSystemClock *self);
 
 /**
- * calendar_plus_system_clock_get_system_primary_calendar:
+ * calendar_plus_system_clock_get_system_calendar:
  * @self: a multi-system clock
  *
- * Returns: (transfer full): the system-wide primary calendar identifier
+ * Returns: (transfer full): the system-wide calendar identifier
  */
-gchar *calendar_plus_system_clock_get_system_primary_calendar(
-    CalendarPlusSystemClock *self);
-
-/**
- * calendar_plus_system_clock_get_system_secondary_calendar:
- * @self: a multi-system clock
- *
- * Returns: (transfer full): the system-wide secondary calendar identifier
- */
-gchar *calendar_plus_system_clock_get_system_secondary_calendar(
+gchar *calendar_plus_system_clock_get_system_calendar(
     CalendarPlusSystemClock *self);
 
 /**
