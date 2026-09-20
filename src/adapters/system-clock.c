@@ -18,6 +18,7 @@ struct _CalendarPlusSystemClock
     CalendarPlusClockEngine *engine;
     gchar *policy_path;
     GFileMonitor *policy_monitor;
+    GSettings *cinnamon_interface_settings;
 };
 
 enum
@@ -68,6 +69,7 @@ calendar_plus_system_clock_dispose(GObject *object)
     }
     g_free(self->policy_path);
     self->policy_path = NULL;
+    g_clear_object(&self->cinnamon_interface_settings);
     calendar_plus_clock_engine_free(self->engine);
     self->engine = NULL;
     G_OBJECT_CLASS(calendar_plus_system_clock_parent_class)->dispose(object); // NOLINT(bugprone-casting-through-void)
@@ -101,6 +103,32 @@ calendar_plus_system_clock_class_init(CalendarPlusSystemClockClass *klass)
                      0);
 }
 
+static GSettings *
+create_cinnamon_interface_settings(void)
+{
+    GSettingsSchemaSource *source = g_settings_schema_source_get_default();
+    GSettingsSchema *schema;
+    GSettings *settings;
+
+    if (source == NULL)
+        return NULL;
+
+    schema = g_settings_schema_source_lookup(
+        source, "org.cinnamon.desktop.interface", TRUE);
+    if (schema == NULL)
+        return NULL;
+
+    if (!g_settings_schema_has_key(schema, "clock-show-seconds"))
+    {
+        g_settings_schema_unref(schema);
+        return NULL;
+    }
+
+    settings = g_settings_new_full(schema, NULL, NULL);
+    g_settings_schema_unref(schema);
+    return settings;
+}
+
 static void
 calendar_plus_system_clock_init(CalendarPlusSystemClock *self)
 {
@@ -112,6 +140,8 @@ calendar_plus_system_clock_init(CalendarPlusSystemClock *self)
                                                   &scheduler,
                                                   on_engine_tick,
                                                   self);
+    self->cinnamon_interface_settings =
+        create_cinnamon_interface_settings();
 
     self->policy_path = g_build_filename(g_get_user_config_dir(),
                                          "infiltrator",
@@ -229,25 +259,13 @@ load_persisted_temporal_policy(CalendarPlusSystemClock *self,
 }
 
 static gboolean
-cinnamon_show_seconds(void)
+cinnamon_show_seconds(CalendarPlusSystemClock *self)
 {
-    GSettingsSchemaSource *source = g_settings_schema_source_get_default();
-    g_autoptr(GSettingsSchema) schema = NULL;
-    g_autoptr(GSettings) settings = NULL;
-
-    if (source == NULL)
+    if (self->cinnamon_interface_settings == NULL)
         return FALSE;
 
-    schema = g_settings_schema_source_lookup(
-        source, "org.cinnamon.desktop.interface", TRUE);
-    if (schema == NULL ||
-        !g_settings_schema_has_key(schema, "clock-show-seconds"))
-    {
-        return FALSE;
-    }
-
-    settings = g_settings_new_full(schema, NULL, NULL);
-    return g_settings_get_boolean(settings, "clock-show-seconds");
+    return g_settings_get_boolean(
+        self->cinnamon_interface_settings, "clock-show-seconds");
 }
 
 gchar *
@@ -277,7 +295,7 @@ calendar_plus_system_clock_get_system_show_seconds(
     InfiltratrTemporalPolicyV3 policy;
 
     if (!load_persisted_temporal_policy(self, &policy))
-        return cinnamon_show_seconds();
+        return cinnamon_show_seconds(self);
     return policy.show_seconds;
 }
 
