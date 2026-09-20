@@ -7,7 +7,7 @@
 #include "calendar-core.h"
 #include "calendar-internal.h"
 #include "event-store.h"
-#include "icu-calendar.h" /* locale/weekend contract exercised directly */
+#include "locale-weekend.h" /* CLDR weekend contract exercised directly */
 #include "julian-day.h" /* private engine invariants exercised by this test */
 #include "version.h"
 
@@ -581,12 +581,12 @@ test_locale_workday_policy(void)
     gboolean known = FALSE;
 
     g_assert_true(
-        calendar_plus_icu_is_work_day_for_locale("en_US", 1, &known));
+        calendar_plus_locale_is_work_day("en_US", 1, &known));
     g_assert_true(known);
 
     known = FALSE;
     g_assert_false(
-        calendar_plus_icu_is_work_day_for_locale("en_US", 7, &known));
+        calendar_plus_locale_is_work_day("en_US", 7, &known));
     g_assert_true(known);
 
     /*
@@ -595,17 +595,17 @@ test_locale_workday_policy(void)
      */
     known = FALSE;
     g_assert_false(
-        calendar_plus_icu_is_work_day_for_locale("ar_SA", 5, &known));
+        calendar_plus_locale_is_work_day("ar_SA", 5, &known));
     g_assert_true(known);
 
     known = FALSE;
     g_assert_false(
-        calendar_plus_icu_is_work_day_for_locale("ar_SA", 6, &known));
+        calendar_plus_locale_is_work_day("ar_SA", 6, &known));
     g_assert_true(known);
 
     known = FALSE;
     g_assert_true(
-        calendar_plus_icu_is_work_day_for_locale("ar_SA", 7, &known));
+        calendar_plus_locale_is_work_day("ar_SA", 7, &known));
     g_assert_true(known);
 }
 
