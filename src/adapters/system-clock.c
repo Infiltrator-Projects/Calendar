@@ -63,7 +63,8 @@ calendar_plus_system_clock_dispose(GObject *object)
     if (self->policy_monitor != NULL)
     {
         g_file_monitor_cancel(self->policy_monitor);
-        g_clear_object(&self->policy_monitor);
+        g_object_unref(self->policy_monitor);
+        self->policy_monitor = NULL;
     }
     g_free(self->policy_path);
     self->policy_path = NULL;
