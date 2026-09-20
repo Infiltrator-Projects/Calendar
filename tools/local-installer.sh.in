@@ -129,7 +129,7 @@ if ! command -v dpkg-checkbuilddeps >/dev/null 2>&1 ||
     install_build_dependencies
 fi
 
-for command_name in dpkg-buildpackage dpkg-deb dpkg-architecture sed install make find getconf; do
+for command_name in dpkg-buildpackage dpkg-deb dpkg-architecture sed install make find getconf gcc; do
     command -v "$command_name" >/dev/null 2>&1 || {
         echo "Required build command is missing: $command_name" >&2
         exit 1
@@ -158,17 +158,17 @@ grep -q "^infiltrator-calendar (${NATIVE_VERSION}) " \
 printf 'Building Calendar %s for local architecture %s.\n' \
     "$NATIVE_VERSION" "$ARCH"
 printf 'CPU: %s\n' "$(awk -F: '/model name/ { sub(/^[[:space:]]+/, "", $2); print $2; exit }' /proc/cpuinfo 2>/dev/null || true)"
-printf 'Compiler: %s\n' "$(cc --version 2>/dev/null | sed -n '1p')"
+printf 'Compiler: %s\n' "$(gcc --version 2>/dev/null | sed -n '1p')"
 printf 'Native optimisation: -O3 -march=native -mtune=native -flto=auto + PGO\n'
 printf 'PGO pass 1: instrument Calendar and pinned Common, then train representative paths.\n'
 
 (
     cd "$SOURCE_DIR"
     make clean
-    make -j"$JOBS" \
+    make -j"$JOBS" CC=gcc \
         BUILD_MODE=native PGO_MODE=generate PGO_DIR="$PGO_DIR" \
         all test
-    make BUILD_MODE=native PGO_MODE=generate PGO_DIR="$PGO_DIR" pgo-train
+    make CC=gcc BUILD_MODE=native PGO_MODE=generate PGO_DIR="$PGO_DIR" pgo-train
 )
 
 PROFILE_COUNT=$(find "$PGO_DIR" -type f -name '*.gcda' -print | wc -l | tr -d ' ')
@@ -182,6 +182,7 @@ printf 'PGO pass 2: rebuild Calendar and pinned Common using measured profiles.\
 (
     cd "$SOURCE_DIR"
     make clean
+    CC=gcc \
     CALENDAR_PLUS_BUILD_MODE=native \
     PGO_MODE=use \
     PGO_DIR="$PGO_DIR" \
