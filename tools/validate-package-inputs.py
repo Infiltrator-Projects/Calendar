@@ -28,7 +28,7 @@ ROOT = Path(__file__).resolve().parents[1]
 APPLET = ROOT / "src/cinnamon"
 PROJECT_URL = "https://github.com/Infiltrator-Projects/Calendar"
 ICON = ROOT / "src/assets/infiltratr-calendar.png"
-ICON_SHA256 = "641e62dbb29afd52a768dfc8cbe592e0d134e439f06fe90d17347e460ae1c2d1"
+ICON_SHA256 = "5254c85db74944c7322ec0fb7c81906383eed8186a37da638143d2295004e50c"
 COMMON_DESIGN = ROOT / "src/vendor/infiltratr-common/design/infiltrator-design-v1.json"
 FONT_ARCHIVE = ROOT / "src/assets/fonts/mb-corpo-fonts.tar.xz"
 
