@@ -279,7 +279,7 @@ static const BuiltinCalendarProvider providers[] = {
     ARITHMETIC_PROVIDER(HEBREW, "hebrew", "Hebrew", "hebrew"),
     ICU_PROVIDER(ISLAMIC, "islamic", "Islamic (astronomical approximation)", "islamic"),
     ARITHMETIC_PROVIDER(ISLAMIC_CIVIL, "islamic-civil", "Islamic (civil/tabular)", "islamic-civil"),
-    ICU_PROVIDER(ISLAMIC_UMM_AL_QURA, "islamic-umalqura", "Islamic (Umm al-Qura)", "islamic-umalqura"),
+    ARITHMETIC_PROVIDER(ISLAMIC_UMM_AL_QURA, "islamic-umalqura", "Islamic (Umm al-Qura)", "islamic-umalqura"),
     ARITHMETIC_PROVIDER(PERSIAN, "persian", "Persian (Solar Hijri)", "persian"),
     ICU_PROVIDER(CHINESE, "chinese", "Chinese traditional", "chinese"),
     ARITHMETIC_PROVIDER(INDIAN, "indian", "Indian National (Saka)", "indian"),
