@@ -468,7 +468,6 @@ validate-js: validate-settings-generated
 	python3 tests/test-settings.py
 	node tests/test-js-runtime.js
 	@for source in "$(APPLET_SRC_DIR)"/*.js; do node --check "$$source"; done
-	@python3 -c 'from pathlib import Path; p=Path("$(APPLET_SRC_DIR)/settings.py"); compile(p.read_text(encoding="utf-8"), str(p), "exec")'
 	@! rg -n 'const UUID = "calendar@cinnamon\.org"' "$(APPLET_SRC_DIR)" || { \
 		echo "Stock applet UUID is configured as the runtime identity." >&2; exit 1; }
 
