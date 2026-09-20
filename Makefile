@@ -43,6 +43,7 @@ CORE_SOURCES := \
 	src/core/time-astronomy.c \
 	src/core/julian-day.c \
 	src/core/calendar-registry.c \
+	src/core/calendar-arithmetic.c \
 	src/core/calendar-helpers.c \
 	src/core/icu-calendar.c \
 	src/core/icu-compat-bridge.c \
@@ -82,6 +83,7 @@ CORE_HEADERS := \
 	src/core/calendar-core.h \
 	src/core/calendar-internal.h \
 	src/core/calendar-registry.h \
+	src/core/calendar-arithmetic.h \
 	src/core/icu-calendar.h \
 	src/core/calendar-ancient.h \
 	src/core/calendar-bahai.h \
