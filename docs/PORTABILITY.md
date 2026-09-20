@@ -2,7 +2,7 @@
 
 # Portability
 
-Calendar is portable at its domain boundaries rather than by pretending that the current Cinnamon implementation is platform-neutral. Chronology, clock, astronomy and event semantics should remain testable without a running desktop. The core may use GLib foundational types, strings, containers and civil-time helpers; GObject/GVariant facades, Cinnamon presentation, desktop lifecycle and other platform integration stay behind explicit seams. ICU/CLDR is delegated only where its documented calendar/locale contract is authoritative.
+Calendar is portable at its domain boundaries rather than by pretending that the current Cinnamon implementation is platform-neutral. Chronology, clock, astronomy and event semantics should remain testable without a running desktop. The core may use GLib foundational types, strings, containers and civil-time helpers; GObject/GVariant facades, Cinnamon presentation, desktop lifecycle and other platform integration stay behind explicit seams. ICU/CLDR is delegated only where its documented calendar/locale contract remains authoritative; fixed-rule arithmetic that Calendar can validate directly is owned locally.
 
 ## Language and interface policy
 
@@ -38,7 +38,7 @@ Astronomical clocks derive from a defined model and configured coordinates. Lati
 
 ## Integer and memory assumptions
 
-External sizes, ICU-derived allocation counts and arithmetic that can exceed a representation are checked before allocation or conversion. Checked Common arithmetic is used when overflow means the result is invalid. Saturating arithmetic is used only when clamping is the documented Calendar policy.
+External sizes, delegated-library allocation counts and arithmetic that can exceed a representation are checked before allocation or conversion. Checked Common arithmetic is used when overflow means the result is invalid. Saturating arithmetic is used only when clamping is the documented Calendar policy.
 
 Binary or ABI-facing structures must use explicit-width types where width is part of the contract. Code must not depend on undefined signed overflow, accidental host alignment or implementation-defined narrowing.
 
@@ -56,7 +56,7 @@ Portability work must distinguish public/user-facing naming from compatibility i
 
 ## Dependency boundary
 
-Calendar may depend on Cinnamon, ICU/CLDR, GLib and pinned Infiltratr Common where their documented contracts are the strongest engineering choice. A dependency must not silently become the owner of Calendar-specific policy.
+Calendar may depend on Cinnamon, GLib, pinned Infiltratr Common and the shrinking ICU/CLDR boundary where their documented contracts are the strongest engineering choice. A dependency must not silently become the owner of Calendar-specific policy.
 
 Generic mechanisms belong in Common when their contract is genuinely reusable and at least as strong as the best local implementation. Calendar-specific chronology, continuation rules and astronomical policy remain in Calendar.
 
