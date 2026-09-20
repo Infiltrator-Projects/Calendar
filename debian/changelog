@@ -1,3 +1,15 @@
+infiltrator-calendar (1.0.33) trixie; urgency=medium
+
+  * Move fixed-rule calendar arithmetic and navigation from ICU into
+    Calendar-owned deterministic engines.
+  * Add Calendar-owned Hebrew, Persian, Japanese and Umm al-Qura arithmetic.
+  * Replace ICU weekend queries with a compact Calendar-owned CLDR weekData
+    projection.
+  * Narrow ICU to the remaining astronomical/lunisolar providers and
+    locale-sensitive calendar formatting.
+
+ -- Shannon Smith <noreply@the-infiltratr.com>  Sun, 20 Sep 2026 20:10:00 +1000
+
 infiltrator-calendar (1.0.32) trixie; urgency=medium
 
   * Remove Calendar's project-owned Python/GTK settings host and use
