@@ -1,3 +1,13 @@
+infiltrator-calendar (1.0.37) trixie; urgency=medium
+
+  * Make Infiltrator System Settings the sole temporal authority.
+  * Remove Calendar-local clock, calendar, seconds, location and custom-format
+    controls, including the retired secondary-calendar feature.
+  * Consume Common 1.19.18 temporal policy v3 with one calendar.
+  * Keep Calendar settings limited to Calendar-specific behaviour.
+
+ -- Shannon Smith <noreply@the-infiltratr.com>  Sun, 20 Sep 2026 23:12:00 +1000
+
 infiltrator-calendar (1.0.36) trixie; urgency=medium
 
   * Restore a branded Cinnamon-native About surface with the Calendar icon.
