@@ -269,9 +269,9 @@ def validate_version() -> None:
         )
     elif build_mode == "native":
         assert re.fullmatch(
-            rf"{re.escape(version)}\+native[1-9][0-9]*",
+            rf"{re.escape(version)}\+native(?:pgo)?[1-9][0-9]*",
             changelog_version,
-        ), "local native package must use <source-version>+nativeN"
+        ), "local native package must use <source-version>+nativeN or +nativepgoN"
     else:
         raise AssertionError(f"unsupported build mode: {build_mode}")
 
