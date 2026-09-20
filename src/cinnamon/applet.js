@@ -23,12 +23,10 @@ const CalendarPlus = imports.gi.CalendarPlus;
 const CinnamonDesktop = imports.gi.CinnamonDesktop;
 const Clutter = imports.gi.Clutter;
 const Gio = imports.gi.Gio;
-const GLib = imports.gi.GLib;
 const Pango = imports.gi.Pango;
 const St = imports.gi.St;
 const Gettext = imports.gettext;
 const Main = imports.ui.main;
-const Mainloop = imports.mainloop;
 const ModalDialog = imports.ui.modalDialog;
 const PopupMenu = imports.ui.popupMenu;
 const Settings = imports.ui.settings;
@@ -118,19 +116,8 @@ class CalendarPlusApplet extends Applet.Applet {
         this._keybinding_set = false;
         this._is_entered = false;
 
-        this.follow_system_temporal = true;
-        this.clock_mode = PanelClock.CLOCK_MODE_STANDARD;
-        this.show_seconds = false;
-        this.location_configured = false;
-        this.latitude = 0.0;
-        this.longitude = 0.0;
-        this.primary_calendar = "gregorian";
-        this.secondary_calendar = "none";
         this.show_events = true;
         this.theme_mode = "system";
-        this.use_custom_format = false;
-        this.custom_format = "";
-        this.custom_tooltip_format = "";
         this.keyOpen = "";
 
         this.menuManager = null;
@@ -146,7 +133,6 @@ class CalendarPlusApplet extends Applet.Applet {
         this._calendarColumn = null;
         this._aboutDialog = null;
         this._resume_source = null;
-        this._format_debounce_id = 0;
 
         this._signals = new SignalBag();
         this._eventSignals = new SignalBag();
@@ -168,12 +154,11 @@ class CalendarPlusApplet extends Applet.Applet {
             );
         }
 
-        this._primary_calendar_system =
+        this._calendar_system =
             CalendarPlus.CalendarSystem.new("gregorian");
-        if (this._primary_calendar_system === null) {
+        if (this._calendar_system === null) {
             throw new Error(`${UUID}: native Gregorian calendar unavailable`);
         }
-        this._secondary_calendar_system = null;
     }
 
     _buildApplet() {
@@ -190,7 +175,6 @@ class CalendarPlusApplet extends Applet.Applet {
         this.menuManager.addMenu(this.menu);
 
         this.settings = new Settings.AppletSettings(this, UUID, this.instance_id);
-        this._migrateLocationSetting();
         this.desktop_settings = new Gio.Settings({
             schema_id: "org.cinnamon.desktop.interface",
         });
@@ -275,12 +259,8 @@ class CalendarPlusApplet extends Applet.Applet {
 
         this._day = new St.Label({ style_class: "calendar-today-day-label" });
         this._date = new St.Label({ style_class: "calendar-today-date-label" });
-        this._secondary_date = new St.Label({
-            style_class: "calendar-today-date-label",
-        });
         this._today_box.add_actor(this._day);
         this._today_box.add_actor(this._date);
-        this._today_box.add_actor(this._secondary_date);
         calendarColumn.add_actor(this.go_home_button);
 
         this._calendar = new Calendar.Calendar(this.settings, this.events_manager);
@@ -308,65 +288,8 @@ class CalendarPlusApplet extends Applet.Applet {
     _bindSettings() {
         this.settings.bind("show-events", "show_events", this._onSettingsChanged);
         this.settings.bind("theme-mode", "theme_mode", this._onSettingsChanged);
-        this.settings.bind(
-            "follow-system-temporal",
-            "follow_system_temporal",
-            this._onSettingsChanged
-        );
-        this.settings.bind("clock-mode", "clock_mode", this._onSettingsChanged);
-        this.settings.bind("show-seconds", "show_seconds", this._onSettingsChanged);
-        this.settings.bind(
-            "location-configured",
-            "location_configured",
-            this._onSettingsChanged
-        );
-        this.settings.bind("latitude", "latitude", this._onSettingsChanged);
-        this.settings.bind("longitude", "longitude", this._onSettingsChanged);
-        this.settings.bind(
-            "primary-calendar",
-            "primary_calendar",
-            this._onSettingsChanged
-        );
-        this.settings.bind(
-            "secondary-calendar",
-            "secondary_calendar",
-            this._onSettingsChanged
-        );
-        this.settings.bind(
-            "use-custom-format",
-            "use_custom_format",
-            this._onSettingsChanged
-        );
-        this.settings.bind(
-            "custom-format",
-            "custom_format",
-            this._onFormatSettingsChanged
-        );
-        this.settings.bind(
-            "custom-tooltip-format",
-            "custom_tooltip_format",
-            this._onFormatSettingsChanged
-        );
         this.settings.bind("keyOpen", "keyOpen", this._setKeybinding);
         this._setKeybinding();
-    }
-
-    _migrateLocationSetting() {
-        /*
-         * Releases before this setting existed used 0,0 as an unavoidable
-         * sentinel. Preserve deliberately entered non-zero coordinates while
-         * allowing a genuine 0,0 location to be selected explicitly now.
-         */
-        if (this.settings.getValue("location-configured")) {
-            return;
-        }
-
-        const latitude = Number(this.settings.getValue("latitude"));
-        const longitude = Number(this.settings.getValue("longitude"));
-        if ((Number.isFinite(latitude) && latitude !== 0) ||
-            (Number.isFinite(longitude) && longitude !== 0)) {
-            this.settings.setValue("location-configured", true);
-        }
     }
 
     _watchDesktopPreferences() {
@@ -520,49 +443,32 @@ class CalendarPlusApplet extends Applet.Applet {
 
         this._applyThemeMode();
         this._resetLabelWidth();
-        this._syncCalendarSystems();
+        this._syncCalendarSystem();
         this._configureWallClock();
         this._syncSystemClock();
         this._updateClockAndDate();
         this._syncEventVisibility(true);
     }
 
-    _cancelFormatDebounce() {
-        if (this._format_debounce_id > 0) {
-            Mainloop.source_remove(this._format_debounce_id);
-            this._format_debounce_id = 0;
-        }
-    }
-
-    _onFormatSettingsChanged() {
-        if (this._destroyed) {
-            return;
-        }
-
-        this._cancelFormatDebounce();
-        this._format_debounce_id = Mainloop.timeout_add(500, () => {
-            this._format_debounce_id = 0;
-            this._onSettingsChanged();
-            return GLib.SOURCE_REMOVE;
-        });
-    }
-
     _systemTemporalPolicy() {
-        if (!this.follow_system_temporal || !this.system_clock) {
-            return null;
+        if (!this.system_clock) {
+            return {
+                mode: "standard",
+                showSeconds: false,
+                locationConfigured: false,
+                latitude: 0.0,
+                longitude: 0.0,
+                calendar: "gregorian",
+            };
         }
 
         try {
             const mode = this.system_clock.get_system_mode();
-            const primary =
-                this.system_clock.get_system_primary_calendar();
-            const secondary =
-                this.system_clock.get_system_secondary_calendar();
+            const calendar = this.system_clock.get_system_calendar();
 
             if (typeof mode !== "string" || mode.length === 0 ||
-                typeof primary !== "string" || primary.length === 0 ||
-                typeof secondary !== "string" || secondary.length === 0) {
-                return null;
+                typeof calendar !== "string" || calendar.length === 0) {
+                throw new Error("invalid system temporal policy");
             }
 
             return {
@@ -575,60 +481,38 @@ class CalendarPlusApplet extends Applet.Applet {
                     this.system_clock.get_system_latitude(),
                 longitude:
                     this.system_clock.get_system_longitude(),
-                primaryCalendar: primary,
-                secondaryCalendar: secondary,
+                calendar,
             };
         } catch (error) {
             global.logError(error);
-            return null;
+            return {
+                mode: "standard",
+                showSeconds: false,
+                locationConfigured: false,
+                latitude: 0.0,
+                longitude: 0.0,
+                calendar: "gregorian",
+            };
         }
     }
 
-    _effectiveTemporalPolicy() {
-        const system = this._systemTemporalPolicy();
-        if (system) {
-            return system;
-        }
+    _syncCalendarSystem() {
+        const temporal = this._systemTemporalPolicy();
 
-        return {
-            mode: this.clock_mode,
-            showSeconds: this.show_seconds,
-            locationConfigured: this.location_configured,
-            latitude: this.latitude,
-            longitude: this.longitude,
-            primaryCalendar: this.primary_calendar,
-            secondaryCalendar: this.secondary_calendar,
-        };
-    }
-
-    _syncCalendarSystems() {
-        const temporal = this._effectiveTemporalPolicy();
-
-        if (!this._primary_calendar_system ||
-            this._primary_calendar_system.get_id() !== temporal.primaryCalendar) {
-            const candidate =
-                CalendarPlus.CalendarSystem.new(temporal.primaryCalendar);
+        if (!this._calendar_system ||
+            this._calendar_system.get_id() !== temporal.calendar) {
+            const candidate = CalendarPlus.CalendarSystem.new(
+                temporal.calendar
+            );
             if (candidate) {
-                this._primary_calendar_system = candidate;
-                this._calendar.setCalendarSystem(temporal.primaryCalendar);
+                this._calendar_system = candidate;
+                this._calendar.setCalendarSystem(temporal.calendar);
             }
-        }
-
-        if (temporal.secondaryCalendar === "none") {
-            this._secondary_calendar_system = null;
-            return;
-        }
-
-        if (!this._secondary_calendar_system ||
-            this._secondary_calendar_system.get_id() !==
-                temporal.secondaryCalendar) {
-            this._secondary_calendar_system =
-                CalendarPlus.CalendarSystem.new(temporal.secondaryCalendar);
         }
     }
 
     _clockConfig() {
-        const temporal = this._effectiveTemporalPolicy();
+        const temporal = this._systemTemporalPolicy();
 
         return {
             mode: temporal.mode,
@@ -636,13 +520,13 @@ class CalendarPlusApplet extends Applet.Applet {
             locationConfigured: temporal.locationConfigured,
             latitude: temporal.latitude,
             longitude: temporal.longitude,
-            useCustomFormat: this.use_custom_format,
-            customFormat: this.custom_format,
-            customTooltipFormat: this.custom_tooltip_format,
+            useCustomFormat: false,
+            customFormat: "",
+            customTooltipFormat: "",
             pointerInside: this._is_entered,
             vertical: this._isVerticalPanel(),
             desktopSettings: this.desktop_settings,
-            primaryCalendar: temporal.primaryCalendar,
+            primaryCalendar: temporal.calendar,
         };
     }
 
@@ -687,7 +571,7 @@ class CalendarPlusApplet extends Applet.Applet {
 
         const display = PanelClock.todayDisplay(
             this.clock,
-            this._primary_calendar_system,
+            this._calendar_system,
             this._clockConfig()
         );
         const dayName = PanelClock.dayName(this.clock);
@@ -706,22 +590,7 @@ class CalendarPlusApplet extends Applet.Applet {
             `${CP_("Show today")}: ${dayName}, ${display.shortDate}`
         );
 
-        let tooltip = display.tooltip;
-        if (this._secondary_calendar_system) {
-            const secondDate = this._secondary_calendar_system.format_date_part(
-                ...display.args,
-                CalendarPlus.DatePart.SHORT
-            );
-            const secondLine =
-                `${this._secondary_calendar_system.get_name()}: ${secondDate}`;
-            this._secondary_date.set_text(secondLine);
-            this._secondary_date.visible = true;
-            tooltip += `\n${secondLine}`;
-        } else {
-            this._secondary_date.set_text("");
-            this._secondary_date.visible = false;
-        }
-
+        const tooltip = display.tooltip;
         this.set_applet_tooltip(tooltip);
         this.events_manager.select_date(this._calendar.getSelectedDate());
     }
@@ -995,13 +864,6 @@ class CalendarPlusApplet extends Applet.Applet {
         this._aboutDialog.open();
     }
 
-    on_custom_format_button_pressed() {
-        Util.trySpawn([
-            "xdg-open",
-            "/usr/share/doc/infiltrator-calendar/strftime-format.html",
-        ], false);
-    }
-
     on_applet_clicked() {
         this._openMenu();
     }
@@ -1056,7 +918,6 @@ class CalendarPlusApplet extends Applet.Applet {
         this._added_to_panel = false;
 
         this._removeKeybinding();
-        this._cancelFormatDebounce();
         this._resumeSignals.disconnectAll();
         this._eventSignals.disconnectAll();
         this._signals.disconnectAll();
