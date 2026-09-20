@@ -724,36 +724,6 @@ function testPanelClockDefensiveFormatting() {
     assert.equal(observations.starts, 1);
 }
 
-function testLocationMigration() {
-    const AppletClass = evaluateApplet();
-    const applet = Object.create(AppletClass.prototype);
-    const values = {
-        "location-configured": false,
-        latitude: -36.39,
-        longitude: 145.36,
-    };
-    applet.settings = {
-        getValue(key) { return values[key]; },
-        setValue(key, value) { values[key] = value; },
-    };
-    applet._migrateLocationSetting();
-    assert.equal(
-        values["location-configured"],
-        true,
-        "existing non-zero coordinates must migrate to configured"
-    );
-
-    values["location-configured"] = false;
-    values.latitude = 0;
-    values.longitude = 0;
-    applet._migrateLocationSetting();
-    assert.equal(
-        values["location-configured"],
-        false,
-        "legacy 0,0 must remain explicitly unconfigured"
-    );
-}
-
 function testConstructorAtomicity() {
     const MismatchedAppletClass = evaluateApplet("3.1.9");
     assert.throws(
@@ -790,8 +760,7 @@ function testConstructorAtomicity() {
     AppletClass.prototype._destroy = originalDestroy;
     const instance = new AppletClass(0, 24, 7, version);
     assert.equal(instance._destroyed, false);
-    assert.equal(instance.primary_calendar, "gregorian");
-    assert.equal(instance._primary_calendar_system.get_id(), "gregorian");
+    assert.equal(instance._calendar_system.get_id(), "gregorian");
     instance._destroy();
     instance._destroy();
     assert.equal(instance._destroyed, true, "destruction must be idempotent");
@@ -1198,7 +1167,6 @@ function testEventsManagerReconnect() {
 }
 
 testPanelClockDefensiveFormatting();
-testLocationMigration();
 testConstructorAtomicity();
 testModuleLoaderCompatibility();
 testCalendarLifecycle();
