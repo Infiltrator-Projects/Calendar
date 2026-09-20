@@ -154,9 +154,9 @@ def main() -> None:
     assert "src/vendor/infiltratr-common" in makefile
     assert (
         "INFILTRATR_COMMON_COMMIT := "
-        "33e69c0a462b56d388881d89c4eb49f72fa0b0fe"
+        "077909257fcb7a710969d03803c42c96fc0db3cf"
     ) in makefile
-    assert "INFILTRATR_COMMON_VERSION := 1.19.10" in makefile
+    assert "INFILTRATR_COMMON_VERSION := 1.19.14" in makefile
     assert "normal `make` automatically retrieves" in read("README.md")
     assert "common-bootstrap: common-check" in makefile
     assert "common-test: $(INFILTRATR_COMMON_ARCHIVE)" in makefile
