@@ -24,6 +24,9 @@ def main() -> None:
     event_manager_source = (APPLET_DIR / "eventManager.js").read_text(encoding="utf-8")
     runtime_source = (APPLET_DIR / "runtimeSupport.js").read_text(encoding="utf-8")
     panel_clock_source = (APPLET_DIR / "panelClock.js").read_text(encoding="utf-8")
+    system_clock_source = (
+        PROJECT_ROOT / "src/adapters/system-clock.c"
+    ).read_text(encoding="utf-8")
     forbidden_temporal_settings = {
         "clock-section",
         "follow-system-temporal",
@@ -135,8 +138,9 @@ def main() -> None:
     assert "configureApplet(tab = 0)" in applet_source
     assert "super.configureApplet(tab);" in applet_source
 
-    # Calendar has no local temporal authority. System Settings owns clock,
-    # calendar, seconds and location; the native facade supplies those values.
+    # Calendar has no local temporal authority. A valid System Settings policy
+    # enriches the stock Mint behaviour; without one, the native facade falls
+    # back to Cinnamon/locale settings instead of requiring System Settings.
     assert 'this.settings.bind("show-seconds"' not in applet_source
     assert 'this.settings.bind("latitude"' not in applet_source
     assert 'this.settings.bind("longitude"' not in applet_source
@@ -208,10 +212,22 @@ def main() -> None:
     assert "class EventDataList" not in event_manager_source
     assert "this.events_by_date" not in event_manager_source
 
-    # Seconds are owned by System Settings, not Calendar or Cinnamon's
-    # independent clock-show-seconds preference.
+    # Seconds follow the richer Infiltrator policy when present and otherwise
+    # mirror Cinnamon's stock clock-show-seconds setting through the native
+    # facade. Calendar itself still owns no duplicate seconds preference.
     assert 'get_boolean("clock-show-seconds")' not in applet_source
     assert "get_system_show_seconds()" in applet_source
+    assert '"clock-show-seconds"' in applet_source
+    assert "load_persisted_temporal_policy" in system_clock_source
+    assert '"org.cinnamon.desktop.interface"' in system_clock_source
+    assert '"clock-show-seconds"' in system_clock_source
+    assert "g_settings_schema_has_key" in system_clock_source
+
+    # The settings menu prefers Infiltrator System Settings but must remain
+    # useful on an ordinary Mint installation where that program is absent.
+    assert 'GLib.find_program_in_path("system-settings")' in applet_source
+    assert 'Util.spawnCommandLine("system-settings")' in applet_source
+    assert 'Util.spawnCommandLine("cinnamon-settings calendar")' in applet_source
 
     # Standard horizontal clocks need all combinations of date, 12/24-hour
     # mode and seconds while retaining Cinnamon's locale-aware formatting.
