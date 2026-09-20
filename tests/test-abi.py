@@ -2,14 +2,13 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 # Copyright (C) 1993-2026 Shannon Smith
 
-"""Protect the published C ABI from symbol removal or version reassignment.
+"""Validate Calendar's current package-internal C ABI.
 
-The baseline intentionally preserves symbol-version assignments first published
-during the project's earlier 2.x/3.x lineage, including the API surface that had
-shipped through 3.6.2. The current application release line is 1.0.x, but those
-historical version nodes remain part of the compatibility contract. Normal
-releases may add symbols, but must not edit historical baseline entries. The
-optional library check also verifies that the linker emitted the recorded GNU
+Calendar's Cinnamon applet and native library are released together and enforce
+exact version identity at runtime; this is not an external stable SDK. The
+baseline therefore describes the current intended ABI and may be deliberately
+updated when architecture changes remove obsolete package-internal symbols.
+The optional library check verifies that the linker emitted the recorded GNU
 symbol versions.
 """
 
