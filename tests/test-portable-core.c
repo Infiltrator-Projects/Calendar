@@ -676,6 +676,14 @@ test_arithmetic_calendar_engines(void)
         {
             CALENDAR_PLUS_CALENDAR_MODE_INDIAN,
             2461122, 1948, 1, 1, 0
+        },
+        {
+            CALENDAR_PLUS_CALENDAR_MODE_BUDDHIST,
+            2461042, 2569, 1, 1, 0
+        },
+        {
+            CALENDAR_PLUS_CALENDAR_MODE_MINGUO,
+            2419403, 1, 1, 1, 1
         }
     };
     gsize index;
