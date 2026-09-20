@@ -243,7 +243,10 @@ function panelText(clock, systemClock, config) {
         return systemClock ? nativePanelText(clock, systemClock, config) : null;
     }
     const text = clock.get_clock();
-    return typeof text === "string" ? text.capitalize() : text;
+    if (typeof text !== "string") {
+        return text;
+    }
+    return typeof text.capitalize === "function" ? text.capitalize() : text;
 }
 
 function todayDisplay(clock, primaryCalendarSystem, config) {
