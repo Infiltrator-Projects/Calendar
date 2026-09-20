@@ -66,10 +66,12 @@ portable Calendar domain contracts
                     ↓
 chronology / clocks / astronomy / event semantics
 
-ICU / CLDR                    Infiltratr Common 1.19.10
+Calendar native arithmetic    Infiltratr Common 1.19.10
      ↓                                  ↓
-locale/calendar authority     generic checked arithmetic /
-where explicitly delegated    formatting / timing / loading /
+fixed-rule chronology         generic checked arithmetic /
+                               formatting / timing / loading /
+
+ICU / CLDR → remaining lunisolar/astronomical conversion and locale formatting
                                UTF-8 / allocation primitives
 ```
 
@@ -86,7 +88,7 @@ src/
 └── vendor/     Pinned Infiltratr Common submodule
 ```
 
-Calendar-specific chronology, continuation and astronomy policy remains local. Common owns only genuinely generic mechanisms. Cinnamon owns desktop integration. ICU/CLDR is authoritative only for the locale/calendar data Calendar explicitly delegates to it.
+Calendar-specific chronology, continuation and astronomy policy remains local. Common owns only genuinely generic mechanisms. Cinnamon owns desktop integration. Fixed-rule calendar arithmetic is now Calendar-owned; ICU/CLDR remains authoritative only for the remaining lunisolar/astronomical providers and locale-formatting data Calendar still explicitly delegates.
 
 The installed `libcalendar-plus.so.0` ABI and established `CalendarPlus` compatibility identifiers remain stable runtime contracts even though the visible product is **Calendar** and the Debian package is `infiltrator-calendar`.
 
