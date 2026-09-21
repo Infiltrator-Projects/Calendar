@@ -31,6 +31,27 @@ const gchar *calendar_plus_get_version(void);
  */
 const gchar *calendar_plus_get_source_id(void);
 
+/**
+ * calendar_plus_get_build_profile:
+ *
+ * Returns the canonical machine-readable build profile compiled into the
+ * loaded native library. Repository packages use generic; local hardware-
+ * native installer builds use native.
+ *
+ * Returns: (transfer none): the canonical build profile
+ */
+const gchar *calendar_plus_get_build_profile(void);
+
+/**
+ * calendar_plus_get_build_profile_label:
+ *
+ * Returns Infiltratr Common's canonical human-readable label for the compiled
+ * build profile so every project presents build identity consistently.
+ *
+ * Returns: (transfer none): the canonical shared build-profile label
+ */
+const gchar *calendar_plus_get_build_profile_label(void);
+
 G_END_DECLS
 
 #endif
