@@ -12,6 +12,7 @@ infiltrator-calendar (1.0.42) trixie; urgency=medium
     coverage for stale, missing, valid and removed providers.
   * Validate provider marker identity/contract at runtime and inherit Common's
     stricter coordinate and unbounded policy-path persistence contracts.
+  * Localise the About temporal-authority line through Calendar's gettext domain.
 
  -- Shannon Smith <noreply@the-infiltratr.com>  Mon, 21 Sep 2026 11:32:00 +1000
 
