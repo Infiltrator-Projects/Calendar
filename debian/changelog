@@ -1,6 +1,6 @@
 infiltrator-calendar (1.0.42) trixie; urgency=medium
 
-  * Replace executable/PATH probing with Common 1.19.19's explicit temporal-v3
+  * Replace executable/PATH probing with Common 1.19.20's validated temporal-v3
     provider capability marker.
   * Consume one cached effective temporal snapshot so clock, calendar, seconds
     and location cannot be mixed across separate policy reads.
@@ -10,6 +10,8 @@ infiltrator-calendar (1.0.42) trixie; urgency=medium
     richer settings frontend and keep Cinnamon Date & Time as the fallback.
   * Show the active temporal authority in About and add precedence regression
     coverage for stale, missing, valid and removed providers.
+  * Validate provider marker identity/contract at runtime and inherit Common's
+    stricter coordinate and unbounded policy-path persistence contracts.
 
  -- Shannon Smith <noreply@the-infiltratr.com>  Mon, 21 Sep 2026 11:32:00 +1000
 
