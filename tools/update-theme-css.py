@@ -4,7 +4,7 @@
 
 Calendar owns Cinnamon selectors and widget mechanics. Infiltratr Common owns
 semantic theme values, typography identity and structural metrics. Common
-1.19.10 also carries the complete Linux MBLINK Night reference roles. This
+1.19.20 carries the complete Linux MBLINK Night reference roles. This
 generator keeps the toolkit-specific source native while preventing a second
 private design truth from drifting away from the pinned Common release.
 """
