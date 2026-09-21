@@ -14,6 +14,7 @@ No unreleased changes.
 - Launch System Settings through its package-owned desktop application identity and retain Cinnamon Date & Time as the deterministic fallback.
 - Show the live temporal authority in About and add precedence tests covering stale policy, no policy, valid richer policy, invalid policy fallback and runtime provider removal.
 - Require Common's provider marker contents to identify the exact System Settings provider/contract instead of trusting pathname existence alone, and consume Common's stricter coordinate/path persistence contracts.
+- Route the About temporal-authority label and provider names through Calendar's gettext domain instead of leaving new user-facing authority text as raw English.
 
 ## 1.0.41 - 2026-09-21
 
