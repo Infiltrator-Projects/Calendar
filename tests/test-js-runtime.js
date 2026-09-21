@@ -1177,6 +1177,42 @@ function testEventListCacheIdentity() {
 }
 
 
+function testEventsManagerPresentationState() {
+    const { EventsManager } = evaluateEventsManager();
+    const selectedDates = [];
+    let showEvents = true;
+    const settings = { getValue() { return showEvents; } };
+    const eventList = {
+        set_date(day) { selectedDates.push(day.to_unix()); },
+        set_events() {},
+    };
+    const manager = new EventsManager(settings, {}, eventList);
+
+    assert.equal(
+        manager.should_show_event_pane(),
+        true,
+        "enabled agenda must reserve popup width before CalendarServer is ready"
+    );
+    manager.select_date(new Date(Date.UTC(2026, 8, 21, 12, 0, 0)), false);
+    assert.equal(
+        selectedDates.length,
+        1,
+        "agenda heading must update while event transport is still pending"
+    );
+
+    manager._calendar_server = { status: 1 };
+    assert.equal(
+        manager.should_show_event_pane(),
+        false,
+        "authoritative no-calendar status may collapse the agenda"
+    );
+
+    manager._calendar_server = null;
+    showEvents = false;
+    assert.equal(manager.should_show_event_pane(), false);
+    manager.destroy();
+}
+
 function testEventsManagerLifecycle() {
     const { EventsManager, observations } = evaluateEventsManager();
     const settings = { getValue() { return true; } };
@@ -1255,6 +1291,7 @@ testCalendarKeyboardNavigation();
 testEventListCacheIdentity();
 testVisibleEventRange();
 testVisibleEventRangeFailureRecovery();
+testEventsManagerPresentationState();
 testEventsManagerLifecycle();
 testEventsManagerReconnect();
 console.log("JavaScript runtime lifecycle tests passed.");

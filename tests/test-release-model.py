@@ -331,7 +331,10 @@ def main() -> None:
     assert 'this.menu.setCustomStyleClass("calendar-plus-popup");' in applet
     assert '`calendar-plus-popup calendar-plus-theme-${effectiveTheme}`' in applet
     assert 'setCustomStyleClass("calendar-background")' not in applet
-    assert "new ModalDialog.ModalDialog()" in applet
+    assert "new ModalDialog.ModalDialog({" in applet
+    assert "destroyOnClose: false" in applet
+    assert "this.menu.close(false);" in applet
+    assert "this._aboutDialog.popModal();" in applet
     assert "new Dialog.MessageDialogContent" not in applet
     assert 'icon_name: "infiltratr-calendar"' in applet
     assert 'style_class: "calendar-plus-about"' in applet
@@ -361,9 +364,10 @@ def main() -> None:
     assert "var EventList = class EventList" in read(
         "src/cinnamon/eventView.js"
     )
-    assert "var EventsManager = class EventsManager" in read(
-        "src/cinnamon/eventManager.js"
-    )
+    event_manager = read("src/cinnamon/eventManager.js")
+    assert "var EventsManager = class EventsManager" in event_manager
+    assert "should_show_event_pane()" in event_manager
+    assert "this.events_manager.should_show_event_pane()" in applet
     assert "var Calendar = class Calendar" in read(
         "src/cinnamon/calendar.js"
     )

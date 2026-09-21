@@ -594,7 +594,8 @@ class CalendarPlusApplet extends Applet.Applet {
         if (!this.event_list || !this.events_manager || !this._calendar) {
             return;
         }
-        this.event_list.actor.visible = this.events_manager.is_active();
+        this.event_list.actor.visible =
+            this.events_manager.should_show_event_pane();
         this._rebalancePopupWidth();
         if (forceRefresh && this.events_manager.is_active()) {
             this.events_manager.select_date(
@@ -783,47 +784,63 @@ class CalendarPlusApplet extends Applet.Applet {
 
     _onAbout() {
         if (this.menu) {
-            this.menu.close();
+            /*
+             * Release PopupMenuManager's grab synchronously before taking a
+             * ModalDialog grab.  This avoids overlapping Cinnamon modal/menu
+             * lifecycles and also sidesteps known animated-menu grab failures.
+             */
+            this.menu.close(false);
         }
 
         if (!this._aboutDialog) {
-            const dialog = new ModalDialog.ModalDialog();
+            /*
+             * ModalDialog destroys itself after close by default.  Calendar
+             * intentionally reuses this instance, so opt out of that default;
+             * otherwise the second About invocation targets a destroyed actor.
+             */
+            const dialog = new ModalDialog.ModalDialog({
+                destroyOnClose: false,
+            });
             const card = new St.BoxLayout({
                 vertical: true,
                 style_class: "calendar-plus-about",
-            });
-            const header = new St.BoxLayout({
-                vertical: false,
-                style_class: "calendar-plus-about-header",
+                x_align: Clutter.ActorAlign.CENTER,
             });
             const icon = new St.Icon({
                 icon_name: "infiltratr-calendar",
                 icon_size: 96,
                 style_class: "calendar-plus-about-icon",
+                x_align: Clutter.ActorAlign.CENTER,
             });
             const identity = new St.BoxLayout({
                 vertical: true,
                 style_class: "calendar-plus-about-identity",
+                x_align: Clutter.ActorAlign.CENTER,
             });
             const title = new St.Label({
                 text: CP_("Calendar"),
                 style_class: "calendar-plus-about-title",
+                x_align: Clutter.ActorAlign.CENTER,
             });
             const version = new St.Label({
                 text: `v${CalendarPlus.get_version()}`,
                 style_class: "calendar-plus-about-version",
+                x_align: Clutter.ActorAlign.CENTER,
             });
             const build = new St.Label({
                 text: `Build: ${CalendarPlus.get_build_profile_label()}`,
                 style_class: "calendar-plus-about-build",
+                x_align: Clutter.ActorAlign.CENTER,
             });
             this._aboutAuthority = new St.Label({
                 text: "",
                 style_class: "calendar-plus-about-build",
+                x_align: Clutter.ActorAlign.CENTER,
             });
             const author = new St.Label({
-                text: "Shannon Smith",
+                text: "Shannon Smith — Author and project maintainer",
                 style_class: "calendar-plus-about-author",
+                x_align: Clutter.ActorAlign.CENTER,
             });
             const description = new St.Label({
                 text: CP_(
@@ -855,9 +872,8 @@ class CalendarPlusApplet extends Applet.Applet {
             identity.add_child(build);
             identity.add_child(this._aboutAuthority);
             identity.add_child(author);
-            header.add_child(icon);
-            header.add_child(identity);
-            card.add_child(header);
+            card.add_child(icon);
+            card.add_child(identity);
             card.add_child(description);
             card.add_child(license);
             card.add_child(legal);
@@ -898,7 +914,9 @@ class CalendarPlusApplet extends Applet.Applet {
             );
         }
 
-        this._aboutDialog.open();
+        if (!this._aboutDialog.open()) {
+            global.logError(`${UUID}: unable to acquire About dialog modal grab`);
+        }
     }
 
     on_applet_clicked() {
@@ -961,6 +979,12 @@ class CalendarPlusApplet extends Applet.Applet {
 
         if (this._aboutDialog) {
             try {
+                /*
+                 * popModal() is synchronous and idempotent.  Balance any live
+                 * shell grab before actor destruction so applet teardown can
+                 * never strand pointer input behind a dead About dialog.
+                 */
+                this._aboutDialog.popModal();
                 this._aboutDialog.destroy();
             } catch (error) {
                 global.logError(error);

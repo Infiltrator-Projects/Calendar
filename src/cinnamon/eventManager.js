@@ -516,7 +516,7 @@ var EventsManager = class EventsManager {
     }
 
     select_date(date, force) {
-        if (this._destroyed || !this.is_active()) {
+        if (this._destroyed) {
             return;
         }
 
@@ -526,11 +526,21 @@ var EventsManager = class EventsManager {
             (previous.get_year() !== day.get_year() ||
              previous.get_month() !== day.get_month());
 
-        /* Selection changes agenda focus; the calendar view owns fetch range. */
+        /*
+         * Selection is presentation state, not transport state.  Update the
+         * agenda heading immediately even while CalendarServer is still being
+         * activated; the eventual server readiness only controls event data.
+         */
         this.current_selected_date = day;
-
         if (this._event_list !== null) {
             this._event_list.set_date(day);
+        }
+
+        if (!this.is_active()) {
+            return;
+        }
+
+        if (this._event_list !== null) {
             this._event_list.set_events(
                 this._snapshot_for_date(day),
                 previous === null || changedMonth || Boolean(force)
@@ -570,6 +580,19 @@ var EventsManager = class EventsManager {
             day.to_unix(),
             GLib.DateTime.new_now_local().to_unix()
         );
+    }
+
+    should_show_event_pane() {
+        /*
+         * Popup geometry must not depend on asynchronous D-Bus activation.
+         * When events are enabled, reserve the agenda pane while CalendarServer
+         * is connecting or temporarily unavailable.  Collapse it only after an
+         * authoritative server status says that no calendars exist.
+         */
+        return !this._destroyed &&
+            this.settings.getValue("show-events") &&
+            (this._calendar_server === null ||
+             this._calendar_server.status !== STATUS_NO_CALENDARS);
     }
 
     is_active() {
