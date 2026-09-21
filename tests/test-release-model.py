@@ -275,7 +275,7 @@ def main() -> None:
     assert 'release_was_published=false' in publisher
     assert 'release_was_published=true' in publisher
     assert 'if [[ "$release_was_published" == false ]]; then' in publisher
-    assert 'VERSION="$(sed -n \'s/^VERSION := //p\' Makefile)"' in publisher
+    assert 'version=$(sed -n \'s/^VERSION := //p\' Makefile)' in publisher
     assert '< VERSION' not in publisher
     assert "APT_REPOSITORY_DISPATCH_TOKEN" not in publisher
     assert "cancel-in-progress: true" in publisher
