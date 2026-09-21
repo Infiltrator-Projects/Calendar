@@ -365,7 +365,10 @@ def main() -> None:
     # longer launches a GTK helper solely to display About information.
     assert "openAbout()" in applet_source
     assert "this._onAbout();" in applet_source
-    assert "new ModalDialog.ModalDialog()" in applet_source
+    assert "new ModalDialog.ModalDialog({" in applet_source
+    assert "destroyOnClose: false" in applet_source
+    assert "this.menu.close(false);" in applet_source
+    assert "this._aboutDialog.popModal();" in applet_source
     assert "new Dialog.MessageDialogContent" not in applet_source
     assert 'icon_name: "infiltratr-calendar"' in applet_source
     assert 'style_class: "calendar-plus-about"' in applet_source
@@ -377,7 +380,7 @@ def main() -> None:
     assert 'CP_("Infiltrator System Settings")' in applet_source
     assert 'CP_("Mint / Cinnamon")' in applet_source
     assert 'style_class: "calendar-plus-about-author"' in applet_source
-    assert 'text: "Shannon Smith"' in applet_source
+    assert 'text: "Shannon Smith — Author and project maintainer"' in applet_source
     assert 'text: "GPL-3.0-or-later"' in applet_source
     assert 'Util.spawnCommandLine("/usr/libexec/calendar-plus-about")' not in applet_source
     assert "xlet-about-dialog" not in applet_source
