@@ -125,6 +125,9 @@ if [ ! -f "$SOURCE_DIR/Makefile" ] ||
 fi
 
 if ! command -v dpkg-checkbuilddeps >/dev/null 2>&1 ||
+   ! command -v dpkg-buildpackage >/dev/null 2>&1 ||
+   ! command -v gcc >/dev/null 2>&1 ||
+   ! command -v make >/dev/null 2>&1 ||
    ! (cd "$SOURCE_DIR" && dpkg-checkbuilddeps >/dev/null 2>&1); then
     install_build_dependencies
 fi
