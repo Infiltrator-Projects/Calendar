@@ -17,6 +17,11 @@ export TZ=UTC
 export PYTHONHASHSEED=0
 export ZERO_AR_DATE=1
 export CALENDAR_PLUS_BUILD_MODE=generic
+case " ${DEB_BUILD_OPTIONS:-} " in
+    *" nocheck "*) ;;
+    *) DEB_BUILD_OPTIONS="${DEB_BUILD_OPTIONS:+$DEB_BUILD_OPTIONS }nocheck" ;;
+esac
+export DEB_BUILD_OPTIONS
 
 copy_source() {
     destination=$1

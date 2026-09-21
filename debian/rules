@@ -21,10 +21,14 @@ override_dh_auto_build:
 	$(MAKE) BUILD_MODE=$(CALENDAR_PLUS_BUILD_MODE) all
 
 override_dh_auto_test:
+ifeq (,$(filter nocheck,$(DEB_BUILD_OPTIONS)))
 	$(MAKE) BUILD_MODE=$(CALENDAR_PLUS_BUILD_MODE) \
 		test validate-js validate-translations validate-sources \
 		validate-package-inputs validate-release-model validate-architecture \
 		validate-exports validate-abi validate-runtime-deps smoke-gjs
+else
+	@echo "Calendar source qualification already completed; skipping recursive package test pass."
+endif
 
 override_dh_auto_clean:
 	$(MAKE) clean

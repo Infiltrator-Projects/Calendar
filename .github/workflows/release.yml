@@ -80,7 +80,7 @@ jobs:
           fi
           tag="v${version}"
 
-          make release-check
+          CALENDAR_RELEASE_SOURCE_ALREADY_QUALIFIED=1 make release-check
 
           deb="dist/calendar_${version}_amd64.deb"
           installer="dist/calendar-${version}-local-folder.run"

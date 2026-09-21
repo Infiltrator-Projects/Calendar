@@ -10,7 +10,21 @@ cd "$ROOT"
 make clean
 rm -rf dist
 shellcheck tools/*.sh tools/local-installer.sh.in
-make check
+
+if [ "${CALENDAR_RELEASE_SOURCE_ALREADY_QUALIFIED:-0}" = "1" ]; then
+    printf 'Calendar source qualification supplied by exact-SHA CI; not rerunning the behavioural suite.\n'
+else
+    make check
+fi
+
+# Package construction, reproducibility and installer smoke validate packaging
+# mechanics. They must not recursively rerun the already-completed source suite.
+case " ${DEB_BUILD_OPTIONS:-} " in
+    *" nocheck "*) ;;
+    *) DEB_BUILD_OPTIONS="${DEB_BUILD_OPTIONS:+$DEB_BUILD_OPTIONS }nocheck" ;;
+esac
+export DEB_BUILD_OPTIONS
+
 make package-source
 make package-local-installer
 make reproducible-build

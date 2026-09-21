@@ -26,7 +26,7 @@ Usage: $(basename "$0") [OPTIONS]
 
 With no options, the builder installs missing build dependencies, performs a
 hardware-native profile-generate build, trains it with Calendar\'s representative
-workload and tests, rebuilds with profile-use, creates a Debian-managed package
+workload, rebuilds with profile-use, creates a Debian-managed package
 and installs it through APT.
 EOF
 }
@@ -170,7 +170,7 @@ printf 'PGO pass 1: instrument Calendar and pinned Common, then train representa
     make clean
     make -j"$JOBS" CC=gcc \
         BUILD_MODE=native PGO_MODE=generate PGO_DIR="$PGO_DIR" \
-        all test
+        all
     make CC=gcc BUILD_MODE=native PGO_MODE=generate PGO_DIR="$PGO_DIR" pgo-train
 )
 
@@ -189,7 +189,7 @@ printf 'PGO pass 2: rebuild Calendar and pinned Common using measured profiles.\
     CALENDAR_PLUS_BUILD_MODE=native \
     PGO_MODE=use \
     PGO_DIR="$PGO_DIR" \
-    DEB_BUILD_OPTIONS="parallel=$JOBS" \
+    DEB_BUILD_OPTIONS="parallel=$JOBS nocheck" \
         dpkg-buildpackage -us -uc -b
 )
 

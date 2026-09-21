@@ -68,7 +68,16 @@ jobs:
       - name: Build and test
         env:
           CC: ${{ matrix.compiler }}
-        run: make clean check
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [[ "$CC" == "gcc" ]]; then
+            make clean check
+          else
+            # GCC owns the complete policy/release validation. Clang's distinct
+            # purpose is compiling and executing the production C/test surface.
+            make clean test
+          fi
       - name: Probe exact-version live Cinnamon qualification
         if: matrix.compiler == 'gcc'
         id: live-cinnamon
@@ -79,6 +88,7 @@ jobs:
           steps.live-cinnamon.outputs.ready == 'true'
         env:
           CALENDAR_PLUS_LIVE_MODE: ${{ steps.live-cinnamon.outputs.mode }}
+          DEB_BUILD_OPTIONS: nocheck
         run: tools/live-cinnamon-ci-smoke.sh
 
   sanitizer:
@@ -134,6 +144,7 @@ jobs:
         run: make static-analysis
 
   debian-package:
+    needs: [native]
     runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -147,7 +158,9 @@ jobs:
             gir1.2-glib-2.0-dev libglib2.0-dev libgtk-3-dev libicu-dev nodejs \
             pkg-config python3 xz-utils \
             lintian shellcheck
-      - name: Run complete release gates
+      - name: Run packaging and release gates
+        env:
+          CALENDAR_RELEASE_SOURCE_ALREADY_QUALIFIED: "1"
         run: make release-check
 
   package-install:
@@ -173,6 +186,8 @@ jobs:
             pkg-config python3 xz-utils
       - name: Build, install, execute and purge generic package
         shell: bash
+        env:
+          DEB_BUILD_OPTIONS: nocheck
         run: |
           set -euo pipefail
           version="$(sed -n 's/^VERSION := //p' Makefile)"

@@ -256,6 +256,17 @@ def main() -> None:
     assert 'cat "$SOURCE_TAR" >> "$TEMP_OUTPUT"' in builder
 
     assert 'ARCH" = "amd64"' in release
+    assert 'CALENDAR_RELEASE_SOURCE_ALREADY_QUALIFIED' in release
+    assert 'DEB_BUILD_OPTIONS' in release and 'nocheck' in release
+    assert 'filter nocheck,$(DEB_BUILD_OPTIONS)' in rules
+    assert 'DEB_BUILD_OPTIONS="parallel=$JOBS nocheck"' in installer
+    assert 'BUILD_MODE=native PGO_MODE=generate PGO_DIR="$PGO_DIR" \\\n        all\n' in installer
+    assert 'BUILD_MODE=native PGO_MODE=generate PGO_DIR="$PGO_DIR" \\\n        all test\n' not in installer
+    reproducible = read("tools/reproducible-build.sh")
+    assert 'nocheck' in reproducible
+    assert 'CALENDAR_RELEASE_SOURCE_ALREADY_QUALIFIED: "1"' in workflow
+    assert 'DEB_BUILD_OPTIONS: nocheck' in workflow
+    assert 'CALENDAR_RELEASE_SOURCE_ALREADY_QUALIFIED=1 make release-check' in publisher
     assert "make reproducible-build" in release
     assert "tools/native-installer-smoke.sh" in release
     assert "tools/validate-release-artifacts.sh" in release
