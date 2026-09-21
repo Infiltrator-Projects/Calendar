@@ -33,6 +33,9 @@ msgstr "%d %s %lld B.E."
 msgid "%d %s, An %s"
 msgstr "%d %s, An %s"
 
+msgid "A native C-backed Cinnamon clock and calendar authored by Shannon Smith, with multiple time and calendar systems."
+msgstr "Um relógio e calendário Cinnamon com backend nativo em C, criado por Shannon Smith, com vários sistemas de horário e calendário."
+
 msgid "About Calendar"
 msgstr "Sobre o Calendar"
 
@@ -98,6 +101,20 @@ msgstr "Marque esta opção para mostrar os números das semanas no calendário.
 
 msgid "Choiak"
 msgstr "Choiak"
+
+msgid ""
+"Copyright © 1993-2026 Shannon Smith\n"
+"\n"
+"This program comes with absolutely no warranty.\n"
+"See the GNU GPL v3+ License for details."
+msgstr ""
+"Copyright © 1993-2026 Shannon Smith\n"
+"\n"
+"Este programa é fornecido sem qualquer garantia.\n"
+"Consulte a licença GNU GPL v3+ para obter detalhes.Copyright © 1993-2026 Shannon Smith\n"
+"\n"
+"This program comes with absolutely no warranty.\n"
+"See the GNU GPL v3+ License for details."
 
 msgid "Dante"
 msgstr "Dante"
