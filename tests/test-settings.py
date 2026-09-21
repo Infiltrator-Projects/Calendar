@@ -157,7 +157,9 @@ def main() -> None:
     assert "customFormat" not in panel_clock_source
     assert "customTooltipFormat" not in panel_clock_source
     assert "CalendarPlus.SystemClock.new()" in applet_source
-    assert "this.system_clock.get_system_calendar()" in applet_source
+    assert "this.system_clock.get_system_policy()" in applet_source
+    assert ".deep_unpack()" in applet_source
+    assert "this.system_clock.get_system_calendar()" not in applet_source
     assert "this._calendar.setCalendarSystem(temporal.calendar)" in applet_source
     assert "systemClock.start_at_location(" in panel_clock_source
     assert "time_mode_requires_longitude(" in panel_clock_source
@@ -216,18 +218,21 @@ def main() -> None:
     # mirror Cinnamon's stock clock-show-seconds setting through the native
     # facade. Calendar itself still owns no duplicate seconds preference.
     assert 'get_boolean("clock-show-seconds")' not in applet_source
-    assert "get_system_show_seconds()" in applet_source
-    assert '"clock-show-seconds"' in applet_source
-    assert "load_persisted_temporal_policy" in system_clock_source
-    assert 'g_find_program_in_path("system-settings")' in system_clock_source
+    assert '"clock-show-seconds"' not in applet_source
+    assert "infiltratr_temporal_posix_provider_available" in system_clock_source
+    assert "infiltratr_temporal_posix_policy_load" in system_clock_source
+    assert "g_file_monitor_directory" in system_clock_source
     assert '"org.cinnamon.desktop.interface"' in system_clock_source
     assert '"clock-show-seconds"' in system_clock_source
     assert "g_settings_schema_has_key" in system_clock_source
+    assert 'g_find_program_in_path("system-settings")' not in system_clock_source
 
-    # The settings menu prefers Infiltrator System Settings but must remain
-    # useful on an ordinary Mint installation where that program is absent.
-    assert 'GLib.find_program_in_path("system-settings")' in applet_source
-    assert 'Util.spawnCommandLine("system-settings")' in applet_source
+    # The settings menu uses the package-owned provider capability and desktop
+    # application identity, never an executable-name/PATH probe.
+    assert 'GLib.find_program_in_path("system-settings")' not in applet_source
+    assert 'Gio.DesktopAppInfo.new(' in applet_source
+    assert '"org.infiltrator.SystemSettings.desktop"' in applet_source
+    assert 'Util.spawnCommandLine("system-settings")' not in applet_source
     assert 'Util.spawnCommandLine("cinnamon-settings calendar")' in applet_source
 
     # Standard horizontal clocks need all combinations of date, 12/24-hour
@@ -364,6 +369,9 @@ def main() -> None:
     assert 'style_class: "calendar-plus-about-version"' in applet_source
     assert 'style_class: "calendar-plus-about-build"' in applet_source
     assert 'CalendarPlus.get_build_profile_label()' in applet_source
+    assert 'Temporal authority: ${authorityLabel}' in applet_source
+    assert '"Infiltrator System Settings"' in applet_source
+    assert '"Mint / Cinnamon"' in applet_source
     assert 'style_class: "calendar-plus-about-author"' in applet_source
     assert 'text: "Shannon Smith"' in applet_source
     assert 'text: "GPL-3.0-or-later"' in applet_source
