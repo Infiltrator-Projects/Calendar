@@ -423,4 +423,3 @@ msgstr "‘Ilm"
 
 msgid "‘Izzat"
 msgstr "‘Izzat"
-
