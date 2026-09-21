@@ -9,7 +9,7 @@ G_IR_COMPILER ?= g-ir-compiler
 PREFIX ?= /usr
 DESTDIR ?=
 
-VERSION := 1.0.39
+VERSION := 1.0.40
 UUID := calendar-plus@the-infiltratr
 APPLET_SRC_DIR := src/cinnamon
 ICON_NAME := infiltratr-calendar
