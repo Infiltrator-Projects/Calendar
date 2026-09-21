@@ -161,12 +161,16 @@ def main() -> None:
         "custom-tooltip-format",
     ):
         assert temporal_key not in settings_schema
-    assert "get_system_calendar" in applet
-    assert "load_persisted_temporal_policy" in system_clock_source
-    assert 'g_find_program_in_path("system-settings")' in system_clock_source
+    assert "get_system_policy()" in applet
+    assert "infiltratr_temporal_posix_provider_available" in system_clock_source
+    assert "infiltratr_temporal_posix_policy_load" in system_clock_source
+    assert "g_file_monitor_directory" in system_clock_source
+    assert 'g_find_program_in_path("system-settings")' not in system_clock_source
     assert '"org.cinnamon.desktop.interface"' in system_clock_source
     assert '"clock-show-seconds"' in system_clock_source
-    assert 'GLib.find_program_in_path("system-settings")' in applet
+    assert 'GLib.find_program_in_path("system-settings")' not in applet
+    assert 'Gio.DesktopAppInfo.new(' in applet
+    assert '"org.infiltrator.SystemSettings.desktop"' in applet
     assert 'Util.spawnCommandLine("cinnamon-settings calendar")' in applet
     assert "get_system_primary_calendar" not in applet
     assert "get_system_secondary_calendar" not in applet
@@ -186,9 +190,9 @@ def main() -> None:
     assert "src/vendor/infiltratr-common" in makefile
     assert (
         "INFILTRATR_COMMON_COMMIT := "
-        "af4942ab03ceac4b9a3c46519c5670f18344cb8e"
+        "210a9a396e3377cd33359991f67cd23328cbb367"
     ) in makefile
-    assert "INFILTRATR_COMMON_VERSION := 1.19.18" in makefile
+    assert "INFILTRATR_COMMON_VERSION := 1.19.19" in makefile
     assert "normal `make` automatically retrieves" in read("README.md")
     assert "common-bootstrap: common-check" in makefile
     assert "common-test: $(INFILTRATR_COMMON_ARCHIVE)" in makefile
@@ -334,6 +338,9 @@ def main() -> None:
     assert 'style_class: "calendar-plus-about-version"' in applet
     assert 'style_class: "calendar-plus-about-build"' in applet
     assert "CalendarPlus.get_build_profile_label()" in applet
+    assert 'Temporal authority: ${authorityLabel}' in applet
+    assert '"Infiltrator System Settings"' in applet
+    assert '"Mint / Cinnamon"' in applet
     assert 'style_class: "calendar-plus-about-author"' in applet
     assert 'Util.spawnCommandLine("/usr/libexec/calendar-plus-about")' not in applet
     assert "getCurrentExtension" in applet
