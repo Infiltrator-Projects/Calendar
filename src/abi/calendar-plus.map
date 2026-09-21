@@ -138,3 +138,8 @@ CALENDAR_PLUS_2.5 {
         calendar_plus_get_build_profile;
         calendar_plus_get_build_profile_label;
 } CALENDAR_PLUS_2.4;
+
+CALENDAR_PLUS_2.6 {
+    global:
+        calendar_plus_system_clock_get_system_policy;
+} CALENDAR_PLUS_2.5;
