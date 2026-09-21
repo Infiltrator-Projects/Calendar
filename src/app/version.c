@@ -15,3 +15,16 @@ calendar_plus_get_source_id(void)
 {
     return calendar_plus_project_info()->source_id;
 }
+
+const gchar *
+calendar_plus_get_build_profile(void)
+{
+    return calendar_plus_project_info()->build_profile;
+}
+
+const gchar *
+calendar_plus_get_build_profile_label(void)
+{
+    return infiltratr_build_profile_label(
+        calendar_plus_project_info()->build_profile);
+}
