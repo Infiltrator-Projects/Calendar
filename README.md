@@ -8,7 +8,7 @@
 
 Calendar is a native Cinnamon panel clock and calendar with alternative clock modes, 30 selectable calendar systems and CalendarServer integration. Its installed Linux desktop identity, Cinnamon Applets manager entry, Linux Mint Software Manager package-name alias and Cinnamon-native About dialog all use the project-owned Calendar icon. The Calendar package owns and installs that artwork itself; no shared icon-helper package is required.
 
-**Stable release:** 1.0.40  
+**Stable release:** 1.0.41  
 **Runtime:** Cinnamon 6.4, 6.6 and 6.7  
 **Build-tested bases:** Debian 13, Linux Mint 22 and Ubuntu 24.04  
 **Shared foundation:** pinned Infiltratr Common 1.19.18, including canonical theme, typography and structural-metric contracts
@@ -25,7 +25,7 @@ The same principle applies across the wider software family: study what is known
 
 ## System temporal authority
 
-Calendar does not own temporal presentation preferences. A valid Infiltrator System Settings policy is the richer authority for clock system, calendar system, seconds and geographic location, and Calendar watches that shared Common 1.19.18 policy for live changes. When no valid Infiltrator policy exists, Calendar deliberately behaves as a native Mint replacement: Cinnamon/locale settings remain authoritative for conventional time, date presentation and seconds, the stock Gregorian month view is used, and no geographic extension is assumed. Calendar's own settings contain only Calendar-specific behaviour such as appearance, events, week numbers and keyboard shortcuts.
+Calendar does not own temporal presentation preferences. When Infiltrator System Settings is installed, its valid shared policy is the richer authority for clock system, calendar system, seconds and geographic location, and Calendar watches that Common 1.19.18 policy for live changes. When System Settings is not installed, Calendar deliberately ignores any stale policy file left in the user's profile and behaves as a native Mint replacement: Cinnamon/locale settings remain authoritative for conventional 12/24-hour time, date visibility and presentation, seconds, first day of week and timezone; the stock Gregorian month view is used and no geographic extension is assumed. Calendar's own settings contain only Calendar-specific behaviour such as appearance, events, week numbers and keyboard shortcuts.
 
 ## Capabilities
 
