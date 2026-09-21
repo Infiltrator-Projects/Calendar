@@ -33,4 +33,4 @@ chmod 0755 "$TEMP_OUTPUT"
 mv -f "$TEMP_OUTPUT" "$OUTPUT"
 trap - EXIT HUP INT TERM
 
-printf 'Local hardware-native installer: %s\n' "$OUTPUT"
+printf 'Local hardware-native PGO installer: %s\n' "$OUTPUT"
