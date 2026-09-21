@@ -178,7 +178,9 @@ def main() -> None:
     assert "super.configureApplet(tab);" in applet
     about_source = read("src/app/about-dialog.c")
     assert "infiltratr_project_info_print" in about_source
-    assert "gtk_" not in about_source
+    assert "#include <gtk/gtk.h>" in about_source
+    assert "gtk_about_dialog_new()" in about_source
+    assert "gtk_dialog_run(GTK_DIALOG(widget))" in about_source
     assert "infiltratr_dynlib_" not in about_source
     assert "<infiltratr/design.h>" not in about_source
     assert "fontconfig," not in control
@@ -230,7 +232,9 @@ def main() -> None:
     about_source = read("src/app/about-dialog.c")
     assert "infiltratr_project_info_print" in about_source
     assert "infiltratr_dynlib_bind_symbols" not in about_source
-    assert "gtk_" not in about_source
+    assert "#include <gtk/gtk.h>" in about_source
+    assert "gtk_about_dialog_set_program_name" in about_source
+    assert "gtk_about_dialog_set_version" in about_source
     icu_source = read("src/core/icu-calendar.c")
     assert 'infiltratr_string_equal(calendar_keyword, "gregorian")' in icu_source
     assert 'g_strcmp0(calendar_keyword, "gregorian")' not in icu_source
