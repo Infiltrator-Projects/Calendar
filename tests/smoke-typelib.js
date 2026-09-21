@@ -76,6 +76,48 @@ requireCondition(historicalClock.get_time().length > 0,
                  "historical clock produced no text");
 historicalClock.stop();
 
+const effectivePolicy = historicalClock.get_system_policy().deep_unpack();
+requireCondition(
+    effectivePolicy.length === 8,
+    "effective temporal policy snapshot has the wrong shape"
+);
+const [
+    effectiveMode,
+    effectiveCalendar,
+    effectiveSeconds,
+    effectiveLocationConfigured,
+    effectiveLatitude,
+    effectiveLongitude,
+    effectiveAuthority,
+    providerAvailable,
+] = effectivePolicy;
+requireCondition(
+    effectiveMode.length > 0 && effectiveCalendar.length > 0,
+    "effective temporal policy identifiers are empty"
+);
+requireCondition(
+    typeof effectiveSeconds === "boolean" &&
+        typeof effectiveLocationConfigured === "boolean" &&
+        Number.isFinite(effectiveLatitude) &&
+        Number.isFinite(effectiveLongitude),
+    "effective temporal policy has invalid scalar fields"
+);
+requireCondition(
+    effectiveAuthority === "mint-cinnamon" ||
+        effectiveAuthority === "infiltrator-system-settings",
+    "effective temporal authority identifier is invalid"
+);
+requireCondition(
+    effectiveAuthority !== "infiltrator-system-settings" || providerAvailable,
+    "Infiltrator authority cannot be active without its provider"
+);
+if (!providerAvailable) {
+    requireCondition(
+        effectiveMode === "standard" && effectiveCalendar === "gregorian",
+        "provider absence must resolve to conventional Mint/Gregorian policy"
+    );
+}
+
 const calendar = CalendarPlus.CalendarSystem.new("gregorian");
 requireCondition(calendar !== null, "Gregorian CalendarSystem unavailable");
 requireCondition(calendar.get_id() === "gregorian", "wrong calendar id");
