@@ -219,6 +219,7 @@ def main() -> None:
     assert "get_system_show_seconds()" in applet_source
     assert '"clock-show-seconds"' in applet_source
     assert "load_persisted_temporal_policy" in system_clock_source
+    assert 'g_find_program_in_path("system-settings")' in system_clock_source
     assert '"org.cinnamon.desktop.interface"' in system_clock_source
     assert '"clock-show-seconds"' in system_clock_source
     assert "g_settings_schema_has_key" in system_clock_source
