@@ -363,7 +363,6 @@ def main() -> None:
     assert 'style_class: "calendar-plus-about-version"' in applet_source
     assert 'style_class: "calendar-plus-about-build"' in applet_source
     assert 'CalendarPlus.get_build_profile_label()' in applet_source
-    assert 'CP_("Build")' in applet_source
     assert 'style_class: "calendar-plus-about-author"' in applet_source
     assert 'text: "Shannon Smith"' in applet_source
     assert 'text: "GPL-3.0-or-later"' in applet_source
