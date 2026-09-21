@@ -155,7 +155,7 @@ chmod +x calendar-<version>-local-folder.run
 ./calendar-<version>-local-folder.run
 ```
 
-The `.run` performs a two-pass local build. Pass 1 instruments Calendar and the pinned Common library with GCC profile generation, runs Calendar's automated tests plus a representative clock/calendar/event workload on the actual machine, then pass 2 rebuilds with the measured profile using `-fprofile-use -fprofile-correction -fprofile-partial-training`. The resulting Debian-managed package is therefore tuned to the local CPU rather than being a generic repository build. The correctness-preserving profile deliberately does not use `-Ofast` or `-ffast-math`.
+The About dialog reports the compiled build profile using Infiltratr Common's canonical label, matching System Monitor: repository builds show **Generic / APT package**, while local `.run` builds show **Native / local machine compile**.\n\nThe `.run` performs a two-pass local build. Pass 1 instruments Calendar and the pinned Common library with GCC profile generation, runs Calendar's automated tests plus a representative clock/calendar/event workload on the actual machine, then pass 2 rebuilds with the measured profile using `-fprofile-use -fprofile-correction -fprofile-partial-training`. The resulting Debian-managed package is therefore tuned to the local CPU rather than being a generic repository build. The correctness-preserving profile deliberately does not use `-Ofast` or `-ffast-math`.
 
 After installation, add **Calendar** from **System Settings → Applets**.
 
