@@ -182,6 +182,7 @@ jobs:
           apt-get install -y --no-install-recommends "$deb"
           test "$(dpkg-query -W -f='${Status}' infiltrator-calendar)" = "install ok installed"
           /usr/libexec/calendar-plus-about --print-metadata | grep -qx "version=$version"
+          /usr/libexec/calendar-plus-about --print-metadata | grep -qx "build-profile=generic"
           CALENDAR_PLUS_EXPECTED_VERSION="$version" gjs tests/smoke-typelib.js >/dev/null
           apt-get purge -y infiltrator-calendar
           ! dpkg-query -W infiltrator-calendar >/dev/null 2>&1
