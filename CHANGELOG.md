@@ -6,6 +6,13 @@ This changelog records user-visible, compatibility, architecture and validation 
 
 No unreleased changes.
 
+## 1.0.41 - 2026-09-21
+
+- Harden Mint-only operation so a stale `~/.config/infiltrator/presentation.conf` cannot override Cinnamon after System Settings has been uninstalled.
+- Treat installed `system-settings` plus a valid temporal policy as the richer authority; otherwise resolve to conventional Gregorian/Cinnamon behaviour.
+- Lock the Mint fallback clock matrix in executable JavaScript tests: 12/24-hour mode, date visibility, seconds and vertical-panel formatting.
+- Document the fallback boundary explicitly, including Cinnamon first-day-of-week, locale and timezone ownership.
+
 ## 1.0.40 - 2026-09-21
 
 - Bring Calendar's About build identity up to the System Monitor standard.
