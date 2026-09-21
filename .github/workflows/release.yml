@@ -16,7 +16,7 @@ permissions:
 
 concurrency:
   group: publish-release-${{ github.repository }}
-  cancel-in-progress: false
+  cancel-in-progress: true
 
 jobs:
   publish:
@@ -177,32 +177,7 @@ jobs:
           test "$published_tag" = "$tag"
 
 
-      - name: Verify Infiltrator APT repository publication
-        env:
-          RELEASE_SHA: ${{ github.event.workflow_run.head_sha }}
-          APP_ID: calendar
-        shell: bash
-        run: |
-          set -euo pipefail
-          VERSION="$(sed -n 's/^VERSION := //p' Makefile)"
-          test -n "$VERSION"
-
-          # The central repository has its own five-minute safety refresh and
-          # independently detects Calendar version advances. Avoid a
-          # separately scoped cross-repository PAT: publication is complete only
-          # after that repository actually advertises this exact version.
-          catalogue='https://infiltrator-projects.github.io/Infiltrator-Repository/catalogue/apps.json'
-          echo "Waiting for the central repository safety refresh to advertise $APP_ID $VERSION."
-          for attempt in $(seq 1 180); do
-            if curl -fsS --retry 2 --retry-delay 1 "$catalogue?release=$RELEASE_SHA&attempt=$attempt" \
-              | jq -e --arg id "$APP_ID" --arg version "$VERSION" \
-                '.[] | select(.id == $id and .version == $version)' >/dev/null; then
-              echo "APT repository advertises $APP_ID $VERSION."
-              exit 0
-            fi
-            echo "Waiting for APT publication of $APP_ID $VERSION ($attempt/180)..."
-            sleep 10
-          done
-
-          echo "::error::GitHub release was published, but the central APT repository did not advertise $APP_ID $VERSION within 30 minutes."
-          exit 1
+      # Central APT publication is intentionally asynchronous. The tokenless
+      # Infiltrator-Repository publisher discovers verified GitHub releases on
+      # its own schedule; Calendar must not wait on or fail because of that
+      # external best-effort schedule.

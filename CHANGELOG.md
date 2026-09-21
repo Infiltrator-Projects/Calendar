@@ -6,6 +6,12 @@ This changelog records user-visible, compatibility, architecture and validation 
 
 No unreleased changes.
 
+## 1.0.43 - 2026-09-21
+
+- Decouple Calendar's verified GitHub release from the central APT repository's independently scheduled tokenless pull refresh.
+- Let a newer publish run supersede an obsolete in-progress publisher instead of holding a completed release open.
+- Preserve strict exact-main, tag and immutable-asset verification for Calendar itself while making external repository propagation asynchronous.
+
 ## 1.0.42 - 2026-09-21
 
 - Replace the generic `system-settings` executable/PATH probe with Common 1.19.20's validated installed `temporal-v3` provider capability.

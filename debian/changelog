@@ -1,3 +1,14 @@
+infiltrator-calendar (1.0.43) trixie; urgency=medium
+
+  * Stop synchronously gating Calendar release completion on the central APT
+    repository's independently scheduled, tokenless safety refresh.
+  * Allow a newer publisher run to supersede an obsolete in-progress release
+    run instead of leaving a completed GitHub release artificially busy.
+  * Keep Calendar's own tag, immutable asset and exact-main verification strict
+    while leaving central repository discovery asynchronous by design.
+
+ -- Shannon Smith <noreply@the-infiltratr.com>  Mon, 21 Sep 2026 13:40:00 +1000
+
 infiltrator-calendar (1.0.42) trixie; urgency=medium
 
   * Replace executable/PATH probing with Common 1.19.20's validated temporal-v3

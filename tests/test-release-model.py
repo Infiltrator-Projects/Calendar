@@ -278,10 +278,11 @@ def main() -> None:
     assert 'VERSION="$(sed -n \'s/^VERSION := //p\' Makefile)"' in publisher
     assert '< VERSION' not in publisher
     assert "APT_REPOSITORY_DISPATCH_TOKEN" not in publisher
-    assert "repository safety refresh" in publisher
-    assert "APP_ID: calendar" in publisher
-    assert "seq 1 180" in publisher
-    assert "within 30 minutes" in publisher
+    assert "cancel-in-progress: true" in publisher
+    assert "Verify Infiltrator APT repository publication" not in publisher
+    assert "Infiltrator-Repository/catalogue/apps.json" not in publisher
+    assert "seq 1 180" not in publisher
+    assert "within 30 minutes" not in publisher
     assert "--draft" in publisher
     assert "release_state=" in publisher
     assert '--json databaseId --jq .databaseId' in publisher
