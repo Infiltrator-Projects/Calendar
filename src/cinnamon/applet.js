@@ -890,11 +890,11 @@ class CalendarPlusApplet extends Applet.Applet {
         const temporal = this._systemTemporalPolicy();
         const authorityLabel =
             temporal.authority === "infiltrator-system-settings"
-                ? "Infiltrator System Settings"
-                : "Mint / Cinnamon";
+                ? CP_("Infiltrator System Settings")
+                : CP_("Mint / Cinnamon");
         if (this._aboutAuthority) {
             this._aboutAuthority.set_text(
-                `Temporal authority: ${authorityLabel}`
+                `${CP_("Temporal authority")}: ${authorityLabel}`
             );
         }
 
