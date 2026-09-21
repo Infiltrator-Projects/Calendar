@@ -328,6 +328,8 @@ def main() -> None:
     assert 'style_class: "calendar-plus-about"' in applet
     assert 'style_class: "calendar-plus-about-title"' in applet
     assert 'style_class: "calendar-plus-about-version"' in applet
+    assert 'style_class: "calendar-plus-about-build"' in applet
+    assert "CalendarPlus.get_build_profile_label()" in applet
     assert 'style_class: "calendar-plus-about-author"' in applet
     assert 'Util.spawnCommandLine("/usr/libexec/calendar-plus-about")' not in applet
     assert "getCurrentExtension" in applet
@@ -450,6 +452,10 @@ def main() -> None:
         f"{missing_common_api}"
     )
     assert "calendar_plus_project_info" in read("src/app/project-info.c")
+    version_source = read("src/app/version.c")
+    assert "calendar_plus_get_build_profile" in version_source
+    assert "calendar_plus_get_build_profile_label" in version_source
+    assert "infiltratr_build_profile_label" in version_source
 
     common_design = json.loads(
         read("src/vendor/infiltratr-common/design/infiltrator-design-v1.json")
