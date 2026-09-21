@@ -338,9 +338,9 @@ def main() -> None:
     assert 'style_class: "calendar-plus-about-version"' in applet
     assert 'style_class: "calendar-plus-about-build"' in applet
     assert "CalendarPlus.get_build_profile_label()" in applet
-    assert 'Temporal authority: ${authorityLabel}' in applet
-    assert '"Infiltrator System Settings"' in applet
-    assert '"Mint / Cinnamon"' in applet
+    assert 'CP_("Temporal authority")' in applet
+    assert 'CP_("Infiltrator System Settings")' in applet
+    assert 'CP_("Mint / Cinnamon")' in applet
     assert 'style_class: "calendar-plus-about-author"' in applet
     assert 'Util.spawnCommandLine("/usr/libexec/calendar-plus-about")' not in applet
     assert "getCurrentExtension" in applet
