@@ -1,3 +1,12 @@
+infiltrator-calendar (1.0.47) trixie; urgency=medium
+
+  * Consume Common ASCII classification in event and locale parsing.
+  * Use Common as the sole calendar ID/name metadata authority.
+  * Consume Common project identity and build-profile contracts directly.
+  * Add regression coverage for the tightened Common ownership boundary.
+
+ -- Shannon Smith <noreply@the-infiltratr.com>  Mon, 21 Sep 2026 21:32:00 +1000
+
 infiltrator-calendar (1.0.46) trixie; urgency=medium
 
   * Make the panel date follow the selected System Settings calendar.

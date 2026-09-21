@@ -6,6 +6,13 @@ This changelog records user-visible, compatibility, architecture and validation 
 
 No unreleased changes.
 
+## 1.0.47 - 2026-09-21
+
+- Finish the Common → Calendar ownership pass without changing Common: use Common's deterministic ASCII classifiers for event-colour and locale-region parsing.
+- Make Infiltratr Common the sole runtime owner of the 30 calendar IDs and English presentation names; Calendar now retains only chronology/backend implementation policy and resolves catalogue metadata through Common.
+- Remove the About helper's stale local build-profile aliases and derive the displayed author identity from Common's InfiltratrProjectInfo contract.
+- Strengthen portable and release-model regression coverage so duplicated Common-owned metadata and ASCII helpers cannot silently return.
+
 ## 1.0.46 - 2026-09-21
 
 - Make the Cinnamon panel date follow System Settings' selected calendar instead of leaving Gregorian date text in the bottom-right panel clock.
