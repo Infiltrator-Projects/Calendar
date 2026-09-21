@@ -18,6 +18,8 @@
 #include "locale-weekend.h"
 #include "julian-day.h"
 
+#include <infiltratr/temporal.h>
+
 struct _CalendarPlusCalendarEngine
 {
     const CalendarPlusCalendarProvider *provider;
@@ -141,16 +143,22 @@ const gchar *
 calendar_plus_calendar_engine_get_id(
     const CalendarPlusCalendarEngine *engine)
 {
-    return engine != NULL && engine->provider != NULL ?
-           engine->provider->id : "";
+    const InfiltratrTemporalCalendarInfo *info =
+        engine != NULL ?
+        calendar_plus_calendar_provider_info(engine->provider) : NULL;
+
+    return info != NULL ? info->id : "";
 }
 
 const gchar *
 calendar_plus_calendar_engine_get_name(
     const CalendarPlusCalendarEngine *engine)
 {
-    return engine != NULL && engine->provider != NULL ?
-           engine->provider->name : "";
+    const InfiltratrTemporalCalendarInfo *info =
+        engine != NULL ?
+        calendar_plus_calendar_provider_info(engine->provider) : NULL;
+
+    return info != NULL ? info->name : "";
 }
 
 gchar *
@@ -396,7 +404,14 @@ calendar_plus_calendar_catalogue_get(
     if (provider == NULL)
         return FALSE;
 
-    descriptor->id = provider->id;
-    descriptor->name = provider->name;
+    {
+        const InfiltratrTemporalCalendarInfo *info =
+            calendar_plus_calendar_provider_info(provider);
+
+        if (info == NULL)
+            return FALSE;
+        descriptor->id = info->id;
+        descriptor->name = info->name;
+    }
     return TRUE;
 }

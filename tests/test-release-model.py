@@ -377,8 +377,19 @@ def main() -> None:
     calendar_system = read("src/adapters/calendar-system.c")
     time_formats = read("src/core/time-formats.c")
     provider_header = read("src/core/calendar-registry.h")
-    assert "CALENDAR_PLUS_CALENDAR_PROVIDER_ABI = 1" in provider_header
+    assert "CALENDAR_PLUS_CALENDAR_PROVIDER_ABI = 2" in provider_header
     assert "CalendarPlusCalendarProvider" in provider_header
+    assert "gsize common_index;" in provider_header
+    assert "const gchar *id;" not in provider_header
+    assert "const gchar *name;" not in provider_header
+    assert "infiltratr_temporal_calendar_at" in registry
+    assert "infiltratr_temporal_calendar_count" in registry
+    assert "calendar_plus_calendar_provider_info" in registry
+    assert "PROVIDER_INTERFACE(id_, name_" not in registry
+    assert '"Gregorian"' not in registry
+    assert '"Positivist"' not in registry
+    assert "provider->id" not in calendar_core
+    assert "provider->name" not in calendar_core
     assert "provider->format" in calendar_core
     assert "provider->add_periods" in calendar_core
     assert "calendar_plus_calendar_engine_build_grid_for_locale" in calendar_core
@@ -553,6 +564,8 @@ def main() -> None:
     assert "infiltratr_size_add_checked" in read("src/adapters/event-store.c")
     assert "infiltratr_size_multiply_checked" in read("src/adapters/event-store.c")
     assert "infiltratr_i64_floor_divmod" in read("src/adapters/clock-glib-adapter.c")
+    assert "infiltratr_temporal_calendar_at" in read("src/core/calendar-registry.c")
+    assert "infiltratr_temporal_calendar_count" in read("src/core/calendar-registry.c")
     assert "INFILTRATR_ARRAY_LENGTH(majors)" in read("src/core/icu-compat-bridge.c")
     icu_bridge = read("src/core/icu-compat-bridge.c")
     assert "ucal_setGregorianChange" in icu_bridge

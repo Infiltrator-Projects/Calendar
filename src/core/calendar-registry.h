@@ -7,6 +7,8 @@
 #include "calendar-internal.h"
 #include "calendar-types.h"
 
+#include <infiltratr/temporal.h>
+
 G_BEGIN_DECLS
 
 /*
@@ -39,8 +41,7 @@ typedef gint64 (*CalendarPlusProviderPeriodStartFunc)(
 struct _CalendarPlusCalendarProvider
 {
     guint abi_version;
-    const gchar *id;
-    const gchar *name;
+    gsize common_index;
     CalendarPlusProviderFieldsFunc fields_from_jdn;
     CalendarPlusProviderFormatFunc format;
     CalendarPlusProviderPeriodStartFunc period_start;
@@ -50,11 +51,13 @@ struct _CalendarPlusCalendarProvider
 
 enum
 {
-    CALENDAR_PLUS_CALENDAR_PROVIDER_ABI = 1
+    CALENDAR_PLUS_CALENDAR_PROVIDER_ABI = 2
 };
 
 const CalendarPlusCalendarProvider *calendar_plus_calendar_provider_from_id(
     const gchar *calendar_id);
+const InfiltratrTemporalCalendarInfo *calendar_plus_calendar_provider_info(
+    const CalendarPlusCalendarProvider *provider);
 gsize calendar_plus_calendar_provider_get_count(void);
 const CalendarPlusCalendarProvider *calendar_plus_calendar_provider_at(
     gsize index);

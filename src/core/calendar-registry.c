@@ -21,8 +21,8 @@
 #include "calendar-swedish.h"
 #include "icu-calendar.h"
 
-#include <glib/gi18n-lib.h>
 #include <infiltratr/core.h>
+#include <infiltratr/temporal.h>
 
 typedef struct
 {
@@ -233,113 +233,138 @@ swedish_add_years(const CalendarPlusCalendarProvider *provider,
     return calendar_plus_swedish_add_years(jdn, amount);
 }
 
-#define PROVIDER_INTERFACE(id_, name_, fields_, format_, start_, add_, years_) \
+#define PROVIDER_INTERFACE(mode_, fields_, format_, start_, add_, years_) \
     { \
         CALENDAR_PLUS_CALENDAR_PROVIDER_ABI, \
-        id_, N_(name_), fields_, format_, start_, add_, years_ \
+        CALENDAR_PLUS_CALENDAR_MODE_##mode_, \
+        fields_, format_, start_, add_, years_ \
     }
 
-#define ICU_PROVIDER(mode_, id_, name_, keyword_) \
+#define ICU_PROVIDER(mode_, keyword_) \
     [CALENDAR_PLUS_CALENDAR_MODE_##mode_] = { \
-        PROVIDER_INTERFACE(id_, name_, \
+        PROVIDER_INTERFACE(mode_, \
                            icu_fields, icu_format, icu_period_start, \
                            icu_add_periods, icu_add_years), \
         CALENDAR_PLUS_CALENDAR_MODE_##mode_, keyword_ \
     }
 
-#define ARITHMETIC_PROVIDER(mode_, id_, name_, keyword_) \
+#define ARITHMETIC_PROVIDER(mode_, keyword_) \
     [CALENDAR_PLUS_CALENDAR_MODE_##mode_] = { \
-        PROVIDER_INTERFACE(id_, name_, \
+        PROVIDER_INTERFACE(mode_, \
                            arithmetic_fields, icu_format, \
                            arithmetic_period_start, arithmetic_add_periods, \
                            arithmetic_add_years), \
         CALENDAR_PLUS_CALENDAR_MODE_##mode_, keyword_ \
     }
 
-#define CUSTOM_PROVIDER(mode_, id_, name_) \
+#define CUSTOM_PROVIDER(mode_) \
     [CALENDAR_PLUS_CALENDAR_MODE_##mode_] = { \
-        PROVIDER_INTERFACE(id_, name_, \
+        PROVIDER_INTERFACE(mode_, \
                            custom_fields, custom_format, custom_period_start, \
                            custom_add_periods, custom_add_years), \
         CALENDAR_PLUS_CALENDAR_MODE_##mode_, NULL \
     }
 
-#define SWEDISH_PROVIDER(mode_, id_, name_) \
+#define SWEDISH_PROVIDER(mode_) \
     [CALENDAR_PLUS_CALENDAR_MODE_##mode_] = { \
-        PROVIDER_INTERFACE(id_, name_, \
+        PROVIDER_INTERFACE(mode_, \
                            swedish_fields, swedish_format, swedish_period_start, \
                            swedish_add_periods, swedish_add_years), \
         CALENDAR_PLUS_CALENDAR_MODE_##mode_, NULL \
     }
 
+/*
+ * This table intentionally follows Common's catalogue order exactly.
+ * Calendar owns only the backend implementation choice and ICU keyword.
+ * Persisted identifiers and English presentation names are read from Common.
+ */
 static const BuiltinCalendarProvider providers[] = {
-    ARITHMETIC_PROVIDER(GREGORIAN, "gregorian", "Gregorian", "gregorian"),
-    CUSTOM_PROVIDER(JULIAN, "julian", "Julian"),
-    CUSTOM_PROVIDER(ISO_WEEK, "iso-week", "ISO week calendar"),
-    ARITHMETIC_PROVIDER(HEBREW, "hebrew", "Hebrew", "hebrew"),
-    ICU_PROVIDER(ISLAMIC, "islamic", "Islamic (astronomical approximation)", "islamic"),
-    ARITHMETIC_PROVIDER(ISLAMIC_CIVIL, "islamic-civil", "Islamic (civil/tabular)", "islamic-civil"),
-    ARITHMETIC_PROVIDER(ISLAMIC_UMM_AL_QURA, "islamic-umalqura", "Islamic (Umm al-Qura)", "islamic-umalqura"),
-    ARITHMETIC_PROVIDER(PERSIAN, "persian", "Persian (Solar Hijri)", "persian"),
-    ICU_PROVIDER(CHINESE, "chinese", "Chinese traditional", "chinese"),
-    ARITHMETIC_PROVIDER(INDIAN, "indian", "Indian National (Saka)", "indian"),
-    ARITHMETIC_PROVIDER(COPTIC, "coptic", "Coptic", "coptic"),
-    ARITHMETIC_PROVIDER(ETHIOPIAN, "ethiopian", "Ethiopian", "ethiopic"),
-    ARITHMETIC_PROVIDER(BUDDHIST, "buddhist", "Buddhist", "buddhist"),
-    ARITHMETIC_PROVIDER(JAPANESE, "japanese", "Japanese imperial era", "japanese"),
-    ARITHMETIC_PROVIDER(MINGUO, "minguo", "Minguo (Republic of China)", "roc"),
-    CUSTOM_PROVIDER(FRENCH_REPUBLICAN, "french-republican", "French Republican"),
-    CUSTOM_PROVIDER(ROMAN, "roman", "Roman"),
-    CUSTOM_PROVIDER(MAYAN, "mayan", "Mayan Long Count"),
-    CUSTOM_PROVIDER(BAHAI, "bahai", "Bahá’í (Badíʿ)"),
-    CUSTOM_PROVIDER(INTERNATIONAL_FIXED, "international-fixed", "International Fixed"),
-    CUSTOM_PROVIDER(WORLD, "world", "World Calendar"),
-    CUSTOM_PROVIDER(POSITIVIST, "positivist", "Positivist"),
-    CUSTOM_PROVIDER(REVISED_JULIAN, "revised-julian", "Revised Julian"),
-    CUSTOM_PROVIDER(BYZANTINE, "byzantine", "Byzantine (Anno Mundi)"),
-    CUSTOM_PROVIDER(EGYPTIAN_NABONASSAR, "egyptian-nabonassar",
-                    "Egyptian civil (Nabonassar era)"),
-    ICU_PROVIDER(DANGI, "dangi", "Dangi (traditional Korean)", "dangi"),
-    ARITHMETIC_PROVIDER(ETHIOPIC_AMETE_ALEM, "ethiopic-amete-alem",
-                        "Ethiopic (Amete Alem)", "ethiopic-amete-alem"),
-    ARITHMETIC_PROVIDER(ISLAMIC_TBLA, "islamic-tbla",
-                    "Islamic (tabular, astronomical epoch)", "islamic-tbla"),
-    CUSTOM_PROVIDER(ARMENIAN_TRADITIONAL, "armenian-traditional",
-                    "Armenian traditional (365-day)"),
-    SWEDISH_PROVIDER(SWEDISH_HISTORICAL, "swedish-historical",
-                     "Swedish historical (1700–1753)")
+    ARITHMETIC_PROVIDER(GREGORIAN, "gregorian"),
+    CUSTOM_PROVIDER(ISO_WEEK),
+    CUSTOM_PROVIDER(JULIAN),
+    CUSTOM_PROVIDER(REVISED_JULIAN),
+    ARITHMETIC_PROVIDER(HEBREW, "hebrew"),
+    ARITHMETIC_PROVIDER(ISLAMIC_UMM_AL_QURA, "islamic-umalqura"),
+    ARITHMETIC_PROVIDER(ISLAMIC_CIVIL, "islamic-civil"),
+    ARITHMETIC_PROVIDER(ISLAMIC_TBLA, "islamic-tbla"),
+    ICU_PROVIDER(ISLAMIC, "islamic"),
+    ARITHMETIC_PROVIDER(PERSIAN, "persian"),
+    CUSTOM_PROVIDER(BAHAI),
+    ARITHMETIC_PROVIDER(BUDDHIST, "buddhist"),
+    ARITHMETIC_PROVIDER(COPTIC, "coptic"),
+    ARITHMETIC_PROVIDER(ETHIOPIAN, "ethiopic"),
+    ARITHMETIC_PROVIDER(ETHIOPIC_AMETE_ALEM, "ethiopic-amete-alem"),
+    ICU_PROVIDER(CHINESE, "chinese"),
+    ICU_PROVIDER(DANGI, "dangi"),
+    ARITHMETIC_PROVIDER(INDIAN, "indian"),
+    ARITHMETIC_PROVIDER(JAPANESE, "japanese"),
+    ARITHMETIC_PROVIDER(MINGUO, "roc"),
+    CUSTOM_PROVIDER(ROMAN),
+    CUSTOM_PROVIDER(BYZANTINE),
+    CUSTOM_PROVIDER(EGYPTIAN_NABONASSAR),
+    CUSTOM_PROVIDER(ARMENIAN_TRADITIONAL),
+    CUSTOM_PROVIDER(MAYAN),
+    CUSTOM_PROVIDER(FRENCH_REPUBLICAN),
+    SWEDISH_PROVIDER(SWEDISH_HISTORICAL),
+    CUSTOM_PROVIDER(INTERNATIONAL_FIXED),
+    CUSTOM_PROVIDER(WORLD),
+    CUSTOM_PROVIDER(POSITIVIST)
 };
 
 G_STATIC_ASSERT(G_N_ELEMENTS(providers) == CALENDAR_PLUS_CALENDAR_MODE_COUNT);
 
-const CalendarPlusCalendarProvider *
-calendar_plus_calendar_provider_from_id(const gchar *calendar_id)
-{
-    guint index;
-
-    for (index = 0; index < G_N_ELEMENTS(providers); index++)
-    {
-        const CalendarPlusCalendarProvider *provider =
-            &providers[index].interface;
-
-        if (infiltratr_string_equal(calendar_id, provider->id))
-            return provider;
-    }
-
-    return NULL;
-}
-
 gsize
 calendar_plus_calendar_provider_get_count(void)
 {
-    return G_N_ELEMENTS(providers);
+    const gsize common_count = infiltratr_temporal_calendar_count();
+
+    return common_count == G_N_ELEMENTS(providers) ? common_count : 0;
 }
 
 const CalendarPlusCalendarProvider *
 calendar_plus_calendar_provider_at(gsize index)
 {
-    if (index >= G_N_ELEMENTS(providers))
+    if (index >= calendar_plus_calendar_provider_get_count() ||
+        providers[index].interface.common_index != index)
+    {
         return NULL;
+    }
 
     return &providers[index].interface;
+}
+
+const InfiltratrTemporalCalendarInfo *
+calendar_plus_calendar_provider_info(
+    const CalendarPlusCalendarProvider *provider)
+{
+    if (provider == NULL ||
+        provider->abi_version != CALENDAR_PLUS_CALENDAR_PROVIDER_ABI ||
+        provider->common_index >= calendar_plus_calendar_provider_get_count())
+    {
+        return NULL;
+    }
+
+    return infiltratr_temporal_calendar_at(provider->common_index);
+}
+
+const CalendarPlusCalendarProvider *
+calendar_plus_calendar_provider_from_id(const gchar *calendar_id)
+{
+    gsize index;
+
+    if (calendar_id == NULL)
+        return NULL;
+
+    for (index = 0; index < calendar_plus_calendar_provider_get_count(); index++)
+    {
+        const CalendarPlusCalendarProvider *provider =
+            calendar_plus_calendar_provider_at(index);
+        const InfiltratrTemporalCalendarInfo *info =
+            calendar_plus_calendar_provider_info(provider);
+
+        if (info != NULL && infiltratr_string_equal(calendar_id, info->id))
+            return provider;
+    }
+
+    return NULL;
 }

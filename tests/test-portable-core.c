@@ -100,6 +100,21 @@ test_calendar_reference_vectors(void)
 
     g_assert_cmpuint(G_N_ELEMENTS(vectors), ==,
                      calendar_plus_calendar_provider_get_count());
+    g_assert_cmpuint(calendar_plus_calendar_provider_get_count(), ==,
+                     infiltratr_temporal_calendar_count());
+
+    for (index = 0; index < calendar_plus_calendar_provider_get_count(); index++)
+    {
+        const CalendarPlusCalendarProvider *provider =
+            calendar_plus_calendar_provider_at(index);
+        const InfiltratrTemporalCalendarInfo *info =
+            infiltratr_temporal_calendar_at(index);
+
+        g_assert_nonnull(provider);
+        g_assert_nonnull(info);
+        g_assert_cmpuint(provider->common_index, ==, index);
+        g_assert_true(calendar_plus_calendar_provider_info(provider) == info);
+    }
 
     for (index = 0; index < G_N_ELEMENTS(vectors); index++)
     {
