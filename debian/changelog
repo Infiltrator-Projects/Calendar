@@ -1,3 +1,14 @@
+infiltrator-calendar (1.0.44) trixie; urgency=medium
+
+  * Use Common 1.19.20 as the runtime authority for native clock-mode IDs,
+    presentation names and capability metadata.
+  * Keep Calendar-owned formatter and next-boundary callbacks local while
+    binding them to the canonical Common temporal catalogue.
+  * Add catalogue-drift regression coverage and refresh current Common design
+    documentation to the exact pinned release.
+
+ -- Shannon Smith <noreply@the-infiltratr.com>  Mon, 21 Sep 2026 14:30:00 +1000
+
 infiltrator-calendar (1.0.43) trixie; urgency=medium
 
   * Stop synchronously gating Calendar release completion on the central APT

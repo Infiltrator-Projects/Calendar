@@ -6,6 +6,12 @@ This changelog records user-visible, compatibility, architecture and validation 
 
 No unreleased changes.
 
+## 1.0.44 - 2026-09-21
+
+- Make Common 1.19.20 the runtime authority for native clock-mode identifiers, presentation names and capability metadata while Calendar retains its formatter and next-boundary implementations.
+- Add executable and static regression checks that compare Calendar's provider bindings against Common's complete temporal catalogue so metadata drift cannot silently return.
+- Refresh current architecture and generated design commentary to the actual pinned Common 1.19.20 foundation.
+
 ## 1.0.43 - 2026-09-21
 
 - Decouple Calendar's verified GitHub release from the central APT repository's independently scheduled tokenless pull refresh.
