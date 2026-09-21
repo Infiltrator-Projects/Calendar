@@ -221,6 +221,8 @@ test -f \
     "$PACKAGE_ROOT/usr/share/locale/en_AU/LC_MESSAGES/calendar-plus@the-infiltratr.mo"
 "$PACKAGE_ROOT/usr/libexec/calendar-plus-about" --print-metadata |
     grep -qx "version=$VERSION"
+"$PACKAGE_ROOT/usr/libexec/calendar-plus-about" --print-metadata |
+    grep -qx "build-profile=native"
 
 mkdir -p "$OUTPUT_DIR"
 OUTPUT_DIR=$(CDPATH='' cd -- "$OUTPUT_DIR" && pwd)
