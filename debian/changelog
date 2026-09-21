@@ -1,3 +1,18 @@
+infiltrator-calendar (1.0.42) trixie; urgency=medium
+
+  * Replace executable/PATH probing with Common 1.19.19's explicit temporal-v3
+    provider capability marker.
+  * Consume one cached effective temporal snapshot so clock, calendar, seconds
+    and location cannot be mixed across separate policy reads.
+  * Monitor the policy directory and provider marker for atomic replacement,
+    installation and removal while Calendar is running.
+  * Use the package-owned System Settings desktop identity for launching the
+    richer settings frontend and keep Cinnamon Date & Time as the fallback.
+  * Show the active temporal authority in About and add precedence regression
+    coverage for stale, missing, valid and removed providers.
+
+ -- Shannon Smith <noreply@the-infiltratr.com>  Mon, 21 Sep 2026 11:32:00 +1000
+
 infiltrator-calendar (1.0.41) trixie; urgency=medium
 
   * Ignore stale per-user Infiltrator temporal policy when System Settings is
