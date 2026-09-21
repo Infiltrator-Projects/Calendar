@@ -45,12 +45,16 @@ def main() -> None:
         "format-button",
     }
     assert not forbidden_temporal_settings.intersection(schema)
-    assert "get_system_mode()" in applet_source
-    assert "get_system_calendar()" in applet_source
-    assert "get_system_show_seconds()" in applet_source
-    assert "get_system_location_configured()" in applet_source
-    assert "get_system_latitude()" in applet_source
-    assert "get_system_longitude()" in applet_source
+    assert "get_system_policy()" in applet_source
+    for legacy_getter in (
+        "get_system_mode()",
+        "get_system_calendar()",
+        "get_system_show_seconds()",
+        "get_system_location_configured()",
+        "get_system_latitude()",
+        "get_system_longitude()",
+    ):
+        assert legacy_getter not in applet_source
     assert "follow_system_temporal" not in applet_source
     assert "secondary_calendar" not in applet_source
     assert "_secondary_date" not in applet_source
