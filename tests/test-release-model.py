@@ -235,6 +235,10 @@ def main() -> None:
     assert "#include <gtk/gtk.h>" in about_source
     assert "gtk_about_dialog_set_program_name" in about_source
     assert "gtk_about_dialog_set_version" in about_source
+    assert "infiltratr_build_profile_label(info->build_profile)" in about_source
+    assert "info->author" in about_source
+    assert '"Shannon Smith — Author and project maintainer"' not in about_source
+    assert 'infiltratr_string_equal(profile' not in about_source
     icu_source = read("src/core/icu-calendar.c")
     assert 'infiltratr_string_equal(calendar_keyword, "gregorian")' in icu_source
     assert 'g_strcmp0(calendar_keyword, "gregorian")' not in icu_source
@@ -496,7 +500,15 @@ def main() -> None:
     # Keep generic mechanics in Common and one Calendar-owned shim/helper layer.
     assert "src/core/calendar-helpers.c" in makefile
     assert "src/core/integer-math.h" in makefile
-    assert "infiltratr_utf8_validate" in read("src/core/event-core.c")
+    event_core = read("src/core/event-core.c")
+    locale_weekend = read("src/core/locale-weekend.c")
+    assert "infiltratr_utf8_validate" in event_core
+    assert "infiltratr_ascii_is_xdigit" in event_core
+    assert "g_ascii_isxdigit" not in event_core
+    assert "infiltratr_ascii_is_alpha" in locale_weekend
+    assert "infiltratr_ascii_to_upper" in locale_weekend
+    assert "g_ascii_isalpha" not in locale_weekend
+    assert "g_ascii_toupper" not in locale_weekend
     assert "g_utf8_validate" not in read("src/core/event-core.c")
     assert "g_utf8_validate" not in read("src/adapters/event-gvariant-adapter.c")
     assert "calendar_plus_time_floor_divide" not in read("src/core/time-formats.c")

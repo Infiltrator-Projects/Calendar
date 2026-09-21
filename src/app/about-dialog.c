@@ -21,11 +21,8 @@ main(int argc,
      char **argv)
 {
     const InfiltratrProjectInfo *info = calendar_plus_project_info();
-    const char *profile;
-    const char *authors[] = {
-        "Shannon Smith — Author and project maintainer",
-        NULL
-    };
+    char author[256];
+    const char *authors[] = { author, NULL };
     char comments[512];
     GtkWidget *widget;
     GtkAboutDialog *dialog;
@@ -40,14 +37,11 @@ main(int argc,
 
     gtk_init(&argc, &argv);
 
-    profile = info->build_profile;
-    if (infiltratr_string_equal(profile, "aggressive") ||
-        infiltratr_string_equal(profile, "portable"))
-        profile = "native";
-
+    (void)snprintf(author, sizeof(author), "%s — Author and project maintainer",
+                   info->author);
     (void)snprintf(comments, sizeof(comments), "%s\n\nBuild: %s",
                    info->comments,
-                   infiltratr_build_profile_label(profile));
+                   infiltratr_build_profile_label(info->build_profile));
 
     widget = gtk_about_dialog_new();
     dialog = GTK_ABOUT_DIALOG(widget);

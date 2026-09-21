@@ -15,7 +15,7 @@
 
 #include "locale-weekend.h"
 
-#include <ctype.h>
+#include <infiltratr/core.h>
 #include <string.h>
 
 typedef struct
@@ -71,8 +71,8 @@ locale_territory(const gchar *locale,
     for (cursor = locale; *cursor != '\0'; cursor++)
     {
         if ((*cursor != '_' && *cursor != '-') ||
-            !g_ascii_isalpha(cursor[1]) ||
-            !g_ascii_isalpha(cursor[2]))
+            !infiltratr_ascii_is_alpha((unsigned char)cursor[1]) ||
+            !infiltratr_ascii_is_alpha((unsigned char)cursor[2]))
         {
             continue;
         }
@@ -86,8 +86,8 @@ locale_territory(const gchar *locale,
             continue;
         }
 
-        territory[0] = (gchar)g_ascii_toupper(cursor[1]);
-        territory[1] = (gchar)g_ascii_toupper(cursor[2]);
+        territory[0] = (gchar)infiltratr_ascii_to_upper((unsigned char)cursor[1]);
+        territory[1] = (gchar)infiltratr_ascii_to_upper((unsigned char)cursor[2]);
         territory[2] = '\0';
         return;
     }

@@ -173,7 +173,7 @@ color_is_valid(const gchar *color)
 
     for (index = 1; index < length; index++)
     {
-        if (!g_ascii_isxdigit(color[index]))
+        if (!infiltratr_ascii_is_xdigit((unsigned char)color[index]))
             return FALSE;
     }
     return TRUE;
