@@ -198,6 +198,8 @@ LDFLAGS += -Wl,-z,relro,-z,now -Wl,--as-needed
 SHARED_LDFLAGS = $(LDFLAGS) -Wl,--version-script=src/abi/calendar-plus.map
 GLIB_CFLAGS = $(shell $(PKG_CONFIG) --cflags gio-2.0 gobject-2.0 icu-i18n)
 GLIB_LIBS = $(shell $(PKG_CONFIG) --libs gio-2.0 gobject-2.0)
+GTK_CFLAGS = $(shell $(PKG_CONFIG) --cflags gtk+-3.0)
+GTK_LIBS = $(shell $(PKG_CONFIG) --libs gtk+-3.0)
 CORE_CFLAGS = $(shell $(PKG_CONFIG) --cflags glib-2.0 icu-i18n)
 CORE_LIBS = $(shell $(PKG_CONFIG) --libs glib-2.0)
 DYNLIB_LIBS = -ldl
@@ -290,6 +292,8 @@ check-deps: common-check
 		echo "Missing build dependency: libglib2.0-dev" >&2; exit 1; }
 	@$(PKG_CONFIG) --exists icu-i18n || { \
 		echo "Missing build dependency: libicu-dev" >&2; exit 1; }
+	@$(PKG_CONFIG) --exists gtk+-3.0 || { \
+		echo "Missing build dependency: libgtk-3-dev" >&2; exit 1; }
 	@command -v msgfmt >/dev/null || { \
 		echo "Missing build dependency: gettext" >&2; exit 1; }
 	@command -v python3 >/dev/null || { \
@@ -357,10 +361,10 @@ pgo-train: $(BUILD_DIR)/pgo-train
 $(BUILD_DIR)/$(ABOUT_BINARY): src/app/about-dialog.c src/app/project-info.c \
 		src/app/project-info.h $(INFILTRATR_COMMON_ARCHIVE)
 	@mkdir -p "$(BUILD_DIR)"
-	$(CC) $(CPPFLAGS) $(CFLAGS) \
+	$(CC) $(CPPFLAGS) $(CFLAGS) $(GTK_CFLAGS) \
 		-frandom-seed=$(REPRO_SEED_PREFIX)-about-dialog \
 		src/app/about-dialog.c src/app/project-info.c \
-		$(INFILTRATR_COMMON_ARCHIVE) -o $@ $(LDFLAGS) $(MATH_LIBS)
+		$(INFILTRATR_COMMON_ARCHIVE) -o $@ $(LDFLAGS) $(GTK_LIBS) $(MATH_LIBS)
 	chmod 0755 $@
 
 prepare-fonts:

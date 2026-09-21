@@ -9,6 +9,7 @@ Build-Depends:
  gobject-introspection,
  gjs,
  libglib2.0-dev,
+ libgtk-3-dev,
  libicu-dev,
  nodejs,
  pkg-config,

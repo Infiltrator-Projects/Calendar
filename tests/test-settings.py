@@ -361,31 +361,14 @@ def main() -> None:
         assert f'CP_("{label}")' in calendar_source
     assert 'CP_("Show today")' in applet_source
     assert 'CP_("About Calendar")' in applet_source
-    # Every About entry point uses the same Cinnamon/St dialog. Calendar no
-    # longer launches a GTK helper solely to display About information.
+    # Every About entry point launches the same native helper.  Calendar does
+    # not take a Cinnamon shell modal/input grab for application metadata.
     assert "openAbout()" in applet_source
     assert "this._onAbout();" in applet_source
-    assert "new ModalDialog.ModalDialog()" in applet_source
-    assert "destroyOnClose: false" not in applet_source
-    assert 'dialog.connect("destroy", () => {' in applet_source
-    assert "this._aboutDialog = null;" in applet_source
-    assert "this.menu.close(false);" in applet_source
-    assert "this._aboutDialog.popModal();" in applet_source
-    assert "new Dialog.MessageDialogContent" not in applet_source
-    assert 'icon_name: "infiltratr-calendar"' in applet_source
-    assert 'style_class: "calendar-plus-about"' in applet_source
-    assert 'style_class: "calendar-plus-about-title"' in applet_source
-    assert 'style_class: "calendar-plus-about-version"' in applet_source
-    assert 'style_class: "calendar-plus-about-build"' in applet_source
-    assert 'CalendarPlus.get_build_profile_label()' in applet_source
-    assert 'CP_("Temporal authority")' in applet_source
-    assert 'CP_("Infiltrator System Settings")' in applet_source
-    assert 'CP_("Mint / Cinnamon")' in applet_source
-    assert 'style_class: "calendar-plus-about-author"' in applet_source
-    assert 'text: "Shannon Smith — Author and project maintainer"' in applet_source
-    assert 'text: "GPL-3.0-or-later"' in applet_source
-    assert 'Util.spawnCommandLine("/usr/libexec/calendar-plus-about")' not in applet_source
-    assert "xlet-about-dialog" not in applet_source
+    assert 'Util.spawnCommandLine("/usr/libexec/calendar-plus-about")' in applet_source
+    assert "ModalDialog" not in applet_source
+    assert "_aboutDialog" not in applet_source
+    assert "calendar-plus-about-title" not in applet_source
     assert 'CP_("Open selected date in Calendar")' in event_source
     assert 'CP_("Open Calendar")' in event_source
 

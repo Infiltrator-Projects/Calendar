@@ -28,7 +28,6 @@ const Pango = imports.gi.Pango;
 const St = imports.gi.St;
 const Gettext = imports.gettext;
 const Main = imports.ui.main;
-const ModalDialog = imports.ui.modalDialog;
 const PopupMenu = imports.ui.popupMenu;
 const Settings = imports.ui.settings;
 const Util = imports.misc.util;
@@ -130,8 +129,6 @@ class CalendarPlusApplet extends Applet.Applet {
         this._calendar = null;
         this._popupBody = null;
         this._calendarColumn = null;
-        this._aboutDialog = null;
-        this._aboutAuthority = null;
         this._resume_source = null;
 
         this._signals = new SignalBag();
@@ -784,144 +781,9 @@ class CalendarPlusApplet extends Applet.Applet {
 
     _onAbout() {
         if (this.menu) {
-            /*
-             * Release PopupMenuManager's grab synchronously before taking a
-             * ModalDialog grab.  This avoids overlapping Cinnamon modal/menu
-             * lifecycles and also sidesteps known animated-menu grab failures.
-             */
             this.menu.close(false);
         }
-
-        if (!this._aboutDialog) {
-            /*
-             * About dialogs are intentionally one-shot.  Cinnamon's native
-             * ModalDialog contract destroys the actor after close; creating a
-             * fresh instance for each invocation also guarantees a fresh modal
-             * grab and prevents stale focus/input state surviving a reopen.
-             */
-            const dialog = new ModalDialog.ModalDialog();
-            const card = new St.BoxLayout({
-                vertical: true,
-                style_class: "calendar-plus-about",
-                x_align: Clutter.ActorAlign.CENTER,
-            });
-            const icon = new St.Icon({
-                icon_name: "infiltratr-calendar",
-                icon_size: 96,
-                style_class: "calendar-plus-about-icon",
-                x_align: Clutter.ActorAlign.CENTER,
-            });
-            const identity = new St.BoxLayout({
-                vertical: true,
-                style_class: "calendar-plus-about-identity",
-                x_align: Clutter.ActorAlign.CENTER,
-            });
-            const title = new St.Label({
-                text: CP_("Calendar"),
-                style_class: "calendar-plus-about-title",
-                x_align: Clutter.ActorAlign.CENTER,
-            });
-            const version = new St.Label({
-                text: `v${CalendarPlus.get_version()}`,
-                style_class: "calendar-plus-about-version",
-                x_align: Clutter.ActorAlign.CENTER,
-            });
-            const build = new St.Label({
-                text: `Build: ${CalendarPlus.get_build_profile_label()}`,
-                style_class: "calendar-plus-about-build",
-                x_align: Clutter.ActorAlign.CENTER,
-            });
-            this._aboutAuthority = new St.Label({
-                text: "",
-                style_class: "calendar-plus-about-build",
-                x_align: Clutter.ActorAlign.CENTER,
-            });
-            const author = new St.Label({
-                text: "Shannon Smith — Author and project maintainer",
-                style_class: "calendar-plus-about-author",
-                x_align: Clutter.ActorAlign.CENTER,
-            });
-            const description = new St.Label({
-                text: CP_(
-                    "A native C-backed Cinnamon clock and calendar authored " +
-                    "by Shannon Smith, with multiple time and calendar systems."
-                ),
-                style_class: "calendar-plus-about-description",
-            });
-            const license = new St.Label({
-                text: "GPL-3.0-or-later",
-                style_class: "calendar-plus-about-license",
-            });
-            const legal = new St.Label({
-                text: CP_(
-                    "Copyright © 1993-2026 Shannon Smith\n\n" +
-                    "This program comes with absolutely no warranty.\n" +
-                    "See the GNU GPL v3+ License for details."
-                ),
-                style_class: "calendar-plus-about-legal",
-            });
-
-            for (const label of [description, legal]) {
-                label.clutter_text.line_wrap = true;
-                label.clutter_text.line_wrap_mode = Pango.WrapMode.WORD_CHAR;
-            }
-
-            identity.add_child(title);
-            identity.add_child(version);
-            identity.add_child(build);
-            identity.add_child(this._aboutAuthority);
-            identity.add_child(author);
-            card.add_child(icon);
-            card.add_child(identity);
-            card.add_child(description);
-            card.add_child(license);
-            card.add_child(legal);
-            dialog.contentLayout.add_child(card);
-
-            dialog.setButtons([
-                {
-                    label: _("Website"),
-                    action: () => {
-                        try {
-                            Gio.app_info_launch_default_for_uri(
-                                "https://github.com/Infiltrator-Projects/Calendar",
-                                global.create_app_launch_context()
-                            );
-                        } catch (error) {
-                            global.logError(error);
-                        }
-                    },
-                },
-                {
-                    label: _("Close"),
-                    action: () => dialog.close(),
-                    key: Clutter.KEY_Escape,
-                    default: true,
-                },
-            ]);
-            dialog.connect("destroy", () => {
-                if (this._aboutDialog === dialog) {
-                    this._aboutDialog = null;
-                    this._aboutAuthority = null;
-                }
-            });
-            this._aboutDialog = dialog;
-        }
-
-        const temporal = this._systemTemporalPolicy();
-        const authorityLabel =
-            temporal.authority === "infiltrator-system-settings"
-                ? CP_("Infiltrator System Settings")
-                : CP_("Mint / Cinnamon");
-        if (this._aboutAuthority) {
-            this._aboutAuthority.set_text(
-                `${CP_("Temporal authority")}: ${authorityLabel}`
-            );
-        }
-
-        if (!this._aboutDialog.open()) {
-            global.logError(`${UUID}: unable to acquire About dialog modal grab`);
-        }
+        Util.spawnCommandLine("/usr/libexec/calendar-plus-about");
     }
 
     on_applet_clicked() {
@@ -981,22 +843,6 @@ class CalendarPlusApplet extends Applet.Applet {
         this._resumeSignals.disconnectAll();
         this._eventSignals.disconnectAll();
         this._signals.disconnectAll();
-
-        if (this._aboutDialog) {
-            try {
-                /*
-                 * popModal() is synchronous and idempotent.  Balance any live
-                 * shell grab before actor destruction so applet teardown can
-                 * never strand pointer input behind a dead About dialog.
-                 */
-                this._aboutDialog.popModal();
-                this._aboutDialog.destroy();
-            } catch (error) {
-                global.logError(error);
-            }
-            this._aboutDialog = null;
-            this._aboutAuthority = null;
-        }
 
         if (this.system_clock) {
             try {

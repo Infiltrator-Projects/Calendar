@@ -331,24 +331,10 @@ def main() -> None:
     assert 'this.menu.setCustomStyleClass("calendar-plus-popup");' in applet
     assert '`calendar-plus-popup calendar-plus-theme-${effectiveTheme}`' in applet
     assert 'setCustomStyleClass("calendar-background")' not in applet
-    assert "new ModalDialog.ModalDialog()" in applet
-    assert "destroyOnClose: false" not in applet
-    assert 'dialog.connect("destroy", () => {' in applet
-    assert "this._aboutDialog = null;" in applet
-    assert "this.menu.close(false);" in applet
-    assert "this._aboutDialog.popModal();" in applet
-    assert "new Dialog.MessageDialogContent" not in applet
-    assert 'icon_name: "infiltratr-calendar"' in applet
-    assert 'style_class: "calendar-plus-about"' in applet
-    assert 'style_class: "calendar-plus-about-title"' in applet
-    assert 'style_class: "calendar-plus-about-version"' in applet
-    assert 'style_class: "calendar-plus-about-build"' in applet
-    assert "CalendarPlus.get_build_profile_label()" in applet
-    assert 'CP_("Temporal authority")' in applet
-    assert 'CP_("Infiltrator System Settings")' in applet
-    assert 'CP_("Mint / Cinnamon")' in applet
-    assert 'style_class: "calendar-plus-about-author"' in applet
-    assert 'Util.spawnCommandLine("/usr/libexec/calendar-plus-about")' not in applet
+    assert 'Util.spawnCommandLine("/usr/libexec/calendar-plus-about")' in applet
+    assert "ModalDialog" not in applet
+    assert "_aboutDialog" not in applet
+    assert "calendar-plus-about-title" not in read("src/cinnamon/stylesheet.css")
     assert "getCurrentExtension" in applet
     assert 'return require("./runtimeSupport")' in applet
     assert 'RuntimeSupport.loadLocalModule("calendar")' in applet
