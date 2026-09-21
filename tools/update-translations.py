@@ -6,6 +6,7 @@
 
 from __future__ import annotations
 
+import difflib
 import json
 import os
 import re
@@ -225,10 +226,14 @@ def main() -> None:
             )
 
     if check_only:
-        changed = [
-            path.relative_to(ROOT)
+        generated = {
+            path: path.read_bytes() if path.exists() else None
             for path in tracked
-            if original[path] != (path.read_bytes() if path.exists() else None)
+        }
+        changed = [
+            path
+            for path in tracked
+            if original[path] != generated[path]
         ]
         for path, contents in original.items():
             if contents is None:
@@ -238,7 +243,18 @@ def main() -> None:
         if changed:
             print("Translation files require regeneration:", file=sys.stderr)
             for path in changed:
-                print(f"  {path}", file=sys.stderr)
+                print(f"  {path.relative_to(ROOT)}", file=sys.stderr)
+            for path in changed:
+                before = (original[path] or b"").decode("utf-8")
+                after = (generated[path] or b"").decode("utf-8")
+                sys.stderr.writelines(
+                    difflib.unified_diff(
+                        before.splitlines(keepends=True),
+                        after.splitlines(keepends=True),
+                        fromfile=f"a/{path.relative_to(ROOT)}",
+                        tofile=f"b/{path.relative_to(ROOT)}",
+                    )
+                )
             raise SystemExit(1)
 
 
