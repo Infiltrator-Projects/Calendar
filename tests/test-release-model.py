@@ -163,6 +163,7 @@ def main() -> None:
         assert temporal_key not in settings_schema
     assert "get_system_calendar" in applet
     assert "load_persisted_temporal_policy" in system_clock_source
+    assert 'g_find_program_in_path("system-settings")' in system_clock_source
     assert '"org.cinnamon.desktop.interface"' in system_clock_source
     assert '"clock-show-seconds"' in system_clock_source
     assert 'GLib.find_program_in_path("system-settings")' in applet
