@@ -689,6 +689,46 @@ function testPanelClockDefensiveFormatting() {
         "conventional modes must use WallClock text"
     );
 
+    const selectedCalendar = {
+        format_date_part() { return "Positivist 13 Gutenberg 238"; },
+    };
+    const selectedCalendarConfig = {
+        ...conventional,
+        primaryCalendar: "positivist",
+        desktopSettings: {
+            get_boolean(key) {
+                if (key === "clock-use-24h") return false;
+                if (key === "clock-show-date") return true;
+                throw new Error(`unexpected Cinnamon key: ${key}`);
+            },
+        },
+    };
+    assert.equal(
+        PanelClock.panelText(
+            clock,
+            systemClock,
+            selectedCalendarConfig,
+            selectedCalendar
+        ),
+        "Positivist 13 Gutenberg 238 12:34",
+        "the panel date must follow the selected system calendar"
+    );
+
+    const selectedNativeConfig = {
+        ...selectedCalendarConfig,
+        mode: "internet",
+    };
+    assert.equal(
+        PanelClock.panelText(
+            clock,
+            systemClock,
+            selectedNativeConfig,
+            selectedCalendar
+        ),
+        "Positivist 13 Gutenberg 238 @500",
+        "selected calendar date must compose with native clock systems"
+    );
+
     const unconfigured = {
         ...base,
         mode: "sidereal",
@@ -724,7 +764,7 @@ function testMintFallbackClockFormatting() {
     const { PanelClock } = evaluatePanelClock();
 
     function render({ use24h, showDate, showSeconds, mode = "standard",
-                      vertical = false }) {
+                      vertical = false, primaryCalendar = "gregorian" }) {
         let format = null;
         const clock = {
             set_format_string(value) {
@@ -743,6 +783,7 @@ function testMintFallbackClockFormatting() {
             mode,
             showSeconds,
             vertical,
+            primaryCalendar,
             desktopSettings,
         });
         return format;
@@ -777,6 +818,16 @@ function testMintFallbackClockFormatting() {
         render({ use24h: false, showDate: true, showSeconds: true }),
         "%A %B %-e, %-l:%M:%S %p",
         "Mint date visibility and seconds must combine in 12-hour mode"
+    );
+    assert.equal(
+        render({
+            use24h: true,
+            showDate: true,
+            showSeconds: false,
+            primaryCalendar: "positivist",
+        }),
+        "%R",
+        "non-Gregorian panel dates must not leak Gregorian WallClock text"
     );
     assert.equal(
         render({

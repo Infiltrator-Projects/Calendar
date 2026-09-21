@@ -6,6 +6,12 @@ This changelog records user-visible, compatibility, architecture and validation 
 
 No unreleased changes.
 
+## 1.0.46 - 2026-09-21
+
+- Make the Cinnamon panel date follow System Settings' selected calendar instead of leaving Gregorian date text in the bottom-right panel clock.
+- Keep Cinnamon WallClock responsible for native Gregorian date formatting only; when Positivist or another non-Gregorian calendar is selected, Calendar renders the selected date through its own chronology engine and composes it with the active conventional or specialised clock.
+- Add regression coverage proving non-Gregorian panel dates do not leak Gregorian WallClock text and compose correctly with both conventional and native clock modes.
+
 ## 1.0.45 - 2026-09-21
 
 - Keep the agenda pane structurally present while CalendarServer is still activating so the popup opens at its final width instead of expanding several seconds later.

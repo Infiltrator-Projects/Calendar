@@ -133,7 +133,15 @@ function uses24HourClock(mode, desktopSettings) {
 }
 
 function defaultHorizontalFormat(config) {
-    const showDate = config.desktopSettings.get_boolean("clock-show-date");
+    /*
+     * Cinnamon's WallClock can only render Gregorian date text. When System
+     * Settings selects another calendar, keep WallClock responsible for the
+     * time token only; panelText() will prepend the selected calendar's date
+     * through Calendar's own chronology engine.
+     */
+    const showDate =
+        config.primaryCalendar === "gregorian" &&
+        config.desktopSettings.get_boolean("clock-show-date");
     const use24 = uses24HourClock(config.mode, config.desktopSettings);
     const seconds = config.showSeconds && !isNativeClockMode(config.mode);
 
@@ -238,15 +246,54 @@ function nativePanelText(clock, systemClock, config) {
     return nativeTime;
 }
 
-function panelText(clock, systemClock, config) {
-    if (isNativeClockMode(config.mode)) {
-        return systemClock ? nativePanelText(clock, systemClock, config) : null;
+function selectedCalendarPanelDate(primaryCalendarSystem, config) {
+    if (!primaryCalendarSystem || config.vertical ||
+        config.primaryCalendar === "gregorian" ||
+        !config.desktopSettings.get_boolean("clock-show-date")) {
+        return null;
     }
-    const text = clock.get_clock();
-    if (typeof text !== "string") {
+
+    const today = new Date();
+    try {
+        const text = primaryCalendarSystem.format_date_part(
+            today.getFullYear(),
+            today.getMonth() + 1,
+            today.getDate(),
+            CalendarPlus.DatePart.SHORT
+        );
+        return typeof text === "string" && text.length > 0 ? text : null;
+    } catch (error) {
+        global.logError(error);
+        return null;
+    }
+}
+
+function withSelectedCalendarDate(text, primaryCalendarSystem, config) {
+    const date = selectedCalendarPanelDate(primaryCalendarSystem, config);
+    if (!date || typeof text !== "string" || text.length === 0) {
         return text;
     }
-    return typeof text.capitalize === "function" ? text.capitalize() : text;
+    return `${date} ${text}`;
+}
+
+function panelText(clock, systemClock, config, primaryCalendarSystem = null) {
+    let text;
+
+    if (isNativeClockMode(config.mode)) {
+        text = systemClock ? nativePanelText(clock, systemClock, config) : null;
+    } else {
+        text = clock.get_clock();
+        if (typeof text === "string" &&
+            typeof text.capitalize === "function") {
+            text = text.capitalize();
+        }
+    }
+
+    return withSelectedCalendarDate(
+        text,
+        primaryCalendarSystem,
+        config
+    );
 }
 
 function todayDisplay(clock, primaryCalendarSystem, config) {

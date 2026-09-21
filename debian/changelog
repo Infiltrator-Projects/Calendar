@@ -1,3 +1,11 @@
+infiltrator-calendar (1.0.46) trixie; urgency=medium
+
+  * Make the panel date follow the selected System Settings calendar.
+  * Compose non-Gregorian dates with conventional and specialised clocks.
+  * Add regression coverage for selected-calendar panel presentation.
+
+ -- Shannon Smith <noreply@the-infiltratr.com>  Mon, 21 Sep 2026 20:15:00 +1000
+
 infiltrator-calendar (1.0.45) trixie; urgency=medium
 
   * Stabilise popup width while CalendarServer activates asynchronously.

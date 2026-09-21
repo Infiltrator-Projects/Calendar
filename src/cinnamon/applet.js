@@ -545,7 +545,8 @@ class CalendarPlusApplet extends Applet.Applet {
         const text = PanelClock.panelText(
             this.clock,
             this.system_clock,
-            config
+            config,
+            this._calendar_system
         );
         if (text) {
             this._clockLabel.set_text(text);
