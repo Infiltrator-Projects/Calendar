@@ -643,7 +643,7 @@ function evaluatePanelClock() {
         "utf8"
     );
     vm.runInContext(
-        `${source}\nglobalThis.__PanelClock = { panelText, syncNativeClock };`,
+        `${source}\nglobalThis.__PanelClock = { panelText, syncNativeClock, configureWallClock, uses24HourClock };`,
         context,
         { filename: "panelClock.js" }
     );
@@ -718,6 +718,90 @@ function testPanelClockDefensiveFormatting() {
 
     PanelClock.syncNativeClock(systemClock, base);
     assert.equal(observations.starts, 1);
+}
+
+function testMintFallbackClockFormatting() {
+    const { PanelClock } = evaluatePanelClock();
+
+    function render({ use24h, showDate, showSeconds, mode = "standard",
+                      vertical = false }) {
+        let format = null;
+        const clock = {
+            set_format_string(value) {
+                format = value;
+                return true;
+            },
+        };
+        const desktopSettings = {
+            get_boolean(key) {
+                if (key === "clock-use-24h") return use24h;
+                if (key === "clock-show-date") return showDate;
+                throw new Error(`unexpected Cinnamon key: ${key}`);
+            },
+        };
+        PanelClock.configureWallClock(clock, {
+            mode,
+            showSeconds,
+            vertical,
+            desktopSettings,
+        });
+        return format;
+    }
+
+    assert.equal(
+        render({ use24h: true, showDate: false, showSeconds: false }),
+        "%R",
+        "Mint 24-hour mode must produce the conventional 24-hour clock"
+    );
+    assert.equal(
+        render({ use24h: false, showDate: false, showSeconds: false }),
+        "%-l:%M %p",
+        "Mint 12-hour mode must produce the conventional AM/PM clock"
+    );
+    assert.equal(
+        render({ use24h: true, showDate: false, showSeconds: true }),
+        "%R:%S",
+        "Mint seconds preference must be preserved in 24-hour mode"
+    );
+    assert.equal(
+        render({ use24h: false, showDate: false, showSeconds: true }),
+        "%-l:%M:%S %p",
+        "Mint seconds preference must be preserved in 12-hour mode"
+    );
+    assert.equal(
+        render({ use24h: true, showDate: true, showSeconds: false }),
+        "%A %B %-e, %R",
+        "Mint date visibility must be preserved with a 24-hour clock"
+    );
+    assert.equal(
+        render({ use24h: false, showDate: true, showSeconds: true }),
+        "%A %B %-e, %-l:%M:%S %p",
+        "Mint date visibility and seconds must combine in 12-hour mode"
+    );
+    assert.equal(
+        render({
+            use24h: false, showDate: false, showSeconds: false,
+            mode: "standard-24",
+        }),
+        "%R",
+        "an explicit System Settings 24-hour profile must override Mint"
+    );
+    assert.equal(
+        render({
+            use24h: true, showDate: false, showSeconds: false,
+            mode: "standard-12",
+        }),
+        "%-l:%M %p",
+        "an explicit System Settings 12-hour profile must override Mint"
+    );
+    assert.equal(
+        render({
+            use24h: true, showDate: false, showSeconds: true,
+            vertical: true,
+        }),
+        "%H%n%M%n%S",
+        "vertical Mint clocks must preserve 24-hour and seconds preferences"
+    );
 }
 
 function testConstructorAtomicity() {
@@ -1163,6 +1247,7 @@ function testEventsManagerReconnect() {
 }
 
 testPanelClockDefensiveFormatting();
+testMintFallbackClockFormatting();
 testConstructorAtomicity();
 testModuleLoaderCompatibility();
 testCalendarLifecycle();
