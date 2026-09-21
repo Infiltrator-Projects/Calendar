@@ -103,7 +103,7 @@ refresh_effective_policy(CalendarPlusSystemClock *self,
 {
     InfiltratrTemporalPolicyV3 persisted;
     InfiltratrTemporalPolicyV3 next;
-    gboolean found = FALSE;
+    bool found = false;
     gboolean next_provider_available;
     gboolean next_infiltrator_authority = FALSE;
     gboolean changed;
@@ -117,7 +117,7 @@ refresh_effective_policy(CalendarPlusSystemClock *self,
     if (next_provider_available)
     {
         load_result = infiltratr_temporal_posix_policy_load(
-            &persisted, (bool *)&found);
+            &persisted, &found);
     }
 
     if (!calendar_plus_system_clock_resolve_effective_policy(
