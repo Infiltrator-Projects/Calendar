@@ -317,7 +317,11 @@ calendar_plus_system_clock_dispose(GObject *object)
     cancel_monitor(&self->provider_directory_monitor);
 
     g_clear_pointer(&self->policy_directory, g_free);
-    g_clear_object(&self->cinnamon_interface_settings);
+    if (self->cinnamon_interface_settings != NULL)
+    {
+        g_object_unref(self->cinnamon_interface_settings);
+        self->cinnamon_interface_settings = NULL;
+    }
 
     calendar_plus_clock_engine_free(self->engine);
     self->engine = NULL;
