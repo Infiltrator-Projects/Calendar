@@ -253,9 +253,11 @@ def main() -> None:
     assert 'DEB="../infiltrator-calendar_${VERSION}_${ARCH}.deb"' in release
     assert 'dist/calendar-${VERSION}-local-folder.run' in release
     assert 'DEB="$DIST/calendar_${VERSION}_${ARCH}.deb"' in artifact_validator
+    assert 'build-profile=generic' in artifact_validator
     assert 'RUN="$DIST/calendar-${VERSION}-local-folder.run"' in artifact_validator
     assert 'calendar-${VERSION}-local-folder.run' in native_installer_smoke
     assert 'calendar_${NATIVE_VERSION}_${ARCH}.deb' in native_installer_smoke
+    assert 'build-profile=native' in native_installer_smoke
     assert '"$(dpkg-deb -f "$DEB" Package)" = "infiltrator-calendar"' in native_installer_smoke
     assert 'deb="dist/calendar_${version}_amd64.deb"' in publisher
     assert 'installer="dist/calendar-${version}-local-folder.run"' in publisher
@@ -291,6 +293,7 @@ def main() -> None:
     assert "tools/live-cinnamon-ci-smoke.sh" in workflow
     assert "Probe exact-version live Cinnamon qualification" in workflow
     assert "steps.live-cinnamon.outputs.ready == 'true'" in workflow
+    assert 'build-profile=generic' in workflow
     assert "Migrate retired package identities" in workflow
     assert '"calendar-plus 3.6.0"' in workflow
     assert '"cinnamon-calendar 1.0.16"' in workflow
