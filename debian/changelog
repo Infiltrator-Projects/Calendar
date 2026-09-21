@@ -1,3 +1,14 @@
+infiltrator-calendar (1.0.40) trixie; urgency=medium
+
+  * Expose Calendar's compiled build profile through the introspected native ABI.
+  * Show Infiltratr Common's canonical build-profile label in the Cinnamon/St
+    About card, matching System Monitor's build-identity behaviour.
+  * Distinguish generic APT builds from local hardware-native PGO builds without
+    duplicating build-label vocabulary inside Calendar.
+  * Add ABI, native, GJS and release-contract checks for the About build label.
+
+ -- Shannon Smith <noreply@the-infiltratr.com>  Mon, 21 Sep 2026 10:18:00 +1000
+
 infiltrator-calendar (1.0.39) trixie; urgency=medium
 
   * Upgrade the local .run installer to a two-pass hardware-native PGO build.
