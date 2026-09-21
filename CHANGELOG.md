@@ -6,6 +6,13 @@ This changelog records user-visible, compatibility, architecture and validation 
 
 No unreleased changes.
 
+## 1.0.40 - 2026-09-21
+
+- Bring Calendar's About build identity up to the System Monitor standard.
+- Expose the compiled Calendar build profile through the native introspected ABI and render Infiltratr Common's canonical shared label in the Cinnamon/St About card.
+- Generic repository packages now identify themselves as `Generic / APT package`; local hardware-native PGO installations identify themselves as `Native / local machine compile`.
+- Add ABI, native, GJS and release-contract coverage so future About changes cannot silently lose the real build identity.
+
 ## 1.0.39 - 2026-09-21
 
 - Upgrade the released local `.run` installer from static native tuning alone to a two-pass hardware-native PGO pipeline.
