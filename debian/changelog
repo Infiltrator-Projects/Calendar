@@ -1,3 +1,14 @@
+infiltrator-calendar (1.0.41) trixie; urgency=medium
+
+  * Ignore stale per-user Infiltrator temporal policy when System Settings is
+    not installed, so package absence always restores Mint/Cinnamon authority.
+  * Preserve Cinnamon 12/24-hour mode, date visibility, seconds, first day of
+    week, locale/date presentation and operating-system timezone in fallback.
+  * Add executable JavaScript coverage for the complete conventional clock
+    matrix and release guards for the System Settings presence boundary.
+
+ -- Shannon Smith <noreply@the-infiltratr.com>  Mon, 21 Sep 2026 10:18:00 +1000
+
 infiltrator-calendar (1.0.40) trixie; urgency=medium
 
   * Expose Calendar's compiled build profile through the introspected native ABI.
