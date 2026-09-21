@@ -349,7 +349,7 @@ pgo-train: $(BUILD_DIR)/pgo-train
 		echo "PGO training requires BUILD_MODE=native." >&2; exit 1; }
 	@test "$(PGO_MODE)" = "generate" || { \
 		echo "PGO training requires PGO_MODE=generate." >&2; exit 1; }
-	LD_LIBRARY_PATH="$(abspath $(BUILD_DIR))${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}" \
+	LD_LIBRARY_PATH="$(abspath $(BUILD_DIR))" \
 		./$(BUILD_DIR)/pgo-train
 
 $(BUILD_DIR)/$(ABOUT_BINARY): src/app/about-dialog.c src/app/project-info.c \
