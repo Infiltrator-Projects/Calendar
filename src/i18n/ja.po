@@ -188,6 +188,9 @@ msgstr "Hroticʿ"
 msgid "Ianuarius"
 msgstr "Ianuarius"
 
+msgid "Infiltrator System Settings"
+msgstr "Infiltrator System Settings"
+
 msgid "Iulius"
 msgstr "Iulius"
 
@@ -262,6 +265,9 @@ msgstr "Mesore"
 
 msgid "Messidor"
 msgstr "Messidor"
+
+msgid "Mint / Cinnamon"
+msgstr "Mint / Cinnamon"
 
 msgid "Moses"
 msgstr "Moses"
@@ -373,6 +379,9 @@ msgstr "Sol"
 
 msgid "Sulṭán"
 msgstr "Sulṭán"
+
+msgid "Temporal authority"
+msgstr "時間設定の管理元"
 
 msgid "The Cinnamon clock and calendar with multiple time and calendar systems"
 msgstr "複数の時刻体系と暦に対応する Cinnamon の時計とカレンダー"
