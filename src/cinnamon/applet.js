@@ -131,6 +131,7 @@ class CalendarPlusApplet extends Applet.Applet {
         this._popupBody = null;
         this._calendarColumn = null;
         this._aboutDialog = null;
+        this._aboutAuthority = null;
         this._resume_source = null;
 
         this._signals = new SignalBag();
@@ -295,7 +296,6 @@ class CalendarPlusApplet extends Applet.Applet {
         for (const key of [
             "clock-use-24h",
             "clock-show-date",
-            "clock-show-seconds",
             "gtk-theme",
         ]) {
             this._signals.connect(
@@ -441,48 +441,57 @@ class CalendarPlusApplet extends Applet.Applet {
     }
 
     _systemTemporalPolicy() {
+        const fallback = {
+            mode: "standard",
+            showSeconds: false,
+            locationConfigured: false,
+            latitude: 0.0,
+            longitude: 0.0,
+            calendar: "gregorian",
+            authority: "mint-cinnamon",
+            providerAvailable: false,
+        };
+
         if (!this.system_clock) {
-            return {
-                mode: "standard",
-                showSeconds: false,
-                locationConfigured: false,
-                latitude: 0.0,
-                longitude: 0.0,
-                calendar: "gregorian",
-            };
+            return fallback;
         }
 
         try {
-            const mode = this.system_clock.get_system_mode();
-            const calendar = this.system_clock.get_system_calendar();
+            const variant = this.system_clock.get_system_policy();
+            if (!variant) {
+                throw new Error("missing effective temporal policy");
+            }
+            const [
+                mode,
+                calendar,
+                showSeconds,
+                locationConfigured,
+                latitude,
+                longitude,
+                authority,
+                providerAvailable,
+            ] = variant.deep_unpack();
 
             if (typeof mode !== "string" || mode.length === 0 ||
-                typeof calendar !== "string" || calendar.length === 0) {
-                throw new Error("invalid system temporal policy");
+                typeof calendar !== "string" || calendar.length === 0 ||
+                (authority !== "mint-cinnamon" &&
+                 authority !== "infiltrator-system-settings")) {
+                throw new Error("invalid effective temporal policy");
             }
 
             return {
                 mode,
-                showSeconds:
-                    this.system_clock.get_system_show_seconds(),
-                locationConfigured:
-                    this.system_clock.get_system_location_configured(),
-                latitude:
-                    this.system_clock.get_system_latitude(),
-                longitude:
-                    this.system_clock.get_system_longitude(),
+                showSeconds: Boolean(showSeconds),
+                locationConfigured: Boolean(locationConfigured),
+                latitude: Number(latitude),
+                longitude: Number(longitude),
                 calendar,
+                authority,
+                providerAvailable: Boolean(providerAvailable),
             };
         } catch (error) {
             global.logError(error);
-            return {
-                mode: "standard",
-                showSeconds: false,
-                locationConfigured: false,
-                latitude: 0.0,
-                longitude: 0.0,
-                calendar: "gregorian",
-            };
+            return fallback;
         }
     }
 
@@ -730,16 +739,26 @@ class CalendarPlusApplet extends Applet.Applet {
         }
 
         /*
-         * System Settings enriches Calendar when installed, but Calendar must
-         * remain a first-class Mint replacement without it.  Open our unified
-         * settings front door when available; otherwise use Cinnamon's native
-         * Date & Time panel, exactly as the stock applet does.
+         * Provider capability, not PATH, decides whether our richer authority
+         * is installed. Launch through the package-owned desktop identity so an
+         * unrelated executable named "system-settings" cannot impersonate the
+         * authority. Mint remains the deterministic fallback.
          */
-        if (GLib.find_program_in_path("system-settings")) {
-            Util.spawnCommandLine("system-settings");
-        } else {
-            Util.spawnCommandLine("cinnamon-settings calendar");
+        const temporal = this._systemTemporalPolicy();
+        if (temporal.providerAvailable) {
+            try {
+                const appInfo = Gio.DesktopAppInfo.new(
+                    "org.infiltrator.SystemSettings.desktop"
+                );
+                if (appInfo) {
+                    appInfo.launch([], global.create_app_launch_context());
+                    return;
+                }
+            } catch (error) {
+                global.logError(error);
+            }
         }
+        Util.spawnCommandLine("cinnamon-settings calendar");
     }
 
     /*
@@ -798,6 +817,10 @@ class CalendarPlusApplet extends Applet.Applet {
                 text: `Build: ${CalendarPlus.get_build_profile_label()}`,
                 style_class: "calendar-plus-about-build",
             });
+            this._aboutAuthority = new St.Label({
+                text: "",
+                style_class: "calendar-plus-about-build",
+            });
             const author = new St.Label({
                 text: "Shannon Smith",
                 style_class: "calendar-plus-about-author",
@@ -830,6 +853,7 @@ class CalendarPlusApplet extends Applet.Applet {
             identity.add_child(title);
             identity.add_child(version);
             identity.add_child(build);
+            identity.add_child(this._aboutAuthority);
             identity.add_child(author);
             header.add_child(icon);
             header.add_child(identity);
@@ -861,6 +885,17 @@ class CalendarPlusApplet extends Applet.Applet {
                 },
             ]);
             this._aboutDialog = dialog;
+        }
+
+        const temporal = this._systemTemporalPolicy();
+        const authorityLabel =
+            temporal.authority === "infiltrator-system-settings"
+                ? "Infiltrator System Settings"
+                : "Mint / Cinnamon";
+        if (this._aboutAuthority) {
+            this._aboutAuthority.set_text(
+                `Temporal authority: ${authorityLabel}`
+            );
         }
 
         this._aboutDialog.open();
@@ -931,6 +966,7 @@ class CalendarPlusApplet extends Applet.Applet {
                 global.logError(error);
             }
             this._aboutDialog = null;
+            this._aboutAuthority = null;
         }
 
         if (this.system_clock) {
