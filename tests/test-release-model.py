@@ -331,8 +331,10 @@ def main() -> None:
     assert 'this.menu.setCustomStyleClass("calendar-plus-popup");' in applet
     assert '`calendar-plus-popup calendar-plus-theme-${effectiveTheme}`' in applet
     assert 'setCustomStyleClass("calendar-background")' not in applet
-    assert "new ModalDialog.ModalDialog({" in applet
-    assert "destroyOnClose: false" in applet
+    assert "new ModalDialog.ModalDialog()" in applet
+    assert "destroyOnClose: false" not in applet
+    assert 'dialog.connect("destroy", () => {' in applet
+    assert "this._aboutDialog = null;" in applet
     assert "this.menu.close(false);" in applet
     assert "this._aboutDialog.popModal();" in applet
     assert "new Dialog.MessageDialogContent" not in applet

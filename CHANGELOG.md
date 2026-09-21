@@ -6,6 +6,14 @@ This changelog records user-visible, compatibility, architecture and validation 
 
 No unreleased changes.
 
+## 1.0.45 - 2026-09-21
+
+- Keep the agenda pane structurally present while CalendarServer is still activating so the popup opens at its final width instead of expanding several seconds later.
+- Separate event-pane presentation readiness from event-transport readiness; selected-date presentation now updates while the asynchronous CalendarServer connection is pending.
+- Make Cinnamon About dialogs one-shot, synchronously release the popup-menu grab before opening them, and clear Calendar's dialog references on destruction so reopening About cannot target stale modal state or strand pointer input.
+- Rework the About card into a centred native Cinnamon layout with stable icon, identity, build, temporal-authority, author, description and licence hierarchy.
+- Add permanent regression checks for startup agenda geometry and the safe About modal lifecycle.
+
 ## 1.0.44 - 2026-09-21
 
 - Make Common 1.19.20 the runtime authority for native clock-mode identifiers, presentation names and capability metadata while Calendar retains its formatter and next-boundary implementations.

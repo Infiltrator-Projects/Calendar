@@ -365,8 +365,10 @@ def main() -> None:
     # longer launches a GTK helper solely to display About information.
     assert "openAbout()" in applet_source
     assert "this._onAbout();" in applet_source
-    assert "new ModalDialog.ModalDialog({" in applet_source
-    assert "destroyOnClose: false" in applet_source
+    assert "new ModalDialog.ModalDialog()" in applet_source
+    assert "destroyOnClose: false" not in applet_source
+    assert 'dialog.connect("destroy", () => {' in applet_source
+    assert "this._aboutDialog = null;" in applet_source
     assert "this.menu.close(false);" in applet_source
     assert "this._aboutDialog.popModal();" in applet_source
     assert "new Dialog.MessageDialogContent" not in applet_source

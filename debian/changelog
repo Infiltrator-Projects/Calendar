@@ -1,3 +1,12 @@
+infiltrator-calendar (1.0.45) trixie; urgency=medium
+
+  * Stabilise popup width while CalendarServer activates asynchronously.
+  * Make About modal ownership one-shot and safe across repeated opens.
+  * Centre and simplify the native Cinnamon About presentation.
+  * Add regression coverage for agenda presentation readiness and modal lifecycle.
+
+ -- Shannon Smith <noreply@the-infiltratr.com>  Mon, 21 Sep 2026 17:55:00 +1000
+
 infiltrator-calendar (1.0.44) trixie; urgency=medium
 
   * Use Common 1.19.20 as the runtime authority for native clock-mode IDs,

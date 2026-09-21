@@ -794,13 +794,12 @@ class CalendarPlusApplet extends Applet.Applet {
 
         if (!this._aboutDialog) {
             /*
-             * ModalDialog destroys itself after close by default.  Calendar
-             * intentionally reuses this instance, so opt out of that default;
-             * otherwise the second About invocation targets a destroyed actor.
+             * About dialogs are intentionally one-shot.  Cinnamon's native
+             * ModalDialog contract destroys the actor after close; creating a
+             * fresh instance for each invocation also guarantees a fresh modal
+             * grab and prevents stale focus/input state surviving a reopen.
              */
-            const dialog = new ModalDialog.ModalDialog({
-                destroyOnClose: false,
-            });
+            const dialog = new ModalDialog.ModalDialog();
             const card = new St.BoxLayout({
                 vertical: true,
                 style_class: "calendar-plus-about",
@@ -900,6 +899,12 @@ class CalendarPlusApplet extends Applet.Applet {
                     default: true,
                 },
             ]);
+            dialog.connect("destroy", () => {
+                if (this._aboutDialog === dialog) {
+                    this._aboutDialog = null;
+                    this._aboutAuthority = null;
+                }
+            });
             this._aboutDialog = dialog;
         }
 
