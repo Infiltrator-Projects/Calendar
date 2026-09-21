@@ -102,6 +102,7 @@ CORE_HEADERS := \
 PRIVATE_HEADERS := \
 	src/app/project-info.h \
 	src/adapters/clock-glib-adapter.h \
+	src/adapters/system-clock-private.h \
 	src/adapters/calendar-system-private.h \
 	src/adapters/event-store-private.h
 HEADERS := $(sort $(PUBLIC_HEADERS) $(CORE_HEADERS) $(PRIVATE_HEADERS))
@@ -113,6 +114,7 @@ INFILTRATR_COMMON_HEADERS := \
 	$(INFILTRATR_COMMON_DIR)/include/infiltratr/arithmetic.h \
 	$(INFILTRATR_COMMON_DIR)/include/infiltratr/timing.h \
 	$(INFILTRATR_COMMON_DIR)/include/infiltratr/temporal.h \
+	$(INFILTRATR_COMMON_DIR)/include/infiltratr/temporal_posix.h \
 	$(INFILTRATR_COMMON_DIR)/include/infiltratr/dynlib.h \
 	$(INFILTRATR_COMMON_DIR)/include/infiltratr/design.h \
 	$(INFILTRATR_COMMON_DIR)/include/infiltratr/utf8.h
@@ -635,7 +637,8 @@ install: all
 	install -Dm644 "$(ICON_SRC)" \
 		"$(DESTDIR)$(PREFIX)/share/app-install/icons/infiltrator-calendar.png"
 	install -d \
-		"$(DESTDIR)$(PREFIX)/share/cinnamon/applets/$(UUID)"
+		"$(DESTDIR)$(PREFIX)/share/cinnamon/applets/$(UUID)" \
+		"$(DESTDIR)$(PREFIX)/share/infiltrator/policy-providers"
 	install -m644 "$(ICON_SRC)" \
 		"$(DESTDIR)$(PREFIX)/share/cinnamon/applets/$(UUID)/icon.png"
 	install -Dm644 "$(FONT_A_COND_REGULAR)" \
