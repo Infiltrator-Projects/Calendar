@@ -192,7 +192,7 @@ def main() -> None:
         "INFILTRATR_COMMON_COMMIT := "
         "e3e9e51f134f2ed6f07a9e32ecb68fb0478dc476"
     ) in makefile
-    assert "INFILTRATR_COMMON_VERSION := 1.19.19" in makefile
+    assert "INFILTRATR_COMMON_VERSION := 1.19.20" in makefile
     assert "normal `make` automatically retrieves" in read("README.md")
     assert "common-bootstrap: common-check" in makefile
     assert "common-test: $(INFILTRATR_COMMON_ARCHIVE)" in makefile
