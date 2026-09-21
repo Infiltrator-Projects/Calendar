@@ -23,6 +23,16 @@ requireCondition(
     CalendarPlus.get_source_id() === `calendar-plus-${expectedVersion}`,
     `unexpected native source id: ${CalendarPlus.get_source_id()}`
 );
+const buildProfile = CalendarPlus.get_build_profile();
+const buildLabel = CalendarPlus.get_build_profile_label();
+requireCondition(
+    buildProfile === "generic" || buildProfile === "native",
+    `unexpected build profile: ${buildProfile}`
+);
+requireCondition(
+    typeof buildLabel === "string" && buildLabel.length > 0,
+    "canonical build-profile label is empty"
+);
 
 
 const calendarIds = [
