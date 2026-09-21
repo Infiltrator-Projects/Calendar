@@ -34,9 +34,6 @@ msgstr ""
 msgid "%d %s, An %s"
 msgstr ""
 
-msgid "A native C-backed Cinnamon clock and calendar authored by Shannon Smith, with multiple time and calendar systems."
-msgstr ""
-
 msgid "About Calendar"
 msgstr ""
 
@@ -101,13 +98,6 @@ msgid "Check this to show week numbers in the calendar."
 msgstr ""
 
 msgid "Choiak"
-msgstr ""
-
-msgid ""
-"Copyright © 1993-2026 Shannon Smith\n"
-"\n"
-"This program comes with absolutely no warranty.\n"
-"See the GNU GPL v3+ License for details."
 msgstr ""
 
 msgid "Dante"
@@ -180,9 +170,6 @@ msgid "Hroticʿ"
 msgstr ""
 
 msgid "Ianuarius"
-msgstr ""
-
-msgid "Infiltrator System Settings"
 msgstr ""
 
 msgid "Iulius"
@@ -258,9 +245,6 @@ msgid "Mesore"
 msgstr ""
 
 msgid "Messidor"
-msgstr ""
-
-msgid "Mint / Cinnamon"
 msgstr ""
 
 msgid "Moses"
@@ -374,9 +358,6 @@ msgstr ""
 msgid "Sulṭán"
 msgstr ""
 
-msgid "Temporal authority"
-msgstr ""
-
 msgid "The Cinnamon clock and calendar with multiple time and calendar systems"
 msgstr ""
 
@@ -429,3 +410,4 @@ msgstr ""
 
 msgid "‘Izzat"
 msgstr ""
+
