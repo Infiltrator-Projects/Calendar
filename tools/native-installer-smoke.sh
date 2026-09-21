@@ -52,6 +52,8 @@ test -f \
     "$TMP/native/usr/share/locale/en_AU/LC_MESSAGES/calendar-plus@the-infiltratr.mo"
 "$TMP/native/usr/libexec/calendar-plus-about" --print-metadata |
     grep -qx "version=$VERSION"
+"$TMP/native/usr/libexec/calendar-plus-about" --print-metadata |
+    grep -qx "build-profile=native"
 
 CALENDAR_PLUS_EXPECTED_VERSION="$VERSION" \
 LD_LIBRARY_PATH="$TMP/native/usr/lib/$MULTIARCH" \
