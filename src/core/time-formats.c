@@ -11,6 +11,7 @@
 #include "time-formats-internal.h"
 
 #include <infiltratr/core.h>
+#include <infiltratr/temporal.h>
 #include <infiltratr/timing.h>
 #include <math.h>
 #include <string.h>
@@ -22,11 +23,12 @@ typedef struct
 {
     guint abi_version;
     CalendarPlusTimeMode mode;
-    const gchar *id;
-    const gchar *settings_name;
-    gboolean supports_seconds;
-    gboolean requires_longitude;
-    gboolean requires_latitude;
+    /*
+     * Stable binding key into Common's authoritative temporal catalogue.
+     * Calendar owns only the formatter/scheduler implementation; Common owns
+     * the identifier, presentation name and capability metadata.
+     */
+    const gchar *common_id;
     TimeFormatFunc format;
     TimeDelayFunc next_tick;
 } TimeProvider;
@@ -136,91 +138,123 @@ calendar_plus_time_delay_for_clock_seconds(long double clock_seconds,
     return delay_seconds_to_milliseconds(remaining / clock_rate);
 }
 
-#define TIME_PROVIDER(mode_, token_, id_, label_, seconds_, longitude_, latitude_) \
+#define TIME_PROVIDER(mode_, token_, id_) \
     [CALENDAR_PLUS_TIME_MODE_##mode_] = { CALENDAR_PLUS_TIME_PROVIDER_ABI, \
-        CALENDAR_PLUS_TIME_MODE_##mode_, id_, label_, seconds_, longitude_, latitude_, \
+        CALENDAR_PLUS_TIME_MODE_##mode_, id_, \
         format_##token_##_provider, delay_##token_##_provider }
 
 static const TimeProvider time_providers[] = {
-    TIME_PROVIDER(DECIMAL, decimal, "decimal", "French Republican decimal time (10-hour day)", TRUE, FALSE, FALSE),
-    TIME_PROVIDER(INTERNET, internet, "internet", "Internet Time (@000 to @999)", TRUE, FALSE, FALSE),
-    TIME_PROVIDER(UNIX, unix, "unix", "Unix time (epoch seconds)", FALSE, FALSE, FALSE),
-    TIME_PROVIDER(HEXADECIMAL, hexadecimal, "hexadecimal", "Hexadecimal time (0000 to FFFF)", FALSE, FALSE, FALSE),
-    TIME_PROVIDER(BINARY, binary, "binary", "Binary clock", TRUE, FALSE, FALSE),
-    TIME_PROVIDER(SIDEREAL, sidereal, "sidereal", "Local sidereal time", TRUE, TRUE, FALSE),
-    TIME_PROVIDER(SOLAR, solar, "solar", "Apparent solar time", TRUE, TRUE, FALSE),
-    TIME_PROVIDER(JULIAN, julian, "julian", "Astronomical Julian Date (JD)", TRUE, FALSE, FALSE),
-    TIME_PROVIDER(MEAN_SOLAR, mean_solar, "mean-solar", "Local mean solar time", TRUE, TRUE, FALSE),
-    TIME_PROVIDER(MODIFIED_JULIAN, modified_julian, "modified-julian", "Modified Julian Date (MJD)", TRUE, FALSE, FALSE),
-    TIME_PROVIDER(CHINESE, chinese, "chinese-time", "Traditional Chinese double-hours", FALSE, FALSE, FALSE),
-    TIME_PROVIDER(ROMAN_TEMPORAL, roman_temporal, "roman-temporal", "Roman temporal time", FALSE, TRUE, TRUE),
-    TIME_PROVIDER(JAPANESE_TEMPORAL, japanese_temporal, "japanese-temporal", "Edo Japanese seasonal time", FALSE, TRUE, TRUE),
-    TIME_PROVIDER(ITALIAN_HOURS, italian_hours, "italian-hours", "Italian hours (from sunset)", TRUE, TRUE, TRUE),
-    TIME_PROVIDER(BABYLONIAN_HOURS, babylonian_hours, "babylonian-hours", "Babylonian hours (from sunrise)", TRUE, TRUE, TRUE),
-    TIME_PROVIDER(INDIAN_GHATI, indian_ghati, "indian-ghati", "Indian ghaṭī time (from sunrise)", FALSE, TRUE, TRUE),
-    TIME_PROVIDER(CHINESE_KE, chinese_ke, "chinese-ke", "Chinese hundred-kè time", FALSE, FALSE, FALSE),
-    TIME_PROVIDER(NUREMBERG_HOURS, nuremberg_hours, "nuremberg-hours", "Nuremberg hours (sunrise/sunset reset)", TRUE, TRUE, TRUE)
+    TIME_PROVIDER(DECIMAL, decimal, "decimal"),
+    TIME_PROVIDER(INTERNET, internet, "internet"),
+    TIME_PROVIDER(UNIX, unix, "unix"),
+    TIME_PROVIDER(HEXADECIMAL, hexadecimal, "hexadecimal"),
+    TIME_PROVIDER(BINARY, binary, "binary"),
+    TIME_PROVIDER(SIDEREAL, sidereal, "sidereal"),
+    TIME_PROVIDER(SOLAR, solar, "solar"),
+    TIME_PROVIDER(JULIAN, julian, "julian"),
+    TIME_PROVIDER(MEAN_SOLAR, mean_solar, "mean-solar"),
+    TIME_PROVIDER(MODIFIED_JULIAN, modified_julian, "modified-julian"),
+    TIME_PROVIDER(CHINESE, chinese, "chinese-time"),
+    TIME_PROVIDER(ROMAN_TEMPORAL, roman_temporal, "roman-temporal"),
+    TIME_PROVIDER(JAPANESE_TEMPORAL, japanese_temporal, "japanese-temporal"),
+    TIME_PROVIDER(ITALIAN_HOURS, italian_hours, "italian-hours"),
+    TIME_PROVIDER(BABYLONIAN_HOURS, babylonian_hours, "babylonian-hours"),
+    TIME_PROVIDER(INDIAN_GHATI, indian_ghati, "indian-ghati"),
+    TIME_PROVIDER(CHINESE_KE, chinese_ke, "chinese-ke"),
+    TIME_PROVIDER(NUREMBERG_HOURS, nuremberg_hours, "nuremberg-hours")
 };
 
 G_STATIC_ASSERT(G_N_ELEMENTS(time_providers) == CALENDAR_PLUS_TIME_MODE_NUREMBERG_HOURS + 1);
+
+static const InfiltratrTemporalClockModeInfo *
+common_mode_info_for_provider(const TimeProvider *provider)
+{
+    return provider != NULL && provider->common_id != NULL
+        ? infiltratr_temporal_clock_mode_find(provider->common_id)
+        : NULL;
+}
 
 static const TimeProvider *
 time_provider_for_mode(CalendarPlusTimeMode mode)
 {
     const TimeProvider *provider;
-    if (mode < CALENDAR_PLUS_TIME_MODE_DECIMAL || mode > CALENDAR_PLUS_TIME_MODE_NUREMBERG_HOURS)
+
+    if (mode < CALENDAR_PLUS_TIME_MODE_DECIMAL ||
+        mode > CALENDAR_PLUS_TIME_MODE_NUREMBERG_HOURS)
         return NULL;
+
     provider = &time_providers[mode];
-    return provider->abi_version == CALENDAR_PLUS_TIME_PROVIDER_ABI ? provider : NULL;
+    return provider->abi_version == CALENDAR_PLUS_TIME_PROVIDER_ABI &&
+           common_mode_info_for_provider(provider) != NULL
+        ? provider : NULL;
 }
 
 CalendarPlusTimeMode
 calendar_plus_time_mode_from_string(const gchar *mode)
 {
+    const InfiltratrTemporalClockModeInfo *info;
     gsize index;
+
     if (mode == NULL)
         return CALENDAR_PLUS_TIME_MODE_INVALID;
-    for (index = 0; index < G_N_ELEMENTS(time_providers); index++)
-        if (infiltratr_string_equal(mode, time_providers[index].id))
+
+    info = infiltratr_temporal_clock_mode_find(mode);
+    if (info == NULL)
+        return CALENDAR_PLUS_TIME_MODE_INVALID;
+
+    for (index = 1; index < G_N_ELEMENTS(time_providers); index++)
+        if (time_providers[index].common_id != NULL &&
+            infiltratr_string_equal(info->id, time_providers[index].common_id))
             return time_providers[index].mode;
+
     return CALENDAR_PLUS_TIME_MODE_INVALID;
 }
 
 const gchar *calendar_plus_time_mode_get_id(CalendarPlusTimeMode mode)
 {
-    const TimeProvider *provider = time_provider_for_mode(mode);
-    return provider != NULL ? provider->id : NULL;
+    const InfiltratrTemporalClockModeInfo *info =
+        common_mode_info_for_provider(time_provider_for_mode(mode));
+    return info != NULL ? info->id : NULL;
 }
 
-gsize calendar_plus_time_mode_get_count(void) { return G_N_ELEMENTS(time_providers) - 1; }
+gsize calendar_plus_time_mode_get_count(void)
+{
+    return G_N_ELEMENTS(time_providers) - 1;
+}
 
 CalendarPlusTimeMode calendar_plus_time_mode_get_at(gsize index)
 {
-    return index < calendar_plus_time_mode_get_count() ? time_providers[index + 1].mode : CALENDAR_PLUS_TIME_MODE_INVALID;
+    return index < calendar_plus_time_mode_get_count()
+        ? time_providers[index + 1].mode
+        : CALENDAR_PLUS_TIME_MODE_INVALID;
 }
 
 const gchar *calendar_plus_time_mode_get_name(CalendarPlusTimeMode mode)
 {
-    const TimeProvider *provider = time_provider_for_mode(mode);
-    return provider != NULL ? provider->settings_name : NULL;
+    const InfiltratrTemporalClockModeInfo *info =
+        common_mode_info_for_provider(time_provider_for_mode(mode));
+    return info != NULL ? info->name : NULL;
 }
 
 gboolean calendar_plus_time_mode_supports_seconds(CalendarPlusTimeMode mode)
 {
-    const TimeProvider *provider = time_provider_for_mode(mode);
-    return provider != NULL && provider->supports_seconds;
+    const InfiltratrTemporalClockModeInfo *info =
+        common_mode_info_for_provider(time_provider_for_mode(mode));
+    return info != NULL && info->supports_seconds;
 }
 
 gboolean calendar_plus_time_mode_requires_longitude(CalendarPlusTimeMode mode)
 {
-    const TimeProvider *provider = time_provider_for_mode(mode);
-    return provider != NULL && provider->requires_longitude;
+    const InfiltratrTemporalClockModeInfo *info =
+        common_mode_info_for_provider(time_provider_for_mode(mode));
+    return info != NULL && info->requires_longitude;
 }
 
 gboolean calendar_plus_time_mode_requires_latitude(CalendarPlusTimeMode mode)
 {
-    const TimeProvider *provider = time_provider_for_mode(mode);
-    return provider != NULL && provider->requires_latitude;
+    const InfiltratrTemporalClockModeInfo *info =
+        common_mode_info_for_provider(time_provider_for_mode(mode));
+    return info != NULL && info->requires_latitude;
 }
 
 static gboolean
@@ -228,9 +262,12 @@ location_is_valid_for_provider(const TimeProvider *provider,
                                gdouble latitude,
                                gdouble longitude)
 {
-    return provider != NULL &&
-           (!provider->requires_latitude || isfinite(latitude)) &&
-           (!provider->requires_longitude || isfinite(longitude));
+    const InfiltratrTemporalClockModeInfo *info =
+        common_mode_info_for_provider(provider);
+
+    return info != NULL &&
+           (!info->requires_latitude || isfinite(latitude)) &&
+           (!info->requires_longitude || isfinite(longitude));
 }
 
 gchar *

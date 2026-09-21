@@ -169,7 +169,7 @@ def render_theme(data: dict) -> str:
 /*
  * Generated from Infiltratr Common. Do not hand-edit colour values here.
  * Calendar deliberately owns only Cinnamon selectors/widget mechanics.
- * Common 1.19.10 carries the complete Linux MBLINK Night reference roles.
+ * Common 1.19.20 carries the complete Linux MBLINK Night reference roles.
  */
 {mode_css("night", night)}
 {mode_css("day", day)}

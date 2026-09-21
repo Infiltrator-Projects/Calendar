@@ -25,7 +25,7 @@ platform-neutral Calendar domain contracts
                     ↓
 chronology / clocks / astronomy / event semantics
 
-ICU / CLDR                    Infiltratr Common 1.19.10
+ICU / CLDR                    Infiltratr Common 1.19.20
      ↓                                  ↓
 locale/calendar authority     reusable checked arithmetic /
 where explicitly delegated    formatting / timing / loading /
@@ -49,7 +49,7 @@ src/
 
 The native core owns Calendar-specific chronology models, continuation rules, alternative clocks, astronomical calculations and event semantics. It deliberately uses GLib foundational facilities such as fixed-width types, strings, containers and civil-time helpers, but remains independent of GObject presentation facades, GVariant transport schemas, Cinnamon actors and desktop lifecycle APIs.
 
-Cinnamon owns panel integration, settings presentation, lifecycle and CalendarServer transport mechanics. Calendar now owns deterministic arithmetic/navigation for the fixed-rule calendar families it can validate directly. ICU/CLDR remains authoritative only for the remaining astronomical/lunisolar providers and locale-sensitive formatting that Calendar still explicitly delegates. Common owns genuinely generic primitives whose contract is reusable across the software family. Calendar's Cinnamon surface projects the pinned Common design JSON into toolkit-specific CSS under generated, regression-checked markers rather than carrying independent typography values. Configuration uses Cinnamon's own xlet-settings renderer and About uses Cinnamon/St, eliminating Calendar-owned Python/GTK presentation shims.
+Cinnamon owns panel integration, settings presentation, lifecycle and CalendarServer transport mechanics. Calendar now owns deterministic arithmetic/navigation for the fixed-rule calendar families it can validate directly. ICU/CLDR remains authoritative only for the remaining astronomical/lunisolar providers and locale-sensitive formatting that Calendar still explicitly delegates. Common owns genuinely generic primitives whose contract is reusable across the software family. Common is also the single authority for system clock-mode identifiers, presentation names and capability metadata; Calendar binds those Common catalogue entries to Calendar-owned formatter and next-boundary implementations rather than duplicating the metadata. Calendar's Cinnamon surface projects the pinned Common design JSON into toolkit-specific CSS under generated, regression-checked markers rather than carrying independent typography values. Configuration uses Cinnamon's own xlet-settings renderer and About uses Cinnamon/St, eliminating Calendar-owned Python/GTK presentation shims.
 
 Ownership is visible at API boundaries. Caller-owned values, returned heap data, snapshots, compatibility ABI objects and adapter-owned platform state should not be inferred from accidental implementation detail.
 

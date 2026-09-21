@@ -17,6 +17,7 @@
 #include "event-source.h"
 #include "julian-day.h"
 
+#include <infiltratr/temporal.h>
 #include <math.h>
 
 
@@ -959,16 +960,37 @@ test_time_catalogue(void)
 {
     gsize item;
 
-    g_assert_cmpuint(calendar_plus_time_mode_get_count(), ==, 18);
+    g_assert_cmpuint(infiltratr_temporal_clock_mode_count(), >=, 3);
+    g_assert_cmpuint(calendar_plus_time_mode_get_count(), ==,
+                     infiltratr_temporal_clock_mode_count() - 3U);
+
+    g_assert_cmpint(calendar_plus_time_mode_from_string("standard"), ==,
+                    CALENDAR_PLUS_TIME_MODE_INVALID);
+    g_assert_cmpint(calendar_plus_time_mode_from_string("standard-24"), ==,
+                    CALENDAR_PLUS_TIME_MODE_INVALID);
+    g_assert_cmpint(calendar_plus_time_mode_from_string("standard-12"), ==,
+                    CALENDAR_PLUS_TIME_MODE_INVALID);
+
     for (item = 0; item < calendar_plus_time_mode_get_count(); item++)
     {
         const CalendarPlusTimeMode mode =
             calendar_plus_time_mode_get_at(item);
+        const gchar *id = calendar_plus_time_mode_get_id(mode);
+        const InfiltratrTemporalClockModeInfo *info;
 
         g_assert_cmpint(mode, !=, CALENDAR_PLUS_TIME_MODE_INVALID);
-        g_assert_nonnull(calendar_plus_time_mode_get_id(mode));
-        g_assert_nonnull(calendar_plus_time_mode_get_name(mode));
+        g_assert_nonnull(id);
+        info = infiltratr_temporal_clock_mode_find(id);
+        g_assert_nonnull(info);
+        g_assert_cmpstr(calendar_plus_time_mode_get_name(mode), ==, info->name);
+        g_assert_cmpint(calendar_plus_time_mode_supports_seconds(mode), ==,
+                        info->supports_seconds);
+        g_assert_cmpint(calendar_plus_time_mode_requires_latitude(mode), ==,
+                        info->requires_latitude);
+        g_assert_cmpint(calendar_plus_time_mode_requires_longitude(mode), ==,
+                        info->requires_longitude);
     }
+
     g_assert_cmpint(calendar_plus_time_mode_get_at(
                         calendar_plus_time_mode_get_count()), ==,
                     CALENDAR_PLUS_TIME_MODE_INVALID);

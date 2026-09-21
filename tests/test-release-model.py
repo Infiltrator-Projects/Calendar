@@ -388,6 +388,11 @@ def main() -> None:
     assert "switch (" not in calendar_core
     assert "switch (" not in time_formats
     assert "TIME_PROVIDER(" in time_formats
+    assert "infiltratr_temporal_clock_mode_find" in time_formats
+    assert "const gchar *settings_name;" not in time_formats
+    assert "gboolean supports_seconds;" not in time_formats
+    assert "gboolean requires_longitude;" not in time_formats
+    assert "gboolean requires_latitude;" not in time_formats
     assert "ICU_PROVIDER(" in registry
     assert "CUSTOM_PROVIDER(" in registry
     assert (ROOT / "src/core/time-astronomy.c").is_file()
