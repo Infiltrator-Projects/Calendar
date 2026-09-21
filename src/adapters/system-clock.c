@@ -236,6 +236,14 @@ calendar_plus_system_clock_is_running(CalendarPlusSystemClock *self)
 
 
 static gboolean
+system_settings_is_available(void)
+{
+    g_autofree gchar *program = g_find_program_in_path("system-settings");
+
+    return program != NULL;
+}
+
+static gboolean
 load_persisted_temporal_policy(CalendarPlusSystemClock *self,
                                InfiltratrTemporalPolicyV3 *policy)
 {
@@ -248,12 +256,13 @@ load_persisted_temporal_policy(CalendarPlusSystemClock *self,
         return FALSE;
 
     /*
-     * A valid Infiltrator policy is an optional enrichment layer, not a hard
-     * runtime dependency on System Settings.  Missing or malformed policy
-     * means "use Cinnamon's native temporal preferences", so Calendar remains
-     * a drop-in replacement for the stock Mint applet.
+     * System Settings is the authority for the richer policy.  A stale policy
+     * file must not keep overriding Mint after System Settings itself has been
+     * removed: package absence means "follow Cinnamon" even if a per-user file
+     * survived an uninstall.  Missing/malformed policy has the same fallback.
      */
-    if (self->policy_path == NULL ||
+    if (!system_settings_is_available() ||
+        self->policy_path == NULL ||
         !g_file_get_contents(self->policy_path, &contents, NULL, NULL))
     {
         return FALSE;
