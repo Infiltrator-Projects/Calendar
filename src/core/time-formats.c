@@ -3,8 +3,10 @@
 
 /*
  * Native clock-provider registry, shared timing primitives and public dispatch.
- * Each mode owns metadata plus paired format/delay callbacks; specialised
- * implementations live in the civil, astronomy and historical modules.
+ * Common owns each mode's stable identifier, presentation name and capability
+ * metadata; Calendar binds that metadata to paired format/delay callbacks.
+ * Specialised implementations live in the civil, astronomy and historical
+ * modules.
  */
 
 #include "time-formats.h"
