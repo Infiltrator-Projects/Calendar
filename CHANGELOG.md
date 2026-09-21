@@ -8,11 +8,12 @@ No unreleased changes.
 
 ## 1.0.42 - 2026-09-21
 
-- Replace the generic `system-settings` executable/PATH probe with Common 1.19.19's explicit installed `temporal-v3` provider capability.
+- Replace the generic `system-settings` executable/PATH probe with Common 1.19.20's validated installed `temporal-v3` provider capability.
 - Resolve one cached effective temporal snapshot, eliminating repeated policy reads and guaranteeing internally consistent clock/calendar/seconds/location state.
 - Monitor the XDG policy directory and installed provider directory so atomic policy replacement and live provider install/removal are reflected without a daemon.
 - Launch System Settings through its package-owned desktop application identity and retain Cinnamon Date & Time as the deterministic fallback.
 - Show the live temporal authority in About and add precedence tests covering stale policy, no policy, valid richer policy, invalid policy fallback and runtime provider removal.
+- Require Common's provider marker contents to identify the exact System Settings provider/contract instead of trusting pathname existence alone, and consume Common's stricter coordinate/path persistence contracts.
 
 ## 1.0.41 - 2026-09-21
 
