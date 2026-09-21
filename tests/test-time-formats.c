@@ -2,6 +2,7 @@
 // Copyright (C) 1993-2026 Shannon Smith
 
 #include "system-clock.h"
+#include "system-clock-private.h"
 #include "time-formats.h"
 #include "calendar-system.h"
 #include "calendar-core.h"
@@ -459,6 +460,66 @@ test_clock_lifecycle(void)
     /* Stop is deliberately idempotent for Cinnamon applet teardown. */
     calendar_plus_system_clock_stop(clock);
     g_assert_false(calendar_plus_system_clock_is_running(clock));
+}
+
+static void
+test_temporal_authority_resolution(void)
+{
+    InfiltratrTemporalPolicyV3 persisted;
+    InfiltratrTemporalPolicyV3 effective;
+    gboolean authority = FALSE;
+
+    g_assert_true(infiltratr_temporal_policy_v3_default(&persisted));
+    g_strlcpy(persisted.clock_mode, "roman-temporal",
+              sizeof(persisted.clock_mode));
+    g_strlcpy(persisted.calendar, "hebrew",
+              sizeof(persisted.calendar));
+    persisted.show_seconds = FALSE;
+    persisted.location_configured = TRUE;
+    persisted.latitude = -36.39;
+    persisted.longitude = 145.36;
+
+    /* A stale policy is ignored when the provider package is absent. */
+    g_assert_true(calendar_plus_system_clock_resolve_effective_policy(
+        FALSE, TRUE, &persisted, TRUE, &effective, &authority));
+    g_assert_false(authority);
+    g_assert_cmpstr(effective.clock_mode, ==, "standard");
+    g_assert_cmpstr(effective.calendar, ==, "gregorian");
+    g_assert_true(effective.show_seconds);
+    g_assert_false(effective.location_configured);
+
+    /* Mint's own seconds state remains authoritative in fallback. */
+    g_assert_true(calendar_plus_system_clock_resolve_effective_policy(
+        FALSE, FALSE, NULL, FALSE, &effective, &authority));
+    g_assert_false(authority);
+    g_assert_false(effective.show_seconds);
+
+    /* Installed provider plus a valid saved policy activates enrichment. */
+    g_assert_true(calendar_plus_system_clock_resolve_effective_policy(
+        TRUE, TRUE, &persisted, TRUE, &effective, &authority));
+    g_assert_true(authority);
+    g_assert_cmpstr(effective.clock_mode, ==, "roman-temporal");
+    g_assert_cmpstr(effective.calendar, ==, "hebrew");
+    g_assert_false(effective.show_seconds);
+    g_assert_true(effective.location_configured);
+    g_assert_cmpfloat(effective.latitude, ==, -36.39);
+    g_assert_cmpfloat(effective.longitude, ==, 145.36);
+
+    /* Installed but unconfigured/corrupt provider safely falls back to Mint. */
+    g_assert_true(calendar_plus_system_clock_resolve_effective_policy(
+        TRUE, FALSE, NULL, TRUE, &effective, &authority));
+    g_assert_false(authority);
+    g_assert_cmpstr(effective.clock_mode, ==, "standard");
+    g_assert_cmpstr(effective.calendar, ==, "gregorian");
+    g_assert_true(effective.show_seconds);
+
+    /* Runtime provider removal immediately resolves back to Mint semantics. */
+    g_assert_true(calendar_plus_system_clock_resolve_effective_policy(
+        FALSE, TRUE, &persisted, FALSE, &effective, &authority));
+    g_assert_false(authority);
+    g_assert_cmpstr(effective.clock_mode, ==, "standard");
+    g_assert_cmpstr(effective.calendar, ==, "gregorian");
+    g_assert_false(effective.show_seconds);
 }
 
 static gchar *
@@ -1317,6 +1378,8 @@ main(int argc, char **argv)
     g_test_add_func("/time-formats/label-replacement",
                     test_label_replacement);
     g_test_add_func("/system-clock/lifecycle", test_clock_lifecycle);
+    g_test_add_func("/system-clock/authority-resolution",
+                    test_temporal_authority_resolution);
     g_test_add_func("/calendar-system/catalogue", test_calendar_catalogue);
     g_test_add_func("/calendar-system/locale-workdays",
                     test_locale_workday_policy);
