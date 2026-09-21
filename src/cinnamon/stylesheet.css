@@ -229,6 +229,11 @@
     opacity: 0.86;
 }
 
+.calendar-plus-about-build {
+    font-size: 0.95em;
+    opacity: 0.82;
+}
+
 .calendar-plus-about-author {
     font-weight: 700;
     opacity: 0.92;
