@@ -794,6 +794,10 @@ class CalendarPlusApplet extends Applet.Applet {
                 text: `v${CalendarPlus.get_version()}`,
                 style_class: "calendar-plus-about-version",
             });
+            const build = new St.Label({
+                text: `${CP_("Build")}: ${CalendarPlus.get_build_profile_label()}`,
+                style_class: "calendar-plus-about-build",
+            });
             const author = new St.Label({
                 text: "Shannon Smith",
                 style_class: "calendar-plus-about-author",
@@ -825,6 +829,7 @@ class CalendarPlusApplet extends Applet.Applet {
 
             identity.add_child(title);
             identity.add_child(version);
+            identity.add_child(build);
             identity.add_child(author);
             header.add_child(icon);
             header.add_child(identity);
