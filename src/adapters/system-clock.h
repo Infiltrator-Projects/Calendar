@@ -93,6 +93,25 @@ gboolean calendar_plus_system_clock_is_running(
     CalendarPlusSystemClock *self);
 
 /**
+ * calendar_plus_system_clock_get_system_policy:
+ * @self: a multi-system clock
+ *
+ * Returns one coherent snapshot of the effective temporal presentation state.
+ * The tuple fields are clock mode, calendar, show-seconds, location-configured,
+ * latitude, longitude, authority identifier and provider-available flag.
+ *
+ * The authority identifier is "mint-cinnamon" unless an installed temporal-v3
+ * provider and a valid persisted policy are both present; only then is it
+ * "infiltrator-system-settings". The provider-available flag therefore
+ * distinguishes an installed-but-not-yet-configured System Settings package
+ * from an active richer policy.
+ *
+ * Returns: (transfer full): a #GVariant tuple (ssbbddsb)
+ */
+GVariant *calendar_plus_system_clock_get_system_policy(
+    CalendarPlusSystemClock *self);
+
+/**
  * calendar_plus_system_clock_get_system_mode:
  * @self: a multi-system clock
  *
