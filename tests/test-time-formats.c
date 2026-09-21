@@ -1035,6 +1035,10 @@ test_native_contract_helpers(void)
     g_assert_cmpstr(calendar_plus_get_version(), ==, CALENDAR_PLUS_VERSION);
     g_assert_cmpstr(calendar_plus_get_source_id(), ==,
                     CALENDAR_PLUS_SOURCE_ID);
+    g_assert_cmpstr(calendar_plus_get_build_profile(), ==,
+                    CALENDAR_PLUS_BUILD_PROFILE);
+    g_assert_nonnull(calendar_plus_get_build_profile_label());
+    g_assert_cmpuint(strlen(calendar_plus_get_build_profile_label()), >, 0U);
 
     g_assert_true(calendar_plus_date_same(2026, 8, 14,
                                           2026, 8, 14));
