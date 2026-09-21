@@ -56,6 +56,8 @@ test -f \
     "$TMP/generic/usr/share/locale/en_AU/LC_MESSAGES/calendar-plus@the-infiltratr.mo"
 "$TMP/generic/usr/libexec/calendar-plus-about" --print-metadata |
     grep -qx "version=$VERSION"
+"$TMP/generic/usr/libexec/calendar-plus-about" --print-metadata |
+    grep -qx "build-profile=generic"
 grep -q '^Build mode: generic amd64-compatible (Debian/Mint ICU runtime bridge)$' \
     "$TMP/generic/usr/share/doc/infiltrator-calendar/BUILD-INFO"
 grep -q "^Shared C library: Infiltratr Common ${COMMON_VERSION}$" \
