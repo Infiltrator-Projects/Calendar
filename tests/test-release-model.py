@@ -135,9 +135,7 @@ def main() -> None:
     assert "share/cinnamon/applets/calendar-plus@the-infiltratr/icon.png" in local_installer
     assert "share/icons/hicolor/256x256/apps/infiltratr-calendar.png" in local_installer
     assert "share/app-install/icons/infiltrator-calendar.png" in local_installer
-    assert "share/fonts/truetype/infiltrator-calendar/mb_corpo_a_cond_regular.ttf" in local_installer
-    assert "share/fonts/truetype/infiltrator-calendar/mb_corpo_s_bold.ttf" in local_installer
-    assert "share/fonts/truetype/infiltrator-calendar/mb_corpo_s_regular.ttf" in local_installer
+    assert "share/fonts/truetype/infiltrator-calendar" not in local_installer
     stylesheet = read("src/cinnamon/stylesheet.css")
     assert "MB Corpo S Title WEB" in stylesheet
     assert '.calendar-plus-panel-clock {' in stylesheet
@@ -501,12 +499,12 @@ def main() -> None:
         read("src/vendor/infiltratr-common/design/infiltrator-design-v1.json")
     )
     typography = common_design["typography"]
-    typography_assets = typography["assets"]
-    assert f'FONT_ARCHIVE_SHA256 := {typography_assets["archive_sha256"]}' in makefile
-    for role, filename in typography["font_files"].items():
-        assert filename in makefile, f"Calendar package does not use Common font file {role}"
-    for role, digest in typography_assets["file_sha256"].items():
-        assert digest in makefile, f"Calendar package does not verify Common font hash {role}"
+    design_policy = common_design["policy"]
+    assert design_policy["font_binaries_are_not_part_of_this_contract"] is True
+    assert design_policy["fallback_is_required_when_mb_corpo_is_unavailable"] is True
+    assert typography["ui_family"] in read("src/cinnamon/stylesheet.css")
+    assert typography["brand_family"] in read("src/cinnamon/stylesheet.css")
+    assert "FONT_ARCHIVE" not in makefile
     stylesheet_source = read("src/cinnamon/stylesheet.css")
     assert "BEGIN GENERATED COMMON TYPOGRAPHY TOKENS" in stylesheet_source
     assert "BEGIN GENERATED COMMON METRIC TOKENS" in stylesheet_source
