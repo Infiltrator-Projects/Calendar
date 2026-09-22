@@ -6,6 +6,13 @@ This changelog records user-visible, compatibility, architecture and validation 
 
 No unreleased changes.
 
+## 1.0.50 - 2026-09-22
+
+- Split the large arithmetic implementation along proven chronology-family boundaries without changing the public arithmetic API or calendar behaviour.
+- Keep Islamic civil/tabular and Umm al-Qura rules together, Hebrew cycle/postponement/navigation rules together, and Persian leap/correction rules together in private core modules.
+- Reduce the arithmetic coordinator to cross-family dispatch, era mapping and generic navigation while preserving the existing reference, boundary, sanitizer and architecture test surface.
+- Document the new private ownership boundary and retain Common 1.19.23 as the exact shared foundation.
+
 ## 1.0.49 - 2026-09-22
 
 - Finish the forensic Common → Calendar ownership pass against Common 1.19.23.
