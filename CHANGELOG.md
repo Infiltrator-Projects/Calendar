@@ -6,6 +6,13 @@ This changelog records user-visible, compatibility, architecture and validation 
 
 No unreleased changes.
 
+## 1.0.51 - 2026-09-22
+
+- Complete the chronology-family modularisation after a second forensic cohesion pass.
+- Move Japanese imperial-era, Coptic/Ethiopic and Indian National arithmetic out of the central coordinator into private family modules without changing the public arithmetic ABI or chronology behaviour.
+- Keep family-owned era/year mapping beside each family conversion so generic navigation cannot acquire a competing chronology interpretation.
+- Reduce the coordinator to cross-family dispatch, simple Gregorian-derived era mapping and generic month/year navigation while retaining the exact Common 1.19.23 foundation.
+
 ## 1.0.50 - 2026-09-22
 
 - Split the large arithmetic implementation along proven chronology-family boundaries without changing the public arithmetic API or calendar behaviour.

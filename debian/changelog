@@ -1,3 +1,12 @@
+infiltrator-calendar (1.0.51) trixie; urgency=medium
+
+  * Complete the chronology-family modularisation after forensic cohesion review.
+  * Split Japanese, Coptic/Ethiopic and Indian arithmetic into private modules.
+  * Keep the public arithmetic ABI and chronology behaviour unchanged.
+  * Retain the exact Infiltratr Common 1.19.23 foundation.
+
+ -- Shannon Smith <noreply@the-infiltratr.com>  Tue, 22 Sep 2026 15:58:00 +1000
+
 infiltrator-calendar (1.0.50) trixie; urgency=medium
 
   * Split self-contained Islamic/Umm al-Qura, Hebrew and Persian arithmetic

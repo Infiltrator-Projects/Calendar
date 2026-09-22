@@ -9,7 +9,7 @@ G_IR_COMPILER ?= g-ir-compiler
 PREFIX ?= /usr
 DESTDIR ?=
 
-VERSION := 1.0.50
+VERSION := 1.0.51
 UUID := calendar-plus@the-infiltratr
 APPLET_SRC_DIR := src/cinnamon
 ICON_NAME := infiltratr-calendar
@@ -39,8 +39,11 @@ CORE_SOURCES := \
 	src/core/julian-day.c \
 	src/core/calendar-registry.c \
 	src/core/calendar-arithmetic.c \
+	src/core/calendar-arithmetic-coptic.c \
 	src/core/calendar-arithmetic-hebrew.c \
+	src/core/calendar-arithmetic-indian.c \
 	src/core/calendar-arithmetic-islamic.c \
+	src/core/calendar-arithmetic-japanese.c \
 	src/core/calendar-arithmetic-persian.c \
 	src/core/calendar-helpers.c \
 	src/core/locale-weekend.c \
