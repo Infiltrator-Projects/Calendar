@@ -18,7 +18,6 @@
 const CalendarPlus = imports.gi.CalendarPlus;
 const CinnamonDesktop = imports.gi.CinnamonDesktop;
 
-var CLOCK_MODE_STANDARD = "standard";
 var CLOCK_MODE_STANDARD_24 = "standard-24";
 var CLOCK_MODE_STANDARD_12 = "standard-12";
 
@@ -77,11 +76,8 @@ const CONVENTIONAL_TIME_FORMATS = Object.freeze([
 ]);
 
 function isNativeClockMode(mode) {
-    return ![
-        CLOCK_MODE_STANDARD,
-        CLOCK_MODE_STANDARD_24,
-        CLOCK_MODE_STANDARD_12,
-    ].includes(mode);
+    return CalendarPlus.time_mode_from_string(mode) !==
+        CalendarPlus.TimeMode.INVALID;
 }
 
 function nativeModeRequiresLocation(mode) {
@@ -197,19 +193,12 @@ function syncNativeClock(systemClock, config) {
         return;
     }
 
-    const latitude = Number.isFinite(config.latitude)
-        ? Math.max(-90, Math.min(90, config.latitude))
-        : 0;
-    const longitude = Number.isFinite(config.longitude)
-        ? Math.max(-180, Math.min(180, config.longitude))
-        : 0;
-
     systemClock.start_at_location(
         config.mode,
         config.showSeconds,
         config.vertical,
-        latitude,
-        longitude
+        config.latitude,
+        config.longitude
     );
 }
 function nativePanelText(clock, systemClock, config) {

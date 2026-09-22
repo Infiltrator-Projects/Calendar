@@ -7,6 +7,8 @@
 #include "time-formats.h"
 #include "integer-math.h"
 
+#include <infiltratr/temporal.h>
+
 G_BEGIN_DECLS
 
 enum
@@ -23,7 +25,6 @@ enum
 
 #define MICROSECONDS_PER_DAY ((gint64)SECONDS_PER_DAY * G_USEC_PER_SEC)
 
-gint64 calendar_plus_time_local_microseconds_of_day(gint64 unix_microseconds, gint utc_offset_seconds);
 guint calendar_plus_time_fractional_day_tick(gint64 microseconds_of_day, guint ticks_per_day);
 void calendar_plus_time_split_clock_seconds(gint64 whole_seconds, gint *hour, gint *minute, gint *second);
 gchar *calendar_plus_time_format_clock_fields(gint hour, gint minute, gint second, gboolean show_seconds, gboolean vertical, const gchar *suffix);
@@ -34,7 +35,7 @@ guint calendar_plus_time_delay_for_clock_seconds(long double clock_seconds, long
 
 #define floor_divide calendar_plus_floor_divide
 #define positive_modulo calendar_plus_positive_modulo
-#define local_microseconds_of_day calendar_plus_time_local_microseconds_of_day
+#define local_microseconds_of_day infiltratr_temporal_local_microseconds_of_day
 #define fractional_day_tick calendar_plus_time_fractional_day_tick
 #define split_clock_seconds calendar_plus_time_split_clock_seconds
 #define format_clock_fields calendar_plus_time_format_clock_fields

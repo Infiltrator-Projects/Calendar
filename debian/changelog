@@ -1,3 +1,12 @@
+infiltrator-calendar (1.0.49) trixie; urgency=medium
+
+  * Complete the Common ownership cleanup against Common 1.19.23.
+  * Fix temporal provider-marker override monitoring.
+  * Remove duplicate day-phase, native-mode and coordinate-normalisation logic.
+  * Enumerate Common-backed calendar metadata in runtime training/test loops.
+
+ -- Shannon Smith <noreply@the-infiltratr.com>  Tue, 22 Sep 2026 14:30:00 +1000
+
 infiltrator-calendar (1.0.48) trixie; urgency=medium
 
   * Complete the forensic maintenance and documentation pass.

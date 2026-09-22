@@ -37,15 +37,6 @@ typedef struct
 
 enum { CALENDAR_PLUS_TIME_PROVIDER_ABI = 1 };
 
-gint64
-calendar_plus_time_local_microseconds_of_day(gint64 unix_microseconds, gint utc_offset_seconds)
-{
-    const gint64 instant_phase = positive_modulo(unix_microseconds, MICROSECONDS_PER_DAY);
-    const gint64 offset_microseconds = (gint64)utc_offset_seconds * G_USEC_PER_SEC;
-    const gint64 offset_phase = positive_modulo(offset_microseconds, MICROSECONDS_PER_DAY);
-    return positive_modulo(instant_phase + offset_phase, MICROSECONDS_PER_DAY);
-}
-
 guint
 calendar_plus_time_fractional_day_tick(gint64 microseconds_of_day, guint ticks_per_day)
 {

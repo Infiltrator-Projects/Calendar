@@ -599,7 +599,18 @@ function evaluatePanelClock() {
             gi: {
                 CalendarPlus: {
                     DatePart: { SHORT: 4, FULL: 5 },
-                    time_mode_from_string(mode) { return mode; },
+                    TimeMode: { INVALID: 0 },
+                    time_mode_from_string(mode) {
+                        const nativeModes = [
+                            "decimal", "internet", "unix", "hexadecimal",
+                            "binary", "sidereal", "solar", "julian",
+                            "mean-solar", "modified-julian", "chinese-time",
+                            "roman-temporal", "japanese-temporal",
+                            "italian-hours", "babylonian-hours",
+                            "indian-ghati", "chinese-ke", "nuremberg-hours",
+                        ];
+                        return nativeModes.includes(mode) ? mode : 0;
+                    },
                     time_mode_requires_longitude(mode) {
                         return [
                             "sidereal",
@@ -643,7 +654,7 @@ function evaluatePanelClock() {
         "utf8"
     );
     vm.runInContext(
-        `${source}\nglobalThis.__PanelClock = { panelText, syncNativeClock, configureWallClock, uses24HourClock };`,
+        `${source}\nglobalThis.__PanelClock = { panelText, syncNativeClock, configureWallClock, uses24HourClock, isNativeClockMode };`,
         context,
         { filename: "panelClock.js" }
     );
@@ -676,6 +687,13 @@ function testPanelClockDefensiveFormatting() {
         primaryCalendar: "gregorian",
     };
 
+    assert.equal(PanelClock.isNativeClockMode("decimal"), true);
+    assert.equal(PanelClock.isNativeClockMode("standard"), false);
+    assert.equal(
+        PanelClock.isNativeClockMode("not-a-clock-mode"),
+        false,
+        "unknown clock IDs must not be misclassified as native"
+    );
     assert.equal(
         PanelClock.panelText(clock, systemClock, base),
         "@500",

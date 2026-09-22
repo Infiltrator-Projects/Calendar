@@ -848,44 +848,17 @@ test_calendar_navigation(void)
 static void
 test_calendar_round_trips(void)
 {
-    const gchar *calendar_ids[] = {
-        "gregorian",
-        "julian",
-        "iso-week",
-        "hebrew",
-        "islamic",
-        "islamic-civil",
-        "islamic-umalqura",
-        "persian",
-        "chinese",
-        "indian",
-        "coptic",
-        "ethiopian",
-        "buddhist",
-        "japanese",
-        "minguo",
-        "french-republican",
-        "roman",
-        "mayan",
-        "bahai",
-        "international-fixed",
-        "world",
-        "positivist",
-        "revised-julian",
-        "byzantine",
-        "egyptian-nabonassar",
-        "dangi",
-        "ethiopic-amete-alem",
-        "islamic-tbla",
-        "armenian-traditional",
-        "swedish-historical"
-    };
     gsize index;
 
-    for (index = 0; index < G_N_ELEMENTS(calendar_ids); index++)
+    for (index = 0;
+         index < calendar_plus_calendar_catalogue_get_count();
+         index++)
     {
-        g_autoptr(CalendarPlusCalendarSystem) calendar =
-            calendar_plus_calendar_system_new(calendar_ids[index]);
+        CalendarPlusCalendarDescriptor descriptor = { 0 };
+        g_autoptr(CalendarPlusCalendarSystem) calendar = NULL;
+
+        g_assert_true(calendar_plus_calendar_catalogue_get(index, &descriptor));
+        calendar = calendar_plus_calendar_system_new(descriptor.id);
         g_autofree gchar *month_start =
             calendar_plus_calendar_system_month_start(calendar,
                                                       2026,

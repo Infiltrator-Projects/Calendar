@@ -23,9 +23,10 @@
 #include "system-clock-private.h"
 
 #include <gio/gio.h>
+#include <infiltratr/core.h>
+#include <infiltratr/posix_path.h>
 #include <infiltratr/temporal.h>
 #include <infiltratr/temporal_posix.h>
-#include <string.h>
 
 struct _CalendarPlusSystemClock
 {
@@ -35,6 +36,7 @@ struct _CalendarPlusSystemClock
     GSettings *cinnamon_interface_settings;
 
     gchar *policy_directory;
+    gchar *provider_marker_basename;
     GFileMonitor *policy_directory_monitor;
     GFileMonitor *config_home_monitor;
     GFileMonitor *provider_directory_monitor;
@@ -65,8 +67,8 @@ policy_equal(const InfiltratrTemporalPolicyV3 *left,
 {
     return left != NULL && right != NULL &&
            left->version == right->version &&
-           strcmp(left->clock_mode, right->clock_mode) == 0 &&
-           strcmp(left->calendar, right->calendar) == 0 &&
+           infiltratr_string_equal(left->clock_mode, right->clock_mode) &&
+           infiltratr_string_equal(left->calendar, right->calendar) &&
            left->show_seconds == right->show_seconds &&
            left->location_configured == right->location_configured &&
            left->latitude == right->latitude &&
@@ -185,7 +187,7 @@ file_has_basename(GFile *file, const gchar *basename)
     if (file == NULL || basename == NULL)
         return FALSE;
     actual = g_file_get_basename(file);
-    return g_strcmp0(actual, basename) == 0;
+    return infiltratr_string_equal(actual, basename);
 }
 
 static void
@@ -233,9 +235,14 @@ on_config_home_changed(GFileMonitor *monitor G_GNUC_UNUSED,
                        gpointer user_data)
 {
     CalendarPlusSystemClock *self = CALENDAR_PLUS_SYSTEM_CLOCK(user_data);
+    const gchar *policy_basename =
+        self->policy_directory != NULL
+            ? infiltratr_path_basename(self->policy_directory)
+            : NULL;
 
-    if (!file_has_basename(file, "infiltrator") &&
-        !file_has_basename(other_file, "infiltrator"))
+    if (policy_basename == NULL ||
+        (!file_has_basename(file, policy_basename) &&
+         !file_has_basename(other_file, policy_basename)))
     {
         return;
     }
@@ -253,8 +260,9 @@ on_provider_directory_changed(GFileMonitor *monitor G_GNUC_UNUSED,
 {
     CalendarPlusSystemClock *self = CALENDAR_PLUS_SYSTEM_CLOCK(user_data);
 
-    if (!file_has_basename(file, "temporal-v3") &&
-        !file_has_basename(other_file, "temporal-v3"))
+    if (self->provider_marker_basename == NULL ||
+        (!file_has_basename(file, self->provider_marker_basename) &&
+         !file_has_basename(other_file, self->provider_marker_basename)))
     {
         return;
     }
@@ -330,6 +338,7 @@ calendar_plus_system_clock_dispose(GObject *object)
     cancel_monitor(&self->provider_directory_monitor);
 
     g_clear_pointer(&self->policy_directory, g_free);
+    g_clear_pointer(&self->provider_marker_basename, g_free);
     if (self->cinnamon_interface_settings != NULL)
     {
         g_object_unref(self->cinnamon_interface_settings);
@@ -375,7 +384,9 @@ calendar_plus_system_clock_init(CalendarPlusSystemClock *self)
     CalendarPlusClockTimeSource time_source;
     CalendarPlusClockScheduler scheduler;
     char policy_directory[4096];
+    char policy_parent[4096];
     char provider_marker[4096];
+    char provider_directory[4096];
 
     calendar_plus_clock_glib_interfaces(&time_source, &scheduler);
     self->engine = calendar_plus_clock_engine_new(&time_source,
@@ -397,22 +408,35 @@ calendar_plus_system_clock_init(CalendarPlusSystemClock *self)
     {
         self->policy_directory = g_strdup(policy_directory);
         setup_policy_directory_monitor(self);
+        if (infiltratr_path_dirname(
+                policy_directory, policy_parent, sizeof(policy_parent)))
+        {
+            self->config_home_monitor =
+                monitor_directory_path(policy_parent,
+                                       G_CALLBACK(on_config_home_changed),
+                                       self);
+        }
     }
-
-    self->config_home_monitor =
-        monitor_directory_path(g_get_user_config_dir(),
-                               G_CALLBACK(on_config_home_changed),
-                               self);
 
     if (infiltratr_temporal_posix_provider_marker_path(
             provider_marker, sizeof(provider_marker)))
     {
-        g_autofree gchar *provider_directory =
-            g_path_get_dirname(provider_marker);
-        self->provider_directory_monitor =
-            monitor_directory_path(provider_directory,
-                                   G_CALLBACK(on_provider_directory_changed),
-                                   self);
+        const gchar *provider_basename =
+            infiltratr_path_basename(provider_marker);
+        if (provider_basename != NULL)
+            self->provider_marker_basename = g_strdup(provider_basename);
+
+        if (infiltratr_path_dirname(
+                provider_marker,
+                provider_directory,
+                sizeof(provider_directory)))
+        {
+            self->provider_directory_monitor =
+                monitor_directory_path(
+                    provider_directory,
+                    G_CALLBACK(on_provider_directory_changed),
+                    self);
+        }
     }
 
     (void)infiltratr_temporal_policy_v3_default(&self->effective_policy);

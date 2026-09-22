@@ -9,6 +9,7 @@
  * inputs without introducing network-dependent oracle data.
  */
 
+#include "calendar-core.h"
 #include "calendar-system.h"
 #include "event-store.h"
 #include "julian-day.h"
@@ -20,38 +21,6 @@
 
 void tzset(void);
 
-static const gchar *const calendar_ids[] = {
-    "gregorian",
-    "julian",
-    "iso-week",
-    "hebrew",
-    "islamic",
-    "islamic-civil",
-    "islamic-umalqura",
-    "persian",
-    "chinese",
-    "indian",
-    "coptic",
-    "ethiopian",
-    "buddhist",
-    "japanese",
-    "minguo",
-    "french-republican",
-    "roman",
-    "mayan",
-    "bahai",
-    "international-fixed",
-    "world",
-    "positivist",
-    "revised-julian",
-    "byzantine",
-    "egyptian-nabonassar",
-    "dangi",
-    "ethiopic-amete-alem",
-    "islamic-tbla",
-    "armenian-traditional",
-    "swedish-historical"
-};
 
 static void
 test_gregorian_jdn_round_trip(void)
@@ -104,11 +73,15 @@ test_all_calendar_grid_properties(void)
     gsize calendar_index;
 
     for (calendar_index = 0;
-         calendar_index < G_N_ELEMENTS(calendar_ids);
+         calendar_index < calendar_plus_calendar_catalogue_get_count();
          calendar_index++)
     {
-        g_autoptr(CalendarPlusCalendarSystem) calendar =
-            calendar_plus_calendar_system_new(calendar_ids[calendar_index]);
+        CalendarPlusCalendarDescriptor descriptor = { 0 };
+        g_autoptr(CalendarPlusCalendarSystem) calendar = NULL;
+
+        g_assert_true(
+            calendar_plus_calendar_catalogue_get(calendar_index, &descriptor));
+        calendar = calendar_plus_calendar_system_new(descriptor.id);
         gint year;
 
         g_assert_nonnull(calendar);
@@ -192,11 +165,15 @@ test_all_calendar_typed_navigation(void)
     gsize calendar_index;
 
     for (calendar_index = 0;
-         calendar_index < G_N_ELEMENTS(calendar_ids);
+         calendar_index < calendar_plus_calendar_catalogue_get_count();
          calendar_index++)
     {
-        g_autoptr(CalendarPlusCalendarSystem) calendar =
-            calendar_plus_calendar_system_new(calendar_ids[calendar_index]);
+        CalendarPlusCalendarDescriptor descriptor = { 0 };
+        g_autoptr(CalendarPlusCalendarSystem) calendar = NULL;
+
+        g_assert_true(
+            calendar_plus_calendar_catalogue_get(calendar_index, &descriptor));
+        calendar = calendar_plus_calendar_system_new(descriptor.id);
         g_autoptr(GVariant) start =
             calendar_plus_calendar_system_month_start_parts(calendar,
                                                             2026,

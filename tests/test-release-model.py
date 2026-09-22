@@ -193,7 +193,7 @@ def main() -> None:
         "INFILTRATR_COMMON_COMMIT := "
         "302c44eb7436803dee020667453a9a0681da8bbf"
     ) in makefile
-    assert "INFILTRATR_COMMON_VERSION := 1.19.22" in makefile
+    assert "INFILTRATR_COMMON_VERSION := 1.19.23" in makefile
     assert "normal `make` automatically retrieves" in read("README.md")
     assert "common-bootstrap: common-check" in makefile
     assert "common-test: $(INFILTRATR_COMMON_ARCHIVE)" in makefile
@@ -462,7 +462,7 @@ def main() -> None:
     # Validate Calendar's actual Common calls against Common's complete public
     # header surface. Do not duplicate Common's private source membership here.
     common = ROOT / "src/vendor/infiltratr-common"
-    assert (common / "VERSION").read_text(encoding="utf-8").strip() == "1.19.22"
+    assert (common / "VERSION").read_text(encoding="utf-8").strip() == "1.19.23"
     assert (common / "LICENSE").is_file()
     common_include = common / "include/infiltratr"
     for public_header in (
@@ -584,6 +584,36 @@ def main() -> None:
     assert "index->revision + 1" not in read("src/core/event-core.c")
     assert "unix_microseconds + delta" not in read("src/core/time-formats-astronomy.c")
     assert "unix_microseconds + delta" not in read("src/core/time-formats-nuremberg.c")
+
+    system_clock_source = read("src/adapters/system-clock.c")
+    assert "infiltratr_string_equal(left->clock_mode" in system_clock_source
+    assert "strcmp(left->clock_mode" not in system_clock_source
+    assert "g_strcmp0(actual, basename)" not in system_clock_source
+    assert "infiltratr_path_dirname" in system_clock_source
+    assert "infiltratr_path_basename" in system_clock_source
+    assert "g_get_user_config_dir" not in system_clock_source
+    assert "g_path_get_dirname" not in system_clock_source
+    assert 'file_has_basename(file, "temporal-v3")' not in system_clock_source
+
+    time_formats = read("src/core/time-formats.c")
+    time_formats_internal = read("src/core/time-formats-internal.h")
+    assert "calendar_plus_time_local_microseconds_of_day" not in time_formats
+    assert (
+        "#define local_microseconds_of_day "
+        "infiltratr_temporal_local_microseconds_of_day"
+    ) in time_formats_internal
+
+    panel_clock = read("src/cinnamon/panelClock.js")
+    assert "CalendarPlus.TimeMode.INVALID" in panel_clock
+    assert "Math.max(-90" not in panel_clock
+    assert "Math.min(90" not in panel_clock
+    assert "Math.max(-180" not in panel_clock
+    assert "Math.min(180" not in panel_clock
+
+    pgo_train = read("tools/pgo-train.c")
+    assert "calendar_ids[]" not in pgo_train
+    assert "calendar_plus_calendar_catalogue_get_count" in pgo_train
+    assert "calendar_plus_calendar_catalogue_get(" in pgo_train
 
     control = read("debian/control")
     assert "cinnamon (>= 6.4)" in control

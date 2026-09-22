@@ -9,21 +9,13 @@
  * (including astronomical modes), and event timing classification.
  */
 
+#include "calendar-core.h"
 #include "calendar-system.h"
 #include "event-store.h"
 #include "time-formats.h"
 
 #include <glib.h>
 
-static const gchar *const calendar_ids[] = {
-    "gregorian", "julian", "iso-week", "hebrew", "islamic",
-    "islamic-civil", "islamic-umalqura", "persian", "chinese", "indian",
-    "coptic", "ethiopian", "buddhist", "japanese", "minguo",
-    "french-republican", "roman", "mayan", "bahai",
-    "international-fixed", "world", "positivist", "revised-julian",
-    "byzantine", "egyptian-nabonassar", "dangi", "ethiopic-amete-alem",
-    "islamic-tbla", "armenian-traditional", "swedish-historical"
-};
 
 int
 main(void)
@@ -35,12 +27,17 @@ main(void)
     {
         gsize index;
 
-        for (index = 0; index < G_N_ELEMENTS(calendar_ids); index++)
+        for (index = 0;
+             index < calendar_plus_calendar_catalogue_get_count();
+             index++)
         {
-            g_autoptr(CalendarPlusCalendarSystem) calendar =
-                calendar_plus_calendar_system_new(calendar_ids[index]);
+            CalendarPlusCalendarDescriptor descriptor = { 0 };
+            g_autoptr(CalendarPlusCalendarSystem) calendar = NULL;
             gint month;
 
+            if (!calendar_plus_calendar_catalogue_get(index, &descriptor))
+                return 1;
+            calendar = calendar_plus_calendar_system_new(descriptor.id);
             if (calendar == NULL)
                 return 1;
 

@@ -6,6 +6,15 @@ This changelog records user-visible, compatibility, architecture and validation 
 
 No unreleased changes.
 
+## 1.0.49 - 2026-09-22
+
+- Finish the forensic Common → Calendar ownership pass against Common 1.19.23.
+- Derive temporal monitor parent/basename identity from Common-returned paths, fixing provider-marker overrides and removing hardcoded `infiltrator`/`temporal-v3` monitor assumptions.
+- Remove Calendar's duplicate local civil-day phase algorithm and consume Common's promoted exact temporal primitive directly.
+- Let the Common-backed native clock registry classify native modes, remove the duplicate JavaScript coordinate clamp and keep coordinate validation/normalisation in the native engine.
+- Enumerate the Common-backed calendar catalogue in PGO/property/round-trip loops while retaining one explicit catalogue test as an independent supported-set oracle.
+- Replace residual adapter string equality and POSIX path manipulation with Common primitives and add regression guards for the tightened ownership boundary.
+
 ## 1.0.48 - 2026-09-22
 
 - Complete the forensic source, test, packaging, comment and maintained-documentation review for Calendar's declared Linux/Cinnamon product scope.
