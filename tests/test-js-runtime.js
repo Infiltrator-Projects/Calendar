@@ -46,8 +46,20 @@ function evaluateApplet(nativeVersion = version, loaderMode = "legacy") {
     }
 
     class Bin {
-        constructor() { this.min_width = 0; }
-        set_child() {}
+        constructor() {
+            this.min_width = 0;
+            this.child = null;
+            this.relayoutQueued = 0;
+        }
+        _init() {
+            this.min_width = 0;
+            this.child = null;
+            this.relayoutQueued = 0;
+        }
+        set_child(child) { this.child = child; }
+        get_child() { return this.child; }
+        queue_relayout() { this.relayoutQueued += 1; }
+        vfunc_get_preferred_width() { return [0, 0]; }
     }
 
     class SignalBag {
@@ -113,6 +125,17 @@ function evaluateApplet(nativeVersion = version, loaderMode = "legacy") {
             },
             gi: {
                 Gio: {},
+                GObject: {
+                    registerClass(klass) {
+                        return class extends klass {
+                            constructor(...args) {
+                                super(...args);
+                                if (typeof this._init === "function")
+                                    this._init(...args);
+                            }
+                        };
+                    },
+                },
                 CalendarPlus: {
                     get_version() { return nativeVersion; },
                     CalendarSystem: {

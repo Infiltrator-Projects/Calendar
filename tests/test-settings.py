@@ -265,6 +265,13 @@ def main() -> None:
     assert "PanelClock.panelText(" in applet_source
     assert "PanelClock.todayDisplay(" in applet_source
 
+    # Keep clock-width hysteresis in the bin's preferred-width contract.
+    # Direct St.Bin.min_width mutation reproduces Cinnamon's allocation warning.
+    assert "GObject.registerClass(" in applet_source
+    assert "class LatchedWidthBin extends St.Bin" in applet_source
+    assert "vfunc_get_preferred_width(forHeight)" in applet_source
+    assert "this._labelBin.min_width" not in applet_source
+
     # Construction must be atomic. Essential native state is established
     # before actors are built; a failed build cleans up and rethrows instead
     # of leaving Cinnamon with a partly initialised applet.

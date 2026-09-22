@@ -15,13 +15,32 @@ These are distinct evidence classes. A hosted build does not become Cinnamon-ses
 
 ## Current development boundary
 
-The current `main` contains the documented correctness, repository hardening, package-owned artwork, forensic event-cache/reload/retry/package-migration/proleptic-Gregorian/sanitizer repairs, and the Common 1.19.23 foundation containing shared build-profile labels, atomic dynamic symbol binding, checked/timing primitives, the shared temporal presentation contract and the unified System/Day/Night plus typography contract. Cinnamon typography, structural geometry and Day/Night palette projection are checked against the pinned Common design source. Common explicitly treats font binaries as outside that contract and requires fallback when MB Corpo is unavailable, so Calendar requests the preferred family names without redistributing proprietary typeface files. Settings use Cinnamon's own renderer and About uses Cinnamon/St; JavaScript local-midnight and instant-equality mechanics remain owned once by the Cinnamon runtime support layer. This ledger deliberately makes no claim that automated conformance substitutes for a separately recorded manual Cinnamon/location qualification.
+The current `main` contains the documented correctness, repository hardening, package-owned artwork, forensic event-cache/reload/retry/package-migration/proleptic-Gregorian/sanitizer repairs, and the Common 1.19.24 foundation containing shared build-profile labels, atomic dynamic symbol binding, checked/timing primitives, the shared temporal presentation contract and the unified System/Day/Night plus typography contract. Cinnamon typography, structural geometry and Day/Night palette projection are checked against the pinned Common design source. Common explicitly treats font binaries as outside that contract and requires fallback when MB Corpo is unavailable, so Calendar requests the preferred family names without redistributing proprietary typeface files. Settings use Cinnamon's own renderer and About uses Cinnamon/St; JavaScript local-midnight and instant-equality mechanics remain owned once by the Cinnamon runtime support layer. This ledger deliberately makes no claim that automated conformance substitutes for a separately recorded manual Cinnamon/location qualification.
 
 The About surface reports the canonical build profile from the compiled native library through Infiltratr Common, so a repository package identifies itself as `Generic / APT package` and a local `.run` build identifies itself as `Native / local machine compile`. This mirrors System Monitor's build-identity contract.
 
-Temporal authority is explicitly guarded: Common 1.19.23 supplies the canonical POSIX policy path and installed `temporal-v3` provider capability. Calendar caches one effective snapshot and monitors both the policy directory and provider directory, so atomic saves, provider installation and provider removal cannot mix fields from different policy generations. Provider absence, missing policy or invalid policy resolves to Mint/Cinnamon; provider plus valid policy resolves to Infiltrator System Settings. The JavaScript runtime matrix separately covers 12/24-hour, date visibility, seconds and vertical-panel combinations, while the month view follows Cinnamon's first-day-of-week helper and the event layer follows the operating-system timezone.
+Temporal authority is explicitly guarded: Common 1.19.24 supplies the canonical POSIX policy path and installed `temporal-v3` provider capability. Calendar caches one effective snapshot and monitors both the policy directory and provider directory, so atomic saves, provider installation and provider removal cannot mix fields from different policy generations. Provider absence, missing policy or invalid policy resolves to Mint/Cinnamon; provider plus valid policy resolves to Infiltrator System Settings. The JavaScript runtime matrix separately covers 12/24-hour, date visibility, seconds and vertical-panel combinations, while the month view follows Cinnamon's first-day-of-week helper and the event layer follows the operating-system timezone.
 
 Automated CI remains authoritative for automated conformance of each commit. A live Cinnamon step that is unavailable is shown as skipped, not converted into a pass.
+
+## Recorded live qualification
+
+### 2026-09-22 — Calendar 1.0.51
+
+| Field | Observed evidence |
+| --- | --- |
+| Date | 2026-09-22 |
+| Exact source | `d7823a6da45ab5613761ea5a921dd1d160e58048` |
+| Calendar version | 1.0.51 |
+| OS | Linux Mint 22.3 (Zena), kernel 7.0.0-31-generic |
+| Cinnamon | 6.6.9 |
+| Session | X11 |
+| Locale/time zone | `en_AU.UTF-8`; `Australia/Melbourne` |
+| Installed integration | PASS — exact-version installed hashes, native typelib/provider loading, enabled applet discovery, update/reset/resume paths and programmatic popup open/close all passed. |
+| Location model | Not separately exercised by this run; no location-dependent presentation claim is made. |
+| Result | PASS — 15 local qualification stages passed, 0 failed, 0 skipped. |
+
+This entry applies only to the exact 1.0.51 source above. Later source revisions require their own executable qualification where their changes affect an environment-dependent evidence class.
 
 ## Recording a live qualification
 

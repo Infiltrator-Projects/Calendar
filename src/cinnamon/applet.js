@@ -24,6 +24,7 @@ const CinnamonDesktop = imports.gi.CinnamonDesktop;
 const Clutter = imports.gi.Clutter;
 const Gio = imports.gi.Gio;
 const GLib = imports.gi.GLib;
+const GObject = imports.gi.GObject;
 const Pango = imports.gi.Pango;
 const St = imports.gi.St;
 const Gettext = imports.gettext;
@@ -76,6 +77,54 @@ const EventView = RuntimeSupport.loadLocalModule("eventView");
 
 const PanelClock = RuntimeSupport.loadLocalModule("panelClock");
 
+/*
+ * Keep the panel clock visually stable without forcing St.Bin.min_width.
+ * Cinnamon moved this latch into the container's preferred-width contract
+ * after Clutter began warning when a child's natural width fell below a
+ * previously forced minimum. The label remains free to report its real
+ * natural width; only the bin's request is latched.
+ */
+const LatchedWidthBin = GObject.registerClass(
+class LatchedWidthBin extends St.Bin {
+    _init(params = {}) {
+        super._init(params);
+        this._latchedWidth = 0;
+    }
+
+    resetLatch() {
+        this._latchedWidth = 0;
+        this.updateLatch();
+    }
+
+    updateLatch() {
+        const label = this.get_child();
+        if (!label) {
+            return;
+        }
+
+        const [, naturalWidth] = label.get_preferred_width(-1);
+        if (naturalWidth <= 0) {
+            return;
+        }
+
+        const characters = Math.max(1, label.get_text().length);
+        const hysteresis = 2 * naturalWidth / characters;
+        if (naturalWidth > this._latchedWidth ||
+            naturalWidth < this._latchedWidth - hysteresis) {
+            this._latchedWidth = naturalWidth;
+            this.queue_relayout();
+        }
+    }
+
+    vfunc_get_preferred_width(forHeight) {
+        const [minimum, natural] = super.vfunc_get_preferred_width(forHeight);
+        return [
+            Math.max(minimum, this._latchedWidth),
+            Math.max(natural, this._latchedWidth),
+        ];
+    }
+});
+
 class CalendarPlusApplet extends Applet.Applet {
     constructor(orientation, panel_height, instance_id, expectedVersion) {
         super(orientation, panel_height, instance_id);
@@ -100,7 +149,7 @@ class CalendarPlusApplet extends Applet.Applet {
         label.track_hover = true;
         label.clutter_text.ellipsize = Pango.EllipsizeMode.NONE;
 
-        const holder = new St.Bin();
+        const holder = new LatchedWidthBin();
         holder.set_child(label);
         this.actor.add(holder, { y_align: St.Align.MIDDLE, y_fill: false });
         this.actor.set_label_actor(label);
@@ -703,32 +752,14 @@ class CalendarPlusApplet extends Applet.Applet {
     }
 
     _resetLabelWidth() {
-        if (!this._labelBin) {
-            return;
+        if (this._labelBin) {
+            this._labelBin.resetLatch();
         }
-        this._labelBin.min_width = 0;
-        this._updateLabelWidth();
     }
 
     _updateLabelWidth() {
-        if (!this._clockLabel || !this._labelBin) {
-            return;
-        }
-
-        const [, naturalWidth] = this._clockLabel.get_preferred_width(-1);
-        const characters = Math.max(1, this._clockLabel.get_text().length);
-        if (naturalWidth <= 0) {
-            return;
-        }
-
-        /*
-         * Small width oscillations make the surrounding panel visibly jitter.
-         * Grow immediately, but shrink only after roughly two glyph widths.
-         */
-        const hysteresis = 2 * naturalWidth / characters;
-        if (naturalWidth > this._labelBin.min_width ||
-            naturalWidth < this._labelBin.min_width - hysteresis) {
-            this._labelBin.min_width = naturalWidth;
+        if (this._labelBin) {
+            this._labelBin.updateLatch();
         }
     }
 

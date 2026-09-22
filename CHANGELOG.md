@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.0.52 - 2026-09-22
+
+- Replace the panel clock's direct `St.Bin.min_width` mutation with a registered latched-width container, preserving two-glyph hysteresis while avoiding the Clutter allocation warning fixed upstream by Cinnamon.
+- Advance the reviewed Cinnamon integration baseline to `40d419f2c0951ace9f69155700993f611f22eca1` after confirming the watched change is limited to that width-latch correction.
+- Pin the exact released Infiltratr Common 1.19.24 commit `748e089ae175329471d4cf375522c44081371bd5`; the release hardens existing graphics operations without adding or removing Common APIs and Calendar has no graphics-surface callers.
+- Record the exact Calendar 1.0.51 live Cinnamon qualification from Linux Mint 22.3/Cinnamon 6.6.9 while keeping location-dependent presentation explicitly unclaimed.
+
 This changelog records user-visible, compatibility, architecture and validation changes for Calendar. Detailed commit-by-commit history remains in Git.
 
 ## Unreleased
