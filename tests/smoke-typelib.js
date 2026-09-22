@@ -36,11 +36,13 @@ requireCondition(
 
 
 const calendarIds = [
-    "gregorian", "julian", "iso-week", "hebrew", "islamic",
-    "islamic-civil", "islamic-umalqura", "persian", "chinese", "indian",
-    "coptic", "ethiopian", "buddhist", "japanese", "minguo",
-    "french-republican", "roman", "mayan", "bahai",
-    "international-fixed", "world", "positivist",
+    "gregorian", "iso-week", "julian", "revised-julian", "hebrew",
+    "islamic-umalqura", "islamic-civil", "islamic-tbla", "islamic",
+    "persian", "bahai", "buddhist", "coptic", "ethiopian",
+    "ethiopic-amete-alem", "chinese", "dangi", "indian", "japanese",
+    "minguo", "roman", "byzantine", "egyptian-nabonassar",
+    "armenian-traditional", "mayan", "french-republican",
+    "swedish-historical", "international-fixed", "world", "positivist",
 ];
 for (const id of calendarIds) {
     const provider = CalendarPlus.CalendarSystem.new(id);
@@ -57,7 +59,7 @@ const timeModeIds = [
     "binary", "sidereal", "solar", "julian", "mean-solar",
     "modified-julian", "chinese-time", "roman-temporal",
     "japanese-temporal", "italian-hours", "babylonian-hours",
-    "indian-ghati", "chinese-ke",
+    "indian-ghati", "chinese-ke", "nuremberg-hours",
 ];
 for (const id of timeModeIds) {
     requireCondition(
@@ -117,6 +119,28 @@ if (!providerAvailable) {
         "provider absence must resolve to conventional Mint/Gregorian policy"
     );
 }
+requireCondition(
+    historicalClock.get_system_mode() === effectiveMode,
+    "system-mode compatibility getter disagrees with policy snapshot"
+);
+requireCondition(
+    historicalClock.get_system_calendar() === effectiveCalendar,
+    "system-calendar compatibility getter disagrees with policy snapshot"
+);
+requireCondition(
+    historicalClock.get_system_show_seconds() === effectiveSeconds,
+    "system-seconds compatibility getter disagrees with policy snapshot"
+);
+requireCondition(
+    historicalClock.get_system_location_configured() ===
+        effectiveLocationConfigured,
+    "system-location compatibility getter disagrees with policy snapshot"
+);
+requireCondition(
+    historicalClock.get_system_latitude() === effectiveLatitude &&
+        historicalClock.get_system_longitude() === effectiveLongitude,
+    "system-coordinate compatibility getters disagree with policy snapshot"
+);
 
 const calendar = CalendarPlus.CalendarSystem.new("gregorian");
 requireCondition(calendar !== null, "Gregorian CalendarSystem unavailable");
@@ -136,6 +160,20 @@ const [year, month, day] = calendar
 requireCondition(
     year === 2026 && month === 9 && day === 8,
     "typed calendar navigation failed"
+);
+const [startYear, startMonth, startDay] = calendar
+    .month_start_parts(2026, 8, 8)
+    .deep_unpack();
+requireCondition(
+    startYear === 2026 && startMonth === 8 && startDay === 1,
+    "typed calendar period-start navigation failed"
+);
+const [nextYear, nextYearMonth, nextYearDay] = calendar
+    .add_years_parts(2026, 8, 8, 1)
+    .deep_unpack();
+requireCondition(
+    nextYear === 2027 && nextYearMonth === 8 && nextYearDay === 8,
+    "typed calendar year navigation failed"
 );
 
 const grid = calendar

@@ -12,8 +12,10 @@
 #include "calendar-system.h"
 #include "event-store.h"
 #include "julian-day.h"
+#include "system-clock.h"
 #include "time-formats.h"
 
+#include <math.h>
 #include <time.h>
 
 void tzset(void);
@@ -47,7 +49,8 @@ static const gchar *const calendar_ids[] = {
     "dangi",
     "ethiopic-amete-alem",
     "islamic-tbla",
-    "armenian-traditional"
+    "armenian-traditional",
+    "swedish-historical"
 };
 
 static void
@@ -234,6 +237,24 @@ test_all_calendar_typed_navigation(void)
                                               returned_year,
                                               returned_month,
                                               returned_day));
+
+        {
+            g_autoptr(GVariant) year_parts =
+                calendar_plus_calendar_system_add_years_parts(
+                    calendar, 2026, 7, 29, 1);
+            g_autofree gchar *year_iso =
+                calendar_plus_calendar_system_add_years(
+                    calendar, 2026, 7, 29, 1);
+            gint typed_year;
+            gint typed_month;
+            gint typed_day;
+            gchar expected[64];
+
+            date_parts(year_parts, &typed_year, &typed_month, &typed_day);
+            g_snprintf(expected, sizeof(expected), "%04d-%02d-%02d",
+                       typed_year, typed_month, typed_day);
+            g_assert_cmpstr(year_iso, ==, expected);
+        }
     }
 }
 
@@ -378,6 +399,44 @@ test_malformed_event_variants(void)
 }
 
 static void
+test_event_store_clear_contract(void)
+{
+    const gint64 day = local_unix(2026, 7, 29, 0);
+    g_autoptr(CalendarPlusEventStore) store =
+        calendar_plus_event_store_new();
+    g_autoptr(GVariant) event =
+        event_variant("clear-me",
+                      local_unix(2026, 7, 29, 9),
+                      local_unix(2026, 7, 29, 10));
+    g_autoptr(GVariant) snapshot = NULL;
+    g_autoptr(GVariant) rows = NULL;
+    g_auto(GStrv) colors = NULL;
+    gint64 revision = 0;
+
+    g_assert_true(calendar_plus_event_store_add_or_update(store, event, 1));
+    snapshot = calendar_plus_event_store_get_snapshot(
+        store, day, local_unix(2026, 7, 29, 9));
+    g_variant_get(snapshot, "(x@a(sssbbxxxxx))", &revision, &rows);
+    g_assert_cmpuint(g_variant_n_children(rows), ==, 1);
+
+    calendar_plus_event_store_clear(store);
+    g_clear_pointer(&snapshot, g_variant_unref);
+    g_clear_pointer(&rows, g_variant_unref);
+    snapshot = calendar_plus_event_store_get_snapshot(
+        store, day, local_unix(2026, 7, 29, 9));
+    g_variant_get(snapshot, "(x@a(sssbbxxxxx))", &revision, &rows);
+    g_assert_cmpuint(g_variant_n_children(rows), ==, 0);
+
+    colors = calendar_plus_event_store_get_colors(
+        store, day, local_unix(2026, 7, 29, 9));
+    g_assert_nonnull(colors);
+    g_assert_cmpuint(g_strv_length(colors), ==, 0);
+
+    /* Clearing an already-empty store is deliberately harmless. */
+    calendar_plus_event_store_clear(store);
+}
+
+static void
 test_event_timezone_refresh(void)
 {
     const gchar *original_timezone = g_getenv("TZ");
@@ -458,36 +517,42 @@ test_typed_date_api_and_validation(void)
 static void
 test_time_registry_contract(void)
 {
-    const CalendarPlusTimeMode modes[] = {
-        CALENDAR_PLUS_TIME_MODE_DECIMAL,
-        CALENDAR_PLUS_TIME_MODE_INTERNET,
-        CALENDAR_PLUS_TIME_MODE_UNIX,
-        CALENDAR_PLUS_TIME_MODE_HEXADECIMAL,
-        CALENDAR_PLUS_TIME_MODE_BINARY,
-        CALENDAR_PLUS_TIME_MODE_SIDEREAL,
-        CALENDAR_PLUS_TIME_MODE_SOLAR,
-        CALENDAR_PLUS_TIME_MODE_JULIAN,
-        CALENDAR_PLUS_TIME_MODE_MEAN_SOLAR,
-        CALENDAR_PLUS_TIME_MODE_MODIFIED_JULIAN,
-        CALENDAR_PLUS_TIME_MODE_CHINESE,
-        CALENDAR_PLUS_TIME_MODE_ROMAN_TEMPORAL,
-        CALENDAR_PLUS_TIME_MODE_JAPANESE_TEMPORAL,
-        CALENDAR_PLUS_TIME_MODE_ITALIAN_HOURS,
-        CALENDAR_PLUS_TIME_MODE_BABYLONIAN_HOURS,
-        CALENDAR_PLUS_TIME_MODE_INDIAN_GHATI,
-        CALENDAR_PLUS_TIME_MODE_CHINESE_KE
-    };
+    const gsize count = calendar_plus_time_mode_get_count();
     gsize index;
 
-    for (index = 0; index < G_N_ELEMENTS(modes); index++)
-    {
-        const gchar *id = calendar_plus_time_mode_get_id(modes[index]);
+    g_assert_cmpuint(count, ==,
+                     (gsize)CALENDAR_PLUS_TIME_MODE_NUREMBERG_HOURS);
 
+    for (index = 0; index < count; index++)
+    {
+        const CalendarPlusTimeMode mode =
+            calendar_plus_time_mode_get_at(index);
+        const gchar *id = calendar_plus_time_mode_get_id(mode);
+        const gchar *name = calendar_plus_time_mode_get_name(mode);
+        gsize other;
+
+        g_assert_cmpint(mode, !=, CALENDAR_PLUS_TIME_MODE_INVALID);
         g_assert_nonnull(id);
-        g_assert_cmpint(calendar_plus_time_mode_from_string(id),
-                        ==,
-                        modes[index]);
+        g_assert_cmpuint(strlen(id), >, 0U);
+        g_assert_nonnull(name);
+        g_assert_cmpuint(strlen(name), >, 0U);
+        g_assert_cmpint(calendar_plus_time_mode_from_string(id), ==, mode);
+
+        for (other = index + 1; other < count; other++)
+        {
+            const CalendarPlusTimeMode other_mode =
+                calendar_plus_time_mode_get_at(other);
+            g_assert_cmpstr(id, !=,
+                calendar_plus_time_mode_get_id(other_mode));
+        }
     }
+
+    g_assert_cmpint(calendar_plus_time_mode_get_at(count), ==,
+                    CALENDAR_PLUS_TIME_MODE_INVALID);
+    g_assert_cmpint(calendar_plus_time_mode_from_string(NULL), ==,
+                    CALENDAR_PLUS_TIME_MODE_INVALID);
+    g_assert_cmpint(calendar_plus_time_mode_from_string("missing"), ==,
+                    CALENDAR_PLUS_TIME_MODE_INVALID);
 
     g_assert_true(calendar_plus_time_mode_requires_longitude(
         CALENDAR_PLUS_TIME_MODE_SIDEREAL));
@@ -503,6 +568,8 @@ test_time_registry_contract(void)
         CALENDAR_PLUS_TIME_MODE_ITALIAN_HOURS));
     g_assert_true(calendar_plus_time_mode_requires_longitude(
         CALENDAR_PLUS_TIME_MODE_BABYLONIAN_HOURS));
+    g_assert_true(calendar_plus_time_mode_requires_longitude(
+        CALENDAR_PLUS_TIME_MODE_NUREMBERG_HOURS));
     g_assert_true(calendar_plus_time_mode_requires_latitude(
         CALENDAR_PLUS_TIME_MODE_ROMAN_TEMPORAL));
     g_assert_true(calendar_plus_time_mode_requires_latitude(
@@ -513,6 +580,8 @@ test_time_registry_contract(void)
         CALENDAR_PLUS_TIME_MODE_BABYLONIAN_HOURS));
     g_assert_true(calendar_plus_time_mode_requires_latitude(
         CALENDAR_PLUS_TIME_MODE_INDIAN_GHATI));
+    g_assert_true(calendar_plus_time_mode_requires_latitude(
+        CALENDAR_PLUS_TIME_MODE_NUREMBERG_HOURS));
     g_assert_false(calendar_plus_time_mode_requires_latitude(
         CALENDAR_PLUS_TIME_MODE_CHINESE_KE));
     g_assert_false(calendar_plus_time_mode_requires_latitude(
@@ -531,6 +600,181 @@ test_time_registry_contract(void)
         CALENDAR_PLUS_TIME_MODE_JAPANESE_TEMPORAL));
     g_assert_null(calendar_plus_time_mode_get_id(
         CALENDAR_PLUS_TIME_MODE_INVALID));
+    g_assert_null(calendar_plus_time_mode_get_name(
+        CALENDAR_PLUS_TIME_MODE_INVALID));
+}
+
+static void
+test_all_time_modes_runtime_contract(void)
+{
+    const gint64 normal_instant =
+        G_GINT64_CONSTANT(1788177600) * G_USEC_PER_SEC;
+    const gint64 extremes[] = { G_MININT64, G_MAXINT64 };
+    const gsize count = calendar_plus_time_mode_get_count();
+    gsize index;
+
+    for (index = 0; index < count; index++)
+    {
+        const CalendarPlusTimeMode mode =
+            calendar_plus_time_mode_get_at(index);
+        const gchar *id = calendar_plus_time_mode_get_id(mode);
+        guint show_seconds;
+        guint vertical;
+        gsize extreme_index;
+
+        for (show_seconds = 0; show_seconds <= 1; show_seconds++)
+        {
+            for (vertical = 0; vertical <= 1; vertical++)
+            {
+                g_autofree gchar *formatted =
+                    calendar_plus_format_time_at_location(
+                        mode,
+                        normal_instant,
+                        10 * 60 * 60,
+                        show_seconds != 0,
+                        vertical != 0,
+                        -36.3833,
+                        145.4000);
+                const guint delay =
+                    calendar_plus_time_delay_to_next_tick_at_location(
+                        mode,
+                        normal_instant,
+                        10 * 60 * 60,
+                        show_seconds != 0,
+                        -36.3833,
+                        145.4000);
+
+                g_assert_nonnull(formatted);
+                g_assert_cmpuint(strlen(formatted), >, 0U);
+                g_assert_cmpuint(delay, >, 0U);
+            }
+        }
+
+        if (calendar_plus_time_mode_requires_latitude(mode))
+        {
+            g_autofree gchar *missing_latitude =
+                calendar_plus_format_time_at_location(
+                    mode, normal_instant, 10 * 60 * 60,
+                    FALSE, FALSE, NAN, 145.4000);
+            g_assert_cmpstr(missing_latitude, ==, "");
+            g_assert_cmpuint(
+                calendar_plus_time_delay_to_next_tick_at_location(
+                    mode, normal_instant, 10 * 60 * 60,
+                    FALSE, NAN, 145.4000),
+                ==, 3600000U);
+        }
+
+        if (calendar_plus_time_mode_requires_longitude(mode))
+        {
+            g_autofree gchar *missing_longitude =
+                calendar_plus_format_time_at_location(
+                    mode, normal_instant, 10 * 60 * 60,
+                    FALSE, FALSE, -36.3833, NAN);
+            g_assert_cmpstr(missing_longitude, ==, "");
+            g_assert_cmpuint(
+                calendar_plus_time_delay_to_next_tick_at_location(
+                    mode, normal_instant, 10 * 60 * 60,
+                    FALSE, -36.3833, NAN),
+                ==, 3600000U);
+        }
+
+        for (extreme_index = 0;
+             extreme_index < G_N_ELEMENTS(extremes);
+             extreme_index++)
+        {
+            g_autofree gchar *extreme =
+                calendar_plus_format_time_at_location(
+                    mode,
+                    extremes[extreme_index],
+                    G_MAXINT,
+                    TRUE,
+                    FALSE,
+                    -36.3833,
+                    145.4000);
+            const guint delay =
+                calendar_plus_time_delay_to_next_tick_at_location(
+                    mode,
+                    extremes[extreme_index],
+                    G_MAXINT,
+                    TRUE,
+                    -36.3833,
+                    145.4000);
+
+            g_assert_nonnull(extreme);
+            g_assert_cmpuint(delay, >, 0U);
+        }
+
+        g_test_message("validated complete runtime contract for %s", id);
+    }
+
+    {
+        g_autofree gchar *invalid =
+            calendar_plus_format_time_at_location(
+                CALENDAR_PLUS_TIME_MODE_INVALID,
+                normal_instant, 0, FALSE, FALSE, 0.0, 0.0);
+        g_assert_cmpstr(invalid, ==, "");
+        g_assert_cmpuint(
+            calendar_plus_time_delay_to_next_tick_at_location(
+                CALENDAR_PLUS_TIME_MODE_INVALID,
+                normal_instant, 0, FALSE, 0.0, 0.0),
+            ==, 1000U);
+    }
+}
+
+static void
+test_system_clock_policy_accessors(void)
+{
+    g_autoptr(CalendarPlusSystemClock) clock =
+        calendar_plus_system_clock_new();
+    g_autoptr(GVariant) policy =
+        calendar_plus_system_clock_get_system_policy(clock);
+    const gchar *snapshot_mode = NULL;
+    const gchar *snapshot_calendar = NULL;
+    const gchar *authority = NULL;
+    gboolean snapshot_seconds = FALSE;
+    gboolean snapshot_location = FALSE;
+    gboolean provider_available = FALSE;
+    gdouble snapshot_latitude = 0.0;
+    gdouble snapshot_longitude = 0.0;
+    g_autofree gchar *mode = NULL;
+    g_autofree gchar *calendar = NULL;
+
+    g_assert_nonnull(policy);
+    g_assert_true(g_variant_is_of_type(
+        policy, G_VARIANT_TYPE("(ssbbddsb)")));
+    g_variant_get(policy, "(&s&sbbdd&sb)",
+                  &snapshot_mode,
+                  &snapshot_calendar,
+                  &snapshot_seconds,
+                  &snapshot_location,
+                  &snapshot_latitude,
+                  &snapshot_longitude,
+                  &authority,
+                  &provider_available);
+
+    mode = calendar_plus_system_clock_get_system_mode(clock);
+    calendar = calendar_plus_system_clock_get_system_calendar(clock);
+
+    g_assert_cmpstr(mode, ==, snapshot_mode);
+    g_assert_cmpstr(calendar, ==, snapshot_calendar);
+    g_assert_cmpint(calendar_plus_system_clock_get_system_show_seconds(clock),
+                    ==, snapshot_seconds);
+    g_assert_cmpint(
+        calendar_plus_system_clock_get_system_location_configured(clock),
+        ==, snapshot_location);
+    g_assert_cmpfloat(
+        calendar_plus_system_clock_get_system_latitude(clock),
+        ==, snapshot_latitude);
+    g_assert_cmpfloat(
+        calendar_plus_system_clock_get_system_longitude(clock),
+        ==, snapshot_longitude);
+    g_assert_true(isfinite(snapshot_latitude));
+    g_assert_true(isfinite(snapshot_longitude));
+    g_assert_true(
+        g_str_equal(authority, "mint-cinnamon") ||
+        g_str_equal(authority, "infiltrator-system-settings"));
+    if (g_str_equal(authority, "infiltrator-system-settings"))
+        g_assert_true(provider_available);
 }
 
 int
@@ -546,6 +790,8 @@ main(int argc,
                     test_all_calendar_typed_navigation);
     g_test_add_func("/properties/unbounded-event-interval",
                     test_unbounded_event_interval);
+    g_test_add_func("/properties/event-store-clear",
+                    test_event_store_clear_contract);
     g_test_add_func("/properties/malformed-event-variants",
                     test_malformed_event_variants);
     g_test_add_func("/properties/event-timezone-refresh",
@@ -554,5 +800,9 @@ main(int argc,
                     test_typed_date_api_and_validation);
     g_test_add_func("/properties/time-registry",
                     test_time_registry_contract);
+    g_test_add_func("/properties/all-time-modes-runtime",
+                    test_all_time_modes_runtime_contract);
+    g_test_add_func("/properties/system-policy-accessors",
+                    test_system_clock_policy_accessors);
     return g_test_run();
 }
