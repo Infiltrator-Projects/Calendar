@@ -13,6 +13,7 @@
 #include "calendar-arithmetic-internal.h"
 
 #include "integer-math.h"
+#include "julian-day.h"
 
 enum
 {
