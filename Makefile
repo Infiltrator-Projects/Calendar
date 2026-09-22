@@ -142,7 +142,7 @@ NATIVE_CFLAGS := -O3 -g -march=native -mtune=native -flto=auto
 PGO_MODE ?= none
 PGO_DIR ?= $(abspath .pgo-data)
 PGO_GENERATE_CFLAGS := -fprofile-generate=$(PGO_DIR)
-PGO_USE_CFLAGS := -fprofile-use=$(PGO_DIR) -fprofile-correction -fprofile-partial-training
+PGO_USE_CFLAGS := -fprofile-use=$(PGO_DIR) -fprofile-correction -fprofile-partial-training -Wno-error=missing-profile
 PGO_GENERATE_LDFLAGS := -fprofile-generate=$(PGO_DIR)
 PGO_USE_LDFLAGS := -fprofile-use=$(PGO_DIR) -fprofile-correction
 

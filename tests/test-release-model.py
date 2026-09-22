@@ -79,6 +79,7 @@ def main() -> None:
     assert "-fprofile-use=$(PGO_DIR)" in makefile
     assert "-fprofile-correction" in makefile
     assert "-fprofile-partial-training" in makefile
+    assert "-Wno-error=missing-profile" in makefile
     assert "pgo-train: $(BUILD_DIR)/pgo-train" in makefile
     assert (ROOT / "tools/pgo-train.c").is_file()
     assert "override CFLAGS += $(NATIVE_CFLAGS) $(PGO_CFLAGS) $(CALENDAR_CFLAGS)" in makefile
