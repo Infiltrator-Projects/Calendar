@@ -1,28 +1,36 @@
 # Roadmap
 
-This is a direction document, not a dated promise. The released source and tests define what is actually supported.
+Calendar is feature-complete for its current Linux/Cinnamon product scope. This
+document therefore defines a maintenance boundary rather than a queue of work
+that must be invented before the application can be considered finished.
 
-## Current foundation
+## Completion baseline
 
-- maintain the 30-calendar and alternative-clock capability with explicit provenance
-- keep the native core and Cinnamon shell separated
-- protect ABI, settings, packaging and runtime integration with automated tests
+- preserve the 30-calendar and alternative-clock capability with explicit model provenance
+- preserve the separation between portable chronology/event logic and Cinnamon presentation
+- preserve the installed ABI, settings identity, package identity and upgrade path
+- keep unavailable astronomical or platform states explicit rather than guessing values
+- keep proprietary font binaries outside the redistributed source/package while honouring the preferred typography contract when those fonts are installed
+- require the exact release revision to pass the automated qualification gates
 
-## Near-term priorities
+## Maintenance priorities
 
-- strengthen edge-case and historical-boundary evidence as models evolve
-- continue consolidating genuinely generic mechanics into Common without exporting calendar policy
-- keep live Cinnamon integration and upstream-drift checks aligned with supported Mint/Cinnamon versions
+Correctness defects, supported-platform regressions, security problems, upstream
+Cinnamon compatibility changes and evidence gaps take priority over new
+features. A fixed defect should gain the narrowest useful permanent regression
+test. Tests that are completely subsumed by stronger coverage should be
+consolidated rather than retained for historical reasons.
 
-## Longer-term direction
+## Optional expansion
 
-- extend chronology or clock coverage only when rules and provenance can be documented precisely
-- improve accessibility and localisation without weakening deterministic model behaviour
-
-## Admission rule
-
-A proposed capability enters the roadmap only when its ownership is clear and there is a credible way to validate it. Features that require pretending uncertain behaviour is known do not qualify.
+New calendars, clocks, localisation, accessibility work or platform backends are
+optional product expansion, not missing completion work. They enter the product
+only when ownership, provenance, failure semantics and a credible validation
+path are explicit.
 
 ## Completion rule
 
-An item is complete when implementation, tests, user-visible behaviour and maintained documentation agree. A checkbox or release number cannot substitute for missing evidence.
+Calendar is complete when implementation, tests, packaging and maintained
+documentation agree for the declared product scope. Completion does not mean
+that future defects are impossible; it means there is no known mandatory
+feature tranche left to implement.

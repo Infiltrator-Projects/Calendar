@@ -1,7 +1,20 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 // Copyright (C) 1993-2026 Shannon Smith
 
-/* GObject/GJS facade over the injected platform-neutral clock engine. */
+/*
+ * GObject/GJS facade over the injected platform-neutral clock engine.
+ *
+ * Temporal authority is published as one coherent snapshot. Provider presence
+ * and the persisted temporal-v3 document are read into local state first; only
+ * after resolution succeeds are the cached fields replaced and one
+ * policy-changed signal emitted. This prevents GJS from observing a mixture of
+ * two policy generations during an atomic System Settings update.
+ *
+ * Three monitors cover the authority boundary: the policy directory itself,
+ * its parent so first creation/removal is observed, and the installed provider
+ * marker. All are cancelled before object teardown. Cinnamon's seconds setting
+ * is consulted only when the richer provider/policy pair is not authoritative.
+ */
 
 #include "system-clock.h"
 

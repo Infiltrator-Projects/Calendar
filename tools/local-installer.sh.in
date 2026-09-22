@@ -212,9 +212,7 @@ test -f \
 test -x "$PACKAGE_ROOT/usr/libexec/calendar-plus-about"
 test -f "$PACKAGE_ROOT/usr/share/icons/hicolor/256x256/apps/infiltratr-calendar.png"
 test -f "$PACKAGE_ROOT/usr/share/app-install/icons/infiltrator-calendar.png"
-test -f "$PACKAGE_ROOT/usr/share/fonts/truetype/infiltrator-calendar/mb_corpo_a_cond_regular.ttf"
-test -f "$PACKAGE_ROOT/usr/share/fonts/truetype/infiltrator-calendar/mb_corpo_s_bold.ttf"
-test -f "$PACKAGE_ROOT/usr/share/fonts/truetype/infiltrator-calendar/mb_corpo_s_regular.ttf"
+test ! -e "$PACKAGE_ROOT/usr/share/fonts/truetype/infiltrator-calendar"
 test -f \
     "$PACKAGE_ROOT/usr/share/cinnamon/applets/calendar-plus@the-infiltratr/icon.png"
 test -f \

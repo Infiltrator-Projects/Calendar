@@ -106,14 +106,14 @@ def main() -> None:
     assert "--exclude-vcs" not in read("tools/reproducible-build.sh")
     assert "calendar-$(VERSION)-local-folder.run" in makefile
     assert "calendar-plus-about" in makefile
-    assert "FONT_ARCHIVE := src/assets/fonts/mb-corpo-fonts.tar.xz" in makefile
-    assert "FONT_ARCHIVE_SHA256 := bdb6063f838a7fab22b4d6b412170640c69511df53aa3dfa9a4ea8431c9d8274" in makefile
-    assert "prepare-fonts:" in makefile
-    assert "share/fonts/truetype/infiltrator-calendar" in makefile
-    assert "prepare-fonts.py" not in makefile
-    assert (ROOT / "src/assets/fonts/mb-corpo-fonts.tar.xz").is_file()
+    assert "FONT_ARCHIVE" not in makefile
+    assert "prepare-fonts" not in makefile
+    assert "share/fonts/truetype/infiltrator-calendar" not in makefile
+    assert not (ROOT / "src/assets/fonts/mb-corpo-fonts.tar.xz").exists()
     assert not (ROOT / "tools/prepare-fonts.py").exists()
-    assert "bundles and installs the MB Corpo font set" in read("README.md")
+    assert "does not redistribute proprietary MB Corpo font binaries" in read("README.md")
+    assert "src/assets/fonts/mb-corpo-fonts.tar.xz" not in copyright_file
+    assert "License: proprietary" not in copyright_file
     assert "Files: src/cinnamon/settings-schema.json" in copyright_file
     assert "Linux Mint Project and Cinnamon contributors" in copyright_file
     assert "CHANGELOG.md CONTRIBUTING.md LICENSE Makefile README.md SECURITY.md docs/*" in copyright_file

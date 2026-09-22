@@ -45,9 +45,7 @@ test -f \
 test -x "$TMP/native/usr/libexec/calendar-plus-about"
 test -f "$TMP/native/usr/share/cinnamon/applets/calendar-plus@the-infiltratr/stylesheet.css"
 test ! -e "$TMP/native/usr/share/cinnamon/applets/calendar-plus@the-infiltratr/settings.py"
-test -f "$TMP/native/usr/share/fonts/truetype/infiltrator-calendar/mb_corpo_a_cond_regular.ttf"
-test -f "$TMP/native/usr/share/fonts/truetype/infiltrator-calendar/mb_corpo_s_bold.ttf"
-test -f "$TMP/native/usr/share/fonts/truetype/infiltrator-calendar/mb_corpo_s_regular.ttf"
+test ! -e "$TMP/native/usr/share/fonts/truetype/infiltrator-calendar"
 test -f \
     "$TMP/native/usr/share/locale/en_AU/LC_MESSAGES/calendar-plus@the-infiltratr.mo"
 "$TMP/native/usr/libexec/calendar-plus-about" --print-metadata |

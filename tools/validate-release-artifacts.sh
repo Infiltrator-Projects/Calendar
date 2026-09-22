@@ -49,9 +49,7 @@ test ! -e \
 test -x "$TMP/generic/usr/libexec/calendar-plus-about"
 test -f "$TMP/generic/usr/share/icons/hicolor/256x256/apps/infiltratr-calendar.png"
 test -f "$TMP/generic/usr/share/app-install/icons/infiltrator-calendar.png"
-test -f "$TMP/generic/usr/share/fonts/truetype/infiltrator-calendar/mb_corpo_a_cond_regular.ttf"
-test -f "$TMP/generic/usr/share/fonts/truetype/infiltrator-calendar/mb_corpo_s_bold.ttf"
-test -f "$TMP/generic/usr/share/fonts/truetype/infiltrator-calendar/mb_corpo_s_regular.ttf"
+test ! -e "$TMP/generic/usr/share/fonts/truetype/infiltrator-calendar"
 test -f \
     "$TMP/generic/usr/share/locale/en_AU/LC_MESSAGES/calendar-plus@the-infiltratr.mo"
 "$TMP/generic/usr/libexec/calendar-plus-about" --print-metadata |

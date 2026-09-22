@@ -19,7 +19,6 @@ import json
 import os
 import re
 import struct
-import tarfile
 import zlib
 from pathlib import Path
 
@@ -30,7 +29,6 @@ PROJECT_URL = "https://github.com/Infiltrator-Projects/Calendar"
 ICON = ROOT / "src/assets/infiltratr-calendar.png"
 ICON_SHA256 = "4181adea531fe79e2e8b79ec14e2f2476d18e9e3128911dcd21e60a863b36f05"
 COMMON_DESIGN = ROOT / "src/vendor/infiltratr-common/design/infiltrator-design-v1.json"
-FONT_ARCHIVE = ROOT / "src/assets/fonts/mb-corpo-fonts.tar.xz"
 
 TRANSIENT_PATTERNS = (
     re.compile(r"^g-ir-cpp-.*\.c$"),
@@ -104,47 +102,25 @@ def validate_icon_asset() -> None:
         raise AssertionError("Calendar icon has invalid compressed image data") from exc
 
 
-def validate_typography_assets() -> None:
-    """Validate Calendar's bundled MB typography against pinned Common."""
+def validate_typography_contract() -> None:
+    """Validate preferred font semantics without redistributing font binaries."""
     common_design = json.loads(COMMON_DESIGN.read_text(encoding="utf-8"))
     typography = common_design["typography"]
-    assets = typography["assets"]
-
-    archive_data = FONT_ARCHIVE.read_bytes()
-    assert hashlib.sha256(archive_data).hexdigest() == assets["archive_sha256"], (
-        "Calendar font archive does not match pinned Common provenance"
-    )
-
-    expected_files = typography["font_files"]
-    expected_hashes = assets["file_sha256"]
-    with tarfile.open(FONT_ARCHIVE, mode="r:xz") as archive:
-        members = {
-            Path(member.name).name: member
-            for member in archive.getmembers()
-            if member.isfile()
-        }
-        for role, filename in expected_files.items():
-            assert filename in members, (
-                f"Calendar font archive is missing Common {role} asset {filename}"
-            )
-            extracted = archive.extractfile(members[filename])
-            assert extracted is not None
-            payload = extracted.read()
-            assert hashlib.sha256(payload).hexdigest() == expected_hashes[role], (
-                f"Calendar font {filename} does not match pinned Common provenance"
-            )
-
+    policy = common_design["policy"]
+    stylesheet = (APPLET / "stylesheet.css").read_text(encoding="utf-8")
     makefile = (ROOT / "Makefile").read_text(encoding="utf-8")
-    assert f"FONT_ARCHIVE_SHA256 := {assets['archive_sha256']}" in makefile
-    for role, filename in expected_files.items():
-        assert filename in makefile, (
-            f"Calendar Makefile does not package Common {role} font {filename}"
-        )
-    for role, digest in expected_hashes.items():
-        assert digest in makefile, (
-            f"Calendar Makefile does not verify Common {role} font digest"
-        )
 
+    assert policy["font_binaries_are_not_part_of_this_contract"] is True
+    assert policy["fallback_is_required_when_mb_corpo_is_unavailable"] is True
+    assert typography["ui_family"] in stylesheet, (
+        "Calendar stylesheet lost the preferred Common UI font family"
+    )
+    assert not (ROOT / "src/assets/fonts/mb-corpo-fonts.tar.xz").exists(), (
+        "Calendar must not redistribute proprietary MB Corpo font binaries"
+    )
+    assert "share/fonts/truetype/infiltrator-calendar" not in makefile, (
+        "Calendar packaging must not install proprietary MB Corpo font binaries"
+    )
 
 def validate_no_transient_files() -> None:
     for path in ROOT.rglob("*"):
@@ -305,7 +281,7 @@ def validate_version() -> None:
 
 def main() -> None:
     validate_icon_asset()
-    validate_typography_assets()
+    validate_typography_contract()
     validate_no_transient_files()
     validate_no_workspace_paths()
     validate_abi_manifest()

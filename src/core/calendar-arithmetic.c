@@ -10,6 +10,20 @@
  *
  * Epochs and arithmetic follow the same civil-date/JDN convention used by the
  * rest of Calendar: an integral JDN identifies a civil date at midnight.
+ *
+ * Invariants:
+ * - this module owns rules and numeric continuation, never locale presentation;
+ * - mode-specific month length, fields↔JDN conversion and month/year navigation
+ *   share the same helpers so navigation cannot silently use a different leap
+ *   rule from formatting;
+ * - fixed-range tables such as Umm al-Qura reject navigation beyond their
+ *   evidenced range instead of extrapolating invented dates;
+ * - intermediate year/day arithmetic uses the checked/saturating Common
+ *   primitives before narrowing back to public field widths.
+ *
+ * The implementations remain together deliberately: splitting one calendar's
+ * conversion and navigation paths into unrelated files would make rule drift
+ * harder to review than this cohesive arithmetic unit.
  */
 
 #include "calendar-arithmetic.h"
