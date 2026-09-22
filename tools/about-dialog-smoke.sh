@@ -42,7 +42,11 @@ run_dialog()
         return 1
     fi
 
-    xdotool key --window "$window" Escape
+    # Xvfb has no window manager, so establish X input focus directly before
+    # exercising GtkDialog's Escape response. Sending a synthetic key event to
+    # an unfocused toplevel does not reliably traverse GTK's key bindings.
+    xdotool windowfocus --sync "$window"
+    xdotool key Escape
 
     attempt=0
     while kill -0 "$pid" 2>/dev/null && [ "$attempt" -lt 80 ]; do
