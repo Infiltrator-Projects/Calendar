@@ -253,11 +253,14 @@ def main() -> None:
     }
     assert all(name in panel_clock_source for name in required_formats)
 
-    # The three conventional choices stay in Cinnamon's locale-aware path.
-    assert 'var CLOCK_MODE_STANDARD = "standard";' in panel_clock_source
+    # Common-backed native-mode resolution leaves conventional choices in
+    # Cinnamon's locale-aware path without duplicating the full mode list here.
+    assert 'var CLOCK_MODE_STANDARD = "standard";' not in panel_clock_source
     assert 'var CLOCK_MODE_STANDARD_24 = "standard-24";' in panel_clock_source
     assert 'var CLOCK_MODE_STANDARD_12 = "standard-12";' in panel_clock_source
     assert "function isNativeClockMode(mode)" in panel_clock_source
+    assert "CalendarPlus.time_mode_from_string(mode)" in panel_clock_source
+    assert "CalendarPlus.TimeMode.INVALID" in panel_clock_source
     assert 'RuntimeSupport.loadLocalModule("panelClock")' in applet_source
     assert "PanelClock.panelText(" in applet_source
     assert "PanelClock.todayDisplay(" in applet_source
