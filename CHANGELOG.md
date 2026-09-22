@@ -6,6 +6,14 @@ This changelog records user-visible, compatibility, architecture and validation 
 
 No unreleased changes.
 
+## 1.0.48 - 2026-09-22
+
+- Complete the forensic source, test, packaging, comment and maintained-documentation review for Calendar's declared Linux/Cinnamon product scope.
+- Stop redistributing proprietary MB Corpo font binaries; retain Common's preferred typography family names and require normal Cinnamon/system fallback when those fonts are not installed.
+- Make package-input, local-installer and release-artifact contracts reject any accidental return of the proprietary font payload.
+- Document the arithmetic-engine invariants, temporal-authority snapshot/lifecycle contract and the maintenance-complete boundary without adding narrational comments to straightforward code.
+- Preserve the existing runtime behaviour and qualify the completed source through GCC, Clang, ASan/UBSan, coverage, clang-tidy, package-install, reproducibility and release-artifact gates.
+
 ## 1.0.47 - 2026-09-21
 
 - Finish the Common → Calendar ownership pass without changing Common: use Common's deterministic ASCII classifiers for event-colour and locale-region parsing.

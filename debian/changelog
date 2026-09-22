@@ -1,3 +1,13 @@
+infiltrator-calendar (1.0.48) trixie; urgency=medium
+
+  * Complete the forensic maintenance and documentation pass.
+  * Stop redistributing proprietary MB Corpo font binaries.
+  * Preserve preferred typography with required Cinnamon/system fallback.
+  * Strengthen package and release regressions around that boundary.
+  * Document chronology and temporal-authority implementation invariants.
+
+ -- Shannon Smith <noreply@the-infiltratr.com>  Tue, 22 Sep 2026 13:40:00 +1000
+
 infiltrator-calendar (1.0.47) trixie; urgency=medium
 
   * Consume Common ASCII classification in event and locale parsing.
