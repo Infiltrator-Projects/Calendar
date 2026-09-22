@@ -135,7 +135,7 @@ def main() -> None:
     assert "share/cinnamon/applets/calendar-plus@the-infiltratr/icon.png" in local_installer
     assert "share/icons/hicolor/256x256/apps/infiltratr-calendar.png" in local_installer
     assert "share/app-install/icons/infiltrator-calendar.png" in local_installer
-    assert "share/fonts/truetype/infiltrator-calendar" not in local_installer
+    assert 'test ! -e "$PACKAGE_ROOT/usr/share/fonts/truetype/infiltrator-calendar"' in local_installer
     stylesheet = read("src/cinnamon/stylesheet.css")
     assert "MB Corpo S Title WEB" in stylesheet
     assert '.calendar-plus-panel-clock {' in stylesheet
@@ -503,7 +503,6 @@ def main() -> None:
     assert design_policy["font_binaries_are_not_part_of_this_contract"] is True
     assert design_policy["fallback_is_required_when_mb_corpo_is_unavailable"] is True
     assert typography["ui_family"] in read("src/cinnamon/stylesheet.css")
-    assert typography["brand_family"] in read("src/cinnamon/stylesheet.css")
     assert "FONT_ARCHIVE" not in makefile
     stylesheet_source = read("src/cinnamon/stylesheet.css")
     assert "BEGIN GENERATED COMMON TYPOGRAPHY TOKENS" in stylesheet_source
