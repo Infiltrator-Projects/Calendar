@@ -377,9 +377,10 @@ def main() -> None:
     assert "var Calendar = class Calendar" in read(
         "src/cinnamon/calendar.js"
     )
-    assert 'var CLOCK_MODE_STANDARD = "standard";' in read(
-        "src/cinnamon/panelClock.js"
-    )
+    panel_clock = read("src/cinnamon/panelClock.js")
+    assert 'var CLOCK_MODE_STANDARD = "standard";' not in panel_clock
+    assert "CalendarPlus.time_mode_from_string(mode)" in panel_clock
+    assert "CalendarPlus.TimeMode.INVALID" in panel_clock
 
     registry = read("src/core/calendar-registry.c")
     custom = read("src/core/calendar-custom.c")
