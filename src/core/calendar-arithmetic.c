@@ -84,7 +84,8 @@ signed_year_from_fields(CalendarPlusCalendarMode mode,
                     fields->year, 1911);
 
         case CALENDAR_PLUS_CALENDAR_MODE_JAPANESE:
-            return calendar_plus_arithmetic_japanese_signed_year_from_fields(\n                fields);
+            return calendar_plus_arithmetic_japanese_signed_year_from_fields(
+                fields);
 
         default:
             return fields->year;
@@ -141,7 +142,8 @@ set_signed_year(CalendarPlusCalendarMode mode,
             break;
 
         case CALENDAR_PLUS_CALENDAR_MODE_JAPANESE:
-            calendar_plus_arithmetic_japanese_set_year_for_gregorian(\n                signed_year, fields);
+            calendar_plus_arithmetic_japanese_set_year_for_gregorian(
+                signed_year, fields);
             break;
 
         default:
