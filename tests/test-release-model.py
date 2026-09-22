@@ -192,9 +192,9 @@ def main() -> None:
     assert "src/vendor/infiltratr-common" in makefile
     assert (
         "INFILTRATR_COMMON_COMMIT := "
-        "336ab8f7f8b7364b6296c7560fc67b242b27eb9d"
+        "302c44eb7436803dee020667453a9a0681da8bbf"
     ) in makefile
-    assert "INFILTRATR_COMMON_VERSION := 1.19.20" in makefile
+    assert "INFILTRATR_COMMON_VERSION := 1.19.22" in makefile
     assert "normal `make` automatically retrieves" in read("README.md")
     assert "common-bootstrap: common-check" in makefile
     assert "common-test: $(INFILTRATR_COMMON_ARCHIVE)" in makefile
@@ -463,7 +463,7 @@ def main() -> None:
     # Validate Calendar's actual Common calls against Common's complete public
     # header surface. Do not duplicate Common's private source membership here.
     common = ROOT / "src/vendor/infiltratr-common"
-    assert (common / "VERSION").read_text(encoding="utf-8").strip() == "1.19.20"
+    assert (common / "VERSION").read_text(encoding="utf-8").strip() == "1.19.22"
     assert (common / "LICENSE").is_file()
     common_include = common / "include/infiltratr"
     for public_header in (
