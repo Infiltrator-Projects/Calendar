@@ -295,7 +295,8 @@ def main() -> None:
     assert 'if [[ "$release_was_published" == false ]]; then' in publisher
     assert 'version=$(sed -n \'s/^VERSION := //p\' Makefile)' in publisher
     assert '< VERSION' not in publisher
-    assert "APT_REPOSITORY_DISPATCH_TOKEN" not in publisher
+    assert "/dispatches" not in publisher
+    assert "client_payload" not in publisher
     assert "cancel-in-progress: true" in publisher
     assert "Verify Infiltrator APT repository publication" not in publisher
     assert "Infiltrator-Repository/catalogue/apps.json" not in publisher
