@@ -69,6 +69,7 @@
 
 .calendar-plus-popup .calendar-today-home-button,
 .calendar-plus-popup .calendar-today-home-button-enabled {
+    min-height: 30px;
     border-radius: 10px;
 }
 

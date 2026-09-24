@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.0.60 - 2026-09-25
+
+- Align the Cinnamon Today/home control with the suite-wide 30 px desktop control height while preserving its existing Common 10 px control radius.
+- Preserve Cinnamon-native layout, temporal behaviour, calendar engines, dependencies and Common APIs unchanged.
+
 ## 1.0.59 - 2026-09-25
 
 - Align calendar weekday headings with the suite-wide 10 px compact label scale.

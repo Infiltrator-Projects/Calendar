@@ -111,6 +111,7 @@ def render_metrics(data: dict) -> str:
 
 .calendar-plus-popup .calendar-today-home-button,
 .calendar-plus-popup .calendar-today-home-button-enabled {{
+    min-height: 30px;
     border-radius: {metric_data["control_radius"]}px;
 }}
 
