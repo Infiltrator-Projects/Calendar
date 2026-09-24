@@ -142,6 +142,8 @@ def main() -> None:
     assert 'font-family: "MB Corpo S Title WEB";' in stylesheet
     assert "font-weight: 400;" in stylesheet
     assert "font-size: 1.08em;" in stylesheet
+    assert ".calendar-day-heading {" in stylesheet
+    assert "font-size: 11px;" in stylesheet
     applet = read("src/cinnamon/applet.js")
     assert "FONT_PANEL_CLOCK" not in applet
     assert "_applyTypography(" not in applet

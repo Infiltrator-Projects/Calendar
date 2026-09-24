@@ -81,6 +81,10 @@ def render_typography(data: dict) -> str:
 .calendar-plus-popup .calendar-events-date-label {{
     font-size: 16px;
 }}
+
+.calendar-plus-popup .calendar-day-heading {{
+    font-size: 11px;
+}}
 {TYPOGRAPHY_END}"""
 
 

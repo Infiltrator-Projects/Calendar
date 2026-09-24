@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.0.57 - 2026-09-24
+
+- Align Cinnamon weekday headings with the suite-wide 11 px supporting-text scale.
+- Preserve Calendar behaviour, Cinnamon-native structure, chronology, event integration and dependencies unchanged.
+
+
 ## 1.0.56 - 2026-09-24
 
 - Align the selected-date heading in the Cinnamon event pane with the suite-wide 16 px section-heading scale.

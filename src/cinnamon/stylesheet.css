@@ -42,6 +42,10 @@
 .calendar-plus-popup .calendar-events-date-label {
     font-size: 16px;
 }
+
+.calendar-plus-popup .calendar-day-heading {
+    font-size: 11px;
+}
 /* END GENERATED COMMON TYPOGRAPHY TOKENS */
 
 /* BEGIN GENERATED COMMON METRIC TOKENS */
