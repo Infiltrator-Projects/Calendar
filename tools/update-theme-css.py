@@ -124,6 +124,7 @@ def render_metrics(data: dict) -> str:
 }}
 
 .calendar-plus-popup .popup-menu-item {{
+    min-height: 30px;
     border-radius: {metric_data["small_radius"]}px;
 }}
 {METRICS_END}"""

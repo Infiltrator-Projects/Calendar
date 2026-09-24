@@ -1,3 +1,10 @@
+infiltrator-calendar (1.0.63) unstable; urgency=medium
+
+  * Align Calendar popup menu actions with the 30 px publisher control height.
+  * Preserve Cinnamon-native behaviour, temporal policy and dependencies.
+
+ -- Shannon Smith <infiltratr@yandex.com>  Fri, 25 Sep 2026 09:22:00 +1000
+
 infiltrator-calendar (1.0.62) unstable; urgency=medium
 
   * Align Calendar popup menu items with the 6 px publisher compact radius.

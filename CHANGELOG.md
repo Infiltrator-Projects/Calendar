@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.0.63 - 2026-09-25
+
+- Give Calendar popup menu actions the suite-wide 30 px desktop control height while keeping their existing 6 px compact radius.
+- Preserve Cinnamon-native layout, temporal behaviour, calendar engines, dependencies and Common APIs unchanged.
+
+
 ## 1.0.62 - 2026-09-25
 
 - Give Calendar popup menu items Common's 6 px compact radius so Cinnamon actions share the suite's compact control geometry.

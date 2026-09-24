@@ -82,6 +82,7 @@
 }
 
 .calendar-plus-popup .popup-menu-item {
+    min-height: 30px;
     border-radius: 6px;
 }
 /* END GENERATED COMMON METRIC TOKENS */
