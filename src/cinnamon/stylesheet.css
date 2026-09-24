@@ -26,12 +26,16 @@
 }
 
 .calendar-plus-popup .calendar-today-day-label,
-.calendar-plus-popup .calendar-month-label,
 .calendar-plus-popup .calendar-day-heading,
 .calendar-plus-popup .calendar-events-date-label,
 .calendar-plus-popup .calendar-events-no-events-label {
     font-family: "MB Corpo S Title WEB";
     font-weight: 700;
+}
+
+.calendar-plus-popup .calendar-month-label {
+    font-family: "MB Corpo A Title Cond WEB";
+    font-weight: 400;
 }
 /* END GENERATED COMMON TYPOGRAPHY TOKENS */
 

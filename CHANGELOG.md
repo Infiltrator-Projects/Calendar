@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.0.53 - 2026-09-24
+
+- Give the Cinnamon month heading the Common brand/display typography role while retaining the normal Common UI face for dates, weekdays and event text.
+- Keep calendar, clock, event, Cinnamon integration and dependency behaviour unchanged.
+
+
 ## 1.0.52 - 2026-09-22
 
 - Replace the panel clock's direct `St.Bin.min_width` mutation with a registered latched-width container, preserving two-glyph hysteresis while avoiding the Clutter allocation warning fixed upstream by Cinnamon.

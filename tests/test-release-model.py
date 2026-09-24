@@ -505,6 +505,7 @@ def main() -> None:
     assert design_policy["font_binaries_are_not_part_of_this_contract"] is True
     assert design_policy["fallback_is_required_when_mb_corpo_is_unavailable"] is True
     assert typography["ui_family"] in read("src/cinnamon/stylesheet.css")
+    assert typography["brand_family"] in read("src/cinnamon/stylesheet.css")
     assert "FONT_ARCHIVE" not in makefile
     stylesheet_source = read("src/cinnamon/stylesheet.css")
     assert "BEGIN GENERATED COMMON TYPOGRAPHY TOKENS" in stylesheet_source

@@ -41,8 +41,10 @@ def metrics(data: dict) -> dict:
 def render_typography(data: dict) -> str:
     type_data = typography(data)
     ui = type_data["ui_family"]
+    brand = type_data["brand_family"]
     regular = type_data["ui_regular_weight"]
     bold = type_data["ui_bold_weight"]
+    brand_weight = type_data["brand_weight"]
     return f"""{TYPOGRAPHY_BEGIN}
 /*
  * Generated from Infiltratr Common. Do not hand-edit typography values here.
@@ -63,12 +65,16 @@ def render_typography(data: dict) -> str:
 }}
 
 .calendar-plus-popup .calendar-today-day-label,
-.calendar-plus-popup .calendar-month-label,
 .calendar-plus-popup .calendar-day-heading,
 .calendar-plus-popup .calendar-events-date-label,
 .calendar-plus-popup .calendar-events-no-events-label {{
     font-family: "{ui}";
     font-weight: {bold};
+}}
+
+.calendar-plus-popup .calendar-month-label {{
+    font-family: "{brand}";
+    font-weight: {brand_weight};
 }}
 {TYPOGRAPHY_END}"""
 
