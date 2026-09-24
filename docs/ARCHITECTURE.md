@@ -2,7 +2,7 @@
 
 # Architecture
 
-Calendar separates platform-neutral chronology, clock, astronomy and event semantics from Cinnamon presentation, GObject/GVariant/main-loop adapters and reusable Common mechanisms. That separation is a correctness boundary: desktop code should present completed Calendar-owned state rather than becoming a second implementation of chronology or timekeeping rules.
+Calendar separates platform-neutral chronology, clock scheduling, astronomy and event semantics from Cinnamon presentation, GObject/GVariant/main-loop adapters and reusable Common mechanisms. That separation is a correctness boundary: desktop code should present completed Calendar-owned state rather than becoming a second implementation of chronology or timekeeping rules.
 
 ## First-principles design
 
@@ -25,7 +25,7 @@ platform-neutral Calendar domain contracts
                     ↓
 chronology / clocks / astronomy / event semantics
 
-ICU / CLDR                    Infiltratr Common 1.19.24
+ICU / CLDR                    Infiltratr Common 1.19.25
      ↓                                  ↓
 locale/calendar authority     reusable checked arithmetic /
 where explicitly delegated    formatting / timing / loading /
@@ -49,7 +49,7 @@ src/
 
 The native core owns Calendar-specific chronology models, continuation rules, alternative clocks, astronomical calculations and event semantics. It deliberately uses GLib foundational facilities such as fixed-width types, strings, containers and civil-time helpers, but remains independent of GObject presentation facades, GVariant transport schemas, Cinnamon actors and desktop lifecycle APIs.
 
-Cinnamon owns panel integration, settings presentation, lifecycle and CalendarServer transport mechanics. Calendar now owns deterministic arithmetic/navigation for the fixed-rule calendar families it can validate directly. ICU/CLDR remains authoritative only for the remaining astronomical/lunisolar providers and locale-sensitive formatting that Calendar still explicitly delegates. Common owns genuinely generic primitives whose contract is reusable across the software family. Common is also the single authority for system clock-mode identifiers, presentation names and capability metadata; Calendar binds those Common catalogue entries to Calendar-owned formatter and next-boundary implementations rather than duplicating the metadata. Calendar's Cinnamon surface projects the pinned Common design JSON into toolkit-specific CSS under generated, regression-checked markers rather than carrying independent typography values. Configuration uses Cinnamon's own xlet-settings renderer and About uses Cinnamon/St, eliminating Calendar-owned Python/GTK presentation shims.
+Cinnamon owns panel integration, settings presentation, lifecycle and CalendarServer transport mechanics. Calendar now owns deterministic arithmetic/navigation for the fixed-rule calendar families it can validate directly. ICU/CLDR remains authoritative only for the remaining astronomical/lunisolar providers and locale-sensitive formatting that Calendar still explicitly delegates. Common owns genuinely generic primitives whose contract is reusable across the software family. Common is also the single authority for system clock-mode identifiers, presentation names, capability metadata and specialised clock rendering. Calendar binds those Common catalogue entries only to Calendar-owned next-boundary scheduling so the Cinnamon panel wakes exactly when the shared rendered value can change. Calendar's Cinnamon surface projects the pinned Common design JSON into toolkit-specific CSS under generated, regression-checked markers rather than carrying independent typography values. Configuration uses Cinnamon's own xlet-settings renderer and About uses Cinnamon/St, eliminating Calendar-owned Python/GTK presentation shims.
 
 Within the arithmetic engine, the coordinator retains cross-family dispatch, simple Gregorian-derived era mapping and generic navigation. Japanese imperial-era, Coptic/Ethiopic, Indian National, Islamic/Umm al-Qura, Hebrew and Persian rule sets live in private sibling translation units. Each family keeps its year/era mapping, month-length, conversion and family-specific navigation-sensitive logic together where applicable; the split follows chronology ownership rather than an arbitrary file-size target.
 
@@ -113,7 +113,7 @@ UTF-8, locale and translation handling must not become hidden chronology policy.
 
 If Calendar contains a stronger implementation of a capability that is fundamentally generic, the correct direction is to improve Common so its generic contract preserves that correctness, performance and resilience. Once Common is at least as strong, Calendar should consume it and remove the duplicate implementation.
 
-Do not weaken specialised chronology merely to increase reuse. Equally, do not preserve a private generic helper indefinitely when its advantages can be incorporated into Common. Common 1.19.24 is therefore consumed wherever its public contract is genuinely stronger or more general: checked/saturating arithmetic, timing, strings, dynamic loading, project metadata and the shared design/typography contract. Calendar does not manufacture artificial callers for unrelated Common APIs such as POSIX hardware readers, byte order helpers or graphics surfaces.
+Do not weaken specialised chronology merely to increase reuse. Equally, do not preserve a private generic helper indefinitely when its advantages can be incorporated into Common. Common 1.19.25 is therefore consumed wherever its public contract is genuinely stronger or more general: checked/saturating arithmetic, timing, strings, dynamic loading, project metadata and the shared design/typography contract. Calendar does not manufacture artificial callers for unrelated Common APIs such as POSIX hardware readers, byte order helpers or graphics surfaces.
 
 ## Native ABI and compatibility
 

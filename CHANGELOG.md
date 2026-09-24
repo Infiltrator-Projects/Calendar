@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.0.54 - 2026-09-24
+
+- Pin the exact released Infiltratr Common 1.19.25 clock-presentation authority.
+- Route every specialised Calendar clock rendering request through Common so Calendar, System Settings and System Monitor produce the same clock text for the same instant and policy.
+- Remove Calendar's duplicate specialised clock formatter callbacks and retain only exact next-boundary scheduling needed by the Cinnamon panel.
+- Keep System Settings temporal-v3 authority, OS/Cinnamon conventional-time fallback, Calendar chronology and timer behaviour unchanged.
+
 ## 1.0.53 - 2026-09-24
 
 - Give the Cinnamon month heading the Common brand/display typography role while retaining the normal Common UI face for dates, weekdays and event text.

@@ -191,9 +191,9 @@ def main() -> None:
     assert "src/vendor/infiltratr-common" in makefile
     assert (
         "INFILTRATR_COMMON_COMMIT := "
-        "748e089ae175329471d4cf375522c44081371bd5"
+        "e985e88c2fbbedfe7239ee716908dc686444287a"
     ) in makefile
-    assert "INFILTRATR_COMMON_VERSION := 1.19.24" in makefile
+    assert "INFILTRATR_COMMON_VERSION := 1.19.25" in makefile
     assert "normal `make` automatically retrieves" in read("README.md")
     assert "common-bootstrap: common-check" in makefile
     assert "common-test: $(INFILTRATR_COMMON_ARCHIVE)" in makefile
@@ -211,6 +211,22 @@ def main() -> None:
     assert "CHANGELOG.md" not in rules
     assert "validate-translations" in rules
     assert "validate-architecture" in rules
+
+    # Common is the sole renderer for specialised clock text. Calendar keeps
+    # only its exact next-boundary scheduling callbacks for Cinnamon wakeups.
+    time_formats = read("src/core/time-formats.c")
+    assert "infiltratr_temporal_format_clock_mode" in time_formats
+    assert "provider->format" not in time_formats
+    assert "TimeFormatFunc" not in time_formats
+    local_clock_sources = "\n".join(
+        read(path)
+        for path in (
+            "src/core/time-formats-civil.c",
+            "src/core/time-formats-astronomy.c",
+            "src/core/time-formats-nuremberg.c",
+        )
+    )
+    assert re.search(r"\bformat_[a-z0-9_]+_provider\s*\(", local_clock_sources) is None
     assert "validate-abi" in rules
     assert "validate-runtime-deps" in rules
 

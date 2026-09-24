@@ -2,38 +2,17 @@
  * SPDX-License-Identifier: GPL-3.0-or-later
  * Copyright (C) 1993-2026 Shannon Smith
  *
- * Astronomical, scientific and seasonal native clock providers.
+ * Astronomical, scientific and seasonal clock scheduling.
  *
- * Continuous astronomical calculations live in time-astronomy.c. This module
- * turns those values into panel strings and schedules their next visible
- * boundaries, including location-dependent Roman and Edo seasonal systems.
+ * Common owns rendered clock text. Continuous astronomical calculations used
+ * to predict the next visible boundary remain here and in time-astronomy.c so
+ * Calendar can keep its one-shot panel timer aligned without polling.
  */
 
 #include "time-formats-internal.h"
 #include "time-astronomy.h"
 
 #include <math.h>
-
-gchar *
-format_sidereal_provider(gint64 unix_microseconds,
-                         gint utc_offset_seconds,
-                         gboolean show_seconds,
-                         gboolean vertical,
-                         gdouble latitude G_GNUC_UNUSED,
-                         gdouble longitude)
-{
-    gint hour;
-    gint minute;
-    gint second;
-
-    (void)utc_offset_seconds;
-    split_clock_seconds(
-        (gint64)floorl(
-            calendar_plus_local_sidereal_seconds(unix_microseconds, longitude)),
-        &hour, &minute, &second);
-    return format_clock_fields(hour, minute, second, show_seconds, vertical,
-                               "LST");
-}
 
 guint
 delay_sidereal_provider(gint64 unix_microseconds,
@@ -47,27 +26,6 @@ delay_sidereal_provider(gint64 unix_microseconds,
         calendar_plus_local_sidereal_seconds(unix_microseconds, longitude),
         CALENDAR_PLUS_SIDEREAL_RATE,
         show_seconds);
-}
-
-gchar *
-format_solar_provider(gint64 unix_microseconds,
-                      gint utc_offset_seconds,
-                      gboolean show_seconds,
-                      gboolean vertical,
-                      gdouble latitude G_GNUC_UNUSED,
-                      gdouble longitude)
-{
-    gint hour;
-    gint minute;
-    gint second;
-
-    (void)utc_offset_seconds;
-    split_clock_seconds(
-        (gint64)floorl(
-            calendar_plus_apparent_solar_seconds(unix_microseconds, longitude)),
-        &hour, &minute, &second);
-    return format_clock_fields(hour, minute, second, show_seconds, vertical,
-                               "SOL");
 }
 
 guint
@@ -84,31 +42,6 @@ delay_solar_provider(gint64 unix_microseconds,
         show_seconds);
 }
 
-gchar *
-format_julian_provider(gint64 unix_microseconds,
-                       gint utc_offset_seconds,
-                       gboolean show_seconds,
-                       gboolean vertical,
-                       gdouble latitude G_GNUC_UNUSED,
-                       gdouble longitude)
-{
-    const gint digits = show_seconds ? 5 : 3;
-    const gint64 scale = show_seconds ? 100000 : 1000;
-    const long double date = calendar_plus_julian_date(unix_microseconds);
-    const gint64 whole_days = (gint64)floorl(date);
-    gint64 fraction =
-        (gint64)floorl((date - whole_days) * scale + 1.0e-10L);
-    const gchar *separator = vertical ? "\n" : " ";
-
-    (void)utc_offset_seconds;
-    (void)longitude;
-    if (fraction >= scale)
-        fraction = scale - 1;
-
-    return g_strdup_printf("JD%s%" G_GINT64_FORMAT ".%0*" G_GINT64_FORMAT,
-                           separator, whole_days, digits, fraction);
-}
-
 guint
 delay_julian_provider(gint64 unix_microseconds,
                       gint utc_offset_seconds,
@@ -123,27 +56,6 @@ delay_julian_provider(gint64 unix_microseconds,
         show_seconds ? 100000 : 1000);
 }
 
-gchar *
-format_mean_solar_provider(gint64 unix_microseconds,
-                           gint utc_offset_seconds,
-                           gboolean show_seconds,
-                           gboolean vertical,
-                           gdouble latitude G_GNUC_UNUSED,
-                           gdouble longitude)
-{
-    gint hour;
-    gint minute;
-    gint second;
-
-    (void)utc_offset_seconds;
-    split_clock_seconds(
-        (gint64)floorl(
-            calendar_plus_mean_solar_seconds(unix_microseconds, longitude)),
-        &hour, &minute, &second);
-    return format_clock_fields(hour, minute, second, show_seconds, vertical,
-                               "LMT");
-}
-
 guint
 delay_mean_solar_provider(gint64 unix_microseconds,
                           gint utc_offset_seconds,
@@ -156,32 +68,6 @@ delay_mean_solar_provider(gint64 unix_microseconds,
         calendar_plus_mean_solar_seconds(unix_microseconds, longitude),
         1.0L,
         show_seconds);
-}
-
-gchar *
-format_modified_julian_provider(gint64 unix_microseconds,
-                                gint utc_offset_seconds,
-                                gboolean show_seconds,
-                                gboolean vertical,
-                                gdouble latitude G_GNUC_UNUSED,
-                                gdouble longitude)
-{
-    const gint digits = show_seconds ? 5 : 3;
-    const gint64 scale = show_seconds ? 100000 : 1000;
-    const long double date =
-        calendar_plus_julian_date(unix_microseconds) - 2400000.5L;
-    const gint64 whole_days = (gint64)floorl(date);
-    gint64 fraction =
-        (gint64)floorl((date - whole_days) * scale + 1.0e-10L);
-    const gchar *separator = vertical ? "\n" : " ";
-
-    (void)utc_offset_seconds;
-    (void)longitude;
-    if (fraction >= scale)
-        fraction = scale - 1;
-
-    return g_strdup_printf("MJD%s%" G_GINT64_FORMAT ".%0*" G_GINT64_FORMAT,
-                           separator, whole_days, digits, fraction);
 }
 
 guint
@@ -265,39 +151,6 @@ seasonal_period_at(gint64 unix_microseconds,
     return TRUE;
 }
 
-static const gchar *const roman_numerals[] = {
-    "I", "II", "III", "IV", "V", "VI",
-    "VII", "VIII", "IX", "X", "XI", "XII"
-};
-
-gchar *
-format_roman_temporal_provider(gint64 unix_microseconds,
-                               gint utc_offset_seconds,
-                               gboolean show_seconds G_GNUC_UNUSED,
-                               gboolean vertical,
-                               gdouble latitude,
-                               gdouble longitude)
-{
-    SeasonalPeriod period;
-    const gchar *separator = vertical ? "\n" : " ";
-
-    (void)utc_offset_seconds;
-    if (!seasonal_period_at(unix_microseconds,
-                            latitude,
-                            longitude,
-                            0.833,
-                            12,
-                            4,
-                            &period))
-    {
-        return g_strdup(vertical ? "N/A\nROM" : "N/A ROM");
-    }
-
-    return period.daylight ?
-        g_strdup_printf("Hora%s%s", separator, roman_numerals[period.index]) :
-        g_strdup_printf("Vigilia%s%s", separator, roman_numerals[period.index]);
-}
-
 guint
 delay_roman_temporal_provider(gint64 unix_microseconds,
                               gint utc_offset_seconds,
@@ -323,66 +176,8 @@ delay_roman_temporal_provider(gint64 unix_microseconds,
         period.seconds_to_next * G_USEC_PER_SEC);
 }
 
-typedef struct
-{
-    const gchar *character;
-    guint number;
-    const gchar *animal;
-} JapaneseToki;
-
-static const JapaneseToki japanese_day_toki[] = {
-    { "卯", 6, "Rabbit" },
-    { "辰", 5, "Dragon" },
-    { "巳", 4, "Snake" },
-    { "午", 9, "Horse" },
-    { "未", 8, "Goat" },
-    { "申", 7, "Monkey" }
-};
-
-static const JapaneseToki japanese_night_toki[] = {
-    { "酉", 6, "Rooster" },
-    { "戌", 5, "Dog" },
-    { "亥", 4, "Boar" },
-    { "子", 9, "Rat" },
-    { "丑", 8, "Ox" },
-    { "寅", 7, "Tiger" }
-};
-
 /* Kansei-calendar dawn/dusk: solar centre 7°21′40″ below the horizon. */
 #define JAPANESE_DAWN_DEPRESSION (7.0 + 21.0 / 60.0 + 40.0 / 3600.0)
-
-gchar *
-format_japanese_temporal_provider(gint64 unix_microseconds,
-                                  gint utc_offset_seconds,
-                                  gboolean show_seconds G_GNUC_UNUSED,
-                                  gboolean vertical,
-                                  gdouble latitude,
-                                  gdouble longitude)
-{
-    SeasonalPeriod period;
-    const JapaneseToki *toki;
-
-    (void)utc_offset_seconds;
-    if (!seasonal_period_at(unix_microseconds,
-                            latitude,
-                            longitude,
-                            JAPANESE_DAWN_DEPRESSION,
-                            6,
-                            6,
-                            &period))
-    {
-        return g_strdup(vertical ? "N/A\n和時" : "N/A 和時");
-    }
-
-    toki = period.daylight ?
-        &japanese_day_toki[period.index] :
-        &japanese_night_toki[period.index];
-    return vertical ?
-        g_strdup_printf("%s %u\n%s", toki->character, toki->number,
-                        toki->animal) :
-        g_strdup_printf("%s %u %s", toki->character, toki->number,
-                        toki->animal);
-}
 
 guint
 delay_japanese_temporal_provider(gint64 unix_microseconds,
@@ -473,52 +268,6 @@ solar_origin_window(gint64 unix_microseconds,
     return TRUE;
 }
 
-static gchar *
-format_equal_hours_from_solar_origin(gint64 unix_microseconds,
-                                     gboolean show_seconds,
-                                     gboolean vertical,
-                                     gdouble latitude,
-                                     gdouble longitude,
-                                     SolarOrigin origin,
-                                     const gchar *suffix)
-{
-    gint64 start;
-    gint64 elapsed_microseconds;
-    gint64 whole_seconds;
-    gint hour;
-    gint minute;
-    gint second;
-    const gchar *separator = vertical ? "\n" : ":";
-
-    if (!solar_origin_window(unix_microseconds,
-                             latitude,
-                             longitude,
-                             origin,
-                             &start,
-                             NULL))
-    {
-        return g_strdup_printf(vertical ? "N/A\n%s" : "N/A %s", suffix);
-    }
-
-    elapsed_microseconds = unix_microseconds - start;
-    whole_seconds = floor_divide(elapsed_microseconds, G_USEC_PER_SEC);
-    hour = (gint)(whole_seconds / SECONDS_PER_HOUR);
-    minute = (gint)((whole_seconds / SECONDS_PER_MINUTE) %
-                    MINUTES_PER_HOUR);
-    second = (gint)(whole_seconds % SECONDS_PER_MINUTE);
-
-    if (show_seconds)
-    {
-        return g_strdup_printf("%02d%s%02d%s%02d%s%s",
-                               hour, separator, minute, separator, second,
-                               vertical ? "\n" : " ", suffix);
-    }
-
-    return g_strdup_printf("%02d%s%02d%s%s",
-                           hour, separator, minute,
-                           vertical ? "\n" : " ", suffix);
-}
-
 static guint
 delay_equal_hours_from_solar_origin(gint64 unix_microseconds,
                                     gboolean show_seconds,
@@ -563,20 +312,6 @@ delay_equal_hours_from_solar_origin(gint64 unix_microseconds,
  * Historical local practice sometimes offset the reset from literal sunset;
  * Calendar intentionally uses the unambiguous strict-sunset convention.
  */
-gchar *
-format_italian_hours_provider(gint64 unix_microseconds,
-                              gint utc_offset_seconds,
-                              gboolean show_seconds,
-                              gboolean vertical,
-                              gdouble latitude,
-                              gdouble longitude)
-{
-    (void)utc_offset_seconds;
-    return format_equal_hours_from_solar_origin(
-        unix_microseconds, show_seconds, vertical, latitude, longitude,
-        SOLAR_ORIGIN_SUNSET, "IT");
-}
-
 guint
 delay_italian_hours_provider(gint64 unix_microseconds,
                              gint utc_offset_seconds,
@@ -595,20 +330,6 @@ delay_italian_hours_provider(gint64 unix_microseconds,
  * equal hours elapsed from sunrise (horae ab ortu Solis). It is not presented
  * as a reconstruction of ancient Mesopotamian civil timekeeping.
  */
-gchar *
-format_babylonian_hours_provider(gint64 unix_microseconds,
-                                 gint utc_offset_seconds,
-                                 gboolean show_seconds,
-                                 gboolean vertical,
-                                 gdouble latitude,
-                                 gdouble longitude)
-{
-    (void)utc_offset_seconds;
-    return format_equal_hours_from_solar_origin(
-        unix_microseconds, show_seconds, vertical, latitude, longitude,
-        SOLAR_ORIGIN_SUNRISE, "BAB");
-}
-
 guint
 delay_babylonian_hours_provider(gint64 unix_microseconds,
                                 gint utc_offset_seconds,
@@ -629,36 +350,6 @@ delay_babylonian_hours_provider(gint64 unix_microseconds,
  * computed sunrise even when seasonal sunrise drift makes the interval differ
  * slightly from exactly 24 mean hours.
  */
-gchar *
-format_indian_ghati_provider(gint64 unix_microseconds,
-                             gint utc_offset_seconds,
-                             gboolean show_seconds G_GNUC_UNUSED,
-                             gboolean vertical,
-                             gdouble latitude,
-                             gdouble longitude)
-{
-    gint64 start;
-    gint64 elapsed_seconds;
-    gint ghati;
-    gint vighati;
-
-    (void)utc_offset_seconds;
-    if (!solar_origin_window(unix_microseconds, latitude, longitude,
-                             SOLAR_ORIGIN_SUNRISE, &start, NULL))
-    {
-        return g_strdup(vertical ? "N/A\nGH" : "N/A GH");
-    }
-
-    elapsed_seconds =
-        floor_divide(unix_microseconds - start, G_USEC_PER_SEC);
-    ghati = (gint)(elapsed_seconds /
-                   ((gint64)24 * SECONDS_PER_MINUTE));
-    vighati = (gint)((elapsed_seconds / 24) % 60);
-
-    return g_strdup_printf(vertical ? "GH\n%02d:%02d" : "GH %02d:%02d",
-                           ghati, vighati);
-}
-
 guint
 delay_indian_ghati_provider(gint64 unix_microseconds,
                             gint utc_offset_seconds,

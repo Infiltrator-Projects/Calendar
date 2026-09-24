@@ -7,9 +7,9 @@
  * Surviving Nuremberg instruments carry separate equal-hour counts for the
  * daylight and night portions of the civil day.  The count begins again at
  * sunrise and again at sunset, so noon may be hour 8 near midsummer but only
- * hour 4 near midwinter.  Calendar displays elapsed equal hours within
- * the current daylight/night span and resets at the computed physical solar
- * boundary. This is distinct from Italian hours (one sunset-to-sunset count)
+ * hour 4 near midwinter. Common renders the visible Nuremberg value; Calendar
+ * retains the boundary calculation solely to schedule the next exact panel
+ * update. This is distinct from Italian hours (one sunset-to-sunset count)
  * and Babylonian hours (one sunrise-to-sunrise count).
  *
  * Model choice: Calendar interprets the historical equal-hour description as
@@ -96,53 +96,6 @@ nuremberg_boundary_window(gint64 unix_microseconds,
     if (next != NULL)
         *next = best_next;
     return TRUE;
-}
-
-gchar *
-format_nuremberg_hours_provider(gint64 unix_microseconds,
-                                gint utc_offset_seconds,
-                                gboolean show_seconds,
-                                gboolean vertical,
-                                gdouble latitude,
-                                gdouble longitude)
-{
-    gint64 start;
-    gint64 elapsed_seconds;
-    gint hour;
-    gint minute;
-    gint second;
-    NurembergBoundary boundary;
-    const gchar *period;
-    const gchar *separator = vertical ? "\n" : ":";
-
-    (void)utc_offset_seconds;
-    if (!nuremberg_boundary_window(unix_microseconds,
-                                   latitude,
-                                   longitude,
-                                   &start,
-                                   NULL,
-                                   &boundary))
-    {
-        return g_strdup(vertical ? "N/A\nNUR" : "N/A NUR");
-    }
-
-    elapsed_seconds = floor_divide(
-        unix_microseconds - start, G_USEC_PER_SEC);
-    hour = (gint)(elapsed_seconds / SECONDS_PER_HOUR);
-    minute = (gint)((elapsed_seconds / SECONDS_PER_MINUTE) % MINUTES_PER_HOUR);
-    second = (gint)(elapsed_seconds % SECONDS_PER_MINUTE);
-    period = boundary == NUREMBERG_BOUNDARY_SUNRISE ? "NUR-D" : "NUR-N";
-
-    if (show_seconds)
-    {
-        return g_strdup_printf("%02d%s%02d%s%02d%s%s",
-                               hour, separator, minute, separator, second,
-                               vertical ? "\n" : " ", period);
-    }
-
-    return g_strdup_printf("%02d%s%02d%s%s",
-                           hour, separator, minute,
-                           vertical ? "\n" : " ", period);
 }
 
 guint

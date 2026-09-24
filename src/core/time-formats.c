@@ -3,10 +3,9 @@
 
 /*
  * Native clock-provider registry, shared timing primitives and public dispatch.
- * Common owns each mode's stable identifier, presentation name and capability
- * metadata; Calendar binds that metadata to paired format/delay callbacks.
- * Specialised implementations live in the civil, astronomy and historical
- * modules.
+ * Common owns each mode's stable identifier, capability metadata and rendered
+ * clock text. Calendar retains only boundary scheduling needed to wake the
+ * Cinnamon panel at the exact instant that Common's visible value can change.
  */
 
 #include "time-formats.h"
@@ -18,7 +17,6 @@
 #include <math.h>
 #include <string.h>
 
-typedef gchar *(*TimeFormatFunc)(gint64, gint, gboolean, gboolean, gdouble, gdouble);
 typedef guint (*TimeDelayFunc)(gint64, gint, gboolean, gdouble, gdouble);
 
 typedef struct
@@ -27,11 +25,9 @@ typedef struct
     CalendarPlusTimeMode mode;
     /*
      * Stable binding key into Common's authoritative temporal catalogue.
-     * Calendar owns only the formatter/scheduler implementation; Common owns
-     * the identifier, presentation name and capability metadata.
+     * Common renders the clock; Calendar owns only next-boundary scheduling.
      */
     const gchar *common_id;
-    TimeFormatFunc format;
     TimeDelayFunc next_tick;
 } TimeProvider;
 
@@ -50,28 +46,6 @@ calendar_plus_time_fractional_day_tick(gint64 microseconds_of_day, guint ticks_p
     return (guint)tick;
 }
 
-void
-calendar_plus_time_split_clock_seconds(gint64 whole_seconds, gint *hour, gint *minute, gint *second)
-{
-    const gint64 normalised = positive_modulo(whole_seconds, SECONDS_PER_DAY);
-    *hour = (gint)(normalised / SECONDS_PER_HOUR);
-    *minute = (gint)((normalised / SECONDS_PER_MINUTE) % MINUTES_PER_HOUR);
-    *second = (gint)(normalised % SECONDS_PER_MINUTE);
-}
-
-gchar *
-calendar_plus_time_format_clock_fields(gint hour, gint minute, gint second,
-                                       gboolean show_seconds, gboolean vertical,
-                                       const gchar *suffix)
-{
-    const gchar *separator = vertical ? "\n" : ":";
-    const gchar *suffix_separator = vertical ? "\n" : " ";
-    if (show_seconds)
-        return g_strdup_printf("%02d%s%02d%s%02d%s%s", hour, separator, minute,
-                               separator, second, suffix_separator, suffix);
-    return g_strdup_printf("%02d%s%02d%s%s", hour, separator, minute,
-                           suffix_separator, suffix);
-}
 
 static guint
 delay_seconds_to_milliseconds(long double seconds)
@@ -133,8 +107,7 @@ calendar_plus_time_delay_for_clock_seconds(long double clock_seconds,
 
 #define TIME_PROVIDER(mode_, token_, id_) \
     [CALENDAR_PLUS_TIME_MODE_##mode_] = { CALENDAR_PLUS_TIME_PROVIDER_ABI, \
-        CALENDAR_PLUS_TIME_MODE_##mode_, id_, \
-        format_##token_##_provider, delay_##token_##_provider }
+        CALENDAR_PLUS_TIME_MODE_##mode_, id_, delay_##token_##_provider }
 
 static const TimeProvider time_providers[] = {
     TIME_PROVIDER(DECIMAL, decimal, "decimal"),
@@ -271,10 +244,26 @@ calendar_plus_format_time_at_location(CalendarPlusTimeMode mode, gint64 unix_mic
     const TimeProvider *provider = time_provider_for_mode(mode);
     const gdouble safe_latitude = isfinite(latitude) ? infiltratr_clamp_double(latitude, -90.0, 90.0) : 0.0;
     const gdouble safe_longitude = isfinite(longitude) ? infiltratr_clamp_double(longitude, -180.0, 180.0) : 0.0;
+    gchar text[256];
+
     if (!location_is_valid_for_provider(provider, latitude, longitude))
         return g_strdup("");
-    return provider->format(unix_microseconds, utc_offset_seconds, show_seconds,
-                            vertical, safe_latitude, safe_longitude);
+    if (!infiltratr_temporal_format_clock_mode(
+            provider->common_id,
+            unix_microseconds,
+            utc_offset_seconds,
+            show_seconds,
+            vertical,
+            TRUE,
+            safe_latitude,
+            safe_longitude,
+            text,
+            sizeof(text),
+            NULL))
+    {
+        return g_strdup("");
+    }
+    return g_strdup(text);
 }
 
 gchar *
