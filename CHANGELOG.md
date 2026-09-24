@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.0.56 - 2026-09-24
+
+- Align the selected-date heading in the Cinnamon event pane with the suite-wide 16 px section-heading scale.
+- Preserve Calendar behaviour, Cinnamon-native structure, chronology, event integration and dependencies unchanged.
+
 ## 1.0.55 - 2026-09-24
 
 - Align the Cinnamon month heading with the 28 px publisher title scale.
