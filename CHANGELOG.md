@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.0.58 - 2026-09-24
+
+- Stabilise the Cinnamon panel clock so ordinary clock ticks can grow the latched allocation but never shrink it; width is reset only when a genuine layout input changes.
+- Request tabular numeral glyphs for the panel clock so seconds, decimal time, binary fields and other numeric clock modes retain constant digit advances when the active font supports them.
+- Preserve the existing MB Corpo typography, temporal policy, specialised clock rendering and Cinnamon preferred-width ownership model.
+
 ## 1.0.57 - 2026-09-24
 
 - Align Cinnamon weekday headings with the suite-wide 11 px supporting-text scale.

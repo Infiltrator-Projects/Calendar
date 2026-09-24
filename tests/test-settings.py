@@ -271,6 +271,9 @@ def main() -> None:
     assert "class LatchedWidthBin extends St.Bin" in applet_source
     assert "vfunc_get_preferred_width(forHeight)" in applet_source
     assert "this._labelBin.min_width" not in applet_source
+    assert "if (naturalWidth > this._latchedWidth)" in applet_source
+    assert "naturalWidth < this._latchedWidth" not in applet_source
+    assert 'font-feature-settings: "tnum" 1;' in stylesheet
 
     # Construction must be atomic. Essential native state is established
     # before actors are built; a failed build cleans up and rethrows instead

@@ -1,3 +1,11 @@
+infiltrator-calendar (1.0.58) unstable; urgency=medium
+
+  * Stop the live panel clock from shrinking its width on ordinary ticks.
+  * Request tabular numeral glyphs for stable numeric clock fields.
+  * Preserve temporal behaviour, MB Corpo typography and Cinnamon ownership.
+
+ -- Shannon Smith <noreply@the-infiltratr.com>  Thu, 24 Sep 2026 23:50:00 +1000
+
 infiltrator-calendar (1.0.57) unstable; urgency=medium
 
   * Align Cinnamon weekday headings with the 11 px publisher supporting-text scale.

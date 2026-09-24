@@ -62,6 +62,7 @@ def render_typography(data: dict) -> str:
     font-family: "{ui}";
     font-weight: {regular};
     font-size: 1.08em;
+    font-feature-settings: "tnum" 1;
 }}
 
 .calendar-plus-popup .calendar-today-day-label,

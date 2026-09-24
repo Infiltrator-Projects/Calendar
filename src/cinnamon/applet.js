@@ -107,10 +107,14 @@ class LatchedWidthBin extends St.Bin {
             return;
         }
 
-        const characters = Math.max(1, label.get_text().length);
-        const hysteresis = 2 * naturalWidth / characters;
-        if (naturalWidth > this._latchedWidth ||
-            naturalWidth < this._latchedWidth - hysteresis) {
+        /*
+         * A live clock must never contract on an ordinary tick: proportional
+         * glyph advances otherwise move neighbouring panel content and make
+         * the time appear to "breathe". Grow to the widest value observed for
+         * the current presentation, then shrink only through resetLatch() when
+         * a real layout input (mode/theme/orientation/panel size) changes.
+         */
+        if (naturalWidth > this._latchedWidth) {
             this._latchedWidth = naturalWidth;
             this.queue_relayout();
         }
