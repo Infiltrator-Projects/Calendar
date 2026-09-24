@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.0.55 - 2026-09-24
+
+- Align the Cinnamon month heading with the 28 px publisher title scale.
+- Preserve Calendar behaviour, Cinnamon-native structure and dependencies unchanged.
+
+
 ## 1.0.54 - 2026-09-24
 
 - Pin the exact released Infiltratr Common 1.19.25 clock-presentation authority.

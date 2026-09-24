@@ -75,6 +75,7 @@ def render_typography(data: dict) -> str:
 .calendar-plus-popup .calendar-month-label {{
     font-family: "{brand}";
     font-weight: {brand_weight};
+    font-size: 28px;
 }}
 {TYPOGRAPHY_END}"""
 
