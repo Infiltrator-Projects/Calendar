@@ -46,8 +46,8 @@ jobs:
           fi
 
   native:
-    name: Hosted native / ${{ matrix.compiler }}
-    runs-on: ubuntu-24.04
+    name: Native / ${{ matrix.compiler }}
+    runs-on: ${{ startsWith(github.event.head_commit.message, 'Release ') && 'ubuntu-24.04' || 'linux-native' }}
     timeout-minutes: 30
     strategy:
       fail-fast: false
@@ -95,8 +95,8 @@ jobs:
         run: tools/live-cinnamon-ci-smoke.sh
 
   sanitizer:
-    name: Hosted ASan / UBSan
-    runs-on: ubuntu-24.04
+    name: ASan / UBSan
+    runs-on: ${{ startsWith(github.event.head_commit.message, 'Release ') && 'ubuntu-24.04' || 'linux-native' }}
     timeout-minutes: 30
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -113,8 +113,8 @@ jobs:
         run: make sanitize
 
   coverage:
-    name: Hosted coverage
-    runs-on: ubuntu-24.04
+    name: Coverage
+    runs-on: ${{ startsWith(github.event.head_commit.message, 'Release ') && 'ubuntu-24.04' || 'linux-native' }}
     timeout-minutes: 30
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -130,8 +130,8 @@ jobs:
         run: make coverage
 
   static-analysis:
-    name: Hosted clang-tidy
-    runs-on: ubuntu-24.04
+    name: Clang-tidy
+    runs-on: ${{ startsWith(github.event.head_commit.message, 'Release ') && 'ubuntu-24.04' || 'linux-native' }}
     timeout-minutes: 30
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
