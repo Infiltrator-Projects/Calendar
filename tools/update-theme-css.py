@@ -104,9 +104,13 @@ def render_metrics(data: dict) -> str:
     spacing: {metric_data["section_spacing"]}px;
 }}
 
-.calendar-plus-popup .calendar,
+.calendar-plus-popup .calendar {{
+    border-radius: {metric_data["card_radius"]}px;
+}}
+
 .calendar-plus-popup .calendar-events-main-box {{
     border-radius: {metric_data["card_radius"]}px;
+    spacing: {metric_data["control_spacing"]}px;
 }}
 
 .calendar-plus-popup .calendar-today-home-button,

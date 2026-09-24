@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.0.61 - 2026-09-25
+
+- Align the Cinnamon event pane's internal vertical rhythm with Common's 10 px control spacing while retaining the 12 px card radius.
+- Preserve Cinnamon-native layout mechanics, temporal behaviour, calendar engines, dependencies and Common APIs unchanged.
+
 ## 1.0.60 - 2026-09-25
 
 - Align the Cinnamon Today/home control with the suite-wide 30 px desktop control height while preserving its existing Common 10 px control radius.

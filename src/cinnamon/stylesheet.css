@@ -62,9 +62,13 @@
     spacing: 18px;
 }
 
-.calendar-plus-popup .calendar,
+.calendar-plus-popup .calendar {
+    border-radius: 12px;
+}
+
 .calendar-plus-popup .calendar-events-main-box {
     border-radius: 12px;
+    spacing: 10px;
 }
 
 .calendar-plus-popup .calendar-today-home-button,
