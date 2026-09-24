@@ -122,6 +122,10 @@ def render_metrics(data: dict) -> str:
 .calendar-plus-popup .calendar-day-base {{
     border-radius: {metric_data["small_radius"]}px;
 }}
+
+.calendar-plus-popup .popup-menu-item {{
+    border-radius: {metric_data["small_radius"]}px;
+}}
 {METRICS_END}"""
 
 def render_theme(data: dict) -> str:

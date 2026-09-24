@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.0.62 - 2026-09-25
+
+- Give Calendar popup menu items Common's 6 px compact radius so Cinnamon actions share the suite's compact control geometry.
+- Keep Cinnamon-native layout, temporal behaviour, calendar engines, dependencies and Common APIs unchanged.
+
+
 ## 1.0.61 - 2026-09-25
 
 - Align the Cinnamon event pane's internal vertical rhythm with Common's 10 px control spacing while retaining the 12 px card radius.

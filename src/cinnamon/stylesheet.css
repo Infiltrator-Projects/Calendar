@@ -80,6 +80,10 @@
 .calendar-plus-popup .calendar-day-base {
     border-radius: 6px;
 }
+
+.calendar-plus-popup .popup-menu-item {
+    border-radius: 6px;
+}
 /* END GENERATED COMMON METRIC TOKENS */
 
 /*
