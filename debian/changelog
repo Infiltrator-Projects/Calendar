@@ -1,4 +1,11 @@
-infiltrator-calendar (1.0.58) unstable; urgency=medium
+infiltrator-calendar (1.0.59) unstable; urgency=medium
+
+  * Align calendar weekday headings with the 10 px publisher compact-label scale.
+  * Preserve Cinnamon-native behaviour, temporal policy and dependencies.
+
+ -- Shannon Smith <noreply@the-infiltratr.com>  Fri, 25 Sep 2026 06:12:00 +1000
+
+infiltrator-calendar (1.0.59) unstable; urgency=medium
 
   * Stop the live panel clock from shrinking its width on ordinary ticks.
   * Request tabular numeral glyphs for stable numeric clock fields.
