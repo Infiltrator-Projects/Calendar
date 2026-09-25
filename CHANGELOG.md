@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.0.64 - 2026-09-25
+
+- Align the Cinnamon month heading with the 27 px publisher page-hero scale while retaining Common's brand/display face.
+- Preserve Cinnamon-native layout, temporal behaviour, calendar engines, dependencies and Common APIs unchanged.
+
 ## 1.0.63 - 2026-09-25
 
 - Give Calendar popup menu actions the suite-wide 30 px desktop control height while keeping their existing 6 px compact radius.

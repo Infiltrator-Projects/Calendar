@@ -1,3 +1,10 @@
+infiltrator-calendar (1.0.64) unstable; urgency=medium
+
+  * Align the Cinnamon month heading with the 27 px publisher page-hero scale.
+  * Preserve Cinnamon-native behaviour, temporal policy and dependencies.
+
+ -- Shannon Smith <infiltratr@yandex.com>  Fri, 25 Sep 2026 11:30:00 +1000
+
 infiltrator-calendar (1.0.63) unstable; urgency=medium
 
   * Align Calendar popup menu actions with the 30 px publisher control height.
