@@ -631,6 +631,7 @@ function evaluatePanelClock() {
                             "roman-temporal", "japanese-temporal",
                             "italian-hours", "babylonian-hours",
                             "indian-ghati", "chinese-ke", "nuremberg-hours",
+    "babylonian-ancient", "nuremberg-solar",
                         ];
                         return nativeModes.includes(mode) ? mode : 0;
                     },
