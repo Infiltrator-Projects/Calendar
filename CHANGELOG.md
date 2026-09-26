@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.0.68 - 2026-09-26
+
+- Pin Calendar to Infiltratr Common 1.19.35 at `7cc5de3de0e94ed2cfcff0840bbb5346eb5c9c9f` after the final temporal clarity pass.
+- Consume native elapsed hierarchies for Chinese shíchén, Edo unequal hours and ancient Babylonian ūmu/bēru/UŠ.
+- Consume clearer era/epoch labels across the full calendar catalogue while preserving Calendar's audited chronology engines.
+
 ## 1.0.67 - 2026-09-26
 
 - Pin Calendar to Infiltratr Common 1.19.34 at `1467755d088d740b873660a8f0c9a515e9a39046` after the complete time/calendar historical-model audit.
