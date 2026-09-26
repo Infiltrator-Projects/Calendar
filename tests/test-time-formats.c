@@ -105,6 +105,7 @@ test_mode_parser(void)
         "chinese-time",
         "roman-temporal",
         "japanese-temporal",
+        "japanese-temporal-early",
         "italian-hours",
         "babylonian-hours",
         "indian-ghati",
@@ -248,6 +249,8 @@ test_historical_and_scientific_times(void)
                             FALSE, FALSE, 0.0, 0.0, "Hora VI");
     assert_time_at_location("japanese-temporal", j2000, 0,
                             FALSE, FALSE, 0.0, 0.0, "巳 4 Snake");
+    assert_time_at_location("japanese-temporal-early", j2000, 0,
+                            FALSE, FALSE, 0.0, 0.0, "巳 4 Snake");
 
     /*
      * Equal-hour sundial conventions keep ordinary 60-minute hours but move
@@ -271,6 +274,8 @@ test_historical_and_scientific_times(void)
     assert_time_at_location("roman-temporal", USECONDS(962409600), 0,
                             FALSE, FALSE, 90.0, 0.0, "N/A ROM");
     assert_time_at_location("japanese-temporal", USECONDS(962409600), 0,
+                            FALSE, FALSE, 90.0, 0.0, "N/A 和時");
+    assert_time_at_location("japanese-temporal-early", USECONDS(962409600), 0,
                             FALSE, FALSE, 90.0, 0.0, "N/A 和時");
     assert_time_at_location("italian-hours", USECONDS(962409600), 0,
                             FALSE, FALSE, 90.0, 0.0, "N/A IT");

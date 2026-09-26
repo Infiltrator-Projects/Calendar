@@ -1,3 +1,11 @@
+infiltrator-calendar (1.0.67) unstable; urgency=medium
+
+  * Pin Infiltratr Common 1.19.34 and consume the audited temporal catalogue.
+  * Split early- and late-Edo unequal-hour models and strengthen historical date vectors.
+  * Synchronize package metadata with source version 1.0.67.
+
+ -- Shannon Smith <infiltratr@yandex.com>  Sat, 26 Sep 2026 18:50:00 +1000
+
 infiltrator-calendar (1.0.65) unstable; urgency=medium
 
   * Pin Infiltratr Common 1.19.30 and adopt corrected historical clock identities.

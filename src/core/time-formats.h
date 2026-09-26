@@ -31,6 +31,7 @@ G_BEGIN_DECLS
  * @CALENDAR_PLUS_TIME_MODE_NUREMBERG_HOURS: historical Nürnberg Great Clock with fixed Wendetage
  * @CALENDAR_PLUS_TIME_MODE_BABYLONIAN_ANCIENT: ancient Babylonian bēru/UŠ from sunset
  * @CALENDAR_PLUS_TIME_MODE_NUREMBERG_SOLAR: location-aware Nuremberg-style solar reconstruction
+ * @CALENDAR_PLUS_TIME_MODE_JAPANESE_TEMPORAL_EARLY: early-Edo sunrise/sunset unequal hours
  *
  * Native time systems supported by Calendar. Conventional 12-hour and
  * 24-hour modes remain with CinnamonDesktop.WallClock for locale handling.
@@ -57,7 +58,8 @@ typedef enum
     CALENDAR_PLUS_TIME_MODE_CHINESE_KE,
     CALENDAR_PLUS_TIME_MODE_NUREMBERG_HOURS,
     CALENDAR_PLUS_TIME_MODE_BABYLONIAN_ANCIENT,
-    CALENDAR_PLUS_TIME_MODE_NUREMBERG_SOLAR
+    CALENDAR_PLUS_TIME_MODE_NUREMBERG_SOLAR,
+    CALENDAR_PLUS_TIME_MODE_JAPANESE_TEMPORAL_EARLY
 } CalendarPlusTimeMode;
 
 /**

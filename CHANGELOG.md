@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.0.67 - 2026-09-26
+
+- Pin Calendar to Infiltratr Common 1.19.34 at `1467755d088d740b873660a8f0c9a515e9a39046` after the complete time/calendar historical-model audit.
+- Split Edo unequal-hour presentation into the documented late-1797 Takahashi twilight model and a distinct early-Edo sunrise/sunset model, with exact display-boundary scheduling for both.
+- Add historical edge vectors for Roman bissextile dating, French Republican leap years III/VII/XI and the Byzantine 1 September Anno Mundi rollover.
+- Synchronize Debian/package metadata and stale release assertions with the current source/Common versions.
+
 ## 1.0.66 - 2026-09-26
 
 - Pin Calendar to Infiltratr Common 1.19.33 at `c680f63e4bb295206c0d717311931b86ebc7f4b0` and consume the audited, self-explanatory time/calendar catalogue labels.

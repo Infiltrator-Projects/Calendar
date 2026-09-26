@@ -205,6 +205,30 @@ delay_japanese_temporal_provider(gint64 unix_microseconds,
 }
 
 
+guint
+delay_japanese_temporal_early_provider(gint64 unix_microseconds,
+                                       gint utc_offset_seconds,
+                                       gboolean show_seconds G_GNUC_UNUSED,
+                                       gdouble latitude,
+                                       gdouble longitude)
+{
+    SeasonalPeriod period;
+
+    (void)utc_offset_seconds;
+    if (!seasonal_period_at(unix_microseconds,
+                            latitude,
+                            longitude,
+                            0.833,
+                            6,
+                            6,
+                            &period))
+        return 3600000;
+
+    return delay_continuous_microseconds_to_milliseconds(
+        period.seconds_to_next * G_USEC_PER_SEC);
+}
+
+
 typedef enum
 {
     SOLAR_ORIGIN_SUNRISE,

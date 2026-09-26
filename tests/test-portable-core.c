@@ -138,6 +138,54 @@ test_calendar_reference_vectors(void)
 
 
 static void
+test_historical_calendar_edge_vectors(void)
+{
+    const CalendarPlusCalendarProvider *roman =
+        calendar_plus_calendar_provider_from_id("roman");
+    const CalendarPlusCalendarProvider *french =
+        calendar_plus_calendar_provider_from_id("french-republican");
+    const CalendarPlusCalendarProvider *byzantine =
+        calendar_plus_calendar_provider_from_id("byzantine");
+    CalendarPlusCalendarFields fields = { 0 };
+    g_autofree gchar *text = NULL;
+    gint64 jdn;
+
+    g_assert_nonnull(roman);
+    g_assert_nonnull(french);
+    g_assert_nonnull(byzantine);
+
+    jdn = calendar_plus_julian_to_jdn(2024, 2, 24);
+    g_assert_true(roman->fields_from_jdn(roman, jdn, &fields));
+    text = roman->format(roman, jdn, CALENDAR_PLUS_DATE_PART_FULL);
+    g_assert_nonnull(text);
+    g_assert_nonnull(strstr(text, "bis VI Kal. Mar"));
+    g_clear_pointer(&text, g_free);
+
+    jdn = calendar_plus_gregorian_to_jdn(1795, 9, 22);
+    g_assert_true(french->fields_from_jdn(french, jdn, &fields));
+    g_assert_cmpint(fields.year, ==, 3);
+    g_assert_cmpint(fields.month, ==, 13);
+    g_assert_cmpint(fields.day, ==, 6);
+    jdn = calendar_plus_gregorian_to_jdn(1799, 9, 22);
+    g_assert_true(french->fields_from_jdn(french, jdn, &fields));
+    g_assert_cmpint(fields.year, ==, 7);
+    g_assert_cmpint(fields.month, ==, 13);
+    g_assert_cmpint(fields.day, ==, 6);
+    jdn = calendar_plus_gregorian_to_jdn(1803, 9, 22);
+    g_assert_true(french->fields_from_jdn(french, jdn, &fields));
+    g_assert_cmpint(fields.year, ==, 11);
+    g_assert_cmpint(fields.month, ==, 13);
+    g_assert_cmpint(fields.day, ==, 6);
+
+    jdn = calendar_plus_julian_to_jdn(2026, 8, 31);
+    g_assert_true(byzantine->fields_from_jdn(byzantine, jdn, &fields));
+    g_assert_cmpint(fields.year, ==, 7534);
+    jdn = calendar_plus_julian_to_jdn(2026, 9, 1);
+    g_assert_true(byzantine->fields_from_jdn(byzantine, jdn, &fields));
+    g_assert_cmpint(fields.year, ==, 7535);
+}
+
+static void
 test_gregorian_proleptic_cutover(void)
 {
     static const CalendarReferenceVector vectors[] = {
@@ -1004,6 +1052,8 @@ main(int argc,
     g_test_add_func("/portable/calendar-records", test_calendar_records);
     g_test_add_func("/portable/calendar-reference-vectors",
                     test_calendar_reference_vectors);
+    g_test_add_func("/portable/historical-calendar-edge-vectors",
+                    test_historical_calendar_edge_vectors);
     g_test_add_func("/portable/gregorian-proleptic-cutover",
                     test_gregorian_proleptic_cutover);
     g_test_add_func("/portable/shared-calendar-helpers",
