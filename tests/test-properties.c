@@ -498,7 +498,7 @@ test_time_registry_contract(void)
     gsize index;
 
     g_assert_cmpuint(count, ==,
-                     (gsize)CALENDAR_PLUS_TIME_MODE_NUREMBERG_SOLAR);
+                     (gsize)CALENDAR_PLUS_TIME_MODE_JAPANESE_TEMPORAL_EARLY);
 
     for (index = 0; index < count; index++)
     {
@@ -542,6 +542,8 @@ test_time_registry_contract(void)
     g_assert_true(calendar_plus_time_mode_requires_longitude(
         CALENDAR_PLUS_TIME_MODE_JAPANESE_TEMPORAL));
     g_assert_true(calendar_plus_time_mode_requires_longitude(
+        CALENDAR_PLUS_TIME_MODE_JAPANESE_TEMPORAL_EARLY));
+    g_assert_true(calendar_plus_time_mode_requires_longitude(
         CALENDAR_PLUS_TIME_MODE_ITALIAN_HOURS));
     g_assert_true(calendar_plus_time_mode_requires_longitude(
         CALENDAR_PLUS_TIME_MODE_BABYLONIAN_HOURS));
@@ -555,6 +557,8 @@ test_time_registry_contract(void)
         CALENDAR_PLUS_TIME_MODE_ROMAN_TEMPORAL));
     g_assert_true(calendar_plus_time_mode_requires_latitude(
         CALENDAR_PLUS_TIME_MODE_JAPANESE_TEMPORAL));
+    g_assert_true(calendar_plus_time_mode_requires_latitude(
+        CALENDAR_PLUS_TIME_MODE_JAPANESE_TEMPORAL_EARLY));
     g_assert_true(calendar_plus_time_mode_requires_latitude(
         CALENDAR_PLUS_TIME_MODE_ITALIAN_HOURS));
     g_assert_true(calendar_plus_time_mode_requires_latitude(
@@ -583,6 +587,8 @@ test_time_registry_contract(void)
         CALENDAR_PLUS_TIME_MODE_ROMAN_TEMPORAL));
     g_assert_false(calendar_plus_time_mode_supports_seconds(
         CALENDAR_PLUS_TIME_MODE_JAPANESE_TEMPORAL));
+    g_assert_false(calendar_plus_time_mode_supports_seconds(
+        CALENDAR_PLUS_TIME_MODE_JAPANESE_TEMPORAL_EARLY));
     g_assert_null(calendar_plus_time_mode_get_id(
         CALENDAR_PLUS_TIME_MODE_INVALID));
     g_assert_null(calendar_plus_time_mode_get_name(
