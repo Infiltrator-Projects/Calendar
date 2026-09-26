@@ -343,6 +343,31 @@ delay_babylonian_hours_provider(gint64 unix_microseconds,
         SOLAR_ORIGIN_SUNRISE);
 }
 
+/* Twelve fixed bēru per sunset day; one UŠ is four SI minutes. */
+guint
+delay_babylonian_ancient_provider(gint64 unix_microseconds,
+                                    gint utc_offset_seconds,
+                                    gboolean show_seconds G_GNUC_UNUSED,
+                                    gdouble latitude,
+                                    gdouble longitude)
+{
+    gint64 start;
+    gint64 next;
+    guint tick_delay;
+
+    (void)utc_offset_seconds;
+    if (!solar_origin_window(unix_microseconds, latitude, longitude,
+                             SOLAR_ORIGIN_SUNSET, &start, &next))
+        return 3600000U;
+    tick_delay = delay_for_integer_period(
+        unix_microseconds - start, (gint64)240 * G_USEC_PER_SEC);
+    if (next != G_MAXINT64)
+        return MIN(tick_delay,
+                   delay_continuous_microseconds_to_milliseconds(
+                       (long double)(next - unix_microseconds)));
+    return tick_delay;
+}
+
 /*
  * Indian ghaṭī time: sixty ghaṭīs in a mean 24-hour day, with one ghaṭī
  * equal to 24 SI minutes and one vighaṭī to 24 SI seconds. The historical

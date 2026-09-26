@@ -19,6 +19,9 @@
 
 typedef guint (*TimeDelayFunc)(gint64, gint, gboolean, gdouble, gdouble);
 
+guint delay_babylonian_ancient_provider(gint64, gint, gboolean, gdouble, gdouble);
+guint delay_nuremberg_solar_provider(gint64, gint, gboolean, gdouble, gdouble);
+
 typedef struct
 {
     guint abi_version;
@@ -127,10 +130,12 @@ static const TimeProvider time_providers[] = {
     TIME_PROVIDER(BABYLONIAN_HOURS, babylonian_hours, "babylonian-hours"),
     TIME_PROVIDER(INDIAN_GHATI, indian_ghati, "indian-ghati"),
     TIME_PROVIDER(CHINESE_KE, chinese_ke, "chinese-ke"),
-    TIME_PROVIDER(NUREMBERG_HOURS, nuremberg_hours, "nuremberg-hours")
+    TIME_PROVIDER(NUREMBERG_HOURS, nuremberg_hours, "nuremberg-hours"),
+    TIME_PROVIDER(BABYLONIAN_ANCIENT, babylonian_ancient, "babylonian-ancient"),
+    TIME_PROVIDER(NUREMBERG_SOLAR, nuremberg_solar, "nuremberg-solar")
 };
 
-G_STATIC_ASSERT(G_N_ELEMENTS(time_providers) == CALENDAR_PLUS_TIME_MODE_NUREMBERG_HOURS + 1);
+G_STATIC_ASSERT(G_N_ELEMENTS(time_providers) == CALENDAR_PLUS_TIME_MODE_NUREMBERG_SOLAR + 1);
 
 static const InfiltratrTemporalClockModeInfo *
 common_mode_info_for_provider(const TimeProvider *provider)
@@ -146,7 +151,7 @@ time_provider_for_mode(CalendarPlusTimeMode mode)
     const TimeProvider *provider;
 
     if (mode < CALENDAR_PLUS_TIME_MODE_DECIMAL ||
-        mode > CALENDAR_PLUS_TIME_MODE_NUREMBERG_HOURS)
+        mode > CALENDAR_PLUS_TIME_MODE_NUREMBERG_SOLAR)
         return NULL;
 
     provider = &time_providers[mode];

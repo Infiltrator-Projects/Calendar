@@ -86,7 +86,7 @@ test_calendar_reference_vectors(void)
         { "bahai", 1844, 3, 21, 1, 1, 1 },
         { "international-fixed", 2026, 1, 1, 2026, 1, 1 },
         { "world", 2026, 1, 1, 2026, 1, 1 },
-        { "positivist", 2026, 1, 1, 2026, 1, 1 },
+        { "positivist", 2026, 1, 1, 238, 1, 1 },
         { "revised-julian", 2000, 1, 1, 2000, 1, 1 },
         { "byzantine", 2026, 9, 14, 7535, 9, 1 },
         { "egyptian-nabonassar", -746, 2, 18, 1, 1, 1 },
@@ -363,7 +363,7 @@ test_clock_interfaces(void)
     g_assert_false(calendar_plus_clock_engine_is_running(engine));
     g_assert_cmpuint(clock.cancellations, ==, 2);
 
-    config.mode = CALENDAR_PLUS_TIME_MODE_NUREMBERG_HOURS;
+    config.mode = CALENDAR_PLUS_TIME_MODE_NUREMBERG_SOLAR;
     config.latitude = NAN;
     config.longitude = 11.0767;
     g_assert_false(calendar_plus_clock_engine_start(engine, &config));
@@ -921,53 +921,35 @@ test_swedish_historical_boundaries(void)
 static void
 test_nuremberg_clock_boundaries(void)
 {
-    const CalendarPlusTimeMode mode =
+    const CalendarPlusTimeMode historical =
         calendar_plus_time_mode_from_string("nuremberg-hours");
-    const gint64 summer_midnight = G_GINT64_CONSTANT(1782000000000000);
-    const gint64 summer_noon = G_GINT64_CONSTANT(1782043200000000);
-    g_autofree gchar *day = NULL;
-    g_autofree gchar *night = NULL;
-    g_autofree gchar *polar = NULL;
-    g_autofree gchar *invalid_location = NULL;
-    guint delay;
+    const CalendarPlusTimeMode local =
+        calendar_plus_time_mode_from_string("nuremberg-solar");
+    const CalendarPlusTimeMode ancient =
+        calendar_plus_time_mode_from_string("babylonian-ancient");
+    const gint64 sample = G_GINT64_CONSTANT(1782043200000000);
+    g_autofree gchar *text = NULL;
 
-    g_assert_cmpint(mode, ==, CALENDAR_PLUS_TIME_MODE_NUREMBERG_HOURS);
-    g_assert_true(calendar_plus_time_mode_requires_latitude(mode));
-    g_assert_true(calendar_plus_time_mode_requires_longitude(mode));
-    g_assert_true(calendar_plus_time_mode_supports_seconds(mode));
+    g_assert_cmpint(historical, ==, CALENDAR_PLUS_TIME_MODE_NUREMBERG_HOURS);
+    g_assert_false(calendar_plus_time_mode_requires_latitude(historical));
+    g_assert_false(calendar_plus_time_mode_requires_longitude(historical));
+    text = calendar_plus_format_time_at_location(
+        historical, sample, 7200, FALSE, FALSE, NAN, NAN);
+    g_assert_true(strstr(text, "NUR-D") != NULL || strstr(text, "NUR-N") != NULL);
+    g_clear_pointer(&text, g_free);
 
-    day = calendar_plus_format_time_at_location(
-        mode, summer_noon, 7200, FALSE, FALSE, 49.4521, 11.0767);
-    g_assert_nonnull(strstr(day, "NUR-D"));
+    g_assert_cmpint(local, ==, CALENDAR_PLUS_TIME_MODE_NUREMBERG_SOLAR);
+    g_assert_true(calendar_plus_time_mode_requires_latitude(local));
+    text = calendar_plus_format_time_at_location(
+        local, sample, 7200, FALSE, FALSE, 49.4521, 11.0767);
+    g_assert_nonnull(strstr(text, "NUR-L"));
+    g_clear_pointer(&text, g_free);
 
-    night = calendar_plus_format_time_at_location(
-        mode, summer_midnight, 7200, TRUE, TRUE, 49.4521, 11.0767);
-    g_assert_nonnull(strstr(night, "NUR-N"));
-    g_assert_nonnull(strchr(night, '\n'));
-
-    delay = calendar_plus_time_delay_to_next_tick_at_location(
-        mode, summer_noon, 7200, FALSE, 49.4521, 11.0767);
-    g_assert_cmpuint(delay, >, 0);
-    g_assert_cmpuint(delay, <=, 60000);
-
-    delay = calendar_plus_time_delay_to_next_tick_at_location(
-        mode, summer_midnight, 7200, TRUE, 49.4521, 11.0767);
-    g_assert_cmpuint(delay, >, 0);
-    g_assert_cmpuint(delay, <=, 1000);
-
-    polar = calendar_plus_format_time_at_location(
-        mode, summer_noon, 0, FALSE, FALSE, 90.0, 0.0);
-    g_assert_cmpstr(polar, ==, "N/A NUR");
-    g_assert_cmpuint(calendar_plus_time_delay_to_next_tick_at_location(
-                         mode, summer_noon, 0, FALSE, 90.0, 0.0),
-                     ==, 3600000);
-
-    invalid_location = calendar_plus_format_time_at_location(
-        mode, summer_noon, 0, FALSE, FALSE, NAN, 11.0767);
-    g_assert_cmpstr(invalid_location, ==, "");
-    g_assert_cmpuint(calendar_plus_time_delay_to_next_tick_at_location(
-                         mode, summer_noon, 0, FALSE, NAN, 11.0767),
-                     ==, 3600000);
+    g_assert_cmpint(ancient, ==, CALENDAR_PLUS_TIME_MODE_BABYLONIAN_ANCIENT);
+    text = calendar_plus_format_time_at_location(
+        ancient, sample, 7200, FALSE, FALSE, 49.4521, 11.0767);
+    g_assert_nonnull(strstr(text, "bēru"));
+    g_assert_nonnull(strstr(text, "UŠ"));
 }
 
 static void

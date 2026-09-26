@@ -146,8 +146,10 @@ gint
 calendar_plus_positivist_month_length(gint64 year,
                                       gint month)
 {
+    const gint64 gregorian_year = calendar_plus_i64_add_saturating(year, 1788);
+
     if (month == 13)
-        return gregorian_is_leap(year) ? 30 : 29;
+        return gregorian_is_leap(gregorian_year) ? 30 : 29;
     return 28;
 }
 
@@ -168,7 +170,8 @@ calendar_plus_positivist_fields_from_jdn(
                                     gregorian_month,
                                     gregorian_day);
 
-    fields->year = year;
+    /* Comte's Great Crisis era: Gregorian 1789 is Positivist year 1. */
+    fields->year = calendar_plus_i64_subtract_saturating(year, 1788);
     if (ordinal <= 364)
     {
         fields->month = (ordinal - 1) / 28 + 1;
@@ -191,7 +194,13 @@ calendar_plus_positivist_fields_to_jdn(
     g_return_val_if_fail(fields != NULL,
                          gregorian_to_jdn(1970, 1, 1));
 
-    return gregorian_to_jdn((gint)fields->year, 1, 1) +
+    const gint64 gregorian_year =
+        calendar_plus_i64_add_saturating(fields->year, 1788);
+
+    g_return_val_if_fail(gregorian_year >= G_MININT &&
+                         gregorian_year <= G_MAXINT,
+                         gregorian_to_jdn(1970, 1, 1));
+    return gregorian_to_jdn((gint)gregorian_year, 1, 1) +
            (gint64)(fields->month - 1) * 28 +
            fields->day - 1;
 }

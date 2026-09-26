@@ -28,7 +28,9 @@ G_BEGIN_DECLS
  * @CALENDAR_PLUS_TIME_MODE_BABYLONIAN_HOURS: equal hours elapsed since sunrise
  * @CALENDAR_PLUS_TIME_MODE_INDIAN_GHATI: Indian ghaṭī/vighaṭī count from sunrise
  * @CALENDAR_PLUS_TIME_MODE_CHINESE_KE: Chinese hundred-kè civil-day division
- * @CALENDAR_PLUS_TIME_MODE_NUREMBERG_HOURS: equal hours reset at sunrise and sunset
+ * @CALENDAR_PLUS_TIME_MODE_NUREMBERG_HOURS: historical Nürnberg Great Clock with fixed Wendetage
+ * @CALENDAR_PLUS_TIME_MODE_BABYLONIAN_ANCIENT: ancient Babylonian bēru/UŠ from sunset
+ * @CALENDAR_PLUS_TIME_MODE_NUREMBERG_SOLAR: location-aware Nuremberg-style solar reconstruction
  *
  * Native time systems supported by Calendar. Conventional 12-hour and
  * 24-hour modes remain with CinnamonDesktop.WallClock for locale handling.
@@ -53,7 +55,9 @@ typedef enum
     CALENDAR_PLUS_TIME_MODE_BABYLONIAN_HOURS,
     CALENDAR_PLUS_TIME_MODE_INDIAN_GHATI,
     CALENDAR_PLUS_TIME_MODE_CHINESE_KE,
-    CALENDAR_PLUS_TIME_MODE_NUREMBERG_HOURS
+    CALENDAR_PLUS_TIME_MODE_NUREMBERG_HOURS,
+    CALENDAR_PLUS_TIME_MODE_BABYLONIAN_ANCIENT,
+    CALENDAR_PLUS_TIME_MODE_NUREMBERG_SOLAR
 } CalendarPlusTimeMode;
 
 /**
