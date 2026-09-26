@@ -1,3 +1,11 @@
+infiltrator-calendar (1.0.65) unstable; urgency=medium
+
+  * Pin Infiltratr Common 1.19.30 and adopt corrected historical clock identities.
+  * Add Ancient Babylonian seasonal hours and corrected Nuremberg Wendetag presentation.
+  * Preserve Calendar chronology, Cinnamon fallback and event behaviour.
+
+ -- Shannon Smith <infiltratr@yandex.com>  Sat, 26 Sep 2026 15:40:00 +1000
+
 infiltrator-calendar (1.0.64) unstable; urgency=medium
 
   * Align the Cinnamon month heading with the 27 px publisher page-hero scale.

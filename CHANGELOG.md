@@ -1,5 +1,13 @@
 # Changelog
 
+## 1.0.65 - 2026-09-26
+
+- Pin Calendar to released Infiltratr Common 1.19.30 at `9a9fae5b3f0d133d400310cdd316b21129631429` so Calendar, System Settings and System Monitor share the corrected historical clock catalogue.
+- Present the sunset-origin Italian system explicitly as historical Italian hours rather than something that could be mistaken for modern Italian civil time.
+- Separate the Renaissance European sunrise-origin "Babylonian hours" from the new Ancient Babylonian seasonal-hours mode with twelve daylight and twelve night simānu.
+- Use Common's corrected Nuremberg Wendetag day/night allocation instead of the former continuous sunrise/sunset reset approximation.
+- Preserve Cinnamon/locale fallback and all Calendar-specific chronology, event and panel behaviour.
+
 ## 1.0.64 - 2026-09-25
 
 - Align the Cinnamon month heading with the 27 px publisher page-hero scale while retaining Common's brand/display face.
