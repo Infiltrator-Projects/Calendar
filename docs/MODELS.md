@@ -38,8 +38,8 @@ These classes have different authorities and should not be described as though t
 | Gregorian, Hebrew, Persian, Indian, Coptic, Ethiopic, Buddhist, Japanese, Minguo, Islamic civil/tabular and Umm al-Qura arithmetic/navigation | Calendar deterministic native algorithms, with locale-sensitive formatting still delegated to ICU/CLDR |
 | Computational Islamic, Chinese and Dangi lunisolar conversion/navigation | ICU/CLDR calendar implementations |
 | Julian, ISO week, French Republican, Roman, Mayan, Badíʿ, International Fixed, World, Positivist, Revised Julian, Byzantine Anno Mundi, Egyptian civil (Nabonassar era) and traditional Armenian calendars | Calendar deterministic native algorithms |
-| French Republican decimal, Internet, Unix, hexadecimal, binary and Chinese hundred-kè clocks | Infiltratr Common 1.19.33 canonical clock renderer; Calendar retains exact display-boundary scheduling |
-| Sidereal, solar, Roman temporal, Edo seasonal, Italian, Babylonian-hour, Indian ghaṭī and Nuremberg clocks | Infiltratr Common 1.19.33 canonical clock renderer using configured coordinates; Calendar retains astronomical boundary scheduling |
+| French Republican decimal, Internet, Unix, hexadecimal, binary and Chinese hundred-kè clocks | Infiltratr Common 1.19.35 canonical clock renderer; Calendar retains exact display-boundary scheduling |
+| Sidereal, solar, Roman temporal, Edo seasonal, Italian, Babylonian-hour, Indian ghaṭī and Nuremberg clocks | Infiltratr Common 1.19.35 canonical clock renderer using configured coordinates; Calendar retains astronomical boundary scheduling |
 
 Sweden's 1700–1753 civil calendar is modelled explicitly, including 30 February 1712.
 
