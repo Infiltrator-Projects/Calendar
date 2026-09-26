@@ -256,16 +256,16 @@ test_historical_and_scientific_times(void)
     assert_time_at_location("italian-hours", j2000, 0,
                             TRUE, FALSE, 0.0, 0.0, "17:53:55 IT");
     assert_time_at_location("babylonian-hours", j2000, 0,
-                            TRUE, FALSE, 0.0, 0.0, "06:00:43 BAB");
+                            TRUE, FALSE, 0.0, 0.0, "06:00:43 BAB-R");
     assert_time_at_location("indian-ghati", j2000, 0,
-                            FALSE, FALSE, 0.0, 0.0, "GH 15:01");
+                            FALSE, FALSE, 0.0, 0.0, "15 ghaṭī · 1 pala");
     assert_time("chinese-ke", USECONDS(0), 0,
-                FALSE, FALSE, 0.0, "刻 00/100");
+                FALSE, FALSE, 0.0, "00刻");
     assert_time_at_location("nuremberg-hours", j2000, 0,
                             TRUE, FALSE, 0.0, 0.0,
                             "06:00:43 NUR-D");
     assert_time("chinese-ke", USECONDS(12 * 3600), 0,
-                FALSE, FALSE, 0.0, "刻 50/100");
+                FALSE, FALSE, 0.0, "50刻");
 
     /* At a pole near the June solstice no requested solar boundary exists. */
     assert_time_at_location("roman-temporal", USECONDS(962409600), 0,
@@ -275,7 +275,7 @@ test_historical_and_scientific_times(void)
     assert_time_at_location("italian-hours", USECONDS(962409600), 0,
                             FALSE, FALSE, 90.0, 0.0, "N/A IT");
     assert_time_at_location("babylonian-hours", USECONDS(962409600), 0,
-                            FALSE, FALSE, 90.0, 0.0, "N/A BAB");
+                            FALSE, FALSE, 90.0, 0.0, "N/A BAB-R");
     assert_time_at_location("indian-ghati", USECONDS(962409600), 0,
                             FALSE, FALSE, 90.0, 0.0, "N/A GH");
 }
