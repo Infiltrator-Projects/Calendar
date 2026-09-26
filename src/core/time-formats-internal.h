@@ -58,6 +58,8 @@ guint delay_babylonian_hours_provider(gint64, gint, gboolean, gdouble, gdouble);
 guint delay_indian_ghati_provider(gint64, gint, gboolean, gdouble, gdouble);
 guint delay_chinese_ke_provider(gint64, gint, gboolean, gdouble, gdouble);
 guint delay_nuremberg_hours_provider(gint64, gint, gboolean, gdouble, gdouble);
+guint delay_babylonian_ancient_provider(gint64, gint, gboolean, gdouble, gdouble);
+guint delay_nuremberg_solar_provider(gint64, gint, gboolean, gdouble, gdouble);
 
 G_END_DECLS
 

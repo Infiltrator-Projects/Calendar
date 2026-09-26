@@ -1,5 +1,13 @@
 # Changelog
 
+## 1.0.66 - 2026-09-26
+
+- Pin Calendar to Infiltratr Common 1.19.33 at `c680f63e4bb295206c0d717311931b86ebc7f4b0` and consume the audited, self-explanatory time/calendar catalogue labels.
+- Correct the Positivist calendar epoch: Gregorian 1789 is Positivist Year 1, so Gregorian 2026 is Positivist Year 238 rather than incorrectly retaining the Gregorian year number.
+- Add Ancient Babylonian bēru/UŠ to Calendar's live clock provider registry and schedule each four-minute UŠ boundary plus the next sunset reset.
+- Split Nuremberg scheduling correctly: historical Nürnberg follows Common's fixed civic Wendetage model at Nürnberg, while the location-aware sunrise/sunset reconstruction remains a separately named mode.
+- Refresh chronology documentation so historical rules, project continuations and astronomical reconstructions are visibly distinguished.
+
 ## 1.0.65 - 2026-09-26
 
 - Pin Calendar to released Infiltratr Common 1.19.30 at `9a9fae5b3f0d133d400310cdd316b21129631429` so Calendar, System Settings and System Monitor share the corrected historical clock catalogue.

@@ -38,14 +38,14 @@ These classes have different authorities and should not be described as though t
 | Gregorian, Hebrew, Persian, Indian, Coptic, Ethiopic, Buddhist, Japanese, Minguo, Islamic civil/tabular and Umm al-Qura arithmetic/navigation | Calendar deterministic native algorithms, with locale-sensitive formatting still delegated to ICU/CLDR |
 | Computational Islamic, Chinese and Dangi lunisolar conversion/navigation | ICU/CLDR calendar implementations |
 | Julian, ISO week, French Republican, Roman, Mayan, Badíʿ, International Fixed, World, Positivist, Revised Julian, Byzantine Anno Mundi, Egyptian civil (Nabonassar era) and traditional Armenian calendars | Calendar deterministic native algorithms |
-| French Republican decimal, Internet, Unix, hexadecimal, binary and Chinese hundred-kè clocks | Infiltratr Common 1.19.25 canonical clock renderer; Calendar retains exact display-boundary scheduling |
-| Sidereal, solar, Roman temporal, Edo seasonal, Italian, Babylonian-hour, Indian ghaṭī and Nuremberg clocks | Infiltratr Common 1.19.25 canonical clock renderer using configured coordinates; Calendar retains astronomical boundary scheduling |
+| French Republican decimal, Internet, Unix, hexadecimal, binary and Chinese hundred-kè clocks | Infiltratr Common 1.19.33 canonical clock renderer; Calendar retains exact display-boundary scheduling |
+| Sidereal, solar, Roman temporal, Edo seasonal, Italian, Babylonian-hour, Indian ghaṭī and Nuremberg clocks | Infiltratr Common 1.19.33 canonical clock renderer using configured coordinates; Calendar retains astronomical boundary scheduling |
 
 Sweden's 1700–1753 civil calendar is modelled explicitly, including 30 February 1712.
 
 ## Range and continuation matrix
 
-The registry contains 30 calendar providers and 18 native time providers. The tables below state the maintained range/continuation contract without pretending that every historical name is a universal historical reconstruction.
+The registry contains 30 calendar providers and 20 native time providers. The tables below state the maintained range/continuation contract without pretending that every historical name is a universal historical reconstruction.
 
 ### Calendar providers
 
@@ -66,13 +66,13 @@ The registry contains 30 calendar providers and 18 native time providers. The ta
 | `buddhist` | Calendar-owned Gregorian-derived Buddhist year arithmetic; locale-sensitive formatting remains ICU/CLDR-backed. |
 | `japanese` | Calendar-owned modern Japanese era boundaries (Meiji through Reiwa) and Gregorian-derived arithmetic; locale-sensitive formatting remains ICU/CLDR-backed. |
 | `minguo` | Calendar-owned Republic of China/Minguo year arithmetic over the proleptic Gregorian calendar. |
-| `french-republican` | Historical epoch at JDN 2375840 with Calendar's explicit Romme-style arithmetic continuation using the shifted Gregorian 4/100/400 rule outside the historical republican era. |
+| `french-republican` | Historical epoch at JDN 2375840 (22 September 1792 = Year I), with Calendar's explicit Romme-style arithmetic continuation outside the historical republican era. |
 | `roman` | Roman date naming over the proleptic Julian calendar; not a separate absolute chronology. |
-| `mayan` | Arithmetic Long Count over kin using the Goodman–Martínez–Thompson correlation JDN 584283; dates before the epoch remain reversible through floor-division arithmetic. |
+| `mayan` | Arithmetic Long Count over kin using the GMT 584283 correlation. GMT is a family of nearby proposed correlations, so absolute Gregorian correspondence is explicitly model-dependent; pre-epoch arithmetic remains reversible. |
 | `bahai` | Years 1–171 B.E. use the historical Western 21-March convention. From 172 B.E., years whose corresponding Gregorian year is 1000–3000 use the Tehran/equinox model; outside that astronomical range Calendar deliberately returns to the 21-March continuation. |
 | `international-fixed` | Deterministic reform-calendar mapping derived from the proleptic Gregorian civil year, including explicit intercalary days. |
 | `world` | Deterministic World Calendar mapping derived from the proleptic Gregorian civil year, including explicit intercalary days. |
-| `positivist` | Deterministic Positivist mapping derived from the proleptic Gregorian civil year and its leap rule. |
+| `positivist` | Comte's Positivist calendar: Gregorian 1789 is Year 1 of the Great Crisis; 13×28 days plus one or two festival days, with Gregorian leap-year alignment. |
 | `revised-julian` | Milanković 1923 leap rule continued arithmetically in both directions, anchored where Revised Julian and Gregorian coincide at 2000-01-01. |
 | `byzantine` | Julian month/day with a 1 September year boundary and Constantinopolitan Anno Mundi era; continued arithmetically using astronomical year numbering internally. |
 | `egyptian-nabonassar` | Wandering 365-day Egyptian civil year anchored at 1 Thoth year 1 = JDN 1448638; arithmetic continuation in both directions. |
@@ -100,10 +100,12 @@ The registry contains 30 calendar providers and 18 native time providers. The ta
 | `roman-temporal` | Unequal temporal hours between computed sunrise/sunset boundaries. Requires finite latitude/longitude and a real crossing; polar absence is unavailable. |
 | `japanese-temporal` | Edo seasonal unequal-hour model using computed solar boundaries. Requires finite latitude/longitude and a real crossing; polar absence is unavailable. |
 | `italian-hours` | Equal elapsed hours from computed sunset. Requires finite latitude/longitude and a valid sunset; otherwise unavailable. |
-| `babylonian-hours` | Calendar's documented later-European gnomonic convention of equal elapsed hours from computed sunrise. Requires finite latitude/longitude and a valid sunrise. |
-| `indian-ghati` | Ghaṭī count from computed sunrise. Requires finite latitude/longitude and a valid sunrise. |
-| `chinese-ke` | Exact hundred-kè partition of the civil day; no geographic solar event required. |
-| `nuremberg-hours` | Equal hours reset at computed sunrise and sunset. Requires finite latitude/longitude and valid solar boundaries; polar absence is unavailable. |
+| `babylonian-hours` | Renaissance European gnomonic convention called “Babylonian hours”: 24 equal hours counted from computed sunrise. This is not ancient Mesopotamian timekeeping. |
+| `babylonian-ancient` | Ancient Mesopotamian astronomical time: 12 fixed bēru per sunset-to-sunset day, 30 UŠ per bēru (4 SI minutes per UŠ). Requires a valid computed sunset as the daily origin. |
+| `indian-ghati` | Sixty ghaṭī per mean day counted from computed sunrise; Common displays ghaṭī/pala units explicitly. Requires finite latitude/longitude and a valid sunrise. |
+| `chinese-ke` | Exact hundred-kè partition of the civil day; no geographic solar event required. The generic mode does not pretend one dynasty's finer subdivision applied universally. |
+| `nuremberg-solar` | Location-aware Nuremberg-style sunrise/sunset reconstruction retained separately from Nürnberg's documented civic Wendetag system. |
+| `nuremberg-hours` | Historical Nürnberg Great Clock reconstruction: equal hours with separate day/night counts and fixed civic Wendetage at Nürnberg; user coordinates are not used. |
 
 ## Historical scope and continuation rules
 
@@ -113,8 +115,8 @@ Examples:
 
 - modern Badíʿ years use a Tehran-referenced astronomical March equinox and sunset boundary;
 - years before 172 B.E. retain the historical Western 21-March civil convention;
-- Italian hours are equal hours measured from computed sunset;
-- the label “Babylonian hours” refers to the later European gnomonic convention of equal hours from sunrise, not a claim to reproduce ancient Mesopotamian civil timekeeping;
+- Italian hours are the explicitly historical equal-hour system measured from computed sunset;
+- “Babylonian hours” refers to the later European sunrise-origin convention; ancient Babylonian bēru/UŠ is a separate mode;
 - Islamic calendar output is computational and is not a local crescent observation.
 
 A continuation rule is a project contract and must be identified as such rather than presented as discovered history.
