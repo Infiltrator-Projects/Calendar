@@ -171,7 +171,7 @@ test_historical_calendar_edge_vectors(void)
     g_assert_cmpint(fields.year, ==, 7);
     g_assert_cmpint(fields.month, ==, 13);
     g_assert_cmpint(fields.day, ==, 6);
-    jdn = calendar_plus_gregorian_to_jdn(1803, 9, 22);
+    jdn = calendar_plus_gregorian_to_jdn(1803, 9, 23);
     g_assert_true(french->fields_from_jdn(french, jdn, &fields));
     g_assert_cmpint(fields.year, ==, 11);
     g_assert_cmpint(fields.month, ==, 13);
