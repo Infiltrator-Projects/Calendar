@@ -193,7 +193,7 @@ def main() -> None:
     assert "src/vendor/infiltratr-common" in makefile
     assert (
         "INFILTRATR_COMMON_COMMIT := "
-        "9a9fae5b3f0d133d400310cdd316b21129631429"
+        "7cc5de3de0e94ed2cfcff0840bbb5346eb5c9c9f"
     ) in makefile
     assert "INFILTRATR_COMMON_VERSION := 1.19.35" in makefile
     assert "normal `make` automatically retrieves" in read("README.md")
