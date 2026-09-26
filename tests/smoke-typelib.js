@@ -60,6 +60,7 @@ const timeModeIds = [
     "modified-julian", "chinese-time", "roman-temporal",
     "japanese-temporal", "italian-hours", "babylonian-hours",
     "indian-ghati", "chinese-ke", "nuremberg-hours",
+    "babylonian-ancient", "nuremberg-solar",
 ];
 for (const id of timeModeIds) {
     requireCondition(
