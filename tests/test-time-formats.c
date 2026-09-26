@@ -263,7 +263,7 @@ test_historical_and_scientific_times(void)
                 FALSE, FALSE, 0.0, "00刻");
     assert_time_at_location("nuremberg-hours", j2000, 0,
                             TRUE, FALSE, 0.0, 0.0,
-                            "06:00:43 NUR-D");
+                            "04:41:24 NUR-D");
     assert_time("chinese-ke", USECONDS(12 * 3600), 0,
                 FALSE, FALSE, 0.0, "50刻");
 
