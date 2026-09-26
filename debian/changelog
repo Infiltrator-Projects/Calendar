@@ -1,3 +1,10 @@
+infiltrator-calendar (1.0.69) unstable; urgency=medium
+
+  * Pin Infiltratr Common 1.19.36 after the final selector readability audit.
+  * Clarify ancient and model-dependent clock/calendar names without changing chronology arithmetic.
+
+ -- Shannon Smith <infiltratr@yandex.com>  Sat, 26 Sep 2026 20:06:00 +1000
+
 infiltrator-calendar (1.0.68) unstable; urgency=medium
 
   * Pin Infiltratr Common 1.19.35 and consume the completed temporal clarity audit.

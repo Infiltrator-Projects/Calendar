@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.0.69 - 2026-09-26
+
+- Pin Calendar to released Infiltratr Common 1.19.36 at `5e129851bbd7ac0b94bd8c2f48f32924016bdbda` after a second forensic readability/accuracy pass over every clock and calendar selector.
+- Consume plain-language historical labels for Roman seasonal hours, ancient Babylonian bēru/UŠ, historical Nuremberg hours, the Nabonassar Egyptian era, the traditional Armenian wandering calendar, the GMT 584283 Maya correlation and the French Republican continuation model.
+- Preserve Calendar's existing audited chronology engines and historical edge vectors; this release changes explanatory selector text rather than calendar arithmetic.
+
 ## 1.0.68 - 2026-09-26
 
 - Pin Calendar to Infiltratr Common 1.19.35 at `7cc5de3de0e94ed2cfcff0840bbb5346eb5c9c9f` after the final temporal clarity pass.
