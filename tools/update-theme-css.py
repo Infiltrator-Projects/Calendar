@@ -4,7 +4,7 @@
 
 Calendar owns Cinnamon selectors and widget mechanics. Infiltratr Common owns
 semantic theme values, typography identity and structural metrics. Common
-1.19.23 carries the complete Linux MBLINK Night reference roles. This
+1.19.35 carries the complete Linux MBLINK Night reference roles. This
 generator keeps the toolkit-specific source native while preventing a second
 private design truth from drifting away from the pinned Common release.
 """
@@ -195,7 +195,7 @@ def render_theme(data: dict) -> str:
 /*
  * Generated from Infiltratr Common. Do not hand-edit colour values here.
  * Calendar deliberately owns only Cinnamon selectors/widget mechanics.
- * Common 1.19.25 carries the complete Linux MBLINK Night reference roles.
+ * Common 1.19.35 carries the complete Linux MBLINK Night reference roles.
  */
 {mode_css("night", night)}
 {mode_css("day", day)}
