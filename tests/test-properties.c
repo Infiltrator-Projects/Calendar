@@ -498,7 +498,7 @@ test_time_registry_contract(void)
     gsize index;
 
     g_assert_cmpuint(count, ==,
-                     (gsize)CALENDAR_PLUS_TIME_MODE_NUREMBERG_HOURS);
+                     (gsize)CALENDAR_PLUS_TIME_MODE_NUREMBERG_SOLAR);
 
     for (index = 0; index < count; index++)
     {
@@ -545,8 +545,12 @@ test_time_registry_contract(void)
         CALENDAR_PLUS_TIME_MODE_ITALIAN_HOURS));
     g_assert_true(calendar_plus_time_mode_requires_longitude(
         CALENDAR_PLUS_TIME_MODE_BABYLONIAN_HOURS));
-    g_assert_true(calendar_plus_time_mode_requires_longitude(
+    g_assert_false(calendar_plus_time_mode_requires_longitude(
         CALENDAR_PLUS_TIME_MODE_NUREMBERG_HOURS));
+    g_assert_true(calendar_plus_time_mode_requires_longitude(
+        CALENDAR_PLUS_TIME_MODE_BABYLONIAN_ANCIENT));
+    g_assert_true(calendar_plus_time_mode_requires_longitude(
+        CALENDAR_PLUS_TIME_MODE_NUREMBERG_SOLAR));
     g_assert_true(calendar_plus_time_mode_requires_latitude(
         CALENDAR_PLUS_TIME_MODE_ROMAN_TEMPORAL));
     g_assert_true(calendar_plus_time_mode_requires_latitude(
@@ -557,8 +561,12 @@ test_time_registry_contract(void)
         CALENDAR_PLUS_TIME_MODE_BABYLONIAN_HOURS));
     g_assert_true(calendar_plus_time_mode_requires_latitude(
         CALENDAR_PLUS_TIME_MODE_INDIAN_GHATI));
-    g_assert_true(calendar_plus_time_mode_requires_latitude(
+    g_assert_false(calendar_plus_time_mode_requires_latitude(
         CALENDAR_PLUS_TIME_MODE_NUREMBERG_HOURS));
+    g_assert_true(calendar_plus_time_mode_requires_latitude(
+        CALENDAR_PLUS_TIME_MODE_BABYLONIAN_ANCIENT));
+    g_assert_true(calendar_plus_time_mode_requires_latitude(
+        CALENDAR_PLUS_TIME_MODE_NUREMBERG_SOLAR));
     g_assert_false(calendar_plus_time_mode_requires_latitude(
         CALENDAR_PLUS_TIME_MODE_CHINESE_KE));
     g_assert_false(calendar_plus_time_mode_requires_latitude(
