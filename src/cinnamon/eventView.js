@@ -66,6 +66,16 @@ function _relationHas(mask, flag) {
     return (mask & flag) !== 0;
 }
 
+function _safeEventColor(color) {
+    if (typeof color !== "string") {
+        return "#808080";
+    }
+    const value = color.trim();
+    return /^(?:#[0-9a-fA-F]{3}|#[0-9a-fA-F]{4}|#[0-9a-fA-F]{6}|#[0-9a-fA-F]{8})$/.test(value)
+        ? value
+        : "#808080";
+}
+
 function _separatorActor() {
     const separator = new Separator.Separator();
     return separator.actor || separator;
@@ -384,7 +394,7 @@ class EventRow {
         const shell = new St.BoxLayout({ x_expand: true });
         shell.add_actor(new St.Bin({
             style_class: "calendar-event-color-strip",
-            style: `background-color: ${event.color};`,
+            style: `background-color: ${_safeEventColor(event.color)};`,
         }));
 
         /*
