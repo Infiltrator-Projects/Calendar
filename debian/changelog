@@ -1,3 +1,11 @@
+infiltrator-calendar (1.0.71) unstable; urgency=medium
+
+  * Serialize CalendarServer range requests to prevent stale overlap.
+  * Sanitize event colours before Cinnamon CSS rendering.
+  * Use a prefix-safe package-owned About desktop launcher.
+
+ -- Shannon Smith <infiltratr@yandex.com>  Mon, 28 Sep 2026 09:58:00 +1000
+
 infiltrator-calendar (1.0.70) unstable; urgency=medium
 
   * Remove tick-driven and duplicate CalendarServer agenda rebuilds.
