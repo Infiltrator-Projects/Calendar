@@ -47,26 +47,13 @@ jobs:
 
   native:
     name: Native / ${{ matrix.compiler }}
-    runs-on: ${{ startsWith(github.event.head_commit.message, 'Release ') && 'ubuntu-24.04' || 'linux-native' }}
+    runs-on: ubuntu-24.04
     timeout-minutes: 30
     strategy:
       fail-fast: false
       matrix:
         compiler: [gcc, clang]
     steps:
-      - name: Ensure Git for self-hosted submodule checkout
-        if: runner.environment == 'self-hosted'
-        shell: bash
-        run: |
-          set -euo pipefail
-          if ! command -v git >/dev/null 2>&1; then
-            if [[ -x /usr/bin/git ]]; then
-              echo /usr/bin >> "$GITHUB_PATH"
-            else
-              sudo -n apt-get update
-              sudo -n apt-get install -y git
-            fi
-          fi
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           submodules: true
@@ -109,22 +96,9 @@ jobs:
 
   sanitizer:
     name: ASan / UBSan
-    runs-on: ${{ startsWith(github.event.head_commit.message, 'Release ') && 'ubuntu-24.04' || 'linux-native' }}
+    runs-on: ubuntu-24.04
     timeout-minutes: 30
     steps:
-      - name: Ensure Git for self-hosted submodule checkout
-        if: runner.environment == 'self-hosted'
-        shell: bash
-        run: |
-          set -euo pipefail
-          if ! command -v git >/dev/null 2>&1; then
-            if [[ -x /usr/bin/git ]]; then
-              echo /usr/bin >> "$GITHUB_PATH"
-            else
-              sudo -n apt-get update
-              sudo -n apt-get install -y git
-            fi
-          fi
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           submodules: true
@@ -140,22 +114,9 @@ jobs:
 
   coverage:
     name: Coverage
-    runs-on: ${{ startsWith(github.event.head_commit.message, 'Release ') && 'ubuntu-24.04' || 'linux-native' }}
+    runs-on: ubuntu-24.04
     timeout-minutes: 30
     steps:
-      - name: Ensure Git for self-hosted submodule checkout
-        if: runner.environment == 'self-hosted'
-        shell: bash
-        run: |
-          set -euo pipefail
-          if ! command -v git >/dev/null 2>&1; then
-            if [[ -x /usr/bin/git ]]; then
-              echo /usr/bin >> "$GITHUB_PATH"
-            else
-              sudo -n apt-get update
-              sudo -n apt-get install -y git
-            fi
-          fi
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           submodules: true
@@ -170,22 +131,9 @@ jobs:
 
   static-analysis:
     name: Clang-tidy
-    runs-on: ${{ startsWith(github.event.head_commit.message, 'Release ') && 'ubuntu-24.04' || 'linux-native' }}
+    runs-on: ubuntu-24.04
     timeout-minutes: 30
     steps:
-      - name: Ensure Git for self-hosted submodule checkout
-        if: runner.environment == 'self-hosted'
-        shell: bash
-        run: |
-          set -euo pipefail
-          if ! command -v git >/dev/null 2>&1; then
-            if [[ -x /usr/bin/git ]]; then
-              echo /usr/bin >> "$GITHUB_PATH"
-            else
-              sudo -n apt-get update
-              sudo -n apt-get install -y git
-            fi
-          fi
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           submodules: true
