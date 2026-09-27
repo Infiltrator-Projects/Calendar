@@ -337,6 +337,14 @@ def main() -> None:
     assert "policy_refresh_source_id" in system_clock_source
     assert "g_idle_add_full" in system_clock_source
 
+    # CalendarServer requests are serialized because its event signals carry no
+    # request-generation token. Event colours must never become raw CSS.
+    assert "_requestVisibleRange" in event_manager_source
+    assert "_queued_range_force" in event_manager_source
+    assert "this._range_request_pending" in event_manager_source
+    assert "function _safeEventColor(color)" in event_source
+    assert "_safeEventColor(event.color)" in event_source
+
     # A stale native library must be rejected explicitly rather than allowed
     # to fail later through a missing or incompatible symbol.
     assert "const APP_VERSION" not in applet_source
