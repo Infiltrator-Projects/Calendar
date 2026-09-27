@@ -335,7 +335,7 @@ def main() -> None:
     assert "this._temporalPolicyCache" in applet_source
     assert "infiltratr_io_result_name(load_result)" in system_clock_source
     assert "policy_refresh_source_id" in system_clock_source
-    assert "g_timeout_add_full" in system_clock_source
+    assert "g_idle_add_full" in system_clock_source
 
     # A stale native library must be rejected explicitly rather than allowed
     # to fail later through a missing or incompatible symbol.

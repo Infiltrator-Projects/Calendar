@@ -185,11 +185,10 @@ schedule_effective_policy_refresh(CalendarPlusSystemClock *self)
         return;
 
     self->policy_refresh_source_id =
-        g_timeout_add_full(G_PRIORITY_DEFAULT,
-                           50,
-                           refresh_effective_policy_deferred,
-                           self,
-                           NULL);
+        g_idle_add_full(G_PRIORITY_DEFAULT_IDLE,
+                        refresh_effective_policy_deferred,
+                        self,
+                        NULL);
 }
 
 static void
