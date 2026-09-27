@@ -18,7 +18,6 @@
 const CalendarPlus = imports.gi.CalendarPlus;
 const Cinnamon = imports.gi.Cinnamon;
 const Clutter = imports.gi.Clutter;
-const Gio = imports.gi.Gio;
 const GLib = imports.gi.GLib;
 const Pango = imports.gi.Pango;
 const St = imports.gi.St;
@@ -53,7 +52,6 @@ function _loadRuntimeSupport() {
 const RuntimeSupport = _loadRuntimeSupport();
 const SignalBag = RuntimeSupport.SignalBag;
 
-const DESKTOP_SCHEMA = "org.cinnamon.desktop.interface";
 const FIRST_WEEKDAY_KEY = "first-day-of-week";
 const WEEK_NUMBER_WIDTH_DIGITS = 3;
 const DATE_PARTS = Object.freeze({
@@ -102,9 +100,13 @@ function _weekdayAbbreviation(dayIndex) {
 }
 
 var Calendar = class Calendar {
-    constructor(settings, events_manager) {
+    constructor(settings, events_manager, desktop_settings) {
         this.settings = settings;
         this.events_manager = events_manager;
+        this.desktop_settings = desktop_settings;
+        if (!this.desktop_settings) {
+            throw new Error("Calendar: desktop settings are required.");
+        }
         this._destroyed = false;
         this._update_id = 0;
         this._set_date_idle_id = 0;
@@ -133,7 +135,6 @@ var Calendar = class Calendar {
             this._onSettingsChange
         );
 
-        this.desktop_settings = new Gio.Settings({ schema_id: DESKTOP_SCHEMA });
         this._desktopSignals.connect(
             this.desktop_settings,
             `changed::${FIRST_WEEKDAY_KEY}`,

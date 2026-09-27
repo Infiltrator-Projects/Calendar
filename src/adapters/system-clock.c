@@ -24,6 +24,7 @@
 
 #include <gio/gio.h>
 #include <infiltratr/core.h>
+#include <infiltratr/posix.h>
 #include <infiltratr/posix_path.h>
 #include <infiltratr/temporal.h>
 #include <infiltratr/temporal_posix.h>
@@ -40,6 +41,7 @@ struct _CalendarPlusSystemClock
     GFileMonitor *policy_directory_monitor;
     GFileMonitor *config_home_monitor;
     GFileMonitor *provider_directory_monitor;
+    guint policy_refresh_source_id;
 
     InfiltratrTemporalPolicyV3 effective_policy;
     gboolean provider_available;
@@ -133,6 +135,12 @@ refresh_effective_policy(CalendarPlusSystemClock *self,
     {
         load_result = infiltratr_temporal_posix_policy_load(
             &persisted, &found);
+        if (load_result != INFILTRATR_IO_OK &&
+            load_result != INFILTRATR_IO_NOT_FOUND)
+        {
+            g_warning("Calendar: unable to read temporal policy: %s",
+                      infiltratr_io_result_name(load_result));
+        }
     }
 
     if (!calendar_plus_system_clock_resolve_effective_policy(
@@ -158,6 +166,30 @@ refresh_effective_policy(CalendarPlusSystemClock *self,
     if (emit_signal && changed)
         g_signal_emit(self, signals[SIGNAL_POLICY_CHANGED], 0);
     return TRUE;
+}
+
+static gboolean
+refresh_effective_policy_deferred(gpointer user_data)
+{
+    CalendarPlusSystemClock *self = CALENDAR_PLUS_SYSTEM_CLOCK(user_data);
+
+    self->policy_refresh_source_id = 0;
+    (void)refresh_effective_policy(self, TRUE);
+    return G_SOURCE_REMOVE;
+}
+
+static void
+schedule_effective_policy_refresh(CalendarPlusSystemClock *self)
+{
+    if (self->policy_refresh_source_id != 0)
+        return;
+
+    self->policy_refresh_source_id =
+        g_timeout_add_full(G_PRIORITY_DEFAULT,
+                           50,
+                           refresh_effective_policy_deferred,
+                           self,
+                           NULL);
 }
 
 static void
@@ -199,7 +231,7 @@ on_policy_directory_changed(GFileMonitor *monitor G_GNUC_UNUSED,
 {
     CalendarPlusSystemClock *self = CALENDAR_PLUS_SYSTEM_CLOCK(user_data);
 
-    (void)refresh_effective_policy(self, TRUE);
+    schedule_effective_policy_refresh(self);
 }
 
 static void
@@ -248,7 +280,7 @@ on_config_home_changed(GFileMonitor *monitor G_GNUC_UNUSED,
     }
 
     setup_policy_directory_monitor(self);
-    (void)refresh_effective_policy(self, TRUE);
+    schedule_effective_policy_refresh(self);
 }
 
 static void
@@ -267,7 +299,7 @@ on_provider_directory_changed(GFileMonitor *monitor G_GNUC_UNUSED,
         return;
     }
 
-    (void)refresh_effective_policy(self, TRUE);
+    schedule_effective_policy_refresh(self);
 }
 
 static void
@@ -332,6 +364,12 @@ static void
 calendar_plus_system_clock_dispose(GObject *object)
 {
     CalendarPlusSystemClock *self = CALENDAR_PLUS_SYSTEM_CLOCK(object);
+
+    if (self->policy_refresh_source_id != 0)
+    {
+        g_source_remove(self->policy_refresh_source_id);
+        self->policy_refresh_source_id = 0;
+    }
 
     cancel_monitor(&self->policy_directory_monitor);
     cancel_monitor(&self->config_home_monitor);

@@ -239,8 +239,11 @@ location_is_valid_for_provider(const TimeProvider *provider,
         common_mode_info_for_provider(provider);
 
     return info != NULL &&
-           (!info->requires_latitude || isfinite(latitude)) &&
-           (!info->requires_longitude || isfinite(longitude));
+           (!info->requires_latitude ||
+            (isfinite(latitude) && latitude >= -90.0 && latitude <= 90.0)) &&
+           (!info->requires_longitude ||
+            (isfinite(longitude) &&
+             longitude >= -180.0 && longitude <= 180.0));
 }
 
 gchar *

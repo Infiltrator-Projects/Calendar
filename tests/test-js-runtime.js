@@ -607,6 +607,7 @@ function evaluateCalendar() {
         Clutter,
         settings,
         eventsManager,
+        desktopSettings: new DesktopSettings(),
         observations,
     };
 }
@@ -798,6 +799,20 @@ function testPanelClockDefensiveFormatting() {
     PanelClock.syncNativeClock(systemClock, invalidConfiguredLocation);
     assert.equal(observations.stops, 2);
 
+    const outOfRangeConfiguredLocation = {
+        ...base,
+        mode: "sidereal",
+        locationConfigured: true,
+        longitude: 181,
+    };
+    assert.equal(
+        PanelClock.panelText(clock, systemClock, outOfRangeConfiguredLocation),
+        "N/A LOC",
+        "out-of-range configured coordinates must remain unavailable"
+    );
+    PanelClock.syncNativeClock(systemClock, outOfRangeConfiguredLocation);
+    assert.equal(observations.stops, 3);
+
     PanelClock.syncNativeClock(systemClock, base);
     assert.equal(observations.starts, 1);
 }
@@ -967,9 +982,9 @@ function testModuleLoaderCompatibility() {
 
 
 function testCalendarLifecycle() {
-    const { Calendar, settings, eventsManager, observations } =
+    const { Calendar, settings, eventsManager, desktopSettings, observations } =
         evaluateCalendar();
-    const calendar = new Calendar(settings, eventsManager);
+    const calendar = new Calendar(settings, eventsManager, desktopSettings);
 
     calendar._update_id = 41;
     calendar._set_date_idle_id = 42;

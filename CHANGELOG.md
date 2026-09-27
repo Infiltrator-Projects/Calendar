@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.0.70 - 2026-09-28
+
+- Stop ordinary wall-clock ticks from rebuilding selected-day event snapshots; refresh only lightweight agenda timing state between real event or date changes.
+- Remove duplicate popup/event refresh paths and let Calendar's existing idle-coalesced grid update own event-view refresh after CalendarServer changes.
+- Cache the coherent temporal-policy snapshot until `policy-changed` and share the applet's Cinnamon desktop-settings object with the calendar view.
+- Coalesce temporal-policy filesystem notifications, report malformed or unreadable System Settings policy data, and reject out-of-range required geographic coordinates consistently.
+
 ## 1.0.69 - 2026-09-26
 
 - Pin Calendar to released Infiltratr Common 1.19.36 at `5e129851bbd7ac0b94bd8c2f48f32924016bdbda` after a second forensic readability/accuracy pass over every clock and calendar selector.

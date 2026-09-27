@@ -99,11 +99,13 @@ function locationIsConfigured(config) {
 
     const parsed = CalendarPlus.time_mode_from_string(config.mode);
     if (CalendarPlus.time_mode_requires_latitude(parsed) &&
-        !Number.isFinite(config.latitude)) {
+        (!Number.isFinite(config.latitude) ||
+         config.latitude < -90 || config.latitude > 90)) {
         return false;
     }
     if (CalendarPlus.time_mode_requires_longitude(parsed) &&
-        !Number.isFinite(config.longitude)) {
+        (!Number.isFinite(config.longitude) ||
+         config.longitude < -180 || config.longitude > 180)) {
         return false;
     }
     return true;

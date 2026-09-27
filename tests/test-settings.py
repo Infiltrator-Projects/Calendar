@@ -169,6 +169,8 @@ def main() -> None:
     assert "time_mode_requires_longitude(" in panel_clock_source
     assert "time_mode_requires_latitude(" in panel_clock_source
     assert '"N/A LOC"' in panel_clock_source
+    assert "config.latitude < -90 || config.latitude > 90" in panel_clock_source
+    assert "config.longitude < -180 || config.longitude > 180" in panel_clock_source
 
     assert "CalendarPlus.CalendarSystem.new(" in calendar_source
     assert "this._calendar.setCalendarSystem(" in applet_source
@@ -311,6 +313,9 @@ def main() -> None:
     assert "this._actorSignals = new SignalBag();" in calendar_source
     assert "_cancel_set_date_idle()" in calendar_source
     assert "this._calendar.destroy();" in applet_source
+    assert "new Gio.Settings" not in calendar_source
+    assert "this.desktop_settings" in calendar_source
+    assert "this.events_manager,\n            this.desktop_settings" in applet_source
     assert calendar_source.count('"style-changed"') == 1
     assert "disconnectAll()" in calendar_source
     assert "destroy() {" in calendar_source
@@ -321,6 +326,16 @@ def main() -> None:
     assert "this.events_manager.set_visible_range(" in calendar_source
     assert "fetch_month_events" not in event_manager_source
     assert "current_month_year" not in event_manager_source
+
+    # Ordinary clock ticks update only presentation timing. Native event
+    # snapshots are rebuilt by Calendar's coalesced event/date update path.
+    assert applet_source.count("this.events_manager.select_date(") == 1
+    assert "this.event_list.refresh_variations();" in applet_source
+    assert "_refreshSelectedAgenda" not in event_manager_source
+    assert "this._temporalPolicyCache" in applet_source
+    assert "infiltratr_io_result_name(load_result)" in system_clock_source
+    assert "policy_refresh_source_id" in system_clock_source
+    assert "g_timeout_add_full" in system_clock_source
 
     # A stale native library must be rejected explicitly rather than allowed
     # to fail later through a missing or incompatible symbol.

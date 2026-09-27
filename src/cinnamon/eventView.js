@@ -220,6 +220,17 @@ var EventList = class EventList {
         );
     }
 
+    refresh_variations() {
+        if (this._destroyed || this._rows.length === 0) {
+            return;
+        }
+
+        const now = GLib.DateTime.new_now_local();
+        for (const row of this._rows) {
+            row.update_variations(now);
+        }
+    }
+
     set_events(snapshot, delayEmpty) {
         if (this._destroyed) {
             return;
@@ -231,9 +242,7 @@ var EventList = class EventList {
             `${snapshot.timestamp}:${this.selected_date.to_unix()}:${use24h ? 1 : 0}`;
 
         if (snapshot !== null && cacheKey === this._current_event_cache_key) {
-            for (const row of this._rows) {
-                row.update_variations();
-            }
+            this.refresh_variations();
             return;
         }
 
@@ -420,11 +429,11 @@ class EventRow {
         this.update_variations();
     }
 
-    update_variations() {
-        const now = GLib.DateTime.new_now_local();
-        const today = midnight(now);
+    update_variations(now = null) {
+        const current = now || GLib.DateTime.new_now_local();
+        const today = midnight(current);
         const selected = this.selected_date;
-        const [state, secondsUntilStart] = this.event.timing(now);
+        const [state, secondsUntilStart] = this.event.timing(current);
         const todayRelation = this.event.relation_to_day(today);
 
         this._resetStateStyles();

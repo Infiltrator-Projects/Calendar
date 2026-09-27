@@ -299,7 +299,6 @@ var EventsManager = class EventsManager {
         }
 
         this.event_store.refresh_timezone();
-        this._refreshSelectedAgenda(false);
         this.queue_reload(true);
         this.emit("events-updated");
     }
@@ -317,11 +316,10 @@ var EventsManager = class EventsManager {
             ) || changed;
         }
 
-        if (changed) {
-            this._refreshSelectedAgenda(false);
-        }
         this._scheduleCull();
-        this.emit("events-updated");
+        if (changed) {
+            this.emit("events-updated");
+        }
     }
 
     _removeEvents(serializedIds) {
@@ -329,10 +327,8 @@ var EventsManager = class EventsManager {
             return;
         }
         if (this.event_store.remove(serializedIds)) {
-            this._refreshSelectedAgenda(false);
+            this.emit("events-updated");
         }
-        this.queue_reload(false);
-        this.emit("events-updated");
     }
 
     _calendarSetChanged() {
@@ -389,7 +385,6 @@ var EventsManager = class EventsManager {
                 return GLib.SOURCE_REMOVE;
             }
             if (this.event_store.cull(this.last_update_timestamp)) {
-                this._refreshSelectedAgenda(false);
                 this.emit("events-updated");
             }
             return GLib.SOURCE_REMOVE;
@@ -546,16 +541,6 @@ var EventsManager = class EventsManager {
                 previous === null || changedMonth || Boolean(force)
             );
         }
-    }
-
-    _refreshSelectedAgenda(delayEmpty) {
-        if (this._event_list === null || this.current_selected_date === null) {
-            return;
-        }
-        this._event_list.set_events(
-            this._snapshot_for_date(this.current_selected_date),
-            Boolean(delayEmpty)
-        );
     }
 
     _snapshot_for_date(day) {

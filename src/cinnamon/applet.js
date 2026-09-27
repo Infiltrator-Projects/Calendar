@@ -183,6 +183,7 @@ class CalendarPlusApplet extends Applet.Applet {
         this._popupBody = null;
         this._calendarColumn = null;
         this._resume_source = null;
+        this._temporalPolicyCache = null;
 
         this._signals = new SignalBag();
         this._eventSignals = new SignalBag();
@@ -239,7 +240,10 @@ class CalendarPlusApplet extends Applet.Applet {
         this._signals.connect(
             this.system_clock,
             "policy-changed",
-            () => this._onSettingsChanged()
+            () => {
+                this._temporalPolicyCache = null;
+                this._onSettingsChanged();
+            }
         );
 
         this.event_list = new EventView.EventList(
@@ -313,7 +317,11 @@ class CalendarPlusApplet extends Applet.Applet {
         this._today_box.add_actor(this._date);
         calendarColumn.add_actor(this.go_home_button);
 
-        this._calendar = new Calendar.Calendar(this.settings, this.events_manager);
+        this._calendar = new Calendar.Calendar(
+            this.settings,
+            this.events_manager,
+            this.desktop_settings
+        );
         this._eventSignals.connect(
             this._calendar,
             "selected-date-changed",
@@ -383,10 +391,6 @@ class CalendarPlusApplet extends Applet.Applet {
                 return;
             }
             this._resetCalendar();
-            this.events_manager.select_date(
-                this._calendar.getSelectedDate(),
-                true
-            );
             this._rebalancePopupWidth();
         });
     }
@@ -505,6 +509,9 @@ class CalendarPlusApplet extends Applet.Applet {
         if (!this.system_clock) {
             return fallback;
         }
+        if (this._temporalPolicyCache !== null) {
+            return this._temporalPolicyCache;
+        }
 
         try {
             const variant = this.system_clock.get_system_policy();
@@ -529,7 +536,7 @@ class CalendarPlusApplet extends Applet.Applet {
                 throw new Error("invalid effective temporal policy");
             }
 
-            return {
+            const resolved = Object.freeze({
                 mode,
                 showSeconds: Boolean(showSeconds),
                 locationConfigured: Boolean(locationConfigured),
@@ -538,7 +545,9 @@ class CalendarPlusApplet extends Applet.Applet {
                 calendar,
                 authority,
                 providerAvailable: Boolean(providerAvailable),
-            };
+            });
+            this._temporalPolicyCache = resolved;
+            return resolved;
         } catch (error) {
             global.logError(error);
             return fallback;
@@ -609,7 +618,7 @@ class CalendarPlusApplet extends Applet.Applet {
 
     _updateClockAndDate() {
         if (this._destroyed || !this.clock || !this._calendar ||
-            !this.events_manager || !this.go_home_button) {
+            !this.events_manager || !this.event_list || !this.go_home_button) {
             return;
         }
 
@@ -638,7 +647,7 @@ class CalendarPlusApplet extends Applet.Applet {
 
         const tooltip = display.tooltip;
         this.set_applet_tooltip(tooltip);
-        this.events_manager.select_date(this._calendar.getSelectedDate());
+        this.event_list.refresh_variations();
     }
 
     _syncEventVisibility(forceRefresh) {
@@ -933,6 +942,7 @@ class CalendarPlusApplet extends Applet.Applet {
         this._popupBody = null;
         this._calendarColumn = null;
         this._resume_source = null;
+        this._temporalPolicyCache = null;
         this.go_home_button = null;
         this._day = null;
         this._date = null;

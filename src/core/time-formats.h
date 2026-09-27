@@ -155,9 +155,9 @@ gchar *calendar_plus_format_time(CalendarPlusTimeMode mode,
  * @longitude: degrees east of Greenwich in the range -180 through 180
  *
  * Authoritative location-explicit formatter for historical solar-origin and
- * seasonal clocks. A non-finite coordinate required by @mode is invalid and
- * returns an empty string rather than silently substituting Greenwich. Finite
- * coordinates are clamped to the documented geographic range.
+ * seasonal clocks. A non-finite or out-of-range coordinate required by @mode
+ * is invalid and returns an empty string rather than silently substituting or
+ * normalising a different geographic location.
  * Returns: (transfer full): newly allocated panel-clock string
  */
 gchar *calendar_plus_format_time_at_location(
@@ -193,8 +193,9 @@ guint calendar_plus_time_delay_to_next_tick(CalendarPlusTimeMode mode,
  * @latitude: degrees north in the range -90 through 90
  * @longitude: degrees east of Greenwich in the range -180 through 180
  *
- * A non-finite coordinate required by @mode is unavailable and returns a
- * one-hour retry interval rather than scheduling from a fabricated location.
+ * A non-finite or out-of-range coordinate required by @mode is unavailable
+ * and returns a one-hour retry interval rather than scheduling from a
+ * fabricated or normalised location.
  * Returns: milliseconds until the next visible boundary, at least one
  */
 guint calendar_plus_time_delay_to_next_tick_at_location(

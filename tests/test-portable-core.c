@@ -418,6 +418,16 @@ test_clock_interfaces(void)
     g_assert_false(calendar_plus_clock_engine_is_running(engine));
     g_assert_cmpuint(clock.schedules, ==, 3);
 
+    config.mode = CALENDAR_PLUS_TIME_MODE_ROMAN_TEMPORAL;
+    config.latitude = 91.0;
+    config.longitude = 11.0767;
+    g_assert_false(calendar_plus_clock_engine_start(engine, &config));
+    config.latitude = 49.4521;
+    config.longitude = 181.0;
+    g_assert_false(calendar_plus_clock_engine_start(engine, &config));
+    g_assert_false(calendar_plus_clock_engine_is_running(engine));
+    g_assert_cmpuint(clock.schedules, ==, 3);
+
     calendar_plus_clock_engine_free(engine);
 }
 
