@@ -131,6 +131,7 @@ var EventsManager = class EventsManager {
         this._range_request_generation = 0;
         this._range_request_pending = false;
         this._range_request_succeeded = false;
+        this._queued_range_force = false;
         this.last_update_timestamp = 0;
         this.event_store = CalendarPlus.EventStore.new();
 
@@ -250,6 +251,7 @@ var EventsManager = class EventsManager {
         this._range_request_generation += 1;
         this._range_request_pending = false;
         this._range_request_succeeded = false;
+        this._queued_range_force = false;
         this.last_update_timestamp = 0;
         this.emit("has-calendars-changed");
         this.emit("events-updated");
@@ -398,6 +400,79 @@ var EventsManager = class EventsManager {
         }
     }
 
+    _requestVisibleRange(first, last, force, clearStore) {
+        if (this._destroyed || this._calendar_server === null ||
+            this.event_store === null || this._range_request_pending) {
+            return;
+        }
+
+        if (clearStore) {
+            this.event_store.clear();
+            this.emit("events-updated");
+        }
+
+        const requestGeneration = ++this._range_request_generation;
+        this._range_request_pending = true;
+        this._range_request_succeeded = false;
+        const requestedStart = first;
+        const requestedEnd = last;
+        const exclusiveEnd = last.add_days(1);
+        this.last_update_timestamp = GLib.get_monotonic_time();
+
+        this._calendar_server.call_set_time_range(
+            first.to_unix(),
+            exclusiveEnd.to_unix() - 1,
+            Boolean(force),
+            null,
+            (server, result) => {
+                let succeeded = false;
+                try {
+                    server.call_set_time_range_finish(result);
+                    succeeded = true;
+                } catch (error) {
+                    if (!this._destroyed &&
+                        requestGeneration === this._range_request_generation) {
+                        global.logError(
+                            `${APPLET_UUID}: event range request failed: ${error}`
+                        );
+                    }
+                }
+
+                if (this._destroyed ||
+                    requestGeneration !== this._range_request_generation) {
+                    return;
+                }
+
+                this._range_request_pending = false;
+                this._range_request_succeeded = succeeded;
+
+                const desiredChanged =
+                    !sameInstant(requestedStart, this.current_range_start) ||
+                    !sameInstant(requestedEnd, this.current_range_end);
+                if (desiredChanged || this._queued_range_force) {
+                    const queuedForce = this._queued_range_force;
+                    this._queued_range_force = false;
+                    const nextStart = this.current_range_start;
+                    const nextEnd = this.current_range_end;
+                    if (nextStart !== null && nextEnd !== null) {
+                        /*
+                         * CalendarServer does not tag event signals with the
+                         * originating range request. Never overlap two range
+                         * calls: after the older request has completed, clear
+                         * its rows before issuing the newest desired range.
+                         */
+                        this._requestVisibleRange(
+                            nextStart,
+                            nextEnd,
+                            queuedForce || desiredChanged,
+                            true
+                        );
+                    }
+                }
+            }
+        );
+    }
+
     set_visible_range(firstDate, lastDate, force) {
         if (this._destroyed || this._calendar_server === null ||
             this.event_store === null) {
@@ -419,54 +494,22 @@ var EventsManager = class EventsManager {
             return;
         }
 
-        /*
-         * The calendar model is authoritative for what is visible.  Querying
-         * exactly its first and last Gregorian cells keeps event dots correct
-         * for calendars whose natural period does not share Gregorian month
-         * boundaries.  CalendarServer expects an inclusive Unix interval.
-         *
-         * "Current range" records the desired grid range, while the request
-         * state below records whether CalendarServer has actually supplied it.
-         * A failed request therefore remains retryable.  The generation also
-         * prevents an older asynchronous failure from dirtying a newer success.
-         */
         this.current_range_start = first;
         this.current_range_end = last;
-        if (changed) {
-            this.event_store.clear();
+
+        if (this._range_request_pending) {
+            /*
+             * Preserve only the newest desired range. This serializes
+             * CalendarServer traffic and prevents an obsolete request from
+             * overlapping the next request's refresh token.
+             */
+            this._queued_range_force =
+                this._queued_range_force || Boolean(force) || changed;
+            return;
         }
 
-        const requestGeneration = ++this._range_request_generation;
-        this._range_request_pending = true;
-        this._range_request_succeeded = false;
-
-        const exclusiveEnd = last.add_days(1);
-        this.last_update_timestamp = GLib.get_monotonic_time();
-        this._calendar_server.call_set_time_range(
-            first.to_unix(),
-            exclusiveEnd.to_unix() - 1,
-            Boolean(force),
-            null,
-            (server, result) => {
-                try {
-                    server.call_set_time_range_finish(result);
-                    if (!this._destroyed &&
-                        requestGeneration === this._range_request_generation) {
-                        this._range_request_pending = false;
-                        this._range_request_succeeded = true;
-                    }
-                } catch (error) {
-                    if (!this._destroyed &&
-                        requestGeneration === this._range_request_generation) {
-                        this._range_request_pending = false;
-                        this._range_request_succeeded = false;
-                        global.logError(
-                            `${APPLET_UUID}: event range request failed: ${error}`
-                        );
-                    }
-                }
-            }
-        );
+        this._queued_range_force = false;
+        this._requestVisibleRange(first, last, force, changed);
     }
 
     queue_reload(force) {
@@ -598,6 +641,7 @@ var EventsManager = class EventsManager {
         this._range_request_generation += 1;
         this._range_request_pending = false;
         this._range_request_succeeded = false;
+        this._queued_range_force = false;
         this._calendar_server_connecting = false;
 
         if (this._bus_watch_id > 0) {
