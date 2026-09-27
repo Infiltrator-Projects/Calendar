@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.0.71 - 2026-09-28
+
+- Serialize CalendarServer visible-range requests so stale range traffic cannot overlap a newer refresh generation.
+- Sanitize CalendarServer event colours before embedding them into Cinnamon CSS.
+- Launch the native About dialog through a package-owned hidden desktop identity instead of a hard-coded /usr/libexec path.
+
+
 ## 1.0.70 - 2026-09-28
 
 - Stop ordinary wall-clock ticks from rebuilding selected-day event snapshots; refresh only lightweight agenda timing state between real event or date changes.
