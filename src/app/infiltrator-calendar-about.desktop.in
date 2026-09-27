@@ -1,0 +1,9 @@
+[Desktop Entry]
+Type=Application
+Name=About Calendar
+Comment=Show Calendar build and project information
+Exec=@ABOUT_EXEC@
+Icon=infiltratr-calendar
+Terminal=false
+NoDisplay=true
+Categories=Utility;
