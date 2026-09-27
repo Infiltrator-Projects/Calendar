@@ -828,7 +828,18 @@ class CalendarPlusApplet extends Applet.Applet {
         if (this.menu) {
             this.menu.close(false);
         }
-        Util.spawnCommandLine("/usr/libexec/calendar-plus-about");
+
+        try {
+            const appInfo = Gio.DesktopAppInfo.new(
+                "infiltrator-calendar-about.desktop"
+            );
+            if (!appInfo) {
+                throw new Error("Calendar About desktop identity is unavailable");
+            }
+            appInfo.launch([], global.create_app_launch_context());
+        } catch (error) {
+            global.logError(error);
+        }
     }
 
     on_applet_clicked() {
