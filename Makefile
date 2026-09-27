@@ -28,6 +28,8 @@ LIB_BASENAME := calendar-plus
 LIB_SONAME := lib$(LIB_BASENAME).so.0
 LIB_REALNAME := lib$(LIB_BASENAME).so.0.0.0
 ABOUT_BINARY := calendar-plus-about
+ABOUT_DESKTOP_TEMPLATE := src/app/infiltrator-calendar-about.desktop.in
+ABOUT_DESKTOP := $(BUILD_DIR)/infiltrator-calendar-about.desktop
 GIR := CalendarPlus-1.0
 CORE_SOURCES := \
 	src/core/clock-engine.c \
@@ -242,6 +244,7 @@ all: common-check check-deps \
 	$(BUILD_DIR)/$(LIB_REALNAME) \
 	$(BUILD_DIR)/$(GIR).typelib \
 	$(BUILD_DIR)/$(ABOUT_BINARY) \
+	$(ABOUT_DESKTOP) \
 	translations
 
 common-bootstrap: common-check
@@ -367,6 +370,11 @@ $(BUILD_DIR)/$(ABOUT_BINARY): src/app/about-dialog.c src/app/project-info.c \
 		src/app/about-dialog.c src/app/project-info.c \
 		$(INFILTRATR_COMMON_ARCHIVE) -o $@ $(LDFLAGS) $(GTK_LIBS) $(MATH_LIBS)
 	chmod 0755 $@
+
+$(ABOUT_DESKTOP): $(ABOUT_DESKTOP_TEMPLATE)
+	@mkdir -p "$(BUILD_DIR)"
+	@sed 's|@ABOUT_EXEC@|$(PREFIX)/libexec/$(ABOUT_BINARY)|g' "$<" > "$@"
+
 
 translations:
 	@mkdir -p "$(BUILD_DIR)/locale"
@@ -615,6 +623,8 @@ install: all
 		"$(DESTDIR)$(LIBDIR)/girepository-1.0/$(GIR).typelib"
 	install -Dm755 "$(BUILD_DIR)/$(ABOUT_BINARY)" \
 		"$(DESTDIR)$(PREFIX)/libexec/$(ABOUT_BINARY)"
+	install -Dm644 "$(ABOUT_DESKTOP)" \
+		"$(DESTDIR)$(PREFIX)/share/applications/infiltrator-calendar-about.desktop"
 	install -Dm644 "$(ICON_SRC)" \
 		"$(DESTDIR)$(PREFIX)/share/icons/hicolor/256x256/apps/$(ICON_NAME).png"
 	install -Dm644 "$(ICON_SRC)" \
