@@ -368,7 +368,8 @@ def main() -> None:
     assert 'this.menu.setCustomStyleClass("calendar-plus-popup");' in applet
     assert '`calendar-plus-popup calendar-plus-theme-${effectiveTheme}`' in applet
     assert 'setCustomStyleClass("calendar-background")' not in applet
-    assert 'Util.spawnCommandLine("/usr/libexec/calendar-plus-about")' in applet
+    assert '"infiltrator-calendar-about.desktop"' in applet
+    assert 'Util.spawnCommandLine("/usr/libexec/calendar-plus-about")' not in applet
     assert "ModalDialog" not in applet
     assert "_aboutDialog" not in applet
     assert "calendar-plus-about-title" not in read("src/cinnamon/stylesheet.css")
