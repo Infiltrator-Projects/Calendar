@@ -393,7 +393,9 @@ def main() -> None:
     # not take a Cinnamon shell modal/input grab for application metadata.
     assert "openAbout()" in applet_source
     assert "this._onAbout();" in applet_source
-    assert 'Util.spawnCommandLine("/usr/libexec/calendar-plus-about")' in applet_source
+    assert '"infiltrator-calendar-about.desktop"' in applet_source
+    assert "Gio.DesktopAppInfo.new(" in applet_source
+    assert 'Util.spawnCommandLine("/usr/libexec/calendar-plus-about")' not in applet_source
     assert "ModalDialog" not in applet_source
     assert "_aboutDialog" not in applet_source
     assert "calendar-plus-about-title" not in applet_source
