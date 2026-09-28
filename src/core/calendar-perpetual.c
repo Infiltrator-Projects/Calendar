@@ -107,7 +107,7 @@ calendar_plus_fixed_fields_to_jdn(
     }
 
     return calendar_plus_i64_add_saturating(
-        gregorian_to_jdn((gint)fields->year, 1, 1),
+        gregorian_to_jdn(fields->year, 1, 1),
         ordinal - 1);
 }
 
@@ -151,7 +151,9 @@ calendar_plus_world_fields_to_jdn(
     for (cursor = 1; cursor < fields->month; cursor++)
         ordinal += calendar_plus_world_month_length(fields->year, cursor);
 
-    return gregorian_to_jdn((gint)fields->year, 1, 1) + ordinal - 1;
+    return calendar_plus_i64_add_saturating(
+        gregorian_to_jdn(fields->year, 1, 1),
+        ordinal - 1);
 }
 
 void
