@@ -355,8 +355,10 @@ def main() -> None:
     assert "this._range_request_pending" in event_manager_source
     assert "function _safeEventColor(color)" in event_source
     assert "_safeEventColor(event.color)" in event_source
-    assert "this._scheduleCull();" in event_manager_source
-    assert "this._event_list.set_events(null, false);" in event_manager_source
+    assert "this._range_accepting_events" in event_manager_source
+    assert "_eventVariantOverlapsRange" in event_manager_source
+    assert "this._event_list.set_events(null, false, true);" in event_manager_source
+    assert "adjustment.page_size" in event_source
 
     # A stale native library must be rejected explicitly rather than allowed
     # to fail later through a missing or incompatible symbol.
