@@ -82,7 +82,7 @@ enum
 
 /*
  * Testable internal variant of the public grid builder. Production callers
- * pass the process locale through calendar_plus_calendar_engine_build_grid();
+ * pass NULL and locale-weekend.c resolves the active process LC_TIME locale;
  * deterministic regression tests may inject a CLDR locale explicitly.
  */
 gboolean calendar_plus_calendar_engine_build_grid_for_locale(
