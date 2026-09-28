@@ -56,12 +56,6 @@ const DATE_FORMAT_FULL = CinnamonDesktop.WallClock.lctime_format(
 );
 const DAY_FORMAT = CinnamonDesktop.WallClock.lctime_format("cinnamon", "%A");
 
-function _capitaliseLocale(text) {
-    return text.length === 0
-        ? text
-        : text.charAt(0).toLocaleUpperCase() + text.slice(1);
-}
-
 function _relationHas(mask, flag) {
     return (mask & flag) !== 0;
 }
@@ -223,7 +217,7 @@ var EventList = class EventList {
             return;
         }
         this.selected_date = gdate;
-        const text = _capitaliseLocale(gdate.format(DATE_FORMAT_FULL));
+        const text = gdate.format(DATE_FORMAT_FULL);
         this.selected_date_label.set_label(text);
         this.selected_date_label.set_accessible_name(
             `${CP_("Open selected date in Calendar")}: ${text}`
@@ -529,7 +523,7 @@ class EventRow {
             }
             return sameInstant(endpointDay, today)
                 ? _("Today")
-                : _capitaliseLocale(endpointDay.format(DAY_FORMAT));
+                : endpointDay.format(DAY_FORMAT);
         }
 
         if (sameInstant(endpointDay, today)) {
@@ -545,7 +539,7 @@ class EventRow {
          */
         for (let offset = -4; offset <= 4; offset++) {
             if (sameInstant(endpointDay, today.add_days(offset))) {
-                return _capitaliseLocale(endpointDay.format(DAY_FORMAT));
+                return endpointDay.format(DAY_FORMAT);
             }
         }
         return endpointDay.format("%x");
