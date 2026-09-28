@@ -233,7 +233,7 @@ DIST_FILES := \
 .PHONY: all check check-deps clean common-bootstrap common-build common-check common-test core-check coverage install package-source \
 	package-local-installer pgo-train \
 	sanitize static-analysis test validate-architecture validate-js validate-package-inputs \
-	validate-sources validate-exports validate-abi validate-runtime-deps validate-release-model smoke-gjs \
+	validate-about-desktop validate-sources validate-exports validate-abi validate-runtime-deps validate-release-model smoke-gjs \
 	path-space-smoke release-check \
 	reproducible-build translations update-pot validate-translations \
 	update-settings validate-settings-generated update-theme validate-theme update-runtime-hashes
@@ -555,6 +555,11 @@ path-space-smoke:
 validate-package-inputs:
 	python3 tools/validate-package-inputs.py
 
+validate-about-desktop: $(ABOUT_DESKTOP)
+	@command -v desktop-file-validate >/dev/null || { \
+		echo "Missing validation dependency: desktop-file-validate" >&2; exit 1; }
+	desktop-file-validate "$(ABOUT_DESKTOP)"
+
 validate-release-model:
 	python3 tests/test-release-model.py
 
@@ -567,7 +572,7 @@ core-check: check-deps $(CORE_ARCHIVE) $(BUILD_DIR)/test-portable-core \
 	./$(BUILD_DIR)/test-exact-clock-boundaries
 
 check: all test validate-js validate-translations validate-sources validate-package-inputs \
-	validate-release-model validate-architecture validate-exports validate-abi validate-runtime-deps smoke-gjs path-space-smoke
+	validate-about-desktop validate-release-model validate-architecture validate-exports validate-abi validate-runtime-deps smoke-gjs path-space-smoke
 
 sanitize:
 	$(MAKE) clean

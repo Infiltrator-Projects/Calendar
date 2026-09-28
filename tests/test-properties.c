@@ -351,6 +351,16 @@ test_malformed_event_variants(void)
                           (gint64)0,
                           (gint64)1,
                           (gint64)1));
+    g_autoptr(GVariant) impossible_time =
+        g_variant_ref_sink(
+            g_variant_new("(sssbxxx)",
+                          "impossible-time",
+                          "#000000",
+                          "summary",
+                          FALSE,
+                          G_MAXINT64,
+                          G_MAXINT64,
+                          (gint64)1));
 
     g_assert_false(calendar_plus_event_store_add_or_update(store,
                                                            NULL,
@@ -372,6 +382,9 @@ test_malformed_event_variants(void)
                                                            1));
     g_assert_false(calendar_plus_event_store_add_or_update(store,
                                                            huge_summary,
+                                                           1));
+    g_assert_false(calendar_plus_event_store_add_or_update(store,
+                                                           impossible_time,
                                                            1));
 }
 

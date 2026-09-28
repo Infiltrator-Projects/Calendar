@@ -488,6 +488,17 @@ function evaluateCalendar() {
         desktopDisconnects: 0,
         eventDisconnects: 0,
         removedSources: 0,
+        calendarTimeoutCallback: null,
+        runCalendarTimeout() {
+            assert.notEqual(
+                this.calendarTimeoutCallback,
+                null,
+                "a calendar coalescing timeout must be pending"
+            );
+            const callback = this.calendarTimeoutCallback;
+            this.calendarTimeoutCallback = null;
+            callback();
+        },
     };
 
     class Table {
@@ -576,7 +587,14 @@ function evaluateCalendar() {
             signals,
             ui: { main: {} },
             mainloop: {
-                source_remove() { observations.removedSources += 1; },
+                timeout_add(delay, callback) {
+                    observations.calendarTimeoutCallback = callback;
+                    return 91;
+                },
+                source_remove() {
+                    observations.calendarTimeoutCallback = null;
+                    observations.removedSources += 1;
+                },
             },
             gettext: {
                 bindtextdomain() {},
@@ -1019,6 +1037,26 @@ function testCalendarLifecycle() {
     assert.equal(calendar._destroyed, true);
 }
 
+function testCalendarNavigationCoalescing() {
+    const { Calendar, settings, eventsManager, desktopSettings, observations } =
+        evaluateCalendar();
+    const calendar = new Calendar(settings, eventsManager, desktopSettings);
+    const applied = [];
+    calendar.setDate = (date) => applied.push(date.getTime());
+
+    const first = new Date(2026, 8, 21, 12, 0, 0);
+    const second = new Date(2026, 8, 22, 12, 0, 0);
+    calendar.queue_set_date(first);
+    calendar.queue_set_date(second);
+    observations.runCalendarTimeout();
+    assert.deepEqual(
+        applied,
+        [second.getTime()],
+        "the newest accumulated destination must win without dropping it"
+    );
+    calendar.destroy();
+}
+
 function testCalendarKeyboardNavigation() {
     const { Calendar, Clutter } = evaluateCalendar();
     const calendar = Object.create(Calendar.prototype);
@@ -1160,11 +1198,11 @@ function testVisibleEventRangeFailureRecovery() {
         { error: new Error("temporary range failure") }
     );
 
-    manager.set_visible_range(first, last, false);
+    observations.runNextTimeout();
     assert.equal(
         observations.rangeCalls.length,
         2,
-        "failed range must remain retryable without changing the grid"
+        "failed range must retry automatically without user interaction"
     );
     observations.rangeCallbacks[1](manager._calendar_server, {});
 
@@ -1173,12 +1211,23 @@ function testVisibleEventRangeFailureRecovery() {
     manager.set_visible_range(nextFirst, nextLast, false);
     const staleCallback = observations.rangeCallbacks[2];
     manager.set_visible_range(first, last, true);
-    const currentCallback = observations.rangeCallbacks[3];
-    currentCallback(manager._calendar_server, {});
+    assert.equal(
+        observations.rangeCalls.length,
+        3,
+        "a newer desired range must wait for the in-flight request"
+    );
+
     staleCallback(
         manager._calendar_server,
         { error: new Error("stale range failure") }
     );
+    assert.equal(
+        observations.rangeCalls.length,
+        4,
+        "completion of the old request must start the newest queued range"
+    );
+    const currentCallback = observations.rangeCallbacks[3];
+    currentCallback(manager._calendar_server, {});
 
     manager.set_visible_range(first, last, false);
     assert.equal(
@@ -1321,6 +1370,25 @@ function testEventsManagerPresentationState() {
     manager.destroy();
 }
 
+function testEventsManagerPreservesPreEpochSelection() {
+    const { EventsManager, observations } = evaluateEventsManager();
+    const manager = new EventsManager({ getValue() { return true; } }, {});
+    const captured = [];
+    manager.current_selected_date = {
+        to_unix() { return -86400; },
+    };
+    manager.select_date = (date) => captured.push(date.getTime());
+
+    manager.queue_reload(false);
+    observations.runNextIdle();
+    assert.deepEqual(
+        captured,
+        [-86400 * 1000],
+        "valid pre-1970 selections must never be replaced with today"
+    );
+    manager.destroy();
+}
+
 function testEventsManagerLifecycle() {
     const { EventsManager, observations } = evaluateEventsManager();
     const settings = { getValue() { return true; } };
@@ -1395,11 +1463,13 @@ testMintFallbackClockFormatting();
 testConstructorAtomicity();
 testModuleLoaderCompatibility();
 testCalendarLifecycle();
+testCalendarNavigationCoalescing();
 testCalendarKeyboardNavigation();
 testEventListCacheIdentity();
 testVisibleEventRange();
 testVisibleEventRangeFailureRecovery();
 testEventsManagerPresentationState();
+testEventsManagerPreservesPreEpochSelection();
 testEventsManagerLifecycle();
 testEventsManagerReconnect();
 console.log("JavaScript runtime lifecycle tests passed.");

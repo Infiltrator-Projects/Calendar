@@ -4,6 +4,7 @@ Priority: optional
 Maintainer: The Infiltratr <noreply@the-infiltratr.com>
 Build-Depends:
  debhelper-compat (= 13),
+ desktop-file-utils,
  gettext,
  gir1.2-glib-2.0-dev,
  gobject-introspection,
@@ -27,7 +28,7 @@ Breaks: calendar-plus, cinnamon-calendar
 Replaces: calendar-plus, cinnamon-calendar
 Depends:
  cinnamon (>= 6.4),
- libicu72 | libicu73 | libicu74 | libicu75 | libicu76 | libicu77 | libicu78 | libicu79 | libicu80,
+ libicu72 | libicu73 | libicu74 | libicu75 | libicu76 | libicu77 | libicu78 | libicu79 | libicu80 | libicu81,
  ${misc:Depends},
  ${shlibs:Depends}
 Description: Cinnamon clock with multiple time and calendar systems

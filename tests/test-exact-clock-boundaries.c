@@ -7,6 +7,8 @@
  * Calendar public clock functions rather than retesting Common in isolation.
  */
 
+#include "calendar-ancient.h"
+#include "calendar-core.h"
 #include "julian-day.h"
 #include "time-formats.h"
 #include "time-astronomy.h"
@@ -195,6 +197,38 @@ test_complete_civil_year_domain(void)
     assert_julian_round_trip(G_MAXINT, 12, 31);
 }
 
+static void
+test_extreme_navigation_is_bounded(void)
+{
+    CalendarPlusCalendarEngine *gregorian =
+        calendar_plus_calendar_engine_new("gregorian");
+    CalendarPlusCalendarEngine *iso =
+        calendar_plus_calendar_engine_new("iso-week");
+    const CalendarPlusDate maximum = { G_MAXINT, 12, 31 };
+    const CalendarPlusDate minimum = { G_MININT, 1, 1 };
+    CalendarPlusDate result = { 0 };
+
+    g_assert_nonnull(gregorian);
+    g_assert_nonnull(iso);
+    g_assert_false(calendar_plus_calendar_engine_add_years(
+        gregorian, &maximum, 1, &result));
+    g_assert_false(calendar_plus_calendar_engine_add_years(
+        gregorian, &minimum, -1, &result));
+    g_assert_false(calendar_plus_calendar_engine_add_years(
+        iso, &maximum, 1, &result));
+
+    calendar_plus_calendar_engine_free(iso);
+    calendar_plus_calendar_engine_free(gregorian);
+}
+
+static void
+test_roman_extreme_format_is_bounded(void)
+{
+    g_autofree gchar *large = calendar_plus_roman_number(G_MAXINT);
+
+    g_assert_cmpstr(large, ==, "2147483647");
+}
+
 int
 main(int argc, char **argv)
 {
@@ -211,5 +245,9 @@ main(int argc, char **argv)
                     test_solar_instant_overflow_rejection);
     g_test_add_func("/date-domain/complete-gint-years",
                     test_complete_civil_year_domain);
+    g_test_add_func("/date-domain/extreme-navigation-bounded",
+                    test_extreme_navigation_is_bounded);
+    g_test_add_func("/date-domain/roman-format-bounded",
+                    test_roman_extreme_format_is_bounded);
     return g_test_run();
 }
