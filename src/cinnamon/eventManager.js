@@ -42,12 +42,69 @@ const SignalBag = RuntimeSupport.SignalBag;
 const midnight = RuntimeSupport.midnight;
 const sameInstant = RuntimeSupport.sameInstant;
 
-function _jsDateToLocalDateTime(date) {
-    if (date === null || typeof date.getTime !== "function" ||
-        !Number.isFinite(date.getTime())) {
+function _civilFields(date) {
+    if (date === null) {
         return null;
     }
-    return GLib.DateTime.new_from_unix_local(Math.floor(date.getTime() / 1000));
+    if (typeof date.getFullYear === "function" &&
+        typeof date.getMonth === "function" &&
+        typeof date.getDate === "function") {
+        return [date.getFullYear(), date.getMonth() + 1, date.getDate()];
+    }
+    if (Number.isInteger(date.year) &&
+        Number.isInteger(date.month) &&
+        Number.isInteger(date.day)) {
+        return [date.year, date.month, date.day];
+    }
+    return null;
+}
+
+function _jsDateToLocalDateTime(date) {
+    const fields = _civilFields(date);
+    if (fields === null) {
+        return null;
+    }
+
+    const [year, month, day] = fields;
+    const value = GLib.DateTime.new_local(year, month, day, 12, 0, 0);
+    if (value === null ||
+        value.get_year() !== year ||
+        value.get_month() !== month ||
+        value.get_day_of_month() !== day) {
+        return null;
+    }
+    return value;
+}
+
+function _eventVariantOverlapsRange(eventVariant, rangeStart, rangeEnd) {
+    try {
+        if (eventVariant === null ||
+            typeof eventVariant.deep_unpack !== "function") {
+            return true;
+        }
+        const row = eventVariant.deep_unpack();
+        if (!Array.isArray(row) || row.length < 7) {
+            return true;
+        }
+
+        const allDay = Boolean(row[3]);
+        const start = Number(row[4]);
+        const end = Number(row[5]);
+        if (!Number.isFinite(start) || !Number.isFinite(end)) {
+            return true;
+        }
+
+        return allDay
+            ? start <= rangeEnd && end > rangeStart
+            : start <= rangeEnd && end >= rangeStart;
+    } catch (error) {
+        /*
+         * Structural/type validation remains native. If transport inspection
+         * cannot prove that a row lies outside the desired range, pass it to C
+         * rather than creating a second tuple validator in JavaScript.
+         */
+        return true;
+    }
 }
 
 class EventRecord {
@@ -138,16 +195,17 @@ var EventsManager = class EventsManager {
         this._serverSignals = new SignalBag();
         this._cancellable = new Gio.Cancellable();
         this._cached_state = STATUS_UNKNOWN;
-        this._gc_timer_id = 0;
         this._reload_id = 0;
         this._force_reload_pending = false;
         this._event_list = event_list || null;
         this.current_range_start = null;
         this.current_range_end = null;
         this.current_selected_date = null;
+        this.current_selected_civil = null;
         this._range_request_generation = 0;
         this._range_request_pending = false;
         this._range_request_succeeded = false;
+        this._range_accepting_events = false;
         this._queued_range_force = false;
         this.last_update_timestamp = 0;
         this.event_store = CalendarPlus.EventStore.new();
@@ -242,7 +300,7 @@ var EventsManager = class EventsManager {
                     this.event_store.clear();
                 }
                 if (this._event_list !== null) {
-                    this._event_list.set_events(null, false);
+                    this._event_list.set_events(null, false, true);
                 }
                 global.logError(
                     `${APPLET_UUID}: could not connect to calendar server: ${error}`
@@ -264,7 +322,6 @@ var EventsManager = class EventsManager {
         this._calendar_server = null;
         this._inited = false;
         this._cached_state = STATUS_UNKNOWN;
-        this._cancelCull();
         this._cancelRangeRetry();
 
         if (this.event_store !== null) {
@@ -278,13 +335,14 @@ var EventsManager = class EventsManager {
          * visible after the transport has disappeared.
          */
         if (this._event_list !== null) {
-            this._event_list.set_events(null, false);
+            this._event_list.set_events(null, false, true);
         }
         this.current_range_start = null;
         this.current_range_end = null;
         this._range_request_generation += 1;
         this._range_request_pending = false;
         this._range_request_succeeded = false;
+        this._range_accepting_events = false;
         this._queued_range_force = false;
         this.last_update_timestamp = 0;
         this.emit("has-calendars-changed");
@@ -343,7 +401,7 @@ var EventsManager = class EventsManager {
                         this.current_range_start,
                         this.current_range_end,
                         true,
-                        false
+                        true
                     );
                 }
                 return GLib.SOURCE_REMOVE;
@@ -380,19 +438,38 @@ var EventsManager = class EventsManager {
     }
 
     _ingestEvents(payload) {
-        if (this._destroyed || this.event_store === null) {
+        if (this._destroyed || this.event_store === null ||
+            !this._range_accepting_events ||
+            this.current_range_start === null ||
+            this.current_range_end === null) {
             return;
         }
 
+        const exclusiveEnd = this.current_range_end.add_days(1);
+        if (exclusiveEnd === null) {
+            return;
+        }
+        const rangeStart = this.current_range_start.to_unix();
+        const rangeEnd = exclusiveEnd.to_unix() - 1;
+
         let changed = false;
         for (const eventVariant of payload.unpack()) {
+            /*
+             * CalendarServer has no request-generation token on event signals.
+             * Reject rows that cannot belong to the newest desired range before
+             * they reach the native index. Native code remains authoritative
+             * for tuple validation and interval normalization.
+             */
+            if (!_eventVariantOverlapsRange(
+                    eventVariant, rangeStart, rangeEnd)) {
+                continue;
+            }
             changed = this.event_store.add_or_update(
                 eventVariant,
                 this.last_update_timestamp
             ) || changed;
         }
 
-        this._scheduleCull();
         if (changed) {
             this.emit("events-updated");
         }
@@ -452,36 +529,6 @@ var EventsManager = class EventsManager {
         this.emit("has-calendars-changed");
     }
 
-    _scheduleCull() {
-        this._cancelCull();
-        if (this._destroyed || !this.is_active()) {
-            return;
-        }
-
-        /*
-         * CalendarServer delivers a refresh as a burst.  Waiting three seconds
-         * lets all add/update signals arrive before C removes records not seen
-         * in the current refresh timestamp.
-         */
-        this._gc_timer_id = Mainloop.timeout_add_seconds(3, () => {
-            this._gc_timer_id = 0;
-            if (this._destroyed || this.event_store === null) {
-                return GLib.SOURCE_REMOVE;
-            }
-            if (this.event_store.cull(this.last_update_timestamp)) {
-                this.emit("events-updated");
-            }
-            return GLib.SOURCE_REMOVE;
-        });
-    }
-
-    _cancelCull() {
-        if (this._gc_timer_id > 0) {
-            Mainloop.source_remove(this._gc_timer_id);
-            this._gc_timer_id = 0;
-        }
-    }
-
     _requestVisibleRange(first, last, force, clearStore) {
         if (this._destroyed || this._calendar_server === null ||
             this.event_store === null || this._range_request_pending) {
@@ -492,6 +539,7 @@ var EventsManager = class EventsManager {
             this.event_store.clear();
             this.emit("events-updated");
         }
+        this._range_accepting_events = false;
 
         const exclusiveEnd = last.add_days(1);
         if (exclusiveEnd === null) {
@@ -564,19 +612,17 @@ var EventsManager = class EventsManager {
 
                 if (succeeded) {
                     /*
-                     * SetTimeRange completes before CalendarServer's asynchronous
-                     * view necessarily emits any event signal.  Arm the settle
-                     * cull here as well as from _ingestEvents(): an authoritative
-                     * empty refresh otherwise has no signal that can retire rows
-                     * from the previous refresh generation.
-                     *
-                     * Any later add/update burst restarts this same timer, so the
-                     * cull still waits until the burst has gone quiet.
+                     * CalendarServer accepts the range before its asynchronous
+                     * backend starts emitting. Event admission opens only after
+                     * that acceptance boundary. Every real request has already
+                     * replaced the local store, so an empty refresh requires no
+                     * silence timer or guessed "refresh complete" delay.
                      */
-                    this._scheduleCull();
+                    this._range_accepting_events = true;
                     this._cancelRangeRetry();
                     this._range_retry_attempt = 0;
                 } else {
+                    this._range_accepting_events = false;
                     this._scheduleRangeRetry();
                 }
             }
@@ -629,7 +675,12 @@ var EventsManager = class EventsManager {
         }
 
         this._queued_range_force = false;
-        this._requestVisibleRange(first, last, force, changed);
+        /*
+         * Every actual CalendarServer request owns a fresh local generation.
+         * Replacing the store up front makes an empty response correct by
+         * construction instead of relying on a timed stale-row cull.
+         */
+        this._requestVisibleRange(first, last, force, true);
     }
 
     queue_reload(force) {
@@ -663,15 +714,10 @@ var EventsManager = class EventsManager {
                     );
                 }
 
-                let selectedDate = new Date();
-                if (this.current_selected_date !== null) {
-                    const candidate = new Date(
-                        this.current_selected_date.to_unix() * 1000
-                    );
-                    if (Number.isFinite(candidate.getTime())) {
-                        selectedDate = candidate;
-                    }
-                }
+                const selectedDate =
+                    this.current_selected_civil !== null
+                        ? this.current_selected_civil
+                        : new Date();
                 this.select_date(selectedDate, forceReload);
             }
             return GLib.SOURCE_REMOVE;
@@ -683,20 +729,45 @@ var EventsManager = class EventsManager {
             return;
         }
 
-        const day = midnight(_jsDateToLocalDateTime(date));
-        if (day === null) {
-            global.logError(
-                `${APPLET_UUID}: selected date has no representable local boundary.`
-            );
+        const fields = _civilFields(date);
+        if (fields === null) {
+            global.logError(`${APPLET_UUID}: invalid selected civil date.`);
             return;
         }
-        const previous = this.current_selected_date;
-        const changedMonth = previous !== null &&
-            (previous.get_year() !== day.get_year() ||
-             previous.get_month() !== day.get_month());
+        const [year, month, dayOfMonth] = fields;
+        const previousCivil = this.current_selected_civil;
+        const changedMonth = previousCivil !== null &&
+            (previousCivil.year !== year || previousCivil.month !== month);
+        const day = midnight(_jsDateToLocalDateTime(date));
+
+        this.current_selected_civil = {
+            year,
+            month,
+            day: dayOfMonth,
+        };
 
         /*
-         * Selection is presentation state, not transport state.  Update the
+         * A jurisdiction can skip an entire civil date. The calendar grid still
+         * owns that date coordinate, but there is no Unix interval to query for
+         * appointments. Present the date itself using UTC as a formatting-only
+         * carrier and keep its agenda empty.
+         */
+        if (day === null) {
+            this.current_selected_date = null;
+            if (this._event_list !== null) {
+                const display = GLib.DateTime.new_utc(
+                    year, month, dayOfMonth, 12, 0, 0
+                );
+                if (display !== null) {
+                    this._event_list.set_date(display);
+                }
+                this._event_list.set_events(null, false);
+            }
+            return;
+        }
+
+        /*
+         * Selection is presentation state, not transport state. Update the
          * agenda heading immediately even while CalendarServer is still being
          * activated; the eventual server readiness only controls event data.
          */
@@ -712,7 +783,7 @@ var EventsManager = class EventsManager {
         if (this._event_list !== null) {
             this._event_list.set_events(
                 this._snapshot_for_date(day),
-                previous === null || changedMonth || Boolean(force)
+                previousCivil === null || changedMonth || Boolean(force)
             );
         }
     }
@@ -783,6 +854,7 @@ var EventsManager = class EventsManager {
         this._range_request_generation += 1;
         this._range_request_pending = false;
         this._range_request_succeeded = false;
+        this._range_accepting_events = false;
         this._queued_range_force = false;
         this._calendar_server_connecting = false;
 
@@ -798,7 +870,6 @@ var EventsManager = class EventsManager {
             }
         }
 
-        this._cancelCull();
         this._cancelReconnect();
         this._cancelRangeRetry();
         if (this._reload_id > 0) {
@@ -836,6 +907,7 @@ var EventsManager = class EventsManager {
         this.settings = null;
         this.desktop_settings = null;
         this.current_selected_date = null;
+        this.current_selected_civil = null;
         this.current_range_start = null;
         this.current_range_end = null;
     }
