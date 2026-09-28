@@ -427,6 +427,70 @@ test_event_store_clear_contract(void)
 }
 
 static void
+test_event_color_range(void)
+{
+    const gint64 first_day = local_unix(2026, 7, 29, 0);
+    g_autoptr(CalendarPlusEventStore) store =
+        calendar_plus_event_store_new();
+    g_autoptr(GVariant) event =
+        event_variant("range-event",
+                      local_unix(2026, 7, 29, 12),
+                      local_unix(2026, 7, 31, 12));
+    g_autoptr(GVariant) range = NULL;
+    guint day;
+
+    g_assert_true(calendar_plus_event_store_add_or_update(store, event, 1));
+    range = calendar_plus_event_store_get_color_range(
+        store,
+        first_day,
+        3,
+        local_unix(2026, 7, 29, 13),
+        8);
+
+    g_assert_nonnull(range);
+    g_assert_true(g_variant_is_of_type(range, G_VARIANT_TYPE("aas")));
+    g_assert_cmpuint(g_variant_n_children(range), ==, 3);
+    for (day = 0; day < 3; day++)
+    {
+        g_autoptr(GVariant) colors =
+            g_variant_get_child_value(range, day);
+        g_autoptr(GVariant) color =
+            g_variant_get_child_value(colors, 0);
+
+        g_assert_cmpuint(g_variant_n_children(colors), ==, 1);
+        g_assert_cmpstr(g_variant_get_string(color, NULL), ==, "#445566");
+    }
+}
+
+static void
+test_calendar_navigation_public_year_bounds(void)
+{
+    static const gchar *const ids[] = {
+        "international-fixed",
+        "world",
+        "swedish-historical"
+    };
+    gsize index;
+
+    for (index = 0; index < G_N_ELEMENTS(ids); index++)
+    {
+        g_autoptr(CalendarPlusCalendarSystem) calendar =
+            calendar_plus_calendar_system_new(ids[index]);
+        g_autoptr(GVariant) above = NULL;
+        g_autoptr(GVariant) below = NULL;
+
+        g_assert_nonnull(calendar);
+        above = calendar_plus_calendar_system_add_years_parts(
+            calendar, G_MAXINT, 1, 1, 1);
+        below = calendar_plus_calendar_system_add_years_parts(
+            calendar, G_MININT, 1, 1, -1);
+
+        g_assert_null(above);
+        g_assert_null(below);
+    }
+}
+
+static void
 test_event_timezone_refresh(void)
 {
     const gchar *original_timezone = g_getenv("TZ");
@@ -796,6 +860,10 @@ main(int argc,
                     test_unbounded_event_interval);
     g_test_add_func("/properties/event-store-clear",
                     test_event_store_clear_contract);
+    g_test_add_func("/properties/event-color-range",
+                    test_event_color_range);
+    g_test_add_func("/properties/calendar-public-year-bounds",
+                    test_calendar_navigation_public_year_bounds);
     g_test_add_func("/properties/malformed-event-variants",
                     test_malformed_event_variants);
     g_test_add_func("/properties/event-timezone-refresh",
