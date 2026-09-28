@@ -573,8 +573,24 @@ class CalendarPlusApplet extends Applet.Applet {
                 providerAvailable,
             ] = variant.deep_unpack();
 
-            if (typeof mode !== "string" || mode.length === 0 ||
-                typeof calendar !== "string" || calendar.length === 0 ||
+            const numericLatitude = Number(latitude);
+            const numericLongitude = Number(longitude);
+            const modeIsValid =
+                mode === "standard" ||
+                mode === PanelClock.CLOCK_MODE_STANDARD_24 ||
+                mode === PanelClock.CLOCK_MODE_STANDARD_12 ||
+                PanelClock.isNativeClockMode(mode);
+            const calendarIsValid =
+                typeof calendar === "string" &&
+                calendar.length > 0 &&
+                CalendarPlus.CalendarSystem.new(calendar) !== null;
+
+            if (typeof mode !== "string" || !modeIsValid ||
+                !calendarIsValid ||
+                !Number.isFinite(numericLatitude) ||
+                numericLatitude < -90 || numericLatitude > 90 ||
+                !Number.isFinite(numericLongitude) ||
+                numericLongitude < -180 || numericLongitude > 180 ||
                 (authority !== "mint-cinnamon" &&
                  authority !== "infiltrator-system-settings")) {
                 throw new Error("invalid effective temporal policy");
@@ -584,8 +600,8 @@ class CalendarPlusApplet extends Applet.Applet {
                 mode,
                 showSeconds: Boolean(showSeconds),
                 locationConfigured: Boolean(locationConfigured),
-                latitude: Number(latitude),
-                longitude: Number(longitude),
+                latitude: numericLatitude,
+                longitude: numericLongitude,
                 calendar,
                 authority,
                 providerAvailable: Boolean(providerAvailable),
@@ -594,7 +610,14 @@ class CalendarPlusApplet extends Applet.Applet {
             return resolved;
         } catch (error) {
             global.logError(error);
-            return fallback;
+            /*
+             * Cache the fallback for this policy generation.  A persistent
+             * malformed/unreadable policy must not be reparsed and relogged on
+             * every WallClock notification; policy-changed invalidates this
+             * cache when the authority changes again.
+             */
+            this._temporalPolicyCache = Object.freeze(fallback);
+            return this._temporalPolicyCache;
         }
     }
 
