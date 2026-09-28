@@ -434,9 +434,7 @@ var Calendar = class Calendar {
         const state = typeof event.get_state === "function" ?
             event.get_state() : 0;
         const shift = (state & Clutter.ModifierType.SHIFT_MASK) !== 0;
-        const navigationBase = this._pendingDate !== null
-            ? this._pendingDate
-            : date;
+        const navigationBase = this._pendingDate || date;
 
         if (key === Clutter.KEY_Left) {
             this._queueKeyboardDate(this._dateByDays(navigationBase, -1));
