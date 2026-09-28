@@ -106,7 +106,11 @@ local_day_start(gint64 unix_time)
         {
             return g_date_time_to_unix(boundary);
         }
-        g_clear_pointer(&boundary, g_date_time_unref);
+        if (boundary != NULL)
+        {
+            g_date_time_unref(boundary);
+            boundary = NULL;
+        }
     }
 
     return unix_time;
