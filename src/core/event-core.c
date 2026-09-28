@@ -562,6 +562,188 @@ calendar_plus_event_index_colors(CalendarPlusEventIndex *index,
     return colors;
 }
 
+
+static gsize
+lower_bound_day(const gint64 *days,
+                gsize count,
+                gint64 target)
+{
+    gsize low = 0;
+    gsize high = count;
+
+    while (low < high)
+    {
+        const gsize middle = low + (high - low) / 2;
+
+        if (days[middle] < target)
+            low = middle + 1;
+        else
+            high = middle;
+    }
+    return low;
+}
+
+static gboolean
+build_local_day_range(gint64 first_local_day_unix,
+                      gsize day_count,
+                      gint64 *days)
+{
+    g_autoptr(GDateTime) cursor = NULL;
+    g_autoptr(GDateTime) first = NULL;
+    gsize item;
+
+    if (days == NULL || day_count == 0)
+        return FALSE;
+
+    first = g_date_time_new_from_unix_local(
+        local_day_start(first_local_day_unix));
+    if (first == NULL)
+        return FALSE;
+
+    cursor = g_steal_pointer(&first);
+    for (item = 0; item < day_count; item++)
+    {
+        g_autoptr(GDateTime) next = NULL;
+
+        days[item] = local_day_start(g_date_time_to_unix(cursor));
+        if (item + 1 == day_count)
+            break;
+
+        next = g_date_time_add_days(cursor, 1);
+        if (next == NULL)
+            return FALSE;
+        g_date_time_unref(cursor);
+        cursor = g_steal_pointer(&next);
+    }
+    return TRUE;
+}
+
+static gchar **
+copy_ordered_bucket_colors(GPtrArray *bucket,
+                           gint64 requested_day,
+                           gint64 now_unix,
+                           gsize maximum_colors)
+{
+    gchar **colors;
+    gsize copied = 0;
+    guint pass;
+    guint item;
+    const gboolean today =
+        requested_day == local_day_start(now_unix);
+    const gsize limit = MIN((gsize)bucket->len, maximum_colors);
+
+    colors = g_new0(gchar *, limit + 1U);
+    if (limit == 0)
+        return colors;
+
+    g_ptr_array_sort(bucket, compare_records);
+    if (!today)
+    {
+        for (item = 0; item < bucket->len && copied < limit; item++)
+        {
+            const EventRecord *event = g_ptr_array_index(bucket, item);
+            colors[copied++] = g_strdup(event->color);
+        }
+        return colors;
+    }
+
+    /*
+     * Match ordered_records() exactly for today's grid dots: ended timed,
+     * all-day, then active/future timed events.
+     */
+    for (pass = 0; pass < 3 && copied < limit; pass++)
+    {
+        for (item = 0; item < bucket->len && copied < limit; item++)
+        {
+            const EventRecord *event = g_ptr_array_index(bucket, item);
+            const gboolean include =
+                pass == 0 ? (!event->all_day && event->end_unix < now_unix) :
+                pass == 1 ? event->all_day :
+                            (!event->all_day && event->end_unix >= now_unix);
+
+            if (include)
+                colors[copied++] = g_strdup(event->color);
+        }
+    }
+    return colors;
+}
+
+CalendarPlusEventColorRange *
+calendar_plus_event_index_color_range(CalendarPlusEventIndex *index,
+                                      gint64 first_local_day_unix,
+                                      gsize day_count,
+                                      gint64 now_unix,
+                                      gsize maximum_colors_per_day)
+{
+    enum { MAX_RANGE_DAYS = 366 };
+    CalendarPlusEventColorRange *range;
+    g_autofree gint64 *days = NULL;
+    GPtrArray **buckets;
+    GHashTableIter iter;
+    gpointer value;
+    gsize item;
+
+    if (index == NULL || day_count == 0 || day_count > MAX_RANGE_DAYS)
+        return NULL;
+
+    days = g_new0(gint64, day_count);
+    if (!build_local_day_range(first_local_day_unix, day_count, days))
+        return NULL;
+
+    buckets = g_new0(GPtrArray *, day_count);
+    for (item = 0; item < day_count; item++)
+        buckets[item] = g_ptr_array_new();
+
+    /*
+     * Traverse the hash once.  Binary-search the first relevant day, then walk
+     * only the event's intersecting span instead of rescanning every event for
+     * every visible calendar cell.
+     */
+    g_hash_table_iter_init(&iter, index->events_by_id);
+    while (g_hash_table_iter_next(&iter, NULL, &value))
+    {
+        EventRecord *event = value;
+        gsize first = lower_bound_day(days, day_count, event->start_day_unix);
+
+        if (first >= day_count || days[first] > event->end_day_unix)
+            continue;
+        for (item = first;
+             item < day_count && days[item] <= event->end_day_unix;
+             item++)
+        {
+            g_ptr_array_add(buckets[item], event);
+        }
+    }
+
+    range = g_new0(CalendarPlusEventColorRange, 1);
+    range->day_count = day_count;
+    range->colors = g_new0(gchar **, day_count);
+    for (item = 0; item < day_count; item++)
+    {
+        range->colors[item] = copy_ordered_bucket_colors(
+            buckets[item],
+            days[item],
+            now_unix,
+            maximum_colors_per_day);
+        g_ptr_array_unref(buckets[item]);
+    }
+    g_free(buckets);
+    return range;
+}
+
+void
+calendar_plus_event_color_range_free(CalendarPlusEventColorRange *range)
+{
+    gsize item;
+
+    if (range == NULL)
+        return;
+    for (item = 0; item < range->day_count; item++)
+        g_strfreev(range->colors[item]);
+    g_free(range->colors);
+    g_free(range);
+}
+
 CalendarPlusEventSnapshot *
 calendar_plus_event_index_snapshot(CalendarPlusEventIndex *index,
                                    gint64 local_day_unix,
