@@ -427,6 +427,97 @@ test_event_store_clear_contract(void)
 }
 
 static void
+test_event_stale_revision_rejected(void)
+{
+    const gint64 day = local_unix(2026, 7, 29, 0);
+    g_autoptr(CalendarPlusEventStore) store =
+        calendar_plus_event_store_new();
+    g_autoptr(GVariant) newer =
+        g_variant_ref_sink(
+            g_variant_new("(sssbxxx)",
+                          "revision-event",
+                          "#445566",
+                          "Newer summary",
+                          FALSE,
+                          local_unix(2026, 7, 29, 12),
+                          local_unix(2026, 7, 29, 13),
+                          (gint64)20));
+    g_autoptr(GVariant) older =
+        g_variant_ref_sink(
+            g_variant_new("(sssbxxx)",
+                          "revision-event",
+                          "#445566",
+                          "Older summary",
+                          FALSE,
+                          local_unix(2026, 7, 29, 12),
+                          local_unix(2026, 7, 29, 13),
+                          (gint64)10));
+    g_autoptr(GVariant) snapshot = NULL;
+    g_autoptr(GVariant) rows = NULL;
+    g_autoptr(GVariant) row = NULL;
+    g_autoptr(GVariant) summary = NULL;
+    gint64 revision;
+
+    g_assert_true(
+        calendar_plus_event_store_add_or_update(store, newer, 100));
+    g_assert_false(
+        calendar_plus_event_store_add_or_update(store, older, 200));
+
+    snapshot = calendar_plus_event_store_get_snapshot(
+        store, day, local_unix(2026, 7, 29, 12));
+    g_variant_get(snapshot, "(x@a(sssbbxxxxx))", &revision, &rows);
+    g_assert_cmpuint(g_variant_n_children(rows), ==, 1);
+    row = g_variant_get_child_value(rows, 0);
+    summary = g_variant_get_child_value(row, 2);
+    g_assert_cmpstr(
+        g_variant_get_string(summary, NULL), ==, "Newer summary");
+}
+
+static void
+test_event_color_range_skipped_civil_day(void)
+{
+    const gchar *original_timezone = g_getenv("TZ");
+    g_autofree gchar *saved_timezone = g_strdup(original_timezone);
+    g_autoptr(CalendarPlusEventStore) store = NULL;
+    g_autoptr(GVariant) event = NULL;
+    g_autoptr(GVariant) range = NULL;
+    guint day;
+
+    g_assert_true(g_setenv("TZ", "Pacific/Apia", TRUE));
+    tzset();
+
+    store = calendar_plus_event_store_new();
+    event = event_variant(
+        "apia-event",
+        local_unix(2011, 12, 31, 12),
+        local_unix(2011, 12, 31, 13));
+    g_assert_true(calendar_plus_event_store_add_or_update(store, event, 1));
+    range = calendar_plus_event_store_get_color_range(
+        store,
+        local_unix(2011, 12, 29, 0),
+        4,
+        local_unix(2011, 12, 31, 14),
+        8);
+
+    g_assert_nonnull(range);
+    g_assert_cmpuint(g_variant_n_children(range), ==, 4);
+    for (day = 0; day < 4; day++)
+    {
+        g_autoptr(GVariant) colors =
+            g_variant_get_child_value(range, day);
+        const guint expected = day == 2 ? 1U : 0U;
+
+        g_assert_cmpuint(g_variant_n_children(colors), ==, expected);
+    }
+
+    if (saved_timezone != NULL)
+        g_assert_true(g_setenv("TZ", saved_timezone, TRUE));
+    else
+        g_unsetenv("TZ");
+    tzset();
+}
+
+static void
 test_event_color_range(void)
 {
     const gint64 first_day = local_unix(2026, 7, 29, 0);
@@ -862,6 +953,10 @@ main(int argc,
                     test_event_store_clear_contract);
     g_test_add_func("/properties/event-color-range",
                     test_event_color_range);
+    g_test_add_func("/properties/event-stale-revision",
+                    test_event_stale_revision_rejected);
+    g_test_add_func("/properties/event-color-range-skipped-day",
+                    test_event_color_range_skipped_civil_day);
     g_test_add_func("/properties/calendar-public-year-bounds",
                     test_calendar_navigation_public_year_bounds);
     g_test_add_func("/properties/malformed-event-variants",
