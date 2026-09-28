@@ -207,7 +207,9 @@ def main() -> None:
     assert "CalendarPlus.EventStore.new()" in event_manager_source
     assert "this.event_store.add_or_update(" in event_manager_source
     assert "this.event_store.get_snapshot(" in event_manager_source
-    assert "this.event_store.get_colors(" in event_manager_source
+    assert "this.event_store.get_color_range(" in event_manager_source
+    assert "get_colors_for_date" not in event_manager_source
+    assert "get_colors_for_range" in event_manager_source
     assert "this.event_store.refresh_timezone()" in event_manager_source
     assert "CalendarPlus.event_day_relation(" in event_manager_source
     assert "CalendarPlus.event_timing(" in event_manager_source
@@ -353,6 +355,8 @@ def main() -> None:
     assert "this._range_request_pending" in event_manager_source
     assert "function _safeEventColor(color)" in event_source
     assert "_safeEventColor(event.color)" in event_source
+    assert "this._scheduleCull();" in event_manager_source
+    assert "this._event_list.set_events(null, false);" in event_manager_source
 
     # A stale native library must be rejected explicitly rather than allowed
     # to fail later through a missing or incompatible symbol.
@@ -389,6 +393,11 @@ def main() -> None:
     assert "_onFormatSettingsChanged" not in applet_source
     assert "_cancelFormatDebounce" not in applet_source
     assert "formattedTooltip.capitalize()" not in panel_clock_source
+    assert ".capitalize()" not in panel_clock_source
+    assert ".capitalize()" not in calendar_source
+    assert "_capitaliseLocale" not in event_source
+    assert "this._temporalPolicyCache = Object.freeze(fallback);" in applet_source
+    assert "CalendarPlus.CalendarSystem.new(calendar) !== null" in applet_source
     assert "new EventManager.EventsManager(" in applet_source
 
     # Calendar-owned interface text uses its own installed gettext domain;
