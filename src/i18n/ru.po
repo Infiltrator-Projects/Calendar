@@ -90,6 +90,9 @@ msgstr "Caesar"
 msgid "Calendar"
 msgstr "Calendar"
 
+msgid "Calendar unavailable"
+msgstr "Календарь недоступен"
+
 msgid "Charlemagne"
 msgstr "Charlemagne"
 
