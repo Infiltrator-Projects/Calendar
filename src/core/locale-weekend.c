@@ -16,6 +16,7 @@
 #include "locale-weekend.h"
 
 #include <infiltratr/core.h>
+#include <locale.h>
 #include <string.h>
 
 typedef struct
@@ -65,7 +66,14 @@ locale_territory(const gchar *locale,
     territory[1] = '0';
     territory[2] = '1';
 
-    if (locale == NULL)
+    /*
+     * NULL means "use the process LC_TIME locale". Production grid callers
+     * intentionally pass NULL so Cinnamon's active locale remains authoritative;
+     * tests can still inject an explicit CLDR-style locale deterministically.
+     */
+    if (locale == NULL || *locale == '\0')
+        locale = setlocale(LC_TIME, NULL);
+    if (locale == NULL || *locale == '\0')
         return;
 
     for (cursor = locale; *cursor != '\0'; cursor++)
