@@ -12,6 +12,8 @@
 
 #include "event-core.h"
 
+#include "julian-day.h"
+
 #include <infiltratr/arithmetic.h>
 #include <infiltratr/core.h>
 #include <infiltratr/utf8.h>
@@ -323,6 +325,22 @@ calendar_plus_event_index_upsert(CalendarPlusEventIndex *index,
         return FALSE;
 
     existing = g_hash_table_lookup(index->events_by_id, replacement->id);
+
+    /*
+     * CalendarServer can finish SetTimeRange before an older asynchronous view
+     * has completely stopped emitting. A positive LAST-MODIFIED/CREATED value
+     * therefore acts as a monotonic source revision when one is available.
+     * Never let a known-older transport record replace newer indexed content.
+     */
+    if (existing != NULL &&
+        existing->modified > 0 &&
+        replacement->modified > 0 &&
+        replacement->modified < existing->modified)
+    {
+        event_record_free(replacement);
+        return FALSE;
+    }
+
     /*
      * A CalendarServer refresh may resend unchanged records with a new refresh
      * token. Updating only last_update_timestamp preserves culling semantics
@@ -584,15 +602,62 @@ lower_bound_day(const gint64 *days,
 }
 
 static gboolean
+local_day_start_for_civil(gint year,
+                          gint month,
+                          gint day,
+                          gint64 *result)
+{
+    gint minute_of_day;
+
+    if (result == NULL ||
+        !calendar_plus_gregorian_date_is_valid(year, month, day))
+    {
+        return FALSE;
+    }
+
+    /*
+     * Some zones skip midnight and a few historical transitions skip an
+     * entire civil date. Search the date itself rather than letting GLib
+     * normalize into an adjacent day. Whole-day gaps deliberately return
+     * FALSE so the corresponding calendar-grid bucket remains empty.
+     */
+    for (minute_of_day = 0; minute_of_day < 24 * 60; minute_of_day++)
+    {
+        g_autoptr(GDateTime) boundary =
+            g_date_time_new_local(year,
+                                  month,
+                                  day,
+                                  minute_of_day / 60,
+                                  minute_of_day % 60,
+                                  0.0);
+
+        if (boundary != NULL &&
+            g_date_time_get_year(boundary) == year &&
+            g_date_time_get_month(boundary) == month &&
+            g_date_time_get_day_of_month(boundary) == day)
+        {
+            *result = g_date_time_to_unix(boundary);
+            return TRUE;
+        }
+    }
+
+    return FALSE;
+}
+
+static gboolean
 build_local_day_range(gint64 first_local_day_unix,
                       gsize day_count,
-                      gint64 *days)
+                      gint64 *days,
+                      gboolean *day_valid)
 {
-    g_autoptr(GDateTime) cursor = NULL;
     g_autoptr(GDateTime) first = NULL;
+    gint64 first_jdn;
+    gint first_year;
+    gint first_month;
+    gint first_day;
     gsize item;
 
-    if (days == NULL || day_count == 0)
+    if (days == NULL || day_valid == NULL || day_count == 0)
         return FALSE;
 
     first = g_date_time_new_from_unix_local(
@@ -600,23 +665,25 @@ build_local_day_range(gint64 first_local_day_unix,
     if (first == NULL)
         return FALSE;
 
-    cursor = first;
-    first = NULL;
+    first_year = g_date_time_get_year(first);
+    first_month = g_date_time_get_month(first);
+    first_day = g_date_time_get_day_of_month(first);
+    first_jdn = calendar_plus_gregorian_to_jdn(
+        first_year, first_month, first_day);
+
     for (item = 0; item < day_count; item++)
     {
-        g_autoptr(GDateTime) next = NULL;
+        const gint64 jdn = calendar_plus_i64_add_saturating(
+            first_jdn, (gint64)item);
+        gint year;
+        gint month;
+        gint day;
 
-        days[item] = local_day_start(g_date_time_to_unix(cursor));
-        if (item + 1 == day_count)
-            break;
-
-        next = g_date_time_add_days(cursor, 1);
-        if (next == NULL)
-            return FALSE;
-        g_date_time_unref(cursor);
-        cursor = next;
-        next = NULL;
+        calendar_plus_jdn_to_gregorian(jdn, &year, &month, &day);
+        day_valid[item] =
+            local_day_start_for_civil(year, month, day, &days[item]);
     }
+
     return TRUE;
 }
 
@@ -680,21 +747,39 @@ calendar_plus_event_index_color_range(CalendarPlusEventIndex *index,
     enum { MAX_RANGE_DAYS = 366 };
     CalendarPlusEventColorRange *range;
     g_autofree gint64 *days = NULL;
+    g_autofree gboolean *day_valid = NULL;
+    g_autofree gint64 *valid_days = NULL;
+    g_autofree gsize *valid_indexes = NULL;
     GPtrArray **buckets;
     GHashTableIter iter;
     gpointer value;
+    gsize valid_count = 0;
     gsize item;
 
     if (index == NULL || day_count == 0 || day_count > MAX_RANGE_DAYS)
         return NULL;
 
     days = g_new0(gint64, day_count);
-    if (!build_local_day_range(first_local_day_unix, day_count, days))
+    day_valid = g_new0(gboolean, day_count);
+    if (!build_local_day_range(
+            first_local_day_unix, day_count, days, day_valid))
+    {
         return NULL;
+    }
 
+    valid_days = g_new0(gint64, day_count);
+    valid_indexes = g_new0(gsize, day_count);
     buckets = g_new0(GPtrArray *, day_count);
     for (item = 0; item < day_count; item++)
+    {
         buckets[item] = g_ptr_array_new();
+        if (day_valid[item])
+        {
+            valid_days[valid_count] = days[item];
+            valid_indexes[valid_count] = item;
+            valid_count++;
+        }
+    }
 
     /*
      * Traverse the hash once.  Binary-search the first relevant day, then walk
@@ -705,15 +790,25 @@ calendar_plus_event_index_color_range(CalendarPlusEventIndex *index,
     while (g_hash_table_iter_next(&iter, NULL, &value))
     {
         EventRecord *event = value;
-        gsize first = lower_bound_day(days, day_count, event->start_day_unix);
+        gsize first;
 
-        if (first >= day_count || days[first] > event->end_day_unix)
+        if (valid_count == 0)
             continue;
+
+        first = lower_bound_day(
+            valid_days, valid_count, event->start_day_unix);
+        if (first >= valid_count ||
+            valid_days[first] > event->end_day_unix)
+        {
+            continue;
+        }
+
         for (item = first;
-             item < day_count && days[item] <= event->end_day_unix;
+             item < valid_count &&
+             valid_days[item] <= event->end_day_unix;
              item++)
         {
-            g_ptr_array_add(buckets[item], event);
+            g_ptr_array_add(buckets[valid_indexes[item]], event);
         }
     }
 
@@ -722,11 +817,13 @@ calendar_plus_event_index_color_range(CalendarPlusEventIndex *index,
     range->colors = g_new0(gchar **, day_count);
     for (item = 0; item < day_count; item++)
     {
-        range->colors[item] = copy_ordered_bucket_colors(
-            buckets[item],
-            days[item],
-            now_unix,
-            maximum_colors_per_day);
+        range->colors[item] = day_valid[item] ?
+            copy_ordered_bucket_colors(
+                buckets[item],
+                days[item],
+                now_unix,
+                maximum_colors_per_day) :
+            g_new0(gchar *, 1U);
         g_ptr_array_unref(buckets[item]);
     }
     g_free((gpointer)buckets);
