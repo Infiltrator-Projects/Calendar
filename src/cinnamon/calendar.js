@@ -521,9 +521,9 @@ var Calendar = class Calendar {
         }
 
         const records = model.deep_unpack();
-        for (const record of records) {
-            this._addGridCell(record);
-        }
+        let eventColorsByCell = [];
+        let firstDate = null;
+        let lastDate = null;
 
         /*
          * The native grid supplies Gregorian coordinates for every displayed
@@ -534,24 +534,36 @@ var Calendar = class Calendar {
         if (records.length > 0) {
             const first = records[0];
             const last = records[records.length - 1];
-            const firstDate = _localDate(first[1], first[2], first[3]);
-            const lastDate = _localDate(last[1], last[2], last[3]);
+            firstDate = _localDate(first[1], first[2], first[3]);
+            lastDate = _localDate(last[1], last[2], last[3]);
             if (firstDate !== null && lastDate !== null) {
                 this.events_manager.set_visible_range(
                     firstDate,
                     lastDate,
                     forceReload
                 );
+                if (this.events_enabled) {
+                    eventColorsByCell = this.events_manager.get_colors_for_range(
+                        firstDate,
+                        records.length,
+                        MAX_EVENT_DOTS
+                    );
+                }
             } else {
                 global.logError(
                     "Calendar: visible range exceeds the GJS Date domain."
                 );
             }
         }
+
+        for (let index = 0; index < records.length; index++) {
+            this._addGridCell(records[index], eventColorsByCell[index] || []);
+        }
+
         this.events_manager.select_date(this._selectedDate, forceReload);
     }
 
-    _addGridCell(record) {
+    _addGridCell(record, eventColors) {
         const [
             dayLabel,
             year,
@@ -573,11 +585,8 @@ var Calendar = class Calendar {
             global.logError("Calendar: grid cell exceeds the GJS Date domain.");
             return;
         }
-        const eventColors = this.events_enabled
-            ? this.events_manager.get_colors_for_date(date).slice(
-                0,
-                MAX_EVENT_DOTS
-            )
+        eventColors = this.events_enabled
+            ? eventColors.slice(0, MAX_EVENT_DOTS)
             : [];
         const accessibleParts = [
             `${this.getCalendarName()}: ${this.formatDate(date, "full")}`,
