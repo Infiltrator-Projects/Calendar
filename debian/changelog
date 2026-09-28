@@ -1,3 +1,12 @@
+infiltrator-calendar (1.0.73) unstable; urgency=medium
+
+  * Fix empty CalendarServer refresh culling and stale agenda teardown.
+  * Batch month-grid event colours through one native range query.
+  * Harden civil-date, locale-format, policy and public-year boundaries.
+  * Add regression coverage for the repaired edge cases.
+
+ -- Shannon Smith <infiltratr@yandex.com>  Mon, 28 Sep 2026 08:30:00 +1000
+
 infiltrator-calendar (1.0.72) unstable; urgency=medium
 
   * Repair serialized event-range tests and add automatic bounded retry.
