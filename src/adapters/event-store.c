@@ -118,9 +118,10 @@ calendar_plus_event_store_get_colors(CalendarPlusEventStore *self,
     g_return_val_if_fail(CALENDAR_PLUS_IS_EVENT_STORE(self), NULL);
 
     /*
-     * Month-grid dots need only stable colours. Avoid constructing, sorting
-     * and deep-copying a complete agenda snapshot for each of the 42 cells.
+     * Month-grid dots need only stable colours. Preserve the agenda's ordering
+     * semantics while avoiding a deep-copied event snapshot for every cell.
      */
-    (void)now_unix;
-    return calendar_plus_event_index_colors(self->index, local_day_unix);
+    return calendar_plus_event_index_colors(self->index,
+                                            local_day_unix,
+                                            now_unix);
 }

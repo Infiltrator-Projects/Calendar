@@ -534,32 +534,25 @@ ordered_records(CalendarPlusEventIndex *index,
 
 gchar **
 calendar_plus_event_index_colors(CalendarPlusEventIndex *index,
-                                 gint64 local_day_unix)
+                                 gint64 local_day_unix,
+                                 gint64 now_unix)
 {
-    const gint64 requested_day = local_day_start(local_day_unix);
-    g_autoptr(GPtrArray) matching = g_ptr_array_new();
-    GHashTableIter iter;
-    gpointer value;
+    g_autoptr(GPtrArray) ordered = NULL;
     gchar **colors;
     guint item;
 
     if (index == NULL)
         return NULL;
 
-    g_hash_table_iter_init(&iter, index->events_by_id);
-    while (g_hash_table_iter_next(&iter, NULL, &value))
+    /*
+     * Reuse agenda ordering semantics, including today's ended/all-day/current
+     * grouping, but copy only colour strings rather than complete event rows.
+     */
+    ordered = ordered_records(index, local_day_unix, now_unix);
+    colors = g_new0(gchar *, (gsize)ordered->len + 1U);
+    for (item = 0; item < ordered->len; item++)
     {
-        const EventRecord *event = value;
-        if (event->start_day_unix <= requested_day &&
-            event->end_day_unix >= requested_day)
-            g_ptr_array_add(matching, value);
-    }
-
-    g_ptr_array_sort(matching, compare_records);
-    colors = g_new0(gchar *, (gsize)matching->len + 1U);
-    for (item = 0; item < matching->len; item++)
-    {
-        const EventRecord *event = g_ptr_array_index(matching, item);
+        const EventRecord *event = g_ptr_array_index(ordered, item);
         colors[item] = g_strdup(event->color);
     }
     return colors;
