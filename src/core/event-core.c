@@ -600,7 +600,8 @@ build_local_day_range(gint64 first_local_day_unix,
     if (first == NULL)
         return FALSE;
 
-    cursor = g_steal_pointer(&first);
+    cursor = first;
+    first = NULL;
     for (item = 0; item < day_count; item++)
     {
         g_autoptr(GDateTime) next = NULL;
@@ -613,7 +614,8 @@ build_local_day_range(gint64 first_local_day_unix,
         if (next == NULL)
             return FALSE;
         g_date_time_unref(cursor);
-        cursor = g_steal_pointer(&next);
+        cursor = next;
+        next = NULL;
     }
     return TRUE;
 }
@@ -727,7 +729,7 @@ calendar_plus_event_index_color_range(CalendarPlusEventIndex *index,
             maximum_colors_per_day);
         g_ptr_array_unref(buckets[item]);
     }
-    g_free(buckets);
+    g_free((gpointer)buckets);
     return range;
 }
 
@@ -740,7 +742,7 @@ calendar_plus_event_color_range_free(CalendarPlusEventColorRange *range)
         return;
     for (item = 0; item < range->day_count; item++)
         g_strfreev(range->colors[item]);
-    g_free(range->colors);
+    g_free((gpointer)range->colors);
     g_free(range);
 }
 
