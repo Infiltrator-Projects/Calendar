@@ -626,7 +626,7 @@ function evaluateCalendar() {
         "utf8"
     );
     vm.runInContext(
-        `${source}\nglobalThis.__Calendar = Calendar;`,
+        `${source}\nglobalThis.__Calendar = Calendar;\nglobalThis.__localDate = _localDate;`,
         context,
         { filename: "calendar.js" }
     );
@@ -640,6 +640,7 @@ function evaluateCalendar() {
 
     return {
         Calendar: context.__Calendar,
+        localDate: context.__localDate,
         Clutter,
         settings,
         eventsManager,
@@ -715,7 +716,7 @@ function evaluatePanelClock() {
         "utf8"
     );
     vm.runInContext(
-        `${source}\nglobalThis.__PanelClock = { panelText, syncNativeClock, configureWallClock, uses24HourClock, isNativeClockMode };`,
+        `${source}\nglobalThis.__PanelClock = { panelText, todayDisplay, dayName, syncNativeClock, configureWallClock, uses24HourClock, isNativeClockMode };`,
         context,
         { filename: "panelClock.js" }
     );
@@ -851,6 +852,39 @@ function testPanelClockDefensiveFormatting() {
 
     PanelClock.syncNativeClock(systemClock, base);
     assert.equal(observations.starts, 1);
+}
+
+function testPanelClockPreservesLocaleCasingAndNullFormats() {
+    const { PanelClock, systemClock } = evaluatePanelClock();
+    const settings = {
+        get_boolean(key) {
+            return key === "clock-use-24h" || key === "clock-show-date";
+        },
+    };
+    const clock = {
+        get_clock() { return "maanantai 12:34"; },
+        get_clock_for_format() { return null; },
+    };
+    const config = {
+        mode: "standard",
+        showSeconds: false,
+        latitude: 0,
+        longitude: 0,
+        locationConfigured: false,
+        vertical: false,
+        desktopSettings: settings,
+        primaryCalendar: "gregorian",
+    };
+
+    assert.equal(
+        PanelClock.panelText(clock, systemClock, config),
+        "maanantai 12:34",
+        "locale-provided casing must not be rewritten by Calendar"
+    );
+    assert.equal(PanelClock.dayName(clock), "");
+    const display = PanelClock.todayDisplay(clock, null, config);
+    assert.equal(display.shortDate, "");
+    assert.equal(display.tooltip, "");
 }
 
 function testMintFallbackClockFormatting() {
@@ -1016,6 +1050,21 @@ function testModuleLoaderCompatibility() {
     assert.equal(ExtensionAppletClass.loaderObservations.featureCalls, 4);
 }
 
+
+function testCalendarRejectsNormalizedCivilDates() {
+    const { localDate } = evaluateCalendar();
+
+    assert.equal(
+        localDate(2026, 2, 30),
+        null,
+        "JavaScript Date normalization must not silently change civil identity"
+    );
+    const valid = localDate(2026, 2, 28);
+    assert.notEqual(valid, null);
+    assert.equal(valid.getFullYear(), 2026);
+    assert.equal(valid.getMonth() + 1, 2);
+    assert.equal(valid.getDate(), 28);
+}
 
 function testCalendarLifecycle() {
     const { Calendar, settings, eventsManager, desktopSettings, observations } =
@@ -1552,9 +1601,11 @@ function testEventsManagerReconnect() {
 }
 
 testPanelClockDefensiveFormatting();
+testPanelClockPreservesLocaleCasingAndNullFormats();
 testMintFallbackClockFormatting();
 testConstructorAtomicity();
 testModuleLoaderCompatibility();
+testCalendarRejectsNormalizedCivilDates();
 testCalendarLifecycle();
 testCalendarNavigationCoalescing();
 testCalendarKeyboardNavigation();
