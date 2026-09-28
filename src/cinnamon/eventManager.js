@@ -730,18 +730,26 @@ var EventsManager = class EventsManager {
         return snapshot.events.length === 0 ? null : snapshot;
     }
 
-    get_colors_for_date(js_date) {
-        if (this._destroyed || this.event_store === null) {
+    get_colors_for_range(js_date, dayCount, maximumColorsPerDay) {
+        if (this._destroyed || this.event_store === null ||
+            !Number.isInteger(dayCount) || dayCount <= 0 ||
+            !Number.isInteger(maximumColorsPerDay) ||
+            maximumColorsPerDay < 0) {
             return [];
         }
+
         const day = midnight(_jsDateToLocalDateTime(js_date));
         if (day === null) {
             return [];
         }
-        return this.event_store.get_colors(
+
+        const variant = this.event_store.get_color_range(
             day.to_unix(),
-            GLib.DateTime.new_now_local().to_unix()
+            dayCount,
+            GLib.DateTime.new_now_local().to_unix(),
+            maximumColorsPerDay
         );
+        return variant === null ? [] : variant.deep_unpack();
     }
 
     should_show_event_pane() {
