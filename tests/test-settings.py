@@ -440,7 +440,7 @@ def main() -> None:
     assert "class CalendarPlusApplet extends Applet.Applet" in applet_source
     assert "can_focus: true" in calendar_source
     assert "can_focus: canLaunch" in event_source
-    assert event_source.count('find_program_in_path("gnome-calendar")') == 1
+    assert "find_program_in_path(this._calendarProgram)" in event_source
     assert "clickable: this._canLaunchCalendar" in event_source
     assert "reactive: this._canLaunchCalendar" in event_source
     assert "can_focus: this._canLaunchCalendar" in event_source
