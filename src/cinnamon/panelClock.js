@@ -229,7 +229,7 @@ function nativePanelText(clock, systemClock, config) {
             nativeTime
         );
         if (replaced !== null) {
-            return replaced.capitalize();
+            return replaced;
         }
     }
 
@@ -274,10 +274,6 @@ function panelText(clock, systemClock, config, primaryCalendarSystem = null) {
         text = systemClock ? nativePanelText(clock, systemClock, config) : null;
     } else {
         text = clock.get_clock();
-        if (typeof text === "string" &&
-            typeof text.capitalize === "function") {
-            text = text.capitalize();
-        }
     }
 
     return withSelectedCalendarDate(
@@ -294,8 +290,8 @@ function todayDisplay(clock, primaryCalendarSystem, config) {
     let shortDate;
     let tooltip;
     if (config.primaryCalendar === "gregorian") {
-        shortDate = clock.get_clock_for_format(DATE_FORMAT_SHORT).capitalize();
-        tooltip = clock.get_clock_for_format(DATE_FORMAT_FULL).capitalize();
+        shortDate = clockForFormat(clock, DATE_FORMAT_SHORT);
+        tooltip = clockForFormat(clock, DATE_FORMAT_FULL);
     } else {
         shortDate = primaryCalendarSystem.format_date_part(
             ...args,
@@ -311,5 +307,5 @@ function todayDisplay(clock, primaryCalendarSystem, config) {
 }
 
 function dayName(clock) {
-    return clock.get_clock_for_format(DAY_FORMAT).capitalize();
+    return clockForFormat(clock, DAY_FORMAT);
 }
