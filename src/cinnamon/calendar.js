@@ -88,7 +88,13 @@ function _localDate(year, month, day) {
     const value = new Date();
     value.setHours(12, 0, 0, 0);
     value.setFullYear(year, month - 1, day);
-    return Number.isFinite(value.getTime()) ? value : null;
+    if (!Number.isFinite(value.getTime()) ||
+        value.getFullYear() !== year ||
+        value.getMonth() + 1 !== month ||
+        value.getDate() !== day) {
+        return null;
+    }
+    return value;
 }
 
 function _weekdayAbbreviation(dayIndex) {
@@ -500,7 +506,7 @@ var Calendar = class Calendar {
             return;
         }
 
-        this._monthLabel.text = this.formatDate(this._selectedDate, "month").capitalize();
+        this._monthLabel.text = this.formatDate(this._selectedDate, "month");
         this._yearLabel.text = this.formatDate(this._selectedDate, "year");
         this._removeCells();
 
