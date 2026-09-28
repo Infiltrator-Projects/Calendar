@@ -290,8 +290,8 @@ function todayDisplay(clock, primaryCalendarSystem, config) {
     let shortDate;
     let tooltip;
     if (config.primaryCalendar === "gregorian") {
-        shortDate = clockForFormat(clock, DATE_FORMAT_SHORT);
-        tooltip = clockForFormat(clock, DATE_FORMAT_FULL);
+        shortDate = clockForFormat(clock, DATE_FORMAT_SHORT) || "";
+        tooltip = clockForFormat(clock, DATE_FORMAT_FULL) || shortDate;
     } else {
         shortDate = primaryCalendarSystem.format_date_part(
             ...args,
@@ -307,5 +307,5 @@ function todayDisplay(clock, primaryCalendarSystem, config) {
 }
 
 function dayName(clock) {
-    return clockForFormat(clock, DAY_FORMAT);
+    return clockForFormat(clock, DAY_FORMAT) || "";
 }
