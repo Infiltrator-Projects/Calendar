@@ -14,6 +14,7 @@ const CalendarPlus = imports.gi.CalendarPlus;
 const CinnamonDesktop = imports.gi.CinnamonDesktop;
 const Clutter = imports.gi.Clutter;
 const GLib = imports.gi.GLib;
+const Gio = imports.gi.Gio;
 const Pango = imports.gi.Pango;
 const St = imports.gi.St;
 const Signals = imports.signals;
@@ -112,13 +113,30 @@ var EventList = class EventList {
          */
         this._current_event_cache_key = null;
         this._signals = new SignalBag();
+        this._backendSettings = null;
+        this._backend = "eds";
+        try {
+            this._backendSettings = new Gio.Settings({ schema_id: "org.cinnamon" });
+            this._backend = this._backendSettings.get_string("calendar-backend") ===
+                "clockenstein" ? "clockenstein" : "eds";
+        } catch (error) {
+            /*
+             * Older Cinnamon releases may not expose calendar-backend. Their
+             * CalendarServer contract is EDS/GNOME Calendar, so that remains
+             * the compatibility fallback.
+             */
+            this._backendSettings = null;
+            this._backend = "eds";
+        }
+        this._calendarProgram = this._backend === "clockenstein"
+            ? "clockenstein-calendar"
+            : "gnome-calendar";
         /*
-         * PATH probing is process/environment state, not row state.  Resolve it
-         * once so a large agenda never repeats filesystem searches and every
-         * launch surface has identical enabled/focusable behaviour.
+         * PATH probing is process/environment state, not row state. Resolve
+         * once per backend and refresh only if Cinnamon changes its backend.
          */
         this._canLaunchCalendar =
-            GLib.find_program_in_path("gnome-calendar") !== null;
+            GLib.find_program_in_path(this._calendarProgram) !== null;
 
         this.actor = new St.BoxLayout({
             style_class: "calendar-events-main-box",
@@ -139,6 +157,14 @@ var EventList = class EventList {
 
         this._buildEmptyState();
         this._buildEventScroller();
+
+        if (this._backendSettings !== null) {
+            this._signals.connect(
+                this._backendSettings,
+                "changed::calendar-backend",
+                () => this._refreshCalendarLauncher()
+            );
+        }
     }
 
     _buildEmptyState() {
@@ -205,11 +231,58 @@ var EventList = class EventList {
         this.actor.add_actor(this.events_scroll_box);
     }
 
+    _refreshCalendarLauncher() {
+        if (this._destroyed) {
+            return;
+        }
+        try {
+            this._backend = this._backendSettings !== null &&
+                this._backendSettings.get_string("calendar-backend") === "clockenstein"
+                ? "clockenstein"
+                : "eds";
+        } catch (error) {
+            this._backend = "eds";
+        }
+        this._calendarProgram = this._backend === "clockenstein"
+            ? "clockenstein-calendar"
+            : "gnome-calendar";
+        this._canLaunchCalendar =
+            GLib.find_program_in_path(this._calendarProgram) !== null;
+
+        for (const button of [this.selected_date_label, this.no_events_button]) {
+            if (button) {
+                button.reactive = this._canLaunchCalendar;
+                button.can_focus = this._canLaunchCalendar;
+            }
+        }
+        this._current_event_cache_key = null;
+    }
+
     launch_calendar(gdate) {
         if (this._destroyed || gdate === null || !this._canLaunchCalendar) {
             return;
         }
-        Util.trySpawn(["gnome-calendar", "--date", gdate.format("%x")], false);
+
+        if (this._backend === "clockenstein") {
+            Util.trySpawn(
+                ["clockenstein-calendar", `--date=${gdate.format("%F")}`],
+                false
+            );
+        } else {
+            Util.trySpawn(["gnome-calendar", "--date", gdate.format("%x")], false);
+        }
+        this.emit("launched-calendar");
+    }
+
+    _launchEvent(uuid) {
+        if (this._destroyed || !this._canLaunchCalendar) {
+            return;
+        }
+        if (this._backend === "clockenstein") {
+            this.launch_calendar(this.selected_date);
+            return;
+        }
+        Util.trySpawn(["gnome-calendar", "--uuid", uuid], false);
         this.emit("launched-calendar");
     }
 
@@ -274,8 +347,7 @@ var EventList = class EventList {
                 clickable: this._canLaunchCalendar,
             });
             row.connect("view-event", (actor, uuid) => {
-                this.emit("launched-calendar");
-                Util.trySpawn(["gnome-calendar", "--uuid", uuid], false);
+                this._launchEvent(uuid);
             });
             this.events_box.add_actor(row.actor);
             this._rows.push(row);
@@ -369,6 +441,7 @@ var EventList = class EventList {
         }
         this.settings = null;
         this.desktop_settings = null;
+        this._backendSettings = null;
         this.selected_date = null;
     }
 };

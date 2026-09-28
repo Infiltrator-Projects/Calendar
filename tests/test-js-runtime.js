@@ -202,6 +202,7 @@ function evaluateEventsManager() {
         removedSources: 0,
         timezoneMonitorCancels: 0,
         timezoneMonitorDisconnects: 0,
+        timezoneRefreshes: 0,
         rangeCalls: [],
         rangeCallbacks: [],
         busAppeared: null,
@@ -371,7 +372,10 @@ function evaluateEventsManager() {
                                         },
                                     };
                                 },
-                                refresh_timezone() { return false; },
+                                refresh_timezone() {
+                                    observations.timezoneRefreshes += 1;
+                                    return false;
+                                },
                             };
                         },
                     },
@@ -428,6 +432,7 @@ function evaluateEventsManager() {
 
 function evaluateEventView() {
     let eventViewIdle = null;
+    const eventViewObservations = { spawns: [] };
     const signals = {
         addSignalMethods(prototype) {
             prototype.connect = prototype.connect || function() { return 1; };
@@ -469,12 +474,13 @@ function evaluateEventView() {
                 Clutter: { ActorAlign: { CENTER: 0, START: 1, END: 2 } },
                 GLib: {
                     SOURCE_REMOVE: false,
-                    find_program_in_path() { return null; },
+                    find_program_in_path(program) { return program; },
                     DateTime: {
                         new_now_local() { return null; },
                         new_local() { return null; },
                     },
                 },
+                Gio: { Settings: class {} },
                 Pango: { EllipsizeMode: { NEVER: 0 } },
                 St: {
                     PolicyType: { NEVER: 0, AUTOMATIC: 1 },
@@ -483,7 +489,13 @@ function evaluateEventView() {
             },
             signals,
             ui: { separator: { Separator: class {} } },
-            misc: { util: {} },
+            misc: {
+                util: {
+                    trySpawn(args) {
+                        eventViewObservations.spawns.push(Array.from(args));
+                    },
+                },
+            },
             mainloop: {
                 idle_add(callback) {
                     eventViewIdle = callback;
@@ -515,6 +527,7 @@ function evaluateEventView() {
     );
     return {
         EventList: context.__EventList,
+        observations: eventViewObservations,
         replaceEventRow: context.__replaceEventRowForTest,
         runEventViewIdle() {
             assert.notEqual(eventViewIdle, null, "an event-view idle must be pending");
@@ -625,7 +638,26 @@ function evaluateCalendar() {
                             } : null;
                         },
                     },
-                    date_same() { return true; },
+                    date_same(yearA, monthA, dayA, yearB, monthB, dayB) {
+                        function valid(year, month, day) {
+                            if (!Number.isInteger(year) ||
+                                !Number.isInteger(month) ||
+                                !Number.isInteger(day) ||
+                                month < 1 || month > 12 || day < 1) {
+                                return false;
+                            }
+                            const leap = year % 4 === 0 &&
+                                (year % 100 !== 0 || year % 400 === 0);
+                            const lengths = [
+                                31, leap ? 29 : 28, 31, 30, 31, 30,
+                                31, 31, 30, 31, 30, 31,
+                            ];
+                            return day <= lengths[month - 1];
+                        }
+                        return valid(yearA, monthA, dayA) &&
+                            valid(yearB, monthB, dayB) &&
+                            yearA === yearB && monthA === monthB && dayA === dayB;
+                    },
                     date_is_work_day() { return true; },
                 },
             },
@@ -654,7 +686,7 @@ function evaluateCalendar() {
         "utf8"
     );
     vm.runInContext(
-        `${source}\nglobalThis.__Calendar = Calendar;\nglobalThis.__localDate = _localDate;\nglobalThis.__representableLocalDate = _representableLocalDate;`,
+        `${source}\nglobalThis.__Calendar = Calendar;\nglobalThis.__localDate = _localDate;\nglobalThis.__representableLocalDate = _representableLocalDate;\nglobalThis.__addCivilDays = _addCivilDays;`,
         context,
         { filename: "calendar.js" }
     );
@@ -670,6 +702,7 @@ function evaluateCalendar() {
         Calendar: context.__Calendar,
         localDate: context.__localDate,
         representableLocalDate: context.__representableLocalDate,
+        addCivilDays: context.__addCivilDays,
         Clutter,
         settings,
         eventsManager,
@@ -1084,7 +1117,8 @@ function testCalendarRejectsNormalizedCivilDates() {
     const originalTimezone = process.env.TZ;
     process.env.TZ = "Pacific/Apia";
     try {
-        const { localDate, representableLocalDate } = evaluateCalendar();
+        const { localDate, representableLocalDate, addCivilDays } =
+            evaluateCalendar();
 
         assert.equal(
             localDate(2026, 2, 30),
@@ -1112,6 +1146,29 @@ function testCalendarRejectsNormalizedCivilDates() {
         assert.equal(valid.getFullYear(), 2011);
         assert.equal(valid.getMonth() + 1, 12);
         assert.equal(valid.getDate(), 31);
+
+        const extreme = localDate(2147483647, 12, 30);
+        assert.notEqual(
+            extreme,
+            null,
+            "date-only UI state must cover the native signed-gint year domain"
+        );
+        assert.equal(
+            representableLocalDate(2147483647, 12, 30),
+            null,
+            "the extreme-year regression must not accidentally pass through Date"
+        );
+        const extremeNext = addCivilDays(extreme, 1);
+        assert.notEqual(extremeNext, null);
+        assert.equal(extremeNext.getFullYear(), 2147483647);
+        assert.equal(extremeNext.getMonth() + 1, 12);
+        assert.equal(extremeNext.getDate(), 31);
+        assert.ok(extremeNext.getDay() >= 0 && extremeNext.getDay() <= 6);
+        assert.equal(
+            addCivilDays(extremeNext, 1),
+            null,
+            "keyboard day navigation must stop cleanly at the native year limit"
+        );
     } finally {
         if (originalTimezone === undefined) {
             delete process.env.TZ;
@@ -1433,6 +1490,66 @@ function testRangeAdmissionRejectsLateOutOfRangeSignals() {
     manager.destroy();
 }
 
+function testRemovalSignalsInvalidateInsteadOfDeletingNewGeneration() {
+    const { EventsManager, observations } = evaluateEventsManager();
+    const manager = new EventsManager({ getValue() { return true; } }, {});
+    let queuedForce = null;
+
+    manager.current_range_start = { to_unix() { return 1000; } };
+    manager.current_range_end = { to_unix() { return 2000; } };
+    manager._range_accepting_events = true;
+    manager.queue_reload = (force) => { queuedForce = force; };
+
+    manager._removeEvents("source:event");
+    assert.equal(observations.clears, 1);
+    assert.equal(manager._range_accepting_events, false);
+    assert.equal(manager._range_request_succeeded, false);
+    assert.equal(
+        queuedForce,
+        true,
+        "ID-only removals must invalidate and re-query the newest range"
+    );
+
+    queuedForce = null;
+    manager._range_request_pending = true;
+    manager._removeEvents("source:event");
+    assert.equal(manager._queued_range_force, true);
+    assert.equal(
+        queuedForce,
+        null,
+        "an in-flight range must finish before the forced replacement starts"
+    );
+    manager.destroy();
+}
+
+function testTimezoneReloadPreservesCivilRange() {
+    const { EventsManager, observations } = evaluateEventsManager();
+    const manager = new EventsManager({ getValue() { return true; } }, {});
+    const calls = [];
+
+    manager.current_range_start = { to_unix() { return 1000; } };
+    manager.current_range_end = { to_unix() { return 2000; } };
+    manager.current_range_start_civil = { year: 2026, month: 8, day: 2 };
+    manager.current_range_end_civil = { year: 2026, month: 9, day: 12 };
+    manager.set_visible_range = (first, last, force) => {
+        calls.push([first, last, force]);
+    };
+
+    manager._timezoneChanged();
+    observations.runNextIdle();
+    assert.equal(observations.timezoneRefreshes, 1);
+    assert.deepEqual(
+        calls,
+        [[
+            { year: 2026, month: 8, day: 2 },
+            { year: 2026, month: 9, day: 12 },
+            true,
+        ]],
+        "timezone reload must reconstruct transport instants from civil endpoints"
+    );
+    manager.destroy();
+}
+
 function testServerLossClearsPresentedAgenda() {
     const { EventsManager, observations } = evaluateEventsManager();
     const presented = [];
@@ -1459,6 +1576,38 @@ function testServerLossClearsPresentedAgenda() {
     manager.destroy();
 }
 
+function testExpectedNoCalendarShutdownStaysAuthoritative() {
+    const { EventsManager } = evaluateEventsManager();
+    const presented = [];
+    const manager = new EventsManager(
+        { getValue() { return true; } },
+        {},
+        {
+            set_events(snapshot, delayed, unavailable) {
+                presented.push([snapshot, delayed, unavailable]);
+            },
+        }
+    );
+    manager._inited = true;
+    manager._cached_state = 1;
+    manager._calendar_server = { status: 1 };
+
+    manager._calendarServerVanished();
+    assert.equal(manager._cached_state, 1);
+    assert.equal(manager.should_show_event_pane(), false);
+    assert.equal(
+        manager._reconnect_timer_id,
+        0,
+        "authoritative no-calendar shutdown must not become a five-second poll"
+    );
+    assert.deepEqual(
+        presented,
+        [[null, false, false]],
+        "expected empty shutdown must not be presented as transport failure"
+    );
+    manager.destroy();
+}
+
 function testBatchedEventColorBridge() {
     const { EventsManager, observations } = evaluateEventsManager();
     observations.colorRangeResult = [
@@ -1480,6 +1629,44 @@ function testBatchedEventColorBridge() {
     manager.destroy();
 }
 
+
+function testEventListLaunchesSelectedCinnamonBackend() {
+    const { EventList, observations } = evaluateEventView();
+    const view = Object.create(EventList.prototype);
+    Object.assign(view, {
+        _destroyed: false,
+        _canLaunchCalendar: true,
+        _backend: "clockenstein",
+        selected_date: {
+            format(pattern) {
+                return pattern === "%F" ? "2026-09-29" : "29/09/26";
+            },
+        },
+    });
+
+    view.launch_calendar(view.selected_date);
+    assert.deepEqual(
+        observations.spawns.pop(),
+        ["clockenstein-calendar", "--date=2026-09-29"],
+        "Clockenstein backend must launch its matching calendar application"
+    );
+
+    view._backend = "eds";
+    view._launchEvent("source:event");
+    assert.deepEqual(
+        observations.spawns.pop(),
+        ["gnome-calendar", "--uuid", "source:event"],
+        "EDS backend event activation must retain GNOME Calendar UUID routing"
+    );
+
+    view._backend = "clockenstein";
+    view._launchEvent("source:event");
+    assert.deepEqual(
+        observations.spawns.pop(),
+        ["clockenstein-calendar", "--date=2026-09-29"],
+        "Clockenstein has no UUID launch contract; open the selected date instead"
+    );
+}
 
 function testEventListScrollUsesViewport() {
     const { EventList, runEventViewIdle } = evaluateEventView();
@@ -1773,6 +1960,7 @@ testCalendarRejectsNormalizedCivilDates();
 testCalendarLifecycle();
 testCalendarNavigationCoalescing();
 testCalendarKeyboardNavigation();
+testEventListLaunchesSelectedCinnamonBackend();
 testEventListScrollUsesViewport();
 testEventListUnavailableState();
 testEventListCacheIdentity();
@@ -1780,7 +1968,10 @@ testVisibleEventRange();
 testVisibleEventRangeFailureRecovery();
 testSuccessfulEmptyRangeReplacesPreviousGeneration();
 testRangeAdmissionRejectsLateOutOfRangeSignals();
+testRemovalSignalsInvalidateInsteadOfDeletingNewGeneration();
+testTimezoneReloadPreservesCivilRange();
 testServerLossClearsPresentedAgenda();
+testExpectedNoCalendarShutdownStaysAuthoritative();
 testBatchedEventColorBridge();
 testEventsManagerPresentationState();
 testEventsManagerPreservesPreEpochSelection();

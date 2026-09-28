@@ -214,6 +214,9 @@ def main() -> None:
     assert "CalendarPlus.event_day_relation(" in event_manager_source
     assert "CalendarPlus.event_timing(" in event_manager_source
     assert "CalendarPlus.EventState." in event_source
+    assert '"changed::calendar-backend"' in event_source
+    assert '"clockenstein-calendar"' in event_source
+    assert '["gnome-calendar", "--uuid", uuid]' in event_source
     assert "CalendarPlus.EventDayRelation." in event_source
     for legacy in (
         "starts_on_day(date)",
@@ -356,6 +359,9 @@ def main() -> None:
     assert "function _safeEventColor(color)" in event_source
     assert "_safeEventColor(event.color)" in event_source
     assert "this._range_accepting_events" in event_manager_source
+    assert "Treat every removal as cache invalidation" in event_manager_source
+    assert "current_range_start_civil" in event_manager_source
+    assert "current_range_end_civil" in event_manager_source
     assert "_eventVariantOverlapsRange" in event_manager_source
     assert "this._event_list.set_events(null, false, true);" in event_manager_source
     assert "adjustment.page_size" in event_source

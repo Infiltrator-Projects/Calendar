@@ -13,10 +13,19 @@ delay_nuremberg_hours_provider(gint64 unix_microseconds,
                                 gdouble latitude G_GNUC_UNUSED,
                                 gdouble longitude G_GNUC_UNUSED)
 {
-    (void)utc_offset_seconds;
-    return delay_for_clock_seconds(
+    const guint solar_tick = delay_for_clock_seconds(
         calendar_plus_apparent_solar_seconds(unix_microseconds, 11.0767),
         1.0L, show_seconds);
+    const guint civil_day_boundary = delay_for_integer_period(
+        unix_microseconds, MICROSECONDS_PER_DAY);
+
+    (void)utc_offset_seconds;
+    /*
+     * Common's historical Nürnberg renderer changes its fixed Wendetag
+     * allocation on Gregorian day boundaries as well as on ordinary displayed
+     * second/minute boundaries. Wake for whichever can change the text first.
+     */
+    return MIN(solar_tick, civil_day_boundary);
 }
 
 typedef enum { NUR_SUNRISE, NUR_SUNSET } NurBoundary;

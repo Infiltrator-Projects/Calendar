@@ -787,6 +787,11 @@ test_historical_calendar_references(void)
                     "13.0.0.0.0 · 4 Ajaw · 3 K’ank’in");
     g_assert_cmpstr(bahai, ==, "1 Bahá 183 B.E.");
     {
+        g_autofree gchar *umm_outside =
+            calendar_format("islamic-umalqura", 1800, 1, 1, "short");
+        g_assert_cmpstr(umm_outside, ==, "");
+    }
+    {
         g_autofree gchar *swedish_1700 = calendar_format("swedish-historical", 1700, 3, 11, "short");
         g_autofree gchar *swedish_1712 = calendar_format("swedish-historical", 1712, 3, 11, "short");
         g_autofree gchar *swedish_1753 = calendar_format("swedish-historical", 1753, 3, 1, "short");
@@ -1192,6 +1197,29 @@ test_event_store(void)
         calendar_plus_event_store_add_or_update(store, all_day, 100));
     g_assert_true(
         calendar_plus_event_store_add_or_update(store, past, 100));
+    {
+        g_autoptr(GVariant) backwards =
+            test_event_variant("backwards",
+                               "#444444",
+                               "Backwards",
+                               FALSE,
+                               test_local_time(2026, 7, 29, 11, 0),
+                               test_local_time(2026, 7, 29, 10, 0),
+                               1);
+        g_autoptr(GVariant) empty_all_day =
+            test_event_variant("empty-all-day",
+                               "#555555",
+                               "Empty all day",
+                               TRUE,
+                               day,
+                               day,
+                               1);
+
+        g_assert_false(
+            calendar_plus_event_store_add_or_update(store, backwards, 100));
+        g_assert_false(
+            calendar_plus_event_store_add_or_update(store, empty_all_day, 100));
+    }
 
     snapshot =
         calendar_plus_event_store_get_snapshot(store, day, now);

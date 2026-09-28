@@ -172,16 +172,24 @@ calendar_plus_calendar_engine_format_date(
     const CalendarPlusDate *date,
     CalendarPlusDatePart part)
 {
+    CalendarPlusCalendarFields fields;
     gint64 jdn;
 
     if (engine == NULL || engine->provider == NULL ||
         !date_to_jdn(date, &jdn) ||
         part <= CALENDAR_PLUS_DATE_PART_INVALID ||
-        part > CALENDAR_PLUS_DATE_PART_FULL)
+        part > CALENDAR_PLUS_DATE_PART_FULL ||
+        !engine->provider->fields_from_jdn(engine->provider, jdn, &fields))
     {
         return g_strdup("");
     }
 
+    /*
+     * Formatting must obey the same supported-domain contract as arithmetic.
+     * This is especially important for bounded providers such as Umm al-Qura:
+     * host ICU may be willing to format dates that Calendar intentionally does
+     * not claim to convert or navigate.
+     */
     return engine->provider->format(engine->provider, jdn, part);
 }
 

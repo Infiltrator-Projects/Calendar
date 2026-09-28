@@ -995,6 +995,22 @@ test_nuremberg_clock_boundaries(void)
         historical, sample, 7200, FALSE, FALSE, NAN, NAN);
     g_assert_true(strstr(text, "NUR-D") != NULL || strstr(text, "NUR-N") != NULL);
     g_clear_pointer(&text, g_free);
+    {
+        g_autoptr(GDateTime) before_wendetag =
+            g_date_time_new_utc(2026, 7, 19, 23, 59, 59.0);
+        gint64 near_midnight;
+        guint delay;
+
+        g_assert_nonnull(before_wendetag);
+        near_midnight =
+            calendar_plus_i64_add_saturating(
+                calendar_plus_i64_multiply_saturating(
+                    g_date_time_to_unix(before_wendetag), G_USEC_PER_SEC),
+                900000);
+        delay = calendar_plus_time_delay_to_next_tick_at_location(
+            historical, near_midnight, 0, FALSE, NAN, NAN);
+        g_assert_cmpuint(delay, <=, 100U);
+    }
 
     g_assert_cmpint(local, ==, CALENDAR_PLUS_TIME_MODE_NUREMBERG_SOLAR);
     g_assert_true(calendar_plus_time_mode_requires_latitude(local));

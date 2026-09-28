@@ -229,7 +229,9 @@ calendar_plus_event_input_is_valid(const CalendarPlusEventInput *input)
                          CALENDAR_PLUS_EVENT_MAX_SUMMARY_BYTES,
                          TRUE) &&
            unix_time_is_local_datetime(input->start_unix) &&
-           unix_time_is_local_datetime(input->end_unix);
+           unix_time_is_local_datetime(input->end_unix) &&
+           input->end_unix >= input->start_unix &&
+           (!input->all_day || input->end_unix > input->start_unix);
 }
 
 static EventRecord *
@@ -251,10 +253,8 @@ event_record_from_input(const CalendarPlusEventInput *input)
     event->last_update_timestamp = input->update_timestamp;
 
     /* The source contract supplies all-day end at following midnight. */
-    if (event->all_day && event->end_unix > G_MININT64)
+    if (event->all_day)
         event->end_unix--;
-    if (event->end_unix < event->start_unix)
-        event->end_unix = event->start_unix;
 
     event->start_day_unix = local_day_start(event->start_unix);
     event->end_day_unix = local_day_start(event->end_unix);

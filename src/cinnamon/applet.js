@@ -434,6 +434,13 @@ class CalendarPlusApplet extends Applet.Applet {
             if (!open || this._destroyed) {
                 return;
             }
+            /*
+             * Re-probe an intentionally exited CalendarServer when the user
+             * opens the popup. This catches calendars added after an earlier
+             * authoritative STATUS_NO_CALENDARS without polling every few
+             * seconds while the popup is closed.
+             */
+            this.events_manager.start_events();
             this._resetCalendar();
             this._rebalancePopupWidth();
         });

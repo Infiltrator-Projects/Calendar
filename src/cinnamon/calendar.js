@@ -63,27 +63,28 @@ const DATE_PARTS = Object.freeze({
     full: CalendarPlus.DatePart.FULL,
 });
 
+function _gregorianWeekday(year, month, day) {
+    const offsets = [0, 3, 2, 5, 0, 3, 5, 1, 4, 6, 2, 4];
+    let y = year;
+    if (month < 3) {
+        y -= 1;
+    }
+    const value = y + Math.floor(y / 4) - Math.floor(y / 100) +
+        Math.floor(y / 400) + offsets[month - 1] + day;
+    return ((value % 7) + 7) % 7;
+}
+
 class CivilDate {
     constructor(year, month, day) {
         this._year = year;
         this._month = month;
         this._day = day;
-
-        const anchor = new Date(0);
-        anchor.setUTCHours(12, 0, 0, 0);
-        anchor.setUTCFullYear(year, month - 1, day);
-        this._utcMillis = anchor.getTime();
     }
 
     getFullYear() { return this._year; }
     getMonth() { return this._month - 1; }
     getDate() { return this._day; }
-    getDay() {
-        return Number.isFinite(this._utcMillis)
-            ? new Date(this._utcMillis).getUTCDay()
-            : 0;
-    }
-    getTime() { return this._utcMillis; }
+    getDay() { return _gregorianWeekday(this._year, this._month, this._day); }
 }
 
 function _dateFields(date) {
@@ -101,13 +102,57 @@ function _sameCivilDate(a, b) {
 }
 
 function _civilDateIsValid(year, month, day) {
-    const probe = new Date(0);
-    probe.setUTCHours(12, 0, 0, 0);
-    probe.setUTCFullYear(year, month - 1, day);
-    return Number.isFinite(probe.getTime()) &&
-        probe.getUTCFullYear() === year &&
-        probe.getUTCMonth() + 1 === month &&
-        probe.getUTCDate() === day;
+    return Number.isInteger(year) &&
+        year >= -2147483648 && year <= 2147483647 &&
+        Number.isInteger(month) &&
+        Number.isInteger(day) &&
+        CalendarPlus.date_same(year, month, day, year, month, day);
+}
+
+function _addCivilDays(date, delta) {
+    if (!Number.isInteger(delta)) {
+        return null;
+    }
+    let [year, month, day] = _dateFields(date);
+    if (!_civilDateIsValid(year, month, day)) {
+        return null;
+    }
+
+    const step = delta < 0 ? -1 : 1;
+    let remaining = Math.abs(delta);
+    while (remaining-- > 0) {
+        if (step > 0) {
+            day += 1;
+            if (!_civilDateIsValid(year, month, day)) {
+                day = 1;
+                month += 1;
+                if (month > 12) {
+                    if (year === 2147483647) {
+                        return null;
+                    }
+                    month = 1;
+                    year += 1;
+                }
+            }
+        } else {
+            day -= 1;
+            if (day < 1) {
+                month -= 1;
+                if (month < 1) {
+                    if (year === -2147483648) {
+                        return null;
+                    }
+                    month = 12;
+                    year -= 1;
+                }
+                day = 31;
+                while (!_civilDateIsValid(year, month, day)) {
+                    day -= 1;
+                }
+            }
+        }
+    }
+    return _localDate(year, month, day);
 }
 
 function _representableLocalDate(year, month, day) {
@@ -294,8 +339,7 @@ var Calendar = class Calendar {
 
     queue_set_date(date) {
         if (this._destroyed || date === null ||
-            typeof date.getTime !== "function" ||
-            !Number.isFinite(date.getTime())) {
+            !_civilDateIsValid(..._dateFields(date))) {
             return;
         }
 
@@ -481,25 +525,18 @@ var Calendar = class Calendar {
     }
 
     _dateByDays(date, delta) {
-        const [year, month, day] = _dateFields(date);
-        const result = new Date(0);
-
         /*
-         * Day-key navigation is date arithmetic, not elapsed-time arithmetic.
-         * Perform it in UTC so local timezone gaps/repeats cannot delete or
-         * duplicate a civil date, then reconstruct the local/civil carrier.
+         * Day-key navigation is pure civil arithmetic. It therefore works for
+         * timezone-skipped dates and for the full native gint year domain
+         * without passing through JavaScript Date milliseconds.
          */
-        result.setUTCHours(12, 0, 0, 0);
-        result.setUTCFullYear(year, month - 1, day);
-        result.setUTCDate(result.getUTCDate() + delta);
-        return _localDate(
-            result.getUTCFullYear(),
-            result.getUTCMonth() + 1,
-            result.getUTCDate()
-        );
+        return _addCivilDays(date, delta);
     }
 
     _queueKeyboardDate(date) {
+        if (date === null) {
+            return;
+        }
         this._focusAfterUpdate = _cloneDate(date);
         this.queue_set_date(date);
     }
@@ -680,7 +717,7 @@ var Calendar = class Calendar {
 
         const date = _localDate(year, month, day);
         if (date === null) {
-            global.logError("Calendar: grid cell exceeds the GJS Date domain.");
+            global.logError("Calendar: native grid returned an invalid civil date.");
             return;
         }
         eventColors = this.events_enabled

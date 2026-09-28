@@ -200,6 +200,13 @@ var EventsManager = class EventsManager {
         this._event_list = event_list || null;
         this.current_range_start = null;
         this.current_range_end = null;
+        /*
+         * Keep civil endpoints separately from transport instants. A timezone
+         * change can change the Unix instant that represents local midnight
+         * without changing which Gregorian cells the calendar requested.
+         */
+        this.current_range_start_civil = null;
+        this.current_range_end_civil = null;
         this.current_selected_date = null;
         this.current_selected_civil = null;
         this._range_request_generation = 0;
@@ -315,13 +322,22 @@ var EventsManager = class EventsManager {
             return;
         }
 
+        /*
+         * STATUS_NO_CALENDARS is authoritative and CalendarServer deliberately
+         * exits after publishing it. Preserve that state across the expected
+         * disappearance instead of misclassifying it as transport failure.
+         */
+        const expectedEmpty = this._cached_state === STATUS_NO_CALENDARS;
+
         this._calendar_server_generation += 1;
         this._calendar_server_connecting = false;
         this._cancelReconnect();
         this._serverSignals.disconnectAll();
         this._calendar_server = null;
         this._inited = false;
-        this._cached_state = STATUS_UNKNOWN;
+        if (!expectedEmpty) {
+            this._cached_state = STATUS_UNKNOWN;
+        }
         this._cancelRangeRetry();
 
         if (this.event_store !== null) {
@@ -335,10 +351,12 @@ var EventsManager = class EventsManager {
          * visible after the transport has disappeared.
          */
         if (this._event_list !== null) {
-            this._event_list.set_events(null, false, true);
+            this._event_list.set_events(null, false, !expectedEmpty);
         }
         this.current_range_start = null;
         this.current_range_end = null;
+        this.current_range_start_civil = null;
+        this.current_range_end_civil = null;
         this._range_request_generation += 1;
         this._range_request_pending = false;
         this._range_request_succeeded = false;
@@ -347,7 +365,14 @@ var EventsManager = class EventsManager {
         this.last_update_timestamp = 0;
         this.emit("has-calendars-changed");
         this.emit("events-updated");
-        this._scheduleReconnect();
+        /*
+         * Unexpected loss gets bounded reconnects. An authoritative empty
+         * service is re-probed on the next user-driven start_events() call or
+         * immediately if the watched bus name reappears.
+         */
+        if (!expectedEmpty) {
+            this._scheduleReconnect();
+        }
     }
 
     _scheduleReconnect() {
@@ -433,6 +458,13 @@ var EventsManager = class EventsManager {
         }
 
         this.event_store.refresh_timezone();
+        /*
+         * Re-query the same civil cells under the new timezone. queue_reload()
+         * reconstructs transport instants from the stored Y/M/D endpoints, so
+         * an old local-midnight Unix timestamp can never shift the range by a
+         * civil day after a large timezone change.
+         */
+        this._range_request_succeeded = false;
         this.queue_reload(true);
         this.emit("events-updated");
     }
@@ -476,12 +508,29 @@ var EventsManager = class EventsManager {
     }
 
     _removeEvents(serializedIds) {
-        if (this._destroyed || this.event_store === null) {
+        if (this._destroyed || this.event_store === null ||
+            typeof serializedIds !== "string" || serializedIds.length === 0) {
             return;
         }
-        if (this.event_store.remove(serializedIds)) {
-            this.emit("events-updated");
+
+        /*
+         * CalendarServer removal signals contain IDs only: there is no range
+         * generation or revision with which to prove that a late removal came
+         * from the current EDS view. Treat every removal as cache invalidation
+         * and rebuild the newest desired range instead of deleting an ID from a
+         * possibly newer generation. This is correct for both genuine current
+         * removals and delayed signals from a stopped view.
+         */
+        this.event_store.clear();
+        this._range_request_succeeded = false;
+        this._range_accepting_events = false;
+        if (this._range_request_pending) {
+            this._queued_range_force = true;
+        } else if (this.current_range_start !== null &&
+                   this.current_range_end !== null) {
+            this.queue_reload(true);
         }
+        this.emit("events-updated");
     }
 
     _calendarSetChanged() {
@@ -635,6 +684,13 @@ var EventsManager = class EventsManager {
             return;
         }
 
+        const firstFields = _civilFields(firstDate);
+        const lastFields = _civilFields(lastDate);
+        if (firstFields === null || lastFields === null) {
+            global.logError(`${APPLET_UUID}: invalid visible civil event range.`);
+            return;
+        }
+
         const first = midnight(_jsDateToLocalDateTime(firstDate));
         const last = midnight(_jsDateToLocalDateTime(lastDate));
         if (first === null || last === null) {
@@ -658,6 +714,16 @@ var EventsManager = class EventsManager {
 
         this.current_range_start = first;
         this.current_range_end = last;
+        this.current_range_start_civil = {
+            year: firstFields[0],
+            month: firstFields[1],
+            day: firstFields[2],
+        };
+        this.current_range_end_civil = {
+            year: lastFields[0],
+            month: lastFields[1],
+            day: lastFields[2],
+        };
         if (changed) {
             this._cancelRangeRetry();
             this._range_retry_attempt = 0;
@@ -705,11 +771,11 @@ var EventsManager = class EventsManager {
                  * last range it supplied rather than inventing one here.
                  */
                 if (forceReload &&
-                    this.current_range_start !== null &&
-                    this.current_range_end !== null) {
+                    this.current_range_start_civil !== null &&
+                    this.current_range_end_civil !== null) {
                     this.set_visible_range(
-                        new Date(this.current_range_start.to_unix() * 1000),
-                        new Date(this.current_range_end.to_unix() * 1000),
+                        this.current_range_start_civil,
+                        this.current_range_end_civil,
                         true
                     );
                 }
@@ -830,10 +896,12 @@ var EventsManager = class EventsManager {
          * is connecting or temporarily unavailable.  Collapse it only after an
          * authoritative server status says that no calendars exist.
          */
+        const status = this._calendar_server !== null
+            ? this._calendar_server.status
+            : this._cached_state;
         return !this._destroyed &&
             this.settings.getValue("show-events") &&
-            (this._calendar_server === null ||
-             this._calendar_server.status !== STATUS_NO_CALENDARS);
+            status !== STATUS_NO_CALENDARS;
     }
 
     is_active() {
@@ -857,6 +925,8 @@ var EventsManager = class EventsManager {
         this._range_accepting_events = false;
         this._queued_range_force = false;
         this._calendar_server_connecting = false;
+        this.current_range_start_civil = null;
+        this.current_range_end_civil = null;
 
         if (this._bus_watch_id > 0) {
             Gio.bus_unwatch_name(this._bus_watch_id);

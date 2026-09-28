@@ -203,8 +203,8 @@ gboolean calendar_plus_date_same(gint year_a,
  * @month: Gregorian month 1..12
  * @day: Gregorian day
  *
- * Uses ICU/CLDR locale weekend policy, with Monday-Friday fallback only when
- * locale weekend information is unavailable.
+ * Uses Calendar's compact CLDR weekData weekend projection, with
+ * Monday-Friday fallback only when the input weekday itself is invalid.
  */
 gboolean calendar_plus_date_is_work_day(gint year,
                                         gint month,
