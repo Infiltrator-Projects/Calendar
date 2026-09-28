@@ -124,7 +124,7 @@ calendar_plus_swedish_fields_to_jdn(
     if (fields->year < 1700 ||
         (fields->year == 1700 && fields->month < 3))
     {
-        return julian_to_jdn((gint)fields->year, fields->month, fields->day);
+        return julian_to_jdn(fields->year, fields->month, fields->day);
     }
 
     if (fields->year < 1712 ||
@@ -133,16 +133,16 @@ calendar_plus_swedish_fields_to_jdn(
         if (fields->year == 1712 && fields->month == 2 && fields->day == 30)
             return swedish_style_last_jdn();
         return calendar_plus_i64_subtract_saturating(
-            julian_to_jdn((gint)fields->year, fields->month, fields->day), 1);
+            julian_to_jdn(fields->year, fields->month, fields->day), 1);
     }
 
     if (fields->year < 1753 ||
         (fields->year == 1753 && fields->month < 3))
     {
-        return julian_to_jdn((gint)fields->year, fields->month, fields->day);
+        return julian_to_jdn(fields->year, fields->month, fields->day);
     }
 
-    return gregorian_to_jdn((gint)fields->year, fields->month, fields->day);
+    return gregorian_to_jdn(fields->year, fields->month, fields->day);
 }
 
 gint
