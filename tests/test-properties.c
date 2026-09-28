@@ -466,6 +466,7 @@ test_event_stale_revision_rejected(void)
     snapshot = calendar_plus_event_store_get_snapshot(
         store, day, local_unix(2026, 7, 29, 12));
     g_variant_get(snapshot, "(x@a(sssbbxxxxx))", &revision, &rows);
+    g_assert_cmpint(revision, >, 0);
     g_assert_cmpuint(g_variant_n_children(rows), ==, 1);
     row = g_variant_get_child_value(rows, 0);
     summary = g_variant_get_child_value(row, 2);
