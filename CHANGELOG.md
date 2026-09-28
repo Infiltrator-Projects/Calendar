@@ -1,5 +1,14 @@
 # Changelog
 
+## 1.0.73 - 2026-09-28
+
+- Cull stale events after successful empty CalendarServer refreshes and clear the visible agenda immediately when event transport disappears.
+- Batch the 42-cell month-grid event-colour lookup into one native range query while preserving agenda ordering and DST-safe local-day boundaries.
+- Reject civil dates that JavaScript silently normalizes, remove forced locale capitalization, and tolerate invalid localized WallClock format results.
+- Remove narrowing casts from perpetual and Swedish calendar navigation so public civil-year limits fail cleanly instead of wrapping.
+- Validate effective temporal-policy mode/calendar/coordinates and cache the safe fallback until the next policy generation.
+- Add regression coverage for empty refreshes, disconnect presentation, batched event colours, locale casing, Date normalization, and extreme year navigation.
+
 ## 1.0.72 - 2026-09-28
 
 - Repair the serialized CalendarServer regression test and add bounded automatic retry for transient range failures.
