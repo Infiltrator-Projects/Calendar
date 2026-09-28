@@ -71,6 +71,14 @@ typedef struct
     gint64 seconds_until_end;
 } CalendarPlusEventTiming;
 
+typedef struct
+{
+    gsize day_count;
+    /* One NULL-terminated colour vector per requested local civil day. */
+    gchar ***colors;
+} CalendarPlusEventColorRange;
+
+
 /** Returns: (transfer full): new single-owner-thread event index. */
 CalendarPlusEventIndex *calendar_plus_event_index_new(void);
 
@@ -109,6 +117,20 @@ gboolean calendar_plus_event_index_refresh_timezone(
 gchar **calendar_plus_event_index_colors(CalendarPlusEventIndex *index,
                                          gint64 local_day_unix,
                                          gint64 now_unix);
+
+
+/**
+ * Builds bounded colour vectors for consecutive local civil days in one index
+ * scan.  Day stepping uses GLib civil-day arithmetic rather than 86,400-second
+ * increments so DST and offset transitions cannot shift bucket identity.
+ */
+CalendarPlusEventColorRange *calendar_plus_event_index_color_range(
+    CalendarPlusEventIndex *index,
+    gint64 first_local_day_unix,
+    gsize day_count,
+    gint64 now_unix,
+    gsize maximum_colors_per_day);
+void calendar_plus_event_color_range_free(CalendarPlusEventColorRange *range);
 
 /**
  * calendar_plus_event_index_snapshot:
