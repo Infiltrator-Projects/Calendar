@@ -238,6 +238,12 @@ var EventsManager = class EventsManager {
                 this._serverSignals.disconnectAll();
                 this._calendar_server = null;
                 this._inited = false;
+                if (this.event_store !== null) {
+                    this.event_store.clear();
+                }
+                if (this._event_list !== null) {
+                    this._event_list.set_events(null, false);
+                }
                 global.logError(
                     `${APPLET_UUID}: could not connect to calendar server: ${error}`
                 );
@@ -263,6 +269,16 @@ var EventsManager = class EventsManager {
 
         if (this.event_store !== null) {
             this.event_store.clear();
+        }
+        /*
+         * The pane deliberately remains allocated while CalendarServer is
+         * reconnecting so popup geometry does not jump.  Clear presentation
+         * state at the same time as the native store; otherwise select_date()
+         * refuses to repaint while inactive and stale appointments can remain
+         * visible after the transport has disappeared.
+         */
+        if (this._event_list !== null) {
+            this._event_list.set_events(null, false);
         }
         this.current_range_start = null;
         this.current_range_end = null;
@@ -547,6 +563,17 @@ var EventsManager = class EventsManager {
                 }
 
                 if (succeeded) {
+                    /*
+                     * SetTimeRange completes before CalendarServer's asynchronous
+                     * view necessarily emits any event signal.  Arm the settle
+                     * cull here as well as from _ingestEvents(): an authoritative
+                     * empty refresh otherwise has no signal that can retire rows
+                     * from the previous refresh generation.
+                     *
+                     * Any later add/update burst restarts this same timer, so the
+                     * cull still waits until the burst has gone quiet.
+                     */
+                    this._scheduleCull();
                     this._cancelRangeRetry();
                     this._range_retry_attempt = 0;
                 } else {
