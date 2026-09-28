@@ -198,6 +198,7 @@ function evaluateEventsManager() {
         cullChanged: false,
         colorRangeCalls: [],
         colorRangeResult: [],
+        addOrUpdateCalls: [],
         removedSources: 0,
         timezoneMonitorCancels: 0,
         timezoneMonitorDisconnects: 0,
@@ -249,6 +250,11 @@ function evaluateEventsManager() {
     const dateTime = {
         new_from_unix_local(value) { return new FakeDateTime(value); },
         new_local(year, month, day, hour, minute, second) {
+            return new FakeDateTime(
+                Date.UTC(year, month - 1, day, hour, minute, second) / 1000
+            );
+        },
+        new_utc(year, month, day, hour, minute, second) {
             return new FakeDateTime(
                 Date.UTC(year, month - 1, day, hour, minute, second) / 1000
             );
@@ -348,6 +354,12 @@ function evaluateEventsManager() {
                                 cull(timestamp) {
                                     observations.culls.push(timestamp);
                                     return observations.cullChanged;
+                                },
+                                add_or_update(event, timestamp) {
+                                    observations.addOrUpdateCalls.push(
+                                        [event, timestamp]
+                                    );
+                                    return true;
                                 },
                                 get_color_range(first, count, now, maximum) {
                                     observations.colorRangeCalls.push(
@@ -626,7 +638,7 @@ function evaluateCalendar() {
         "utf8"
     );
     vm.runInContext(
-        `${source}\nglobalThis.__Calendar = Calendar;\nglobalThis.__localDate = _localDate;`,
+        `${source}\nglobalThis.__Calendar = Calendar;\nglobalThis.__localDate = _localDate;\nglobalThis.__representableLocalDate = _representableLocalDate;`,
         context,
         { filename: "calendar.js" }
     );
@@ -641,6 +653,7 @@ function evaluateCalendar() {
     return {
         Calendar: context.__Calendar,
         localDate: context.__localDate,
+        representableLocalDate: context.__representableLocalDate,
         Clutter,
         settings,
         eventsManager,
@@ -1052,18 +1065,44 @@ function testModuleLoaderCompatibility() {
 
 
 function testCalendarRejectsNormalizedCivilDates() {
-    const { localDate } = evaluateCalendar();
+    const originalTimezone = process.env.TZ;
+    process.env.TZ = "Pacific/Apia";
+    try {
+        const { localDate, representableLocalDate } = evaluateCalendar();
 
-    assert.equal(
-        localDate(2026, 2, 30),
-        null,
-        "JavaScript Date normalization must not silently change civil identity"
-    );
-    const valid = localDate(2026, 2, 28);
-    assert.notEqual(valid, null);
-    assert.equal(valid.getFullYear(), 2026);
-    assert.equal(valid.getMonth() + 1, 2);
-    assert.equal(valid.getDate(), 28);
+        assert.equal(
+            localDate(2026, 2, 30),
+            null,
+            "invalid Gregorian coordinates must still be rejected"
+        );
+
+        const skipped = localDate(2011, 12, 30);
+        assert.notEqual(
+            skipped,
+            null,
+            "a timezone-skipped civil date must remain selectable"
+        );
+        assert.equal(skipped.getFullYear(), 2011);
+        assert.equal(skipped.getMonth() + 1, 12);
+        assert.equal(skipped.getDate(), 30);
+        assert.equal(
+            representableLocalDate(2011, 12, 30),
+            null,
+            "the regression must exercise a genuinely unrepresentable local date"
+        );
+
+        const valid = localDate(2011, 12, 31);
+        assert.notEqual(valid, null);
+        assert.equal(valid.getFullYear(), 2011);
+        assert.equal(valid.getMonth() + 1, 12);
+        assert.equal(valid.getDate(), 31);
+    } finally {
+        if (originalTimezone === undefined) {
+            delete process.env.TZ;
+        } else {
+            process.env.TZ = originalTimezone;
+        }
+    }
 }
 
 function testCalendarLifecycle() {
@@ -1305,7 +1344,7 @@ function testVisibleEventRangeFailureRecovery() {
     manager.destroy();
 }
 
-function testSuccessfulEmptyRangeCullsPreviousGeneration() {
+function testSuccessfulEmptyRangeReplacesPreviousGeneration() {
     const { EventsManager, observations } = evaluateEventsManager();
     const manager = new EventsManager({ getValue() { return true; } }, {});
     manager._inited = true;
@@ -1321,13 +1360,59 @@ function testSuccessfulEmptyRangeCullsPreviousGeneration() {
     const first = new Date(Date.UTC(2026, 7, 2, 12, 0, 0));
     const last = new Date(Date.UTC(2026, 8, 12, 12, 0, 0));
     manager.set_visible_range(first, last, true);
+    assert.equal(
+        observations.clears,
+        1,
+        "every real refresh must replace the previous local event generation"
+    );
     observations.rangeCallbacks[0](manager._calendar_server, {});
-
-    observations.runNextTimeout();
     assert.deepEqual(
         observations.culls,
-        [123456],
-        "successful empty refresh must cull rows from the prior refresh token"
+        [],
+        "empty refresh correctness must not depend on a silence timer"
+    );
+    manager.destroy();
+}
+
+function testRangeAdmissionRejectsLateOutOfRangeSignals() {
+    const { EventsManager, observations } = evaluateEventsManager();
+    const manager = new EventsManager({ getValue() { return true; } }, {});
+    manager._inited = true;
+    manager.current_range_start = {
+        to_unix() { return 1000; },
+        add_days() { return this; },
+    };
+    manager.current_range_end = {
+        to_unix() { return 2000; },
+        add_days() {
+            return { to_unix() { return 3000; } };
+        },
+    };
+    manager._range_accepting_events = true;
+
+    function eventVariant(start, end) {
+        return {
+            deep_unpack() {
+                return ["id", "#112233", "event", false, start, end, 10];
+            },
+        };
+    }
+    manager._ingestEvents({
+        unpack() {
+            return [
+                eventVariant(100, 200),
+                eventVariant(1500, 1600),
+            ];
+        },
+    });
+    assert.equal(
+        observations.addOrUpdateCalls.length,
+        1,
+        "late rows wholly outside the newest desired range must be rejected"
+    );
+    assert.deepEqual(
+        observations.addOrUpdateCalls[0][0].deep_unpack().slice(4, 6),
+        [1500, 1600]
     );
     manager.destroy();
 }
@@ -1336,8 +1421,8 @@ function testServerLossClearsPresentedAgenda() {
     const { EventsManager, observations } = evaluateEventsManager();
     const presented = [];
     const eventList = {
-        set_events(snapshot, delayed) {
-            presented.push([snapshot, delayed]);
+        set_events(snapshot, delayed, unavailable) {
+            presented.push([snapshot, delayed, unavailable]);
         },
     };
     const manager = new EventsManager(
@@ -1351,8 +1436,8 @@ function testServerLossClearsPresentedAgenda() {
     manager._calendarServerVanished();
     assert.deepEqual(
         presented,
-        [[null, false]],
-        "transport loss must clear stale appointments from the visible agenda"
+        [[null, false, true]],
+        "transport loss must clear stale appointments and mark transport unavailable"
     );
     assert.equal(observations.clears, 1);
     manager.destroy();
@@ -1516,17 +1601,23 @@ function testEventsManagerPreservesPreEpochSelection() {
     const { EventsManager, observations } = evaluateEventsManager();
     const manager = new EventsManager({ getValue() { return true; } }, {});
     const captured = [];
-    manager.current_selected_date = {
-        to_unix() { return -86400; },
+    manager.current_selected_civil = {
+        year: 1969,
+        month: 12,
+        day: 31,
     };
-    manager.select_date = (date) => captured.push(date.getTime());
+    manager.select_date = (date) => captured.push([
+        date.year,
+        date.month,
+        date.day,
+    ]);
 
     manager.queue_reload(false);
     observations.runNextIdle();
     assert.deepEqual(
         captured,
-        [-86400 * 1000],
-        "valid pre-1970 selections must never be replaced with today"
+        [[1969, 12, 31]],
+        "valid pre-1970 civil selections must never be replaced with today"
     );
     manager.destroy();
 }
@@ -1612,7 +1703,8 @@ testCalendarKeyboardNavigation();
 testEventListCacheIdentity();
 testVisibleEventRange();
 testVisibleEventRangeFailureRecovery();
-testSuccessfulEmptyRangeCullsPreviousGeneration();
+testSuccessfulEmptyRangeReplacesPreviousGeneration();
+testRangeAdmissionRejectsLateOutOfRangeSignals();
 testServerLossClearsPresentedAgenda();
 testBatchedEventColorBridge();
 testEventsManagerPresentationState();
