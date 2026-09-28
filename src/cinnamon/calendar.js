@@ -63,7 +63,36 @@ const DATE_PARTS = Object.freeze({
     full: CalendarPlus.DatePart.FULL,
 });
 
+class CivilDate {
+    constructor(year, month, day) {
+        this._year = year;
+        this._month = month;
+        this._day = day;
+
+        const anchor = new Date(0);
+        anchor.setUTCHours(12, 0, 0, 0);
+        anchor.setUTCFullYear(year, month - 1, day);
+        this._utcMillis = anchor.getTime();
+    }
+
+    getFullYear() { return this._year; }
+    getMonth() { return this._month - 1; }
+    getDate() { return this._day; }
+    getDay() {
+        return Number.isFinite(this._utcMillis)
+            ? new Date(this._utcMillis).getUTCDay()
+            : 0;
+    }
+    getTime() { return this._utcMillis; }
+}
+
 function _dateFields(date) {
+    if (date === null ||
+        typeof date.getFullYear !== "function" ||
+        typeof date.getMonth !== "function" ||
+        typeof date.getDate !== "function") {
+        return [NaN, NaN, NaN];
+    }
     return [date.getFullYear(), date.getMonth() + 1, date.getDate()];
 }
 
@@ -71,20 +100,21 @@ function _sameCivilDate(a, b) {
     return CalendarPlus.date_same(..._dateFields(a), ..._dateFields(b));
 }
 
-/*
- * Navigation comes back from C as Gregorian fields.  Noon is deliberately
- * used as the reconstruction time because local midnight can be skipped or
- * repeated by civil-time transitions in some timezones.
- */
-function _localDateFromVariant(parts) {
-    if (parts === null) {
-        return null;
-    }
-    const [year, month, day] = parts.deep_unpack();
-    return _localDate(year, month, day);
+function _civilDateIsValid(year, month, day) {
+    const probe = new Date(0);
+    probe.setUTCHours(12, 0, 0, 0);
+    probe.setUTCFullYear(year, month - 1, day);
+    return Number.isFinite(probe.getTime()) &&
+        probe.getUTCFullYear() === year &&
+        probe.getUTCMonth() + 1 === month &&
+        probe.getUTCDate() === day;
 }
 
-function _localDate(year, month, day) {
+function _representableLocalDate(year, month, day) {
+    if (!_civilDateIsValid(year, month, day)) {
+        return null;
+    }
+
     const value = new Date();
     value.setHours(12, 0, 0, 0);
     value.setFullYear(year, month - 1, day);
@@ -95,6 +125,37 @@ function _localDate(year, month, day) {
         return null;
     }
     return value;
+}
+
+/*
+ * Date-only UI state must survive civil dates that have no local instant
+ * (for example Pacific/Apia 2011-12-30). Use a lightweight civil carrier when
+ * the host timezone cannot represent local noon; convert to an actual instant
+ * only at event/transport boundaries that genuinely need one.
+ */
+function _localDate(year, month, day) {
+    if (!_civilDateIsValid(year, month, day)) {
+        return null;
+    }
+    return _representableLocalDate(year, month, day) ||
+        new CivilDate(year, month, day);
+}
+
+function _cloneDate(date) {
+    const [year, month, day] = _dateFields(date);
+    return _localDate(year, month, day);
+}
+
+/*
+ * Navigation comes back from C as Gregorian fields. Preserve the civil
+ * coordinate even when the host timezone skipped that date completely.
+ */
+function _localDateFromVariant(parts) {
+    if (parts === null) {
+        return null;
+    }
+    const [year, month, day] = parts.deep_unpack();
+    return _localDate(year, month, day);
 }
 
 function _weekdayAbbreviation(dayIndex) {
@@ -215,7 +276,7 @@ var Calendar = class Calendar {
         }
         const changed = !_sameCivilDate(date, this._selectedDate);
         if (changed) {
-            this._selectedDate = new Date(date.getTime());
+            this._selectedDate = _cloneDate(date);
             this.emit("selected-date-changed", this._selectedDate);
         }
         if (changed || forceReload) {
@@ -244,7 +305,7 @@ var Calendar = class Calendar {
          * burst of wheel/key input accumulates every step without rebuilding
          * the 42-cell grid for every individual event.
          */
-        this._pendingDate = new Date(date.getTime());
+        this._pendingDate = _cloneDate(date);
         if (this._set_date_idle_id > 0) {
             return;
         }
@@ -420,18 +481,26 @@ var Calendar = class Calendar {
     }
 
     _dateByDays(date, delta) {
-        const result = new Date(date.getTime());
+        const [year, month, day] = _dateFields(date);
+        const result = new Date(0);
+
         /*
-         * Noon is retained for the same reason as native-result reconstruction:
-         * civil midnight can be skipped/repeated by timezone transitions.
+         * Day-key navigation is date arithmetic, not elapsed-time arithmetic.
+         * Perform it in UTC so local timezone gaps/repeats cannot delete or
+         * duplicate a civil date, then reconstruct the local/civil carrier.
          */
-        result.setHours(12, 0, 0, 0);
-        result.setDate(result.getDate() + delta);
-        return result;
+        result.setUTCHours(12, 0, 0, 0);
+        result.setUTCFullYear(year, month - 1, day);
+        result.setUTCDate(result.getUTCDate() + delta);
+        return _localDate(
+            result.getUTCFullYear(),
+            result.getUTCMonth() + 1,
+            result.getUTCDate()
+        );
     }
 
     _queueKeyboardDate(date) {
-        this._focusAfterUpdate = new Date(date.getTime());
+        this._focusAfterUpdate = _cloneDate(date);
         this.queue_set_date(date);
     }
 
@@ -451,10 +520,10 @@ var Calendar = class Calendar {
         } else if (key === Clutter.KEY_Down) {
             this._queueKeyboardDate(this._dateByDays(navigationBase, 7));
         } else if (key === Clutter.KEY_Page_Up) {
-            this._focusAfterUpdate = new Date(navigationBase.getTime());
+            this._focusAfterUpdate = _cloneDate(navigationBase);
             this._browse(shift ? -1 : 0, shift ? 0 : -1, navigationBase, true);
         } else if (key === Clutter.KEY_Page_Down) {
-            this._focusAfterUpdate = new Date(navigationBase.getTime());
+            this._focusAfterUpdate = _cloneDate(navigationBase);
             this._browse(shift ? 1 : 0, shift ? 0 : 1, navigationBase, true);
         } else if (key === Clutter.KEY_Home || key === Clutter.KEY_End) {
             const logical =
@@ -488,7 +557,7 @@ var Calendar = class Calendar {
         const destination = _localDateFromVariant(variant);
         if (destination !== null) {
             if (focus) {
-                this._focusAfterUpdate = new Date(destination.getTime());
+                this._focusAfterUpdate = _cloneDate(destination);
             }
             this.queue_set_date(destination);
         }
@@ -532,26 +601,55 @@ var Calendar = class Calendar {
          * controls which day's agenda is shown.
          */
         if (records.length > 0) {
-            const first = records[0];
-            const last = records[records.length - 1];
-            firstDate = _localDate(first[1], first[2], first[3]);
-            lastDate = _localDate(last[1], last[2], last[3]);
+            let firstRepresentableIndex = -1;
+
+            for (let index = 0; index < records.length; index++) {
+                const record = records[index];
+                const candidate = _representableLocalDate(
+                    record[1], record[2], record[3]
+                );
+                if (candidate !== null) {
+                    firstDate = candidate;
+                    firstRepresentableIndex = index;
+                    break;
+                }
+            }
+            for (let index = records.length - 1; index >= 0; index--) {
+                const record = records[index];
+                const candidate = _representableLocalDate(
+                    record[1], record[2], record[3]
+                );
+                if (candidate !== null) {
+                    lastDate = candidate;
+                    break;
+                }
+            }
+
             if (firstDate !== null && lastDate !== null) {
                 this.events_manager.set_visible_range(
                     firstDate,
                     lastDate,
                     forceReload
                 );
-                if (this.events_enabled) {
-                    eventColorsByCell = this.events_manager.get_colors_for_range(
+                if (this.events_enabled && firstRepresentableIndex >= 0) {
+                    const colors = this.events_manager.get_colors_for_range(
                         firstDate,
-                        records.length,
+                        records.length - firstRepresentableIndex,
                         MAX_EVENT_DOTS
                     );
+                    eventColorsByCell =
+                        Array.from({ length: records.length }, () => []);
+                    for (let index = 0;
+                         index < colors.length &&
+                         firstRepresentableIndex + index < records.length;
+                         index++) {
+                        eventColorsByCell[firstRepresentableIndex + index] =
+                            colors[index];
+                    }
                 }
             } else {
                 global.logError(
-                    "Calendar: visible range exceeds the GJS Date domain."
+                    "Calendar: visible range has no representable local instant."
                 );
             }
         }
