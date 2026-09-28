@@ -143,3 +143,8 @@ CALENDAR_PLUS_2.6 {
     global:
         calendar_plus_system_clock_get_system_policy;
 } CALENDAR_PLUS_2.5;
+
+CALENDAR_PLUS_2.7 {
+    global:
+        calendar_plus_event_store_get_color_range;
+} CALENDAR_PLUS_2.6;
