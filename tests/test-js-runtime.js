@@ -427,6 +427,7 @@ function evaluateEventsManager() {
 
 
 function evaluateEventView() {
+    let eventViewIdle = null;
     const signals = {
         addSignalMethods(prototype) {
             prototype.connect = prototype.connect || function() { return 1; };
@@ -483,7 +484,16 @@ function evaluateEventView() {
             signals,
             ui: { separator: { Separator: class {} } },
             misc: { util: {} },
-            mainloop: {},
+            mainloop: {
+                idle_add(callback) {
+                    eventViewIdle = callback;
+                    return 71;
+                },
+                timeout_add() { return 72; },
+                source_remove() {
+                    eventViewIdle = null;
+                },
+            },
             gettext: {
                 bindtextdomain() {},
                 domain() { return { gettext(value) { return value; } }; },
@@ -506,6 +516,12 @@ function evaluateEventView() {
     return {
         EventList: context.__EventList,
         replaceEventRow: context.__replaceEventRowForTest,
+        runEventViewIdle() {
+            assert.notEqual(eventViewIdle, null, "an event-view idle must be pending");
+            const callback = eventViewIdle;
+            eventViewIdle = null;
+            callback();
+        },
     };
 }
 
@@ -1465,6 +1481,63 @@ function testBatchedEventColorBridge() {
 }
 
 
+function testEventListScrollUsesViewport() {
+    const { EventList, runEventViewIdle } = evaluateEventView();
+    const view = Object.create(EventList.prototype);
+    let scrollValue = null;
+    const adjustment = {
+        lower: 0,
+        upper: 1000,
+        page_size: 200,
+        set_value(value) { scrollValue = value; },
+    };
+
+    Object.assign(view, {
+        _destroyed: false,
+        _scroll_to_idle_id: 0,
+        events_scroll_box: {
+            get_vscroll_bar() {
+                return { get_adjustment() { return adjustment; } };
+            },
+        },
+    });
+
+    view._queueScrollTo({ actor: { y: 700, height: 40 } });
+    runEventViewIdle();
+    assert.equal(
+        scrollValue,
+        620,
+        "agenda scroll centring must use the 200px visible page, not content height"
+    );
+
+    scrollValue = null;
+    view._queueScrollTo({ actor: { y: 980, height: 40 } });
+    runEventViewIdle();
+    assert.equal(
+        scrollValue,
+        800,
+        "agenda scroll centring must clamp to upper minus page size"
+    );
+}
+
+function testEventListUnavailableState() {
+    const { EventList } = evaluateEventView();
+    const view = Object.create(EventList.prototype);
+    let label = "";
+    let shown = 0;
+    Object.assign(view, {
+        no_events_label: { set_text(value) { label = value; } },
+        no_events_box: { show() { shown += 1; } },
+        _no_events_timeout_id: 0,
+    });
+
+    view._showEmptyState(false, true);
+    assert.equal(label, "Calendar unavailable");
+    assert.equal(shown, 1);
+    view._showEmptyState(false, false);
+    assert.equal(label, "No Events");
+}
+
 function testEventListCacheIdentity() {
     const { EventList, replaceEventRow } = evaluateEventView();
     class FakeRow {
@@ -1700,6 +1773,8 @@ testCalendarRejectsNormalizedCivilDates();
 testCalendarLifecycle();
 testCalendarNavigationCoalescing();
 testCalendarKeyboardNavigation();
+testEventListScrollUsesViewport();
+testEventListUnavailableState();
 testEventListCacheIdentity();
 testVisibleEventRange();
 testVisibleEventRangeFailureRecovery();
