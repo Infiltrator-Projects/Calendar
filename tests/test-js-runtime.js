@@ -194,6 +194,10 @@ function evaluateEventsManager() {
         serverDisconnects: 0,
         cancels: 0,
         clears: 0,
+        culls: [],
+        cullChanged: false,
+        colorRangeCalls: [],
+        colorRangeResult: [],
         removedSources: 0,
         timezoneMonitorCancels: 0,
         timezoneMonitorDisconnects: 0,
@@ -341,6 +345,20 @@ function evaluateEventsManager() {
                         new() {
                             return {
                                 clear() { observations.clears += 1; },
+                                cull(timestamp) {
+                                    observations.culls.push(timestamp);
+                                    return observations.cullChanged;
+                                },
+                                get_color_range(first, count, now, maximum) {
+                                    observations.colorRangeCalls.push(
+                                        [first, count, now, maximum]
+                                    );
+                                    return {
+                                        deep_unpack() {
+                                            return observations.colorRangeResult;
+                                        },
+                                    };
+                                },
                                 refresh_timezone() { return false; },
                             };
                         },
@@ -1238,6 +1256,81 @@ function testVisibleEventRangeFailureRecovery() {
     manager.destroy();
 }
 
+function testSuccessfulEmptyRangeCullsPreviousGeneration() {
+    const { EventsManager, observations } = evaluateEventsManager();
+    const manager = new EventsManager({ getValue() { return true; } }, {});
+    manager._inited = true;
+    manager._calendar_server = {
+        status: 2,
+        call_set_time_range(start, end, force, cancellable, callback) {
+            observations.rangeCalls.push([start, end, force]);
+            observations.rangeCallbacks.push(callback);
+        },
+        call_set_time_range_finish() {},
+    };
+
+    const first = new Date(Date.UTC(2026, 7, 2, 12, 0, 0));
+    const last = new Date(Date.UTC(2026, 8, 12, 12, 0, 0));
+    manager.set_visible_range(first, last, true);
+    observations.rangeCallbacks[0](manager._calendar_server, {});
+
+    observations.runNextTimeout();
+    assert.deepEqual(
+        observations.culls,
+        [123456],
+        "successful empty refresh must cull rows from the prior refresh token"
+    );
+    manager.destroy();
+}
+
+function testServerLossClearsPresentedAgenda() {
+    const { EventsManager, observations } = evaluateEventsManager();
+    const presented = [];
+    const eventList = {
+        set_events(snapshot, delayed) {
+            presented.push([snapshot, delayed]);
+        },
+    };
+    const manager = new EventsManager(
+        { getValue() { return true; } },
+        {},
+        eventList
+    );
+    manager._inited = true;
+    manager._calendar_server = { status: 2 };
+
+    manager._calendarServerVanished();
+    assert.deepEqual(
+        presented,
+        [[null, false]],
+        "transport loss must clear stale appointments from the visible agenda"
+    );
+    assert.equal(observations.clears, 1);
+    manager.destroy();
+}
+
+function testBatchedEventColorBridge() {
+    const { EventsManager, observations } = evaluateEventsManager();
+    observations.colorRangeResult = [
+        ["#112233"],
+        [],
+        ["#445566", "#778899"],
+    ];
+    const manager = new EventsManager({ getValue() { return true; } }, {});
+    const result = manager.get_colors_for_range(
+        new Date(Date.UTC(2026, 7, 2, 12, 0, 0)),
+        3,
+        8
+    );
+
+    assert.deepEqual(result, observations.colorRangeResult);
+    assert.equal(observations.colorRangeCalls.length, 1);
+    assert.equal(observations.colorRangeCalls[0][1], 3);
+    assert.equal(observations.colorRangeCalls[0][3], 8);
+    manager.destroy();
+}
+
+
 function testEventListCacheIdentity() {
     const { EventList, replaceEventRow } = evaluateEventView();
     class FakeRow {
@@ -1468,6 +1561,9 @@ testCalendarKeyboardNavigation();
 testEventListCacheIdentity();
 testVisibleEventRange();
 testVisibleEventRangeFailureRecovery();
+testSuccessfulEmptyRangeCullsPreviousGeneration();
+testServerLossClearsPresentedAgenda();
+testBatchedEventColorBridge();
 testEventsManagerPresentationState();
 testEventsManagerPreservesPreEpochSelection();
 testEventsManagerLifecycle();
