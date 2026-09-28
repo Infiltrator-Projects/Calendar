@@ -91,6 +91,9 @@ msgstr ""
 msgid "Calendar"
 msgstr ""
 
+msgid "Calendar unavailable"
+msgstr ""
+
 msgid "Charlemagne"
 msgstr ""
 
