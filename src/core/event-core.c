@@ -78,18 +78,38 @@ local_day_start(gint64 unix_time)
 {
     g_autoptr(GDateTime) instant =
         g_date_time_new_from_unix_local(unix_time);
-    g_autoptr(GDateTime) midnight = NULL;
+    g_autoptr(GDateTime) boundary = NULL;
+    gint year;
+    gint month;
+    gint day;
+    gint minute_of_day;
 
     if (instant == NULL)
         return unix_time;
 
-    midnight = g_date_time_new_local(g_date_time_get_year(instant),
-                                     g_date_time_get_month(instant),
-                                     g_date_time_get_day_of_month(instant),
-                                     0,
-                                     0,
-                                     0.0);
-    return midnight != NULL ? g_date_time_to_unix(midnight) : unix_time;
+    year = g_date_time_get_year(instant);
+    month = g_date_time_get_month(instant);
+    day = g_date_time_get_day_of_month(instant);
+
+    for (minute_of_day = 0; minute_of_day < 24 * 60; minute_of_day++)
+    {
+        boundary = g_date_time_new_local(year,
+                                         month,
+                                         day,
+                                         minute_of_day / 60,
+                                         minute_of_day % 60,
+                                         0.0);
+        if (boundary != NULL &&
+            g_date_time_get_year(boundary) == year &&
+            g_date_time_get_month(boundary) == month &&
+            g_date_time_get_day_of_month(boundary) == day)
+        {
+            return g_date_time_to_unix(boundary);
+        }
+        g_clear_pointer(&boundary, g_date_time_unref);
+    }
+
+    return unix_time;
 }
 
 guint
@@ -161,6 +181,15 @@ text_is_valid(const gchar *text,
 }
 
 static gboolean
+unix_time_is_local_datetime(gint64 unix_time)
+{
+    g_autoptr(GDateTime) value =
+        g_date_time_new_from_unix_local(unix_time);
+
+    return value != NULL;
+}
+
+static gboolean
 color_is_valid(const gchar *color)
 {
     gsize index;
@@ -192,7 +221,9 @@ calendar_plus_event_input_is_valid(const CalendarPlusEventInput *input)
            color_is_valid(input->color) &&
            text_is_valid(input->summary,
                          CALENDAR_PLUS_EVENT_MAX_SUMMARY_BYTES,
-                         TRUE);
+                         TRUE) &&
+           unix_time_is_local_datetime(input->start_unix) &&
+           unix_time_is_local_datetime(input->end_unix);
 }
 
 static EventRecord *
@@ -499,6 +530,39 @@ ordered_records(CalendarPlusEventIndex *index,
 
     g_ptr_array_unref(sorted);
     return ordered;
+}
+
+gchar **
+calendar_plus_event_index_colors(CalendarPlusEventIndex *index,
+                                 gint64 local_day_unix)
+{
+    const gint64 requested_day = local_day_start(local_day_unix);
+    g_autoptr(GPtrArray) matching = g_ptr_array_new();
+    GHashTableIter iter;
+    gpointer value;
+    gchar **colors;
+    guint item;
+
+    if (index == NULL)
+        return NULL;
+
+    g_hash_table_iter_init(&iter, index->events_by_id);
+    while (g_hash_table_iter_next(&iter, NULL, &value))
+    {
+        const EventRecord *event = value;
+        if (event->start_day_unix <= requested_day &&
+            event->end_day_unix >= requested_day)
+            g_ptr_array_add(matching, value);
+    }
+
+    g_ptr_array_sort(matching, compare_records);
+    colors = g_new0(gchar *, (gsize)matching->len + 1U);
+    for (item = 0; item < matching->len; item++)
+    {
+        const EventRecord *event = g_ptr_array_index(matching, item);
+        colors[item] = g_strdup(event->color);
+    }
+    return colors;
 }
 
 CalendarPlusEventSnapshot *

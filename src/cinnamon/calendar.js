@@ -54,6 +54,7 @@ const SignalBag = RuntimeSupport.SignalBag;
 
 const FIRST_WEEKDAY_KEY = "first-day-of-week";
 const WEEK_NUMBER_WIDTH_DIGITS = 3;
+const MAX_EVENT_DOTS = 8;
 const DATE_PARTS = Object.freeze({
     day: CalendarPlus.DatePart.DAY,
     month: CalendarPlus.DatePart.MONTH,
@@ -80,17 +81,14 @@ function _localDateFromVariant(parts) {
         return null;
     }
     const [year, month, day] = parts.deep_unpack();
-    const date = new Date();
-    date.setHours(12, 0, 0, 0);
-    date.setFullYear(year, month - 1, day);
-    return date;
+    return _localDate(year, month, day);
 }
 
 function _localDate(year, month, day) {
     const value = new Date();
     value.setHours(12, 0, 0, 0);
     value.setFullYear(year, month - 1, day);
-    return value;
+    return Number.isFinite(value.getTime()) ? value : null;
 }
 
 function _weekdayAbbreviation(dayIndex) {
@@ -115,6 +113,7 @@ var Calendar = class Calendar {
         this._calendarSystemId = "gregorian";
         this._calendarSystem = CalendarPlus.CalendarSystem.new("gregorian");
         this._selectedDate = new Date();
+        this._pendingDate = null;
         this._focusAfterUpdate = null;
         this.events_enabled = false;
 
@@ -227,18 +226,28 @@ var Calendar = class Calendar {
     }
 
     queue_set_date(date) {
-        if (this._destroyed || this._set_date_idle_id > 0) {
+        if (this._destroyed || !(date instanceof Date) ||
+            !Number.isFinite(date.getTime())) {
             return;
         }
 
         /*
-         * A short delay coalesces rapid wheel events and navigation clicks,
-         * keeping expensive actor rebuilds out of a burst of input events.
+         * Keep only the newest destination while one short coalescing timer is
+         * pending. Navigation itself uses _pendingDate as its next base, so a
+         * burst of wheel/key input accumulates every step without rebuilding
+         * the 42-cell grid for every individual event.
          */
+        this._pendingDate = new Date(date.getTime());
+        if (this._set_date_idle_id > 0) {
+            return;
+        }
+
         this._set_date_idle_id = Mainloop.timeout_add(25, () => {
             this._set_date_idle_id = 0;
-            if (!this._destroyed) {
-                this.setDate(date, false);
+            const pending = this._pendingDate;
+            this._pendingDate = null;
+            if (!this._destroyed && pending !== null) {
+                this.setDate(pending, false);
             }
             return GLib.SOURCE_REMOVE;
         });
@@ -253,6 +262,10 @@ var Calendar = class Calendar {
         }
         this._buildHeader();
         this._update(false);
+    }
+
+    refreshEventAvailability() {
+        this._refreshEventAvailability();
     }
 
     _refreshEventAvailability() {
@@ -420,25 +433,29 @@ var Calendar = class Calendar {
         const state = typeof event.get_state === "function" ?
             event.get_state() : 0;
         const shift = (state & Clutter.ModifierType.SHIFT_MASK) !== 0;
+        const navigationBase = this._pendingDate !== null
+            ? this._pendingDate
+            : date;
 
         if (key === Clutter.KEY_Left) {
-            this._queueKeyboardDate(this._dateByDays(date, -1));
+            this._queueKeyboardDate(this._dateByDays(navigationBase, -1));
         } else if (key === Clutter.KEY_Right) {
-            this._queueKeyboardDate(this._dateByDays(date, 1));
+            this._queueKeyboardDate(this._dateByDays(navigationBase, 1));
         } else if (key === Clutter.KEY_Up) {
-            this._queueKeyboardDate(this._dateByDays(date, -7));
+            this._queueKeyboardDate(this._dateByDays(navigationBase, -7));
         } else if (key === Clutter.KEY_Down) {
-            this._queueKeyboardDate(this._dateByDays(date, 7));
+            this._queueKeyboardDate(this._dateByDays(navigationBase, 7));
         } else if (key === Clutter.KEY_Page_Up) {
-            this._focusAfterUpdate = new Date(date.getTime());
-            this._browse(shift ? -1 : 0, shift ? 0 : -1, date, true);
+            this._focusAfterUpdate = new Date(navigationBase.getTime());
+            this._browse(shift ? -1 : 0, shift ? 0 : -1, navigationBase, true);
         } else if (key === Clutter.KEY_Page_Down) {
-            this._focusAfterUpdate = new Date(date.getTime());
-            this._browse(shift ? 1 : 0, shift ? 0 : 1, date, true);
+            this._focusAfterUpdate = new Date(navigationBase.getTime());
+            this._browse(shift ? 1 : 0, shift ? 0 : 1, navigationBase, true);
         } else if (key === Clutter.KEY_Home || key === Clutter.KEY_End) {
-            const logical = (date.getDay() - this._weekStart + 7) % 7;
+            const logical =
+                (navigationBase.getDay() - this._weekStart + 7) % 7;
             const delta = key === Clutter.KEY_Home ? -logical : 6 - logical;
-            this._queueKeyboardDate(this._dateByDays(date, delta));
+            this._queueKeyboardDate(this._dateByDays(navigationBase, delta));
         } else {
             return Clutter.EVENT_PROPAGATE;
         }
@@ -457,8 +474,9 @@ var Calendar = class Calendar {
         }
     }
 
-    _browse(yearDelta, periodDelta, baseDate = this._selectedDate, focus = false) {
-        const args = _dateFields(baseDate);
+    _browse(yearDelta, periodDelta, baseDate = null, focus = false) {
+        const sourceDate = baseDate || this._pendingDate || this._selectedDate;
+        const args = _dateFields(sourceDate);
         const variant = yearDelta !== 0
             ? this._calendarSystem.add_years_parts(...args, yearDelta)
             : this._calendarSystem.add_months_parts(...args, periodDelta);
@@ -511,11 +529,19 @@ var Calendar = class Calendar {
         if (records.length > 0) {
             const first = records[0];
             const last = records[records.length - 1];
-            this.events_manager.set_visible_range(
-                _localDate(first[1], first[2], first[3]),
-                _localDate(last[1], last[2], last[3]),
-                forceReload
-            );
+            const firstDate = _localDate(first[1], first[2], first[3]);
+            const lastDate = _localDate(last[1], last[2], last[3]);
+            if (firstDate !== null && lastDate !== null) {
+                this.events_manager.set_visible_range(
+                    firstDate,
+                    lastDate,
+                    forceReload
+                );
+            } else {
+                global.logError(
+                    "Calendar: visible range exceeds the GJS Date domain."
+                );
+            }
         }
         this.events_manager.select_date(this._selectedDate, forceReload);
     }
@@ -538,8 +564,15 @@ var Calendar = class Calendar {
         ] = record;
 
         const date = _localDate(year, month, day);
+        if (date === null) {
+            global.logError("Calendar: grid cell exceeds the GJS Date domain.");
+            return;
+        }
         const eventColors = this.events_enabled
-            ? this.events_manager.get_colors_for_date(date)
+            ? this.events_manager.get_colors_for_date(date).slice(
+                0,
+                MAX_EVENT_DOTS
+            )
             : [];
         const accessibleParts = [
             `${this.getCalendarName()}: ${this.formatDate(date, "full")}`,
@@ -717,6 +750,7 @@ var Calendar = class Calendar {
         this.events_manager = null;
         this.settings = null;
         this._selectedDate = null;
+        this._pendingDate = null;
     }
 };
 

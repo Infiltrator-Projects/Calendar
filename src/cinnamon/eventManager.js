@@ -43,6 +43,9 @@ const midnight = RuntimeSupport.midnight;
 const sameInstant = RuntimeSupport.sameInstant;
 
 function _jsDateToLocalDateTime(date) {
+    if (!(date instanceof Date) || !Number.isFinite(date.getTime())) {
+        return null;
+    }
     return GLib.DateTime.new_from_unix_local(Math.floor(date.getTime() / 1000));
 }
 
@@ -76,6 +79,10 @@ class EventRecord {
         this.end = GLib.DateTime.new_from_unix_local(endUnix);
         this.start_date = GLib.DateTime.new_from_unix_local(startDayUnix);
         this.end_date = GLib.DateTime.new_from_unix_local(endDayUnix);
+        if (this.start === null || this.end === null ||
+            this.start_date === null || this.end_date === null) {
+            throw new Error("Calendar event is outside the local DateTime domain");
+        }
     }
 
     relation_to_day(day) {
@@ -99,7 +106,14 @@ class EventSnapshot {
     constructor(variant) {
         const [revision, rows] = variant.deep_unpack();
         this.timestamp = revision;
-        this.events = rows.map((row) => new EventRecord(row));
+        this.events = [];
+        for (const row of rows) {
+            try {
+                this.events.push(new EventRecord(row));
+            } catch (error) {
+                global.logError(error);
+            }
+        }
     }
 
     get_event_list() {
@@ -118,6 +132,8 @@ var EventsManager = class EventsManager {
         this._calendar_server_connecting = false;
         this._calendar_server_generation = 0;
         this._reconnect_timer_id = 0;
+        this._range_retry_timer_id = 0;
+        this._range_retry_attempt = 0;
         this._serverSignals = new SignalBag();
         this._cancellable = new Gio.Cancellable();
         this._cached_state = STATUS_UNKNOWN;
@@ -242,6 +258,7 @@ var EventsManager = class EventsManager {
         this._inited = false;
         this._cached_state = STATUS_UNKNOWN;
         this._cancelCull();
+        this._cancelRangeRetry();
 
         if (this.event_store !== null) {
             this.event_store.clear();
@@ -275,6 +292,46 @@ var EventsManager = class EventsManager {
             Mainloop.source_remove(this._reconnect_timer_id);
             this._reconnect_timer_id = 0;
         }
+    }
+
+    _cancelRangeRetry() {
+        if (this._range_retry_timer_id > 0) {
+            Mainloop.source_remove(this._range_retry_timer_id);
+            this._range_retry_timer_id = 0;
+        }
+    }
+
+    _scheduleRangeRetry() {
+        if (this._destroyed || this._range_retry_timer_id > 0 ||
+            this._range_request_pending ||
+            this.current_range_start === null ||
+            this.current_range_end === null) {
+            return;
+        }
+
+        const delay = Math.min(
+            60,
+            Math.pow(2, Math.min(this._range_retry_attempt, 5))
+        );
+        this._range_retry_attempt += 1;
+        this._range_retry_timer_id = Mainloop.timeout_add_seconds(
+            delay,
+            () => {
+                this._range_retry_timer_id = 0;
+                if (!this._destroyed && !this._range_request_pending &&
+                    this._calendar_server !== null &&
+                    this.current_range_start !== null &&
+                    this.current_range_end !== null) {
+                    this._requestVisibleRange(
+                        this.current_range_start,
+                        this.current_range_end,
+                        true,
+                        false
+                    );
+                }
+                return GLib.SOURCE_REMOVE;
+            }
+        );
     }
 
     _startTimezoneMonitor() {
@@ -419,12 +476,19 @@ var EventsManager = class EventsManager {
             this.emit("events-updated");
         }
 
+        const exclusiveEnd = last.add_days(1);
+        if (exclusiveEnd === null) {
+            global.logError(
+                `${APPLET_UUID}: visible event range exceeds DateTime limits.`
+            );
+            return;
+        }
+
         const requestGeneration = ++this._range_request_generation;
         this._range_request_pending = true;
         this._range_request_succeeded = false;
         const requestedStart = first;
         const requestedEnd = last;
-        const exclusiveEnd = last.add_days(1);
         this.last_update_timestamp = GLib.get_monotonic_time();
 
         this._calendar_server.call_set_time_range(
@@ -462,6 +526,8 @@ var EventsManager = class EventsManager {
                     this._queued_range_force = false;
                     const nextStart = this.current_range_start;
                     const nextEnd = this.current_range_end;
+                    this._cancelRangeRetry();
+                    this._range_retry_attempt = 0;
                     if (nextStart !== null && nextEnd !== null) {
                         /*
                          * CalendarServer does not tag event signals with the
@@ -476,6 +542,14 @@ var EventsManager = class EventsManager {
                             true
                         );
                     }
+                    return;
+                }
+
+                if (succeeded) {
+                    this._cancelRangeRetry();
+                    this._range_retry_attempt = 0;
+                } else {
+                    this._scheduleRangeRetry();
                 }
             }
         );
@@ -489,6 +563,12 @@ var EventsManager = class EventsManager {
 
         const first = midnight(_jsDateToLocalDateTime(firstDate));
         const last = midnight(_jsDateToLocalDateTime(lastDate));
+        if (first === null || last === null) {
+            global.logError(
+                `${APPLET_UUID}: visible range has no representable local day boundary.`
+            );
+            return;
+        }
         if (last.to_unix() < first.to_unix()) {
             global.logError(`${APPLET_UUID}: invalid visible event range.`);
             return;
@@ -504,6 +584,10 @@ var EventsManager = class EventsManager {
 
         this.current_range_start = first;
         this.current_range_end = last;
+        if (changed) {
+            this._cancelRangeRetry();
+            this._range_retry_attempt = 0;
+        }
 
         if (this._range_request_pending) {
             /*
@@ -551,10 +635,15 @@ var EventsManager = class EventsManager {
                     );
                 }
 
-                const selectedDate = this.current_selected_date !== null &&
-                    this.current_selected_date.to_unix() > 0 ?
-                    new Date(this.current_selected_date.to_unix() * 1000) :
-                    new Date();
+                let selectedDate = new Date();
+                if (this.current_selected_date !== null) {
+                    const candidate = new Date(
+                        this.current_selected_date.to_unix() * 1000
+                    );
+                    if (Number.isFinite(candidate.getTime())) {
+                        selectedDate = candidate;
+                    }
+                }
                 this.select_date(selectedDate, forceReload);
             }
             return GLib.SOURCE_REMOVE;
@@ -567,6 +656,12 @@ var EventsManager = class EventsManager {
         }
 
         const day = midnight(_jsDateToLocalDateTime(date));
+        if (day === null) {
+            global.logError(
+                `${APPLET_UUID}: selected date has no representable local boundary.`
+            );
+            return;
+        }
         const previous = this.current_selected_date;
         const changedMonth = previous !== null &&
             (previous.get_year() !== day.get_year() ||
@@ -612,6 +707,9 @@ var EventsManager = class EventsManager {
             return [];
         }
         const day = midnight(_jsDateToLocalDateTime(js_date));
+        if (day === null) {
+            return [];
+        }
         return this.event_store.get_colors(
             day.to_unix(),
             GLib.DateTime.new_now_local().to_unix()
@@ -666,6 +764,7 @@ var EventsManager = class EventsManager {
 
         this._cancelCull();
         this._cancelReconnect();
+        this._cancelRangeRetry();
         if (this._reload_id > 0) {
             Mainloop.source_remove(this._reload_id);
             this._reload_id = 0;

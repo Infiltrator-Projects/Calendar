@@ -28,12 +28,33 @@ function loadLocalModule(name) {
 
 var midnight = function midnight(dateTime) {
     const GLib = imports.gi.GLib;
-    return GLib.DateTime.new_local(
-        dateTime.get_year(),
-        dateTime.get_month(),
-        dateTime.get_day_of_month(),
-        0, 0, 0
-    );
+    if (dateTime === null) {
+        return null;
+    }
+
+    const year = dateTime.get_year();
+    const month = dateTime.get_month();
+    const day = dateTime.get_day_of_month();
+
+    /*
+     * Some historical timezone transitions skip local midnight. Use the first
+     * representable minute on the same civil date rather than returning null
+     * or silently borrowing an instant from an adjacent date.
+     */
+    for (let minuteOfDay = 0; minuteOfDay < 24 * 60; minuteOfDay++) {
+        const hour = Math.floor(minuteOfDay / 60);
+        const minute = minuteOfDay % 60;
+        const candidate = GLib.DateTime.new_local(
+            year, month, day, hour, minute, 0
+        );
+        if (candidate !== null &&
+            candidate.get_year() === year &&
+            candidate.get_month() === month &&
+            candidate.get_day_of_month() === day) {
+            return candidate;
+        }
+    }
+    return null;
 };
 
 var sameInstant = function sameInstant(a, b) {

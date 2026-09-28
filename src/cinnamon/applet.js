@@ -344,24 +344,68 @@ class CalendarPlusApplet extends Applet.Applet {
     }
 
     _bindSettings() {
-        this.settings.bind("show-events", "show_events", this._onSettingsChanged);
-        this.settings.bind("theme-mode", "theme_mode", this._onSettingsChanged);
+        this.settings.bind(
+            "show-events",
+            "show_events",
+            this._onShowEventsChanged
+        );
+        this.settings.bind(
+            "theme-mode",
+            "theme_mode",
+            this._onThemeModeChanged
+        );
         this.settings.bind("keyOpen", "keyOpen", this._setKeybinding);
         this._setKeybinding();
     }
 
-    _watchDesktopPreferences() {
-        for (const key of [
-            "clock-use-24h",
-            "clock-show-date",
-            "gtk-theme",
-        ]) {
-            this._signals.connect(
-                this.desktop_settings,
-                `changed::${key}`,
-                () => this._onSettingsChanged()
+    _onShowEventsChanged() {
+        if (this._destroyed || !this._calendar || !this.events_manager) {
+            return;
+        }
+        this._calendar.refreshEventAvailability();
+        this._syncEventVisibility(true);
+    }
+
+    _onThemeModeChanged() {
+        if (this._destroyed) {
+            return;
+        }
+        this._applyThemeMode();
+        this._resetLabelWidth();
+        this._rebalancePopupWidth();
+    }
+
+    _onDesktopClockPreferenceChanged(refreshAgenda) {
+        if (this._destroyed || !this._calendar || !this.events_manager) {
+            return;
+        }
+        this._resetLabelWidth();
+        this._configureWallClock();
+        this._updateClockAndDate();
+        if (refreshAgenda && this.events_manager.is_active()) {
+            this.events_manager.select_date(
+                this._calendar.getSelectedDate(),
+                true
             );
         }
+    }
+
+    _watchDesktopPreferences() {
+        this._signals.connect(
+            this.desktop_settings,
+            "changed::clock-use-24h",
+            () => this._onDesktopClockPreferenceChanged(true)
+        );
+        this._signals.connect(
+            this.desktop_settings,
+            "changed::clock-show-date",
+            () => this._onDesktopClockPreferenceChanged(false)
+        );
+        this._signals.connect(
+            this.desktop_settings,
+            "changed::gtk-theme",
+            () => this._onThemeModeChanged()
+        );
     }
 
     _systemThemeName() {
@@ -491,7 +535,7 @@ class CalendarPlusApplet extends Applet.Applet {
         this._configureWallClock();
         this._syncSystemClock();
         this._updateClockAndDate();
-        this._syncEventVisibility(true);
+        this._syncEventVisibility(false);
     }
 
     _systemTemporalPolicy() {

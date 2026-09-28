@@ -98,6 +98,17 @@ gboolean calendar_plus_event_index_refresh_timezone(
     CalendarPlusEventIndex *index);
 
 /**
+ * calendar_plus_event_index_colors:
+ * @index: event index
+ * @local_day_unix: any Unix instant on the requested local day
+ *
+ * Returns: (transfer full) (array zero-terminated=1): stable ordered colours
+ * for events intersecting the requested local day.
+ */
+gchar **calendar_plus_event_index_colors(CalendarPlusEventIndex *index,
+                                         gint64 local_day_unix);
+
+/**
  * calendar_plus_event_index_snapshot:
  * @index: event index
  * @local_day_unix: any Unix instant on the requested local day
