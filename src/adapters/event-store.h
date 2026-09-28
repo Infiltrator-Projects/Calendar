@@ -164,6 +164,29 @@ gchar **calendar_plus_event_store_get_colors(
     gint64 local_day_unix,
     gint64 now_unix);
 
+
+/**
+ * calendar_plus_event_store_get_color_range:
+ * @self: an event store
+ * @first_local_day_unix: Unix timestamp on the first requested local day
+ * @day_count: number of consecutive local civil days
+ * @now_unix: current Unix timestamp for today's ordering
+ * @maximum_colors_per_day: per-day output cap
+ *
+ * Returns one string-array per requested civil day. The native index is scanned
+ * once and local days advance through civil-time arithmetic, so DST changes do
+ * not turn month-grid rendering into 42 independent index scans.
+ *
+ * Returns: (transfer full): an array-of-string-arrays variant aligned with the
+ * requested days
+ */
+GVariant *calendar_plus_event_store_get_color_range(
+    CalendarPlusEventStore *self,
+    gint64 first_local_day_unix,
+    guint day_count,
+    gint64 now_unix,
+    guint maximum_colors_per_day);
+
 G_END_DECLS
 
 #endif
