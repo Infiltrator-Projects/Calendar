@@ -333,9 +333,12 @@ def main() -> None:
     assert "fetch_month_events" not in event_manager_source
     assert "current_month_year" not in event_manager_source
 
-    # Ordinary clock ticks update only presentation timing. Native event
-    # snapshots are rebuilt by Calendar's coalesced event/date update path.
-    assert applet_source.count("this.events_manager.select_date(") == 1
+    # Ordinary clock ticks update only presentation timing. Explicit agenda
+    # refreshes are reserved for event-visibility and 12/24-hour presentation
+    # changes; neither path is part of the WallClock tick callback.
+    assert applet_source.count("this.events_manager.select_date(") == 2
+    assert "() => this._onDesktopClockPreferenceChanged(true)" in applet_source
+    assert "this._syncEventVisibility(true);" in applet_source
     assert "this.event_list.refresh_variations();" in applet_source
     assert "_refreshSelectedAgenda" not in event_manager_source
     assert "this._temporalPolicyCache" in applet_source
