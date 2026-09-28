@@ -43,7 +43,8 @@ const midnight = RuntimeSupport.midnight;
 const sameInstant = RuntimeSupport.sameInstant;
 
 function _jsDateToLocalDateTime(date) {
-    if (!(date instanceof Date) || !Number.isFinite(date.getTime())) {
+    if (date === null || typeof date.getTime !== "function" ||
+        !Number.isFinite(date.getTime())) {
         return null;
     }
     return GLib.DateTime.new_from_unix_local(Math.floor(date.getTime() / 1000));

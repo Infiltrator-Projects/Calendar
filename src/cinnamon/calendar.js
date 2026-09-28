@@ -226,7 +226,8 @@ var Calendar = class Calendar {
     }
 
     queue_set_date(date) {
-        if (this._destroyed || !(date instanceof Date) ||
+        if (this._destroyed || date === null ||
+            typeof date.getTime !== "function" ||
             !Number.isFinite(date.getTime())) {
             return;
         }
