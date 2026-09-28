@@ -291,7 +291,7 @@ var EventList = class EventList {
 
     _showEmptyState(delayed, unavailable = false) {
         this.no_events_label.set_text(
-            unavailable ? _("Calendar unavailable") : _("No Events")
+            unavailable ? CP_("Calendar unavailable") : _("No Events")
         );
         if (!delayed) {
             this.no_events_box.show();
