@@ -1,5 +1,14 @@
 # Changelog
 
+## 1.0.74 - 2026-09-28
+
+- Preserve timezone-skipped civil dates in the 42-cell grid and align batched event colours to civil-date progression rather than representable-day progression.
+- Resolve production work-day styling from the active LC_TIME locale instead of silently falling back to CLDR territory 001.
+- Harden CalendarServer generation handoff with an event-admission barrier, newest-range filtering and rejection of known-older event revisions.
+- Replace timed stale-event culling with explicit per-request store generations so empty refreshes are correct without guessing when an asynchronous backend is finished.
+- Distinguish CalendarServer unavailability from an authoritative empty agenda and centre agenda auto-scroll against the visible viewport rather than total content height.
+- Add regression coverage for Pacific/Apia's skipped 2011-12-30 civil date, range admission, explicit empty-generation replacement and repaired runtime boundaries.
+
 ## 1.0.73 - 2026-09-28
 
 - Cull stale events after successful empty CalendarServer refreshes and clear the visible agenda immediately when event transport disappears.
