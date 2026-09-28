@@ -63,10 +63,16 @@ def main() -> None:
     assert theme["type"] == "combobox"
     assert theme["default"] == "system"
     assert list(theme["options"].values()) == ["system", "day", "night"]
-    assert 'this.settings.bind("theme-mode", "theme_mode", this._onSettingsChanged);' in applet_source
+    assert '"theme-mode",' in applet_source
+    assert '"theme_mode",' in applet_source
+    assert "this._onThemeModeChanged" in applet_source
+    assert '"show-events",' in applet_source
+    assert "this._onShowEventsChanged" in applet_source
+    assert "this._calendar.refreshEventAvailability();" in applet_source
     assert 'this.theme_mode = "system";' in applet_source
-    assert 'changed::${key}' in applet_source
-    assert '"gtk-theme"' in applet_source
+    assert '"changed::clock-use-24h"' in applet_source
+    assert '"changed::clock-show-date"' in applet_source
+    assert '"changed::gtk-theme"' in applet_source
     assert 'this._systemPrefersDark() ? "night" : "day"' in applet_source
     assert "this._systemUsesHighContrast()" in applet_source
     assert "super.configureApplet(tab);" in applet_source
