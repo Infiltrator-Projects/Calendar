@@ -216,3 +216,41 @@ calendar_plus_event_store_get_snapshot(CalendarPlusEventStore *self,
     calendar_plus_event_snapshot_free(snapshot);
     return result;
 }
+
+GVariant *
+calendar_plus_event_store_get_color_range(CalendarPlusEventStore *self,
+                                          gint64 first_local_day_unix,
+                                          guint day_count,
+                                          gint64 now_unix,
+                                          guint maximum_colors_per_day)
+{
+    CalendarPlusEventColorRange *range;
+    GVariantBuilder days;
+    gsize day;
+
+    g_return_val_if_fail(CALENDAR_PLUS_IS_EVENT_STORE(self), NULL);
+    range = calendar_plus_event_index_color_range(
+        calendar_plus_event_store_get_index(self),
+        first_local_day_unix,
+        day_count,
+        now_unix,
+        maximum_colors_per_day);
+    if (range == NULL)
+        return NULL;
+
+    g_variant_builder_init(&days, G_VARIANT_TYPE("aas"));
+    for (day = 0; day < range->day_count; day++)
+    {
+        GVariantBuilder colors;
+        gsize item;
+
+        g_variant_builder_init(&colors, G_VARIANT_TYPE("as"));
+        for (item = 0; range->colors[day][item] != NULL; item++)
+            g_variant_builder_add(&colors, "s", range->colors[day][item]);
+        g_variant_builder_add_value(&days, g_variant_builder_end(&colors));
+    }
+
+    calendar_plus_event_color_range_free(range);
+    return g_variant_ref_sink(g_variant_builder_end(&days));
+}
+
