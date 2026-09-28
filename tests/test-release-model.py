@@ -425,6 +425,8 @@ def main() -> None:
     assert "provider->add_periods" in calendar_core
     assert "calendar_plus_calendar_engine_build_grid_for_locale" in calendar_core
     assert "locale-workday-grid" in read("tests/test-time-formats.c")
+    locale_weekend = read("src/core/locale-weekend.c")
+    assert "setlocale(LC_TIME, NULL)" in locale_weekend
     assert "cell->is_work_day = weekday != 0 && weekday != 6;" not in calendar_core
     assert "switch (" not in custom
     assert "switch (" not in calendar_core
