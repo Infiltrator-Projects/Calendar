@@ -168,11 +168,12 @@ var EventList = class EventList {
             icon_type: St.IconType.SYMBOLIC,
             icon_size: 48,
         }));
-        content.add_actor(new St.Label({
+        this.no_events_label = new St.Label({
             style_class: "calendar-events-no-events-label",
             text: _("No Events"),
             y_align: Clutter.ActorAlign.CENTER,
-        }));
+        });
+        content.add_actor(this.no_events_label);
 
         this.no_events_button.add_actor(content);
         this.no_events_box.add_actor(this.no_events_button);
@@ -235,7 +236,7 @@ var EventList = class EventList {
         }
     }
 
-    set_events(snapshot, delayEmpty) {
+    set_events(snapshot, delayEmpty, unavailable = false) {
         if (this._destroyed) {
             return;
         }
@@ -255,7 +256,7 @@ var EventList = class EventList {
 
         if (snapshot === null) {
             this._current_event_cache_key = null;
-            this._showEmptyState(Boolean(delayEmpty));
+            this._showEmptyState(Boolean(delayEmpty), Boolean(unavailable));
             return;
         }
 
@@ -288,7 +289,10 @@ var EventList = class EventList {
         }
     }
 
-    _showEmptyState(delayed) {
+    _showEmptyState(delayed, unavailable = false) {
+        this.no_events_label.set_text(
+            unavailable ? _("Calendar unavailable") : _("No Events")
+        );
         if (!delayed) {
             this.no_events_box.show();
             return;
@@ -318,9 +322,13 @@ var EventList = class EventList {
             const adjustment = this.events_scroll_box
                 .get_vscroll_bar()
                 .get_adjustment();
-            const centre = row.actor.y + row.actor.height / 2 -
-                this.events_box.height / 2;
-            adjustment.set_value(Math.max(0, centre));
+            const pageSize = Math.max(0, adjustment.page_size);
+            const lower = adjustment.lower;
+            const upper = Math.max(lower, adjustment.upper - pageSize);
+            const centre = row.actor.y + row.actor.height / 2 - pageSize / 2;
+            adjustment.set_value(
+                Math.min(upper, Math.max(lower, centre))
+            );
             return GLib.SOURCE_REMOVE;
         });
     }
