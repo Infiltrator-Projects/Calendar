@@ -3,7 +3,7 @@
 ## 1.0.73 - 2026-09-28
 
 - Cull stale events after successful empty CalendarServer refreshes and clear the visible agenda immediately when event transport disappears.
-- Batch the 42-cell month-grid event-colour lookup into one native range query while preserving agenda ordering and DST-safe local-day boundaries.
+- Batch the 42-cell month-grid event-colour lookup into one native `CALENDAR_PLUS_2.7` range query while preserving agenda ordering and DST-safe local-day boundaries.
 - Reject civil dates that JavaScript silently normalizes, remove forced locale capitalization, and tolerate invalid localized WallClock format results.
 - Remove narrowing casts from perpetual and Swedish calendar navigation so public civil-year limits fail cleanly instead of wrapping.
 - Validate effective temporal-policy mode/calendar/coordinates and cache the safe fallback until the next policy generation.
