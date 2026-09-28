@@ -592,8 +592,11 @@ def main() -> None:
     )
     assert "infiltratr_size_add_checked" in read("src/core/icu-calendar.c")
     assert "infiltratr_size_multiply_checked" in read("src/core/icu-calendar.c")
-    assert "infiltratr_size_add_checked" in read("src/adapters/event-store.c")
-    assert "infiltratr_size_multiply_checked" in read("src/adapters/event-store.c")
+    event_store_source = read("src/adapters/event-store.c")
+    event_core_source = read("src/core/event-core.c")
+    assert "calendar_plus_event_index_colors" in event_store_source
+    assert "g_new0(gchar *," in event_core_source
+    assert "calendar_plus_event_index_colors" in event_core_source
     assert "infiltratr_i64_floor_divmod" in read("src/adapters/clock-glib-adapter.c")
     assert "infiltratr_temporal_calendar_at" in read("src/core/calendar-registry.c")
     assert "infiltratr_temporal_calendar_count" in read("src/core/calendar-registry.c")
