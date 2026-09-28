@@ -187,7 +187,7 @@ static void
 initialise_bridge(void)
 {
     static const char *const majors[] = {
-        "80", "79", "78", "77", "76", "75", "74", "73", "72"
+        "81", "80", "79", "78", "77", "76", "75", "74", "73", "72"
     };
     size_t index;
 

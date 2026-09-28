@@ -107,7 +107,7 @@ static const gchar *const positivist_months[] = {
 };
 
 static gint
-iso_weeks_in_year(gint year)
+iso_weeks_in_year(gint64 year)
 {
     const gint january_first = iso_weekday(gregorian_to_jdn(year, 1, 1));
 
@@ -119,23 +119,26 @@ static void
 iso_fields_from_jdn(gint64 jdn,
                     CalendarFields *fields)
 {
-    gint year;
+    gint gregorian_year;
     gint month;
     gint day;
     gint week;
+    gint64 year;
     const gint weekday = iso_weekday(jdn);
 
-    jdn_to_gregorian(jdn, &year, &month, &day);
-    week = (gregorian_day_of_year(year, month, day) - weekday + 10) / 7;
+    jdn_to_gregorian(jdn, &gregorian_year, &month, &day);
+    year = gregorian_year;
+    week = (gregorian_day_of_year(gregorian_year, month, day) -
+            weekday + 10) / 7;
 
     if (week < 1)
     {
-        year--;
+        year = calendar_plus_i64_subtract_saturating(year, 1);
         week = iso_weeks_in_year(year);
     }
     else if (week > iso_weeks_in_year(year))
     {
-        year++;
+        year = calendar_plus_i64_add_saturating(year, 1);
         week = 1;
     }
 
@@ -152,7 +155,7 @@ static gint64
 iso_fields_to_jdn(const CalendarFields *fields)
 {
     const gint64 january_fourth =
-        gregorian_to_jdn((gint)fields->year, 1, 4);
+        gregorian_to_jdn(fields->year, 1, 4);
     const gint64 week_one_monday =
         january_fourth - (iso_weekday(january_fourth) - 1);
 
@@ -591,9 +594,9 @@ calendar_plus_custom_add_years(CalendarMode mode,
                 amount, provider->fixed_year_days));
 
     provider->fields_from_jdn(jdn, &fields);
-    fields.year += amount;
+    fields.year = calendar_plus_i64_add_saturating(fields.year, amount);
     if (provider->clamp_iso_weeks)
-        fields.month = MIN(fields.month, iso_weeks_in_year((gint)fields.year));
+        fields.month = MIN(fields.month, iso_weeks_in_year(fields.year));
     fields.day = MIN(fields.day, provider->month_length(&fields));
 
     return provider->fields_to_jdn(&fields);

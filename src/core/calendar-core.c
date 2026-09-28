@@ -42,7 +42,12 @@ static gboolean
 date_from_jdn(gint64 jdn,
               CalendarPlusDate *date)
 {
-    if (date == NULL)
+    const gint64 minimum =
+        calendar_plus_gregorian_to_jdn(G_MININT, 1, 1);
+    const gint64 maximum =
+        calendar_plus_gregorian_to_jdn(G_MAXINT, 12, 31);
+
+    if (date == NULL || jdn < minimum || jdn > maximum)
         return FALSE;
 
     calendar_plus_jdn_to_gregorian(jdn,

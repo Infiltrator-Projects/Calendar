@@ -132,7 +132,12 @@ calendar_plus_roman_number(gint64 value)
     g_autoptr(GString) result = g_string_new(NULL);
     gsize index;
 
-    if (value <= 0)
+    /*
+     * Conventional unbarred Roman notation is bounded. Avoid multi-megabyte
+     * strings and millions of subtraction iterations for the library's much
+     * wider supported civil-year domain.
+     */
+    if (value <= 0 || value > 3999)
         return g_strdup_printf("%" G_GINT64_FORMAT, value);
 
     for (index = 0; index < G_N_ELEMENTS(numerals); index++)

@@ -115,32 +115,12 @@ calendar_plus_event_store_get_colors(CalendarPlusEventStore *self,
                                      gint64 local_day_unix,
                                      gint64 now_unix)
 {
-    CalendarPlusEventSnapshot *snapshot;
-    gchar **colors;
-    size_t color_count;
-    size_t allocation_bytes;
-    gsize item;
-
     g_return_val_if_fail(CALENDAR_PLUS_IS_EVENT_STORE(self), NULL);
-    snapshot = calendar_plus_event_index_snapshot(self->index,
-                                                  local_day_unix,
-                                                  now_unix);
-    if (snapshot == NULL)
-        return NULL;
 
-    if (!infiltratr_size_add_checked((size_t)snapshot->length, 1U,
-                                     &color_count) ||
-        !infiltratr_size_multiply_checked(color_count, sizeof(*colors),
-                                          &allocation_bytes))
-    {
-        calendar_plus_event_snapshot_free(snapshot);
-        return NULL;
-    }
-
-    colors = (gchar **)g_malloc0(allocation_bytes);
-    for (item = 0; item < snapshot->length; item++)
-        colors[item] = g_strdup(snapshot->events[item].color);
-
-    calendar_plus_event_snapshot_free(snapshot);
-    return colors;
+    /*
+     * Month-grid dots need only stable colours. Avoid constructing, sorting
+     * and deep-copying a complete agenda snapshot for each of the 42 cells.
+     */
+    (void)now_unix;
+    return calendar_plus_event_index_colors(self->index, local_day_unix);
 }
