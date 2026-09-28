@@ -349,10 +349,18 @@ var EventsManager = class EventsManager {
          * the result for that range, not the range itself, so the queued forced
          * reload can immediately ask CalendarServer for the same cells again.
          */
-        this._range_request_generation += 1;
-        this._range_request_pending = false;
         this._range_request_succeeded = false;
-        this.queue_reload(true);
+        if (this._range_request_pending) {
+            /*
+             * Do not invalidate an in-flight method call locally: CalendarServer
+             * event signals carry no request token, so starting another call
+             * before the first reply would recreate the stale-range race.
+             * Queue one forced refresh to run immediately after it completes.
+             */
+            this._queued_range_force = true;
+        } else {
+            this.queue_reload(true);
+        }
         this.emit("events-updated");
     }
 
