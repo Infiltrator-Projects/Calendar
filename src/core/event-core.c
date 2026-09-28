@@ -812,6 +812,15 @@ calendar_plus_event_index_color_range(CalendarPlusEventIndex *index,
         }
     }
 
+    /*
+     * These temporary lookup arrays are no longer needed once the single
+     * event-index scan has populated the per-day buckets. Release them before
+     * allocating the returned range so ownership is explicit to both readers
+     * and static analyzers.
+     */
+    g_clear_pointer(&valid_days, g_free);
+    g_clear_pointer(&valid_indexes, g_free);
+
     range = g_new0(CalendarPlusEventColorRange, 1);
     range->day_count = day_count;
     range->colors = g_new0(gchar **, day_count);
