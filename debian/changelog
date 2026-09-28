@@ -1,3 +1,15 @@
+infiltrator-calendar (1.0.72) unstable; urgency=medium
+
+  * Repair serialized event-range tests and add automatic bounded retry.
+  * Preserve historical selections and harden local-day/timestamp boundaries.
+  * Coalesce rapid navigation without dropping user input.
+  * Synchronize event-dot visibility and reduce redundant agenda work.
+  * Use lightweight event-colour lookup for the month grid.
+  * Harden extreme civil-year/ISO/Roman formatting boundaries.
+  * Add ICU 81 probing and About desktop-file validation.
+
+ -- Shannon Smith <infiltratr@yandex.com>  Mon, 28 Sep 2026 10:55:00 +1000
+
 infiltrator-calendar (1.0.71) unstable; urgency=medium
 
   * Serialize CalendarServer range requests to prevent stale overlap.

@@ -1,5 +1,15 @@
 # Changelog
 
+## 1.0.72 - 2026-09-28
+
+- Repair the serialized CalendarServer regression test and add bounded automatic retry for transient range failures.
+- Preserve pre-1970 selections, reject unrepresentable event timestamps, and make local-day boundaries robust to skipped midnight.
+- Coalesce rapid calendar navigation without dropping steps and synchronize month-grid event dots immediately with the show-events setting.
+- Avoid forced agenda rebuilds for unrelated theme/date-display changes and cap per-day dot actors.
+- Replace full event snapshot construction with lightweight ordered colour lookup for month-grid cells.
+- Reject navigation beyond the public gint civil-year domain, harden ISO-year arithmetic, and bound Roman numeral formatting.
+- Probe ICU 81 in addition to ICU 72-80 and validate the package-owned About desktop file during CI.
+
 ## 1.0.71 - 2026-09-28
 
 - Serialize CalendarServer visible-range requests so stale range traffic cannot overlap a newer refresh generation.
