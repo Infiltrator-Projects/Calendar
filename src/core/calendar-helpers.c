@@ -42,6 +42,7 @@ calendar_plus_format_named_date(
     const CalendarPlusCalendarFields *fields,
     CalendarPlusDatePart part,
     const gchar *const *months,
+    gsize month_count,
     const gchar *year_suffix)
 {
     const gchar *month_name;
@@ -49,6 +50,7 @@ calendar_plus_format_named_date(
     g_return_val_if_fail(fields != NULL, g_strdup(""));
     g_return_val_if_fail(months != NULL, g_strdup(""));
     g_return_val_if_fail(fields->month >= 1, g_strdup(""));
+    g_return_val_if_fail((gsize)fields->month < month_count, g_strdup(""));
 
     month_name = _(months[fields->month]);
     if (part == CALENDAR_PLUS_DATE_PART_DAY)

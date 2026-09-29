@@ -255,7 +255,18 @@ var EventList = class EventList {
                 button.can_focus = this._canLaunchCalendar;
             }
         }
-        this._current_event_cache_key = null;
+
+        /*
+         * Existing rows outlive backend preference changes. Update their
+         * activation policy in place so switching between EDS and Clockenstein
+         * cannot leave stale clickable/non-clickable actors until the next
+         * event-store revision.
+         */
+        for (const row of this._rows) {
+            if (row && typeof row.set_clickable === "function") {
+                row.set_clickable(this._canLaunchCalendar);
+            }
+        }
     }
 
     launch_calendar(gdate) {
@@ -457,14 +468,18 @@ class EventRow {
         const canLaunch = Boolean(params.clickable);
         this.actor = new St.Button({
             style_class: "calendar-event-button",
-            reactive: canLaunch,
-            can_focus: canLaunch,
+            reactive: false,
+            can_focus: false,
             accessible_role: Atk.Role.LIST_ITEM,
             accessible_name: event.summary,
         });
-        if (canLaunch) {
-            this.actor.connect("clicked", () => this.emit("view-event", event.id));
-        }
+        /*
+         * Connect once for the row lifetime. Backend availability can change
+         * while the popup remains open, so reactivity is mutable state rather
+         * than a constructor-only decision.
+         */
+        this.actor.connect("clicked", () => this.emit("view-event", event.id));
+        this.set_clickable(canLaunch);
 
         const shell = new St.BoxLayout({ x_expand: true });
         shell.add_actor(new St.Bin({
@@ -514,6 +529,12 @@ class EventRow {
         this.update_variations();
     }
 
+    set_clickable(clickable) {
+        const enabled = Boolean(clickable);
+        this.actor.reactive = enabled;
+        this.actor.can_focus = enabled;
+    }
+
     update_variations(now = null) {
         const current = now || GLib.DateTime.new_now_local();
         const today = midnight(current);
@@ -541,13 +562,18 @@ class EventRow {
             }
         } else {
             this.event_time.set_style_class_name("calendar-event-time-present");
-            if (this.event.all_day || this.event.multi_day) {
+            if (this.event.all_day) {
                 this.event_time.add_style_pseudo_class("all-day");
             } else {
                 this.countdown_label.set_text(_("In progress"));
                 this.countdown_label.add_style_pseudo_class("current");
             }
-            this.is_current_or_next = startsToday && !this.event.all_day;
+            /*
+             * A timed event remains current after midnight if it spans days.
+             * Do not require STARTS_ON_DAY: that would skip an event which
+             * started yesterday but is still in progress now.
+             */
+            this.is_current_or_next = !this.event.all_day;
         }
 
         const rangeText = this._rangeText(today, selected);

@@ -457,16 +457,41 @@ var EventsManager = class EventsManager {
             return;
         }
 
-        this.event_store.refresh_timezone();
         /*
-         * Re-query the same civil cells under the new timezone. queue_reload()
-         * reconstructs transport instants from the stored Y/M/D endpoints, so
-         * an old local-midnight Unix timestamp can never shift the range by a
-         * civil day after a large timezone change.
+         * Close admission before touching timezone-derived membership. Signals
+         * from the old CalendarServer view are not generation-tagged and must
+         * not repopulate the index during the deferred forced reload.
          */
-        this._range_request_succeeded = false;
-        this.queue_reload(true);
+        this._range_accepting_events = false;
+        this.event_store.refresh_timezone();
+        this._invalidateCurrentRange(false);
         this.emit("events-updated");
+    }
+
+    _invalidateCurrentRange(clearStore) {
+        if (this._destroyed || this.event_store === null) {
+            return;
+        }
+
+        /*
+         * All event-universe invalidations share one ordering invariant:
+         * close admission first, mark the accepted request stale, then either
+         * queue a replacement behind the in-flight request or reload the newest
+         * civil range. This removes idle-window races between invalidation and
+         * queue_reload().
+         */
+        this._range_accepting_events = false;
+        this._range_request_succeeded = false;
+        if (clearStore) {
+            this.event_store.clear();
+        }
+
+        if (this._range_request_pending) {
+            this._queued_range_force = true;
+        } else if (this.current_range_start !== null &&
+                   this.current_range_end !== null) {
+            this.queue_reload(true);
+        }
     }
 
     _ingestEvents(payload) {
@@ -521,15 +546,7 @@ var EventsManager = class EventsManager {
          * possibly newer generation. This is correct for both genuine current
          * removals and delayed signals from a stopped view.
          */
-        this.event_store.clear();
-        this._range_request_succeeded = false;
-        this._range_accepting_events = false;
-        if (this._range_request_pending) {
-            this._queued_range_force = true;
-        } else if (this.current_range_start !== null &&
-                   this.current_range_end !== null) {
-            this.queue_reload(true);
-        }
+        this._invalidateCurrentRange(true);
         this.emit("events-updated");
     }
 
@@ -543,24 +560,13 @@ var EventsManager = class EventsManager {
          * A clean reload is safer than trying to infer which cached rows came
          * from the removed EDS client.
          */
-        this.event_store.clear();
         /*
-         * Keep the grid-owned desired range.  A client-set change invalidates
-         * the result for that range, not the range itself, so the queued forced
-         * reload can immediately ask CalendarServer for the same cells again.
+         * Keep the grid-owned desired range. A client-set change invalidates
+         * the result for that range, not the range itself. The shared
+         * invalidation path closes event admission before the deferred reload,
+         * including while another SetTimeRange call is still in flight.
          */
-        this._range_request_succeeded = false;
-        if (this._range_request_pending) {
-            /*
-             * Do not invalidate an in-flight method call locally: CalendarServer
-             * event signals carry no request token, so starting another call
-             * before the first reply would recreate the stale-range race.
-             * Queue one forced refresh to run immediately after it completes.
-             */
-            this._queued_range_force = true;
-        } else {
-            this.queue_reload(true);
-        }
+        this._invalidateCurrentRange(true);
         this.emit("events-updated");
     }
 

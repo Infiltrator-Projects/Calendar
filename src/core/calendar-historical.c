@@ -236,7 +236,7 @@ calendar_plus_revised_julian_format(
     CalendarPlusDatePart part)
 {
     g_return_val_if_fail(fields != NULL, g_strdup(""));
-    return calendar_plus_format_named_date(fields, part, common_months, NULL);
+    return calendar_plus_format_named_date(fields, part, common_months, G_N_ELEMENTS(common_months), NULL);
 }
 
 void
@@ -313,7 +313,7 @@ calendar_plus_byzantine_format(
     CalendarPlusDatePart part)
 {
     g_return_val_if_fail(fields != NULL, g_strdup(""));
-    return calendar_plus_format_named_date(fields, part, common_months, "A.M.");
+    return calendar_plus_format_named_date(fields, part, common_months, G_N_ELEMENTS(common_months), "A.M.");
 }
 
 void
@@ -379,7 +379,7 @@ calendar_plus_egyptian_format(
     CalendarPlusDatePart part)
 {
     g_return_val_if_fail(fields != NULL, g_strdup(""));
-    return calendar_plus_format_named_date(fields, part, egyptian_months, NULL);
+    return calendar_plus_format_named_date(fields, part, egyptian_months, G_N_ELEMENTS(egyptian_months), NULL);
 }
 
 /*
@@ -455,5 +455,5 @@ calendar_plus_armenian_format(
     CalendarPlusDatePart part)
 {
     g_return_val_if_fail(fields != NULL, g_strdup(""));
-    return calendar_plus_format_named_date(fields, part, armenian_months, NULL);
+    return calendar_plus_format_named_date(fields, part, armenian_months, G_N_ELEMENTS(armenian_months), NULL);
 }

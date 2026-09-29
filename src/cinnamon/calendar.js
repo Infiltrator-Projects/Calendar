@@ -294,9 +294,18 @@ var Calendar = class Calendar {
             global.logError(`Calendar: unknown calendar '${calendarId}'.`);
             return;
         }
+
+        const model = this._gridModelForDate(this._selectedDate, replacement);
+        if (model === null) {
+            global.logError(
+                `Calendar: '${calendarId}' cannot represent the selected date.`
+            );
+            return;
+        }
+
         this._calendarSystem = replacement;
         this._calendarSystemId = calendarId;
-        this._update(true);
+        this._update(true, model);
     }
 
     formatDate(date, part) {
@@ -320,12 +329,20 @@ var Calendar = class Calendar {
             return;
         }
         const changed = !_sameCivilDate(date, this._selectedDate);
+        let model = null;
         if (changed) {
+            model = this._gridModelForDate(date);
+            if (model === null) {
+                global.logError(
+                    "Calendar: selected date is outside the active calendar domain."
+                );
+                return;
+            }
             this._selectedDate = _cloneDate(date);
             this.emit("selected-date-changed", this._selectedDate);
         }
         if (changed || forceReload) {
-            this._update(Boolean(forceReload));
+            this._update(Boolean(forceReload), model);
         }
     }
 
@@ -607,24 +624,37 @@ var Calendar = class Calendar {
         }
     }
 
-    _update(forceReload) {
+    _gridModelForDate(date, calendarSystem = null) {
+        const system = calendarSystem || this._calendarSystem;
+        if (!system) {
+            return null;
+        }
+        return system.build_grid(
+            ..._dateFields(date),
+            ..._dateFields(new Date()),
+            this._weekStart
+        );
+    }
+
+    _update(forceReload, preparedModel = null) {
         if (this._destroyed || !this._calendarSystem) {
+            return;
+        }
+
+        /*
+         * Build before mutating any actors. A bounded provider can reject an
+         * otherwise valid Gregorian coordinate; retaining the existing header
+         * and 42-cell grid is preferable to leaving a half-cleared popup.
+         */
+        const model = preparedModel || this._gridModelForDate(this._selectedDate);
+        if (model === null) {
+            global.logError("Calendar: native grid generation failed.");
             return;
         }
 
         this._monthLabel.text = this.formatDate(this._selectedDate, "month");
         this._yearLabel.text = this.formatDate(this._selectedDate, "year");
         this._removeCells();
-
-        const model = this._calendarSystem.build_grid(
-            ..._dateFields(this._selectedDate),
-            ..._dateFields(new Date()),
-            this._weekStart
-        );
-        if (model === null) {
-            global.logError("Calendar: native grid generation failed.");
-            return;
-        }
 
         const records = model.deep_unpack();
         let eventColorsByCell = [];

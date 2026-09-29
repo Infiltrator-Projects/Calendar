@@ -205,6 +205,7 @@ navigate(const CalendarPlusCalendarEngine *engine,
          CalendarPlusDate *result)
 {
     gint64 jdn;
+    gint64 destination;
 
     if (engine == NULL || engine->provider == NULL || operation == NULL ||
         !date_to_jdn(date, &jdn))
@@ -212,7 +213,17 @@ navigate(const CalendarPlusCalendarEngine *engine,
         return FALSE;
     }
 
-    return date_from_jdn(operation(engine->provider, jdn, amount), result);
+    destination = operation(engine->provider, jdn, amount);
+    /*
+     * Provider adapters return the source JDN when a requested non-zero
+     * navigation cannot be represented (for example beyond the maintained
+     * Umm al-Qura table or after an ICU failure). Expose that as failure rather
+     * than reporting a successful navigation to the unchanged date.
+     */
+    if (amount != 0 && destination == jdn)
+        return FALSE;
+
+    return date_from_jdn(destination, result);
 }
 
 static gint64

@@ -15,6 +15,7 @@ gchar *calendar_plus_format_named_date(
     const CalendarPlusCalendarFields *fields,
     CalendarPlusDatePart part,
     const gchar *const *months,
+    gsize month_count,
     const gchar *year_suffix);
 
 G_END_DECLS
