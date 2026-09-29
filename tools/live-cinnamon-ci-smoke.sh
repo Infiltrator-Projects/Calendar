@@ -174,6 +174,8 @@ if [ "$mode" = "user-runtime" ]; then
         had_user_runtime=true
     fi
 
+    # ShellCheck cannot see that this cleanup function is invoked by trap.
+    # shellcheck disable=SC2317
     cleanup_user_runtime() {
         status=$?
         trap - EXIT HUP INT TERM
