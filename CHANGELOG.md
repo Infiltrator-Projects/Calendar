@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.0.76 - 2026-09-29
+
+- Anchor the Cinnamon panel clock to the right edge of its latched allocation so ordinary width growth opens to the left instead of moving the clock's right boundary.
+- Add a regression assertion for right-edge anchoring and refresh the runtime-integrity metadata required by release qualification.
+- Carry forward the already-qualified Calendar 1.0.75 functionality and current main-line correctness improvements unchanged.
+
 ## 1.0.75 - 2026-09-29
 
 - Treat CalendarServer ID-only removal signals as cache invalidation and rebuild the newest requested range, preventing late stale removals from deleting a newer event generation.
