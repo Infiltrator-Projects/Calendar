@@ -351,6 +351,29 @@ fake_fire(FakeClock *clock)
 }
 
 static void
+test_bounded_calendar_navigation_failure(void)
+{
+    CalendarPlusCalendarEngine *engine =
+        calendar_plus_calendar_engine_new("islamic-umalqura");
+    const CalendarPlusDate first_supported = { 1882, 11, 12 };
+    const CalendarPlusDate outside_supported = { 1800, 1, 1 };
+    CalendarPlusDate result = { 123, 4, 5 };
+
+    g_assert_nonnull(engine);
+    g_assert_false(calendar_plus_calendar_engine_add_periods(
+        engine, &first_supported, -1, &result));
+    g_assert_cmpint(result.year, ==, 123);
+    g_assert_cmpint(result.month, ==, 4);
+    g_assert_cmpint(result.day, ==, 5);
+    g_assert_false(calendar_plus_calendar_engine_add_years(
+        engine, &first_supported, -1, &result));
+    g_assert_false(calendar_plus_calendar_engine_period_start(
+        engine, &outside_supported, &result));
+
+    calendar_plus_calendar_engine_free(engine);
+}
+
+static void
 test_clock_interfaces(void)
 {
     FakeClock clock = {
@@ -1076,6 +1099,8 @@ main(int argc,
     g_test_add_func("/portable/clock-destroy-during-tick",
                     test_clock_destroy_during_tick);
     g_test_add_func("/portable/calendar-records", test_calendar_records);
+    g_test_add_func("/portable/bounded-calendar-navigation-failure",
+                    test_bounded_calendar_navigation_failure);
     g_test_add_func("/portable/calendar-reference-vectors",
                     test_calendar_reference_vectors);
     g_test_add_func("/portable/historical-calendar-edge-vectors",

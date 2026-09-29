@@ -323,7 +323,7 @@ calendar_plus_arithmetic_month_start(
     if (!arithmetic_mode_supported(mode) ||
         !calendar_plus_arithmetic_fields_from_jdn(mode, jdn, &fields))
     {
-        return jdn;
+        return G_MAXINT64;
     }
 
     fields.day = 1;
@@ -345,7 +345,7 @@ calendar_plus_arithmetic_add_months(
     if (!arithmetic_mode_supported(mode) ||
         !calendar_plus_arithmetic_fields_from_jdn(mode, jdn, &fields))
     {
-        return jdn;
+        return G_MAXINT64;
     }
 
     if (mode == CALENDAR_PLUS_CALENDAR_MODE_HEBREW)
@@ -370,7 +370,7 @@ calendar_plus_arithmetic_add_months(
     if (mode == CALENDAR_PLUS_CALENDAR_MODE_ISLAMIC_UMM_AL_QURA &&
         !calendar_plus_arithmetic_islamic_year_supported(mode, year))
     {
-        return jdn;
+        return G_MAXINT64;
     }
     fields.month = target_month;
     fields.day = MIN(fields.day, month_length(mode, &fields));
@@ -389,7 +389,7 @@ calendar_plus_arithmetic_add_years(
     if (!arithmetic_mode_supported(mode) ||
         !calendar_plus_arithmetic_fields_from_jdn(mode, jdn, &fields))
     {
-        return jdn;
+        return G_MAXINT64;
     }
 
     if (mode == CALENDAR_PLUS_CALENDAR_MODE_HEBREW)
@@ -411,7 +411,7 @@ calendar_plus_arithmetic_add_years(
     if (mode == CALENDAR_PLUS_CALENDAR_MODE_ISLAMIC_UMM_AL_QURA &&
         !calendar_plus_arithmetic_islamic_year_supported(mode, year))
     {
-        return jdn;
+        return G_MAXINT64;
     }
     set_signed_year(mode, year, &fields);
     fields.day = MIN(fields.day, month_length(mode, &fields));

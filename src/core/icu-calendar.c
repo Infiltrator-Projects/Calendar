@@ -323,7 +323,7 @@ icu_add(const gchar *calendar_keyword,
     UDate result;
 
     if (U_FAILURE(status) || calendar == NULL)
-        return jdn;
+        return G_MAXINT64;
 
     /*
      * Change the month or year from day one, then restore the original day
@@ -342,7 +342,7 @@ icu_add(const gchar *calendar_keyword,
     result = ucal_getMillis(calendar, &status);
     ucal_close(calendar);
 
-    return U_SUCCESS(status) ? udate_to_jdn(result) : jdn;
+    return U_SUCCESS(status) ? udate_to_jdn(result) : G_MAXINT64;
 }
 
 gint64
@@ -354,13 +354,13 @@ calendar_plus_icu_month_start(const gchar *calendar_keyword,
     UDate result;
 
     if (U_FAILURE(status) || calendar == NULL)
-        return jdn;
+        return G_MAXINT64;
 
     ucal_setMillis(calendar, jdn_to_udate(jdn), &status);
     ucal_set(calendar, UCAL_DATE, 1);
     result = ucal_getMillis(calendar, &status);
     ucal_close(calendar);
-    return U_SUCCESS(status) ? udate_to_jdn(result) : jdn;
+    return U_SUCCESS(status) ? udate_to_jdn(result) : G_MAXINT64;
 }
 
 gint64

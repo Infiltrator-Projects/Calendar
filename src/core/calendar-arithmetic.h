@@ -13,6 +13,8 @@ G_BEGIN_DECLS
  *
  * Formatting remains delegated to ICU while locale data is being migrated,
  * but conversion and navigation for these providers no longer depend on ICU.
+ * Navigation helpers use G_MAXINT64 as an internal invalid-JDN sentinel when a
+ * requested destination lies outside a maintained provider domain.
  */
 gboolean calendar_plus_arithmetic_fields_from_jdn(
     CalendarPlusCalendarMode mode,
