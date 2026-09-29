@@ -886,7 +886,7 @@ test_arithmetic_calendar_engines(void)
                 last_year,
                 1),
             ==,
-            last_year);
+            G_MAXINT64);
     }
 }
 

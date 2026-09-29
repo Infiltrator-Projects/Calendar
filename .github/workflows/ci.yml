@@ -138,7 +138,7 @@ jobs:
           apt-get update
           apt-get install -y --no-install-recommends \
             build-essential gettext gobject-introspection gjs \
-            gir1.2-glib-2.0-dev libglib2.0-dev libgtk-3-dev libicu-dev nodejs \
+            libglib2.0-dev libgtk-3-dev libicu-dev nodejs \
             pkg-config python3
       - name: Verify ICU major and execute Calendar tests
         shell: bash
