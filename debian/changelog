@@ -1,3 +1,13 @@
+infiltrator-calendar (1.0.75) unstable; urgency=medium
+
+  * Rebuild newest event range after generation-ambiguous removal signals.
+  * Follow Cinnamon calendar backend launch routing, including Clockenstein.
+  * Preserve authoritative no-calendar state and civil ranges across timezone changes.
+  * Enforce bounded calendar formatting and malformed-event rejection.
+  * Align historical Nuremberg scheduling and extreme civil-date handling.
+
+ -- Shannon Smith <infiltratr@yandex.com>  Tue, 29 Sep 2026 10:04:00 +1000
+
 infiltrator-calendar (1.0.74) unstable; urgency=medium
 
   * Preserve skipped civil dates and event-dot alignment across timezone gaps.

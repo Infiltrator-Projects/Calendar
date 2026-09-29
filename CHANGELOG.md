@@ -1,5 +1,14 @@
 # Changelog
 
+## 1.0.75 - 2026-09-29
+
+- Treat CalendarServer ID-only removal signals as cache invalidation and rebuild the newest requested range, preventing late stale removals from deleting a newer event generation.
+- Follow Cinnamon's selected calendar backend when launching dates/events, including Clockenstein support and live backend changes.
+- Preserve authoritative no-calendar state across CalendarServer's expected shutdown and retain civil range endpoints across timezone changes.
+- Require provider arithmetic support before formatting bounded calendars such as Umm al-Qura, and reject malformed or zero-length all-day event intervals instead of silently repairing them.
+- Keep historical Nuremberg scheduling aligned with Common's fixed Wendetag day boundaries and preserve full gint-range civil dates in the Cinnamon date-only model.
+- Add regression coverage for stale removals, backend launch routing, empty-server shutdown, timezone-stable civil ranges, bounded formatting, malformed intervals and extreme civil years.
+
 ## 1.0.74 - 2026-09-28
 
 - Preserve timezone-skipped civil dates in the 42-cell grid and align batched event colours to civil-date progression rather than representable-day progression.
