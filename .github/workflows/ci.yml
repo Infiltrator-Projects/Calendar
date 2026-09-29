@@ -65,8 +65,16 @@ jobs:
           printf '%s\n' /usr/local/bin /usr/bin /bin >> "$GITHUB_PATH"
           export PATH="/usr/local/bin:/usr/bin:/bin:$PATH"
           if ! command -v git >/dev/null 2>&1; then
-            echo "Self-hosted Calendar runner is missing git." >&2
-            exit 1
+            if command -v sudo >/dev/null 2>&1 && sudo -n true >/dev/null 2>&1; then
+              sudo -n apt-get update
+              sudo -n apt-get install -y git
+            elif [[ "$(id -u)" -eq 0 ]]; then
+              apt-get update
+              apt-get install -y git
+            else
+              echo "Self-hosted Calendar runner needs git and passwordless package installation." >&2
+              exit 1
+            fi
           fi
           git --version
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
