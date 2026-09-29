@@ -8,8 +8,8 @@ ROOT=$(CDPATH='' cd -- "$(dirname -- "$0")/.." && pwd)
 UUID=calendar-plus@the-infiltratr
 SOURCE_DIR=src/cinnamon
 EXPECTED_VERSION=$(sed -n 's/^VERSION := //p' "$ROOT/Makefile")
-APPLET_DIR="/usr/share/cinnamon/applets/$UUID"
-ABOUT=/usr/libexec/calendar-plus-about
+APPLET_DIR="${CALENDAR_PLUS_APPLET_DIR:-/usr/share/cinnamon/applets/$UUID}"
+ABOUT="${CALENDAR_PLUS_ABOUT:-/usr/libexec/calendar-plus-about}"
 
 case "${XDG_CURRENT_DESKTOP:-}" in
     *Cinnamon*) ;;

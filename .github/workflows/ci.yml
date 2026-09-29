@@ -106,6 +106,12 @@ jobs:
         id: live-cinnamon
         shell: bash
         run: tools/live-cinnamon-ci-smoke.sh --probe
+      - name: Live Cinnamon runtime qualification
+        if: steps.live-cinnamon.outputs.ready == 'true'
+        env:
+          CALENDAR_PLUS_LIVE_MODE: ${{ steps.live-cinnamon.outputs.mode }}
+          DEB_BUILD_OPTIONS: nocheck
+        run: tools/live-cinnamon-ci-smoke.sh
 
   icu-compat:
     name: ICU ${{ matrix.icu_major }} runtime

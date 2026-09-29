@@ -13,7 +13,9 @@ UUID=calendar-plus@the-infiltratr
 EXPECTED_VERSION=$(sed -n 's/^VERSION := //p' "$ROOT/Makefile")
 UID_NOW=$(id -u)
 RUNTIME_DIR="/run/user/$UID_NOW"
-APPLET_DIR="/usr/share/cinnamon/applets/$UUID"
+SYSTEM_APPLET_DIR="/usr/share/cinnamon/applets/$UUID"
+USER_APPLET_DIR="${XDG_DATA_HOME:-$HOME/.local/share}/cinnamon/applets/$UUID"
+ABOUT=/usr/libexec/calendar-plus-about
 
 detect_session() {
     case "${XDG_CURRENT_DESKTOP:-}" in
@@ -32,11 +34,11 @@ detect_session() {
 }
 
 installed_version() {
-    if [ ! -f "$APPLET_DIR/metadata.json" ]; then
+    if [ ! -f "$SYSTEM_APPLET_DIR/metadata.json" ]; then
         printf '\n'
         return
     fi
-    python3 - "$APPLET_DIR/metadata.json" <<'PY'
+    python3 - "$SYSTEM_APPLET_DIR/metadata.json" <<'PY'
 import json
 import sys
 print(json.load(open(sys.argv[1], encoding="utf-8")).get("version", ""))
@@ -51,7 +53,7 @@ installed_runtime_matches() {
     while read -r expected relative; do
         case "$relative" in
             src/cinnamon/*)
-                installed="$APPLET_DIR/${relative#src/cinnamon/}"
+                installed="$SYSTEM_APPLET_DIR/${relative#src/cinnamon/}"
                 [ -f "$installed" ] || return 1
                 actual=$(sha256sum "$installed" | awk '{print $1}')
                 [ "$actual" = "$expected" ] || return 1
@@ -59,6 +61,31 @@ installed_runtime_matches() {
         esac
     done < "$manifest"
     return 0
+}
+
+
+native_version_matches() {
+    [ -x "$ABOUT" ] || return 1
+    actual=$("$ABOUT" --print-metadata 2>/dev/null |
+        sed -n 's/^version=//p' | head -n 1)
+    [ "$actual" = "$EXPECTED_VERSION" ]
+}
+
+reload_calendar_applet() {
+    command -v gdbus >/dev/null 2>&1 || return 1
+    script=$(cat <<EOF
+(() => {
+    const Extension = imports.ui.extension;
+    Extension.reloadExtension("$UUID", Extension.Type.APPLET);
+    return true;
+})()
+EOF
+)
+    gdbus call --session \
+        --dest org.Cinnamon \
+        --object-path /org/Cinnamon \
+        --method org.Cinnamon.Eval \
+        "$script" | grep -Eq '^\(true,'
 }
 
 if [ "${1:-}" = "--probe" ]; then
@@ -77,8 +104,12 @@ if [ "${1:-}" = "--probe" ]; then
              sudo -n true >/dev/null 2>&1; then
             ready=true
             mode=install
+        elif native_version_matches && [ -d "$SYSTEM_APPLET_DIR" ]; then
+            ready=true
+            mode=user-runtime
+            echo "::notice::The native Calendar ABI/version is current; exact JavaScript runtime files will be staged in the user's Cinnamon applet directory for live qualification."
         else
-            echo "::warning::Cinnamon is active but the exact Calendar source revision is not installed, and this runner has no passwordless sudo. The live-current-revision step will be shown as skipped, not passed."
+            echo "::warning::Cinnamon is active but neither the exact Calendar source revision nor a same-version native runtime suitable for user-local staging is available."
         fi
     fi
 
@@ -128,6 +159,49 @@ EOF
             echo 'Cinnamon refused to reload the newly installed Calendar applet.' >&2
             exit 1
         }
+fi
+
+if [ "$mode" = "user-runtime" ]; then
+    native_version_matches || {
+        echo "Installed Calendar native runtime does not match the source version." >&2
+        exit 1
+    }
+
+    backup_root=$(mktemp -d)
+    had_user_runtime=false
+    if [ -e "$USER_APPLET_DIR" ]; then
+        mv "$USER_APPLET_DIR" "$backup_root/original"
+        had_user_runtime=true
+    fi
+
+    cleanup_user_runtime() {
+        status=$?
+        trap - EXIT HUP INT TERM
+        rm -rf "$USER_APPLET_DIR"
+        if [ "$had_user_runtime" = true ] && [ -e "$backup_root/original" ]; then
+            mkdir -p "$(dirname "$USER_APPLET_DIR")"
+            mv "$backup_root/original" "$USER_APPLET_DIR"
+        fi
+        reload_calendar_applet >/dev/null 2>&1 || true
+        rm -rf "$backup_root"
+        exit "$status"
+    }
+    trap cleanup_user_runtime EXIT HUP INT TERM
+
+    mkdir -p "$USER_APPLET_DIR"
+    cp -a "$ROOT/src/cinnamon/." "$USER_APPLET_DIR/"
+    if [ -f "$SYSTEM_APPLET_DIR/icon.png" ]; then
+        cp "$SYSTEM_APPLET_DIR/icon.png" "$USER_APPLET_DIR/icon.png"
+    fi
+
+    reload_calendar_applet || {
+        echo "Cinnamon refused to reload the user-local Calendar runtime." >&2
+        exit 1
+    }
+    sleep 1
+    CALENDAR_PLUS_APPLET_DIR="$USER_APPLET_DIR" \
+        "$ROOT/tools/cinnamon-smoke.sh"
+    exit 0
 fi
 
 current="$(installed_version)"
