@@ -153,7 +153,10 @@ class CalendarPlusApplet extends Applet.Applet {
         label.track_hover = true;
         label.clutter_text.ellipsize = Pango.EllipsizeMode.NONE;
 
-        const holder = new LatchedWidthBin();
+        // Keep the visible clock pinned to the panel's right edge. The
+        // width latch may grow to absorb wider ticks, but that spare width
+        // must open to the left rather than moving the clock's right edge.
+        const holder = new LatchedWidthBin({ x_align: St.Align.END });
         holder.set_child(label);
         this.actor.add(holder, { y_align: St.Align.MIDDLE, y_fill: false });
         this.actor.set_label_actor(label);
