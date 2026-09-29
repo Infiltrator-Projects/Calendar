@@ -334,7 +334,7 @@ def main() -> None:
     assert (ROOT / "tools/upstream-calendar-baseline.json").is_file()
     assert (ROOT / "tools/live-cinnamon-ci-smoke.sh").is_file()
     assert "tools/live-cinnamon-ci-smoke.sh" in workflow
-    assert "'bigbedroom'" in workflow
+    assert "runs-on: bigbedroom" in workflow
     assert "image: debian:12" in workflow
     assert "icu_major: 72" in workflow
     assert "image: debian:13" in workflow
