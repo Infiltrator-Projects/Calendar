@@ -182,7 +182,8 @@ def main() -> None:
     assert "this._calendar.setCalendarSystem(" in applet_source
     assert "this._calendarSystem.add_months_parts(" in calendar_source
     assert "this._calendarSystem.add_years_parts(" in calendar_source
-    assert "this._calendarSystem.build_grid(" in calendar_source
+    assert "system.build_grid(" in calendar_source
+    assert "this._gridModelForDate(" in calendar_source
     assert "CalendarPlus.DatePart.DAY" in calendar_source
     assert "CalendarPlus.DatePart.SHORT" in panel_clock_source
     assert "CalendarPlus.DatePart.FULL" in panel_clock_source
