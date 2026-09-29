@@ -1,3 +1,12 @@
+infiltrator-calendar (1.0.76) unstable; urgency=medium
+
+  * Anchor the live Cinnamon panel clock to its right edge.
+  * Keep width-latch growth opening to the left so wider ticks do not shift the
+    clock's right boundary.
+  * Add regression coverage and refresh runtime-integrity metadata.
+
+ -- Shannon Smith <noreply@the-infiltratr.com>  Tue, 29 Sep 2026 19:27:00 +1000
+
 infiltrator-calendar (1.0.75) unstable; urgency=medium
 
   * Rebuild newest event range after generation-ambiguous removal signals.
