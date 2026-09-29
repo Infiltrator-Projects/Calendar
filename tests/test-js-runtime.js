@@ -432,7 +432,10 @@ function evaluateEventsManager() {
 
 function evaluateEventView() {
     let eventViewIdle = null;
-    const eventViewObservations = { spawns: [] };
+    const eventViewObservations = {
+        spawns: [],
+        availablePrograms: new Set(["gnome-calendar", "clockenstein-calendar"]),
+    };
     const signals = {
         addSignalMethods(prototype) {
             prototype.connect = prototype.connect || function() { return 1; };
@@ -474,7 +477,11 @@ function evaluateEventView() {
                 Clutter: { ActorAlign: { CENTER: 0, START: 1, END: 2 } },
                 GLib: {
                     SOURCE_REMOVE: false,
-                    find_program_in_path(program) { return program; },
+                    find_program_in_path(program) {
+                        return eventViewObservations.availablePrograms.has(program)
+                            ? program
+                            : null;
+                    },
                     DateTime: {
                         new_now_local() { return null; },
                         new_local() { return null; },
@@ -520,6 +527,7 @@ function evaluateEventView() {
     vm.runInContext(
         source +
             "\nglobalThis.__EventList = EventList;" +
+            "\nglobalThis.__EventRow = EventRow;" +
             "\nglobalThis.__replaceEventRowForTest = " +
             "(replacement) => { EventRow = replacement; };",
         context,
@@ -527,6 +535,7 @@ function evaluateEventView() {
     );
     return {
         EventList: context.__EventList,
+        EventRow: context.__EventRow,
         observations: eventViewObservations,
         replaceEventRow: context.__replaceEventRowForTest,
         runEventViewIdle() {
@@ -1178,6 +1187,49 @@ function testCalendarRejectsNormalizedCivilDates() {
     }
 }
 
+function testCalendarRejectsUnsupportedProviderDate() {
+    const { Calendar } = evaluateCalendar();
+    const original = new Date(2026, 6, 29, 12, 0, 0);
+    const unsupported = new Date(1800, 0, 1, 12, 0, 0);
+    const calendar = Object.create(Calendar.prototype);
+    let updates = 0;
+    let emissions = 0;
+
+    Object.assign(calendar, {
+        _destroyed: false,
+        _selectedDate: original,
+        _gridModelForDate() { return null; },
+        _update() { updates += 1; },
+        emit() { emissions += 1; },
+    });
+
+    calendar.setDate(unsupported, false);
+    assert.equal(calendar._selectedDate, original);
+    assert.equal(updates, 0);
+    assert.equal(emissions, 0);
+}
+
+function testCalendarGridFailureIsTransactional() {
+    const { Calendar } = evaluateCalendar();
+    const calendar = Object.create(Calendar.prototype);
+    let removed = 0;
+
+    Object.assign(calendar, {
+        _destroyed: false,
+        _calendarSystem: {},
+        _selectedDate: new Date(2026, 6, 29, 12, 0, 0),
+        _monthLabel: { text: "old month" },
+        _yearLabel: { text: "old year" },
+        _gridModelForDate() { return null; },
+        _removeCells() { removed += 1; },
+    });
+
+    calendar._update(false);
+    assert.equal(removed, 0);
+    assert.equal(calendar._monthLabel.text, "old month");
+    assert.equal(calendar._yearLabel.text, "old year");
+}
+
 function testCalendarLifecycle() {
     const { Calendar, settings, eventsManager, desktopSettings, observations } =
         evaluateCalendar();
@@ -1531,11 +1583,23 @@ function testTimezoneReloadPreservesCivilRange() {
     manager.current_range_end = { to_unix() { return 2000; } };
     manager.current_range_start_civil = { year: 2026, month: 8, day: 2 };
     manager.current_range_end_civil = { year: 2026, month: 9, day: 12 };
+    manager._range_accepting_events = true;
     manager.set_visible_range = (first, last, force) => {
         calls.push([first, last, force]);
     };
 
     manager._timezoneChanged();
+    assert.equal(manager._range_accepting_events, false);
+    manager._ingestEvents({
+        unpack() {
+            return [{
+                deep_unpack() {
+                    return ["late", "#112233", "late", false, 1200, 1300, 1];
+                },
+            }];
+        },
+    });
+    assert.equal(observations.addOrUpdateCalls.length, 0);
     observations.runNextIdle();
     assert.equal(observations.timezoneRefreshes, 1);
     assert.deepEqual(
@@ -1547,6 +1611,24 @@ function testTimezoneReloadPreservesCivilRange() {
         ]],
         "timezone reload must reconstruct transport instants from civil endpoints"
     );
+    manager.destroy();
+}
+
+function testCalendarSetChangeClosesAdmission() {
+    const { EventsManager, observations } = evaluateEventsManager();
+    const manager = new EventsManager({ getValue() { return true; } }, {});
+    let queuedForce = null;
+
+    manager.current_range_start = { to_unix() { return 1000; } };
+    manager.current_range_end = { to_unix() { return 2000; } };
+    manager._range_accepting_events = true;
+    manager.queue_reload = (force) => { queuedForce = force; };
+
+    manager._calendarSetChanged();
+    assert.equal(observations.clears, 1);
+    assert.equal(manager._range_accepting_events, false);
+    assert.equal(manager._range_request_succeeded, false);
+    assert.equal(queuedForce, true);
     manager.destroy();
 }
 
@@ -1666,6 +1748,83 @@ function testEventListLaunchesSelectedCinnamonBackend() {
         ["clockenstein-calendar", "--date=2026-09-29"],
         "Clockenstein has no UUID launch contract; open the selected date instead"
     );
+}
+
+function testEventListBackendRefreshesExistingRows() {
+    const { EventList, observations } = evaluateEventView();
+    let backend = "eds";
+    const rowStates = [];
+    const selectedButton = { reactive: true, can_focus: true };
+    const emptyButton = { reactive: true, can_focus: true };
+    const view = Object.create(EventList.prototype);
+
+    Object.assign(view, {
+        _destroyed: false,
+        _backendSettings: {
+            get_string(key) {
+                assert.equal(key, "calendar-backend");
+                return backend;
+            },
+        },
+        _rows: [{ set_clickable(value) { rowStates.push(Boolean(value)); } }],
+        selected_date_label: selectedButton,
+        no_events_button: emptyButton,
+    });
+
+    observations.availablePrograms.delete("clockenstein-calendar");
+    backend = "clockenstein";
+    view._refreshCalendarLauncher();
+    assert.equal(view._canLaunchCalendar, false);
+    assert.equal(selectedButton.reactive, false);
+    assert.equal(emptyButton.can_focus, false);
+    assert.deepEqual(rowStates, [false]);
+
+    observations.availablePrograms.add("clockenstein-calendar");
+    view._refreshCalendarLauncher();
+    assert.equal(view._canLaunchCalendar, true);
+    assert.equal(selectedButton.can_focus, true);
+    assert.equal(emptyButton.reactive, true);
+    assert.deepEqual(rowStates, [false, true]);
+}
+
+function testTimedMultiDayEventRemainsCurrent() {
+    const { EventRow } = evaluateEventView();
+    const pseudoClasses = [];
+    let countdown = "";
+    const row = Object.create(EventRow.prototype);
+
+    Object.assign(row, {
+        event: {
+            summary: "Long running event",
+            all_day: false,
+            multi_day: true,
+            timing() { return [2, -3600, 3600]; },
+            relation_to_day() { return 0; },
+        },
+        selected_date: {},
+        event_time: {
+            set_style_class_name() {},
+            add_style_pseudo_class(value) { pseudoClasses.push(value); },
+            set_text() {},
+        },
+        countdown_label: {
+            set_text(value) { countdown = value; },
+            get_text() { return countdown; },
+            add_style_pseudo_class(value) { pseudoClasses.push(value); },
+        },
+        actor: { set_accessible_name() {} },
+        _resetStateStyles() {
+            countdown = "";
+            this.is_current_or_next = false;
+        },
+        _rangeText() { return "range"; },
+        is_current_or_next: false,
+    });
+
+    row.update_variations({});
+    assert.equal(row.is_current_or_next, true);
+    assert.equal(countdown, "In progress");
+    assert.equal(pseudoClasses.includes("all-day"), false);
 }
 
 function testEventListScrollUsesViewport() {
@@ -1957,10 +2116,14 @@ testMintFallbackClockFormatting();
 testConstructorAtomicity();
 testModuleLoaderCompatibility();
 testCalendarRejectsNormalizedCivilDates();
+testCalendarRejectsUnsupportedProviderDate();
+testCalendarGridFailureIsTransactional();
 testCalendarLifecycle();
 testCalendarNavigationCoalescing();
 testCalendarKeyboardNavigation();
 testEventListLaunchesSelectedCinnamonBackend();
+testEventListBackendRefreshesExistingRows();
+testTimedMultiDayEventRemainsCurrent();
 testEventListScrollUsesViewport();
 testEventListUnavailableState();
 testEventListCacheIdentity();
@@ -1970,6 +2133,7 @@ testSuccessfulEmptyRangeReplacesPreviousGeneration();
 testRangeAdmissionRejectsLateOutOfRangeSignals();
 testRemovalSignalsInvalidateInsteadOfDeletingNewGeneration();
 testTimezoneReloadPreservesCivilRange();
+testCalendarSetChangeClosesAdmission();
 testServerLossClearsPresentedAgenda();
 testExpectedNoCalendarShutdownStaysAuthoritative();
 testBatchedEventColorBridge();

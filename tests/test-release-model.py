@@ -569,6 +569,9 @@ def main() -> None:
     assert "static gchar *\nformat_named_date" not in read(
         "src/core/calendar-historical.c"
     )
+    helper_source = read("src/core/calendar-helpers.c")
+    assert "(gsize)fields->month < month_count" in helper_source
+    assert "gsize month_count" in read("src/core/calendar-helpers.h")
     assert "calendar_plus_julian_month_length" in read(
         "src/core/calendar-ancient.c"
     )
