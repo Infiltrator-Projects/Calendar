@@ -325,7 +325,7 @@ def main() -> None:
     assert '--json databaseId --jq .databaseId' in publisher
     assert "local-source.zip" not in publisher
     assert "actions/checkout@v" not in workflow
-    assert workflow.count("submodules: true") == 6
+    assert workflow.count("submodules: true") == 7
     assert "check-upstream-drift.sh" not in workflow
     assert "upstream-drift:" not in workflow
     assert "schedule:" not in workflow
