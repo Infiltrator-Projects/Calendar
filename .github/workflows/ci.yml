@@ -54,30 +54,28 @@ jobs:
       matrix:
         compiler: [gcc, clang]
     steps:
-      - name: Prepare self-hosted checkout
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         if: runner.environment == 'self-hosted'
+        with:
+          submodules: false
+      - name: Resolve pinned Common revision
+        if: runner.environment == 'self-hosted'
+        id: common-pin
         shell: bash
         run: |
           set -euo pipefail
-          # Some home runner services start with a deliberately minimal PATH.
-          # Make the system tool directories visible to checkout before asking
-          # it to resolve the Common submodule.
-          printf '%s\n' /usr/local/bin /usr/bin /bin >> "$GITHUB_PATH"
-          export PATH="/usr/local/bin:/usr/bin:/bin:$PATH"
-          if ! command -v git >/dev/null 2>&1; then
-            if command -v sudo >/dev/null 2>&1 && sudo -n true >/dev/null 2>&1; then
-              sudo -n apt-get update
-              sudo -n apt-get install -y git
-            elif [[ "$(id -u)" -eq 0 ]]; then
-              apt-get update
-              apt-get install -y git
-            else
-              echo "Self-hosted Calendar runner needs git and passwordless package installation." >&2
-              exit 1
-            fi
-          fi
-          git --version
+          sha="$(sed -n 's/^INFILTRATR_COMMON_COMMIT := //p' Makefile)"
+          test -n "$sha"
+          printf 'sha=%s\n' "$sha" >> "$GITHUB_OUTPUT"
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        if: runner.environment == 'self-hosted'
+        with:
+          repository: Infiltrator-Projects/Infiltrator-Libraries
+          ref: ${{ steps.common-pin.outputs.sha }}
+          path: src/vendor/infiltratr-common
+          submodules: false
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        if: runner.environment == 'github-hosted'
         with:
           submodules: true
       - name: Install build dependencies
