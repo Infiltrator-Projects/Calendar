@@ -129,6 +129,42 @@ class LatchedWidthBin extends St.Bin {
     }
 });
 
+/*
+ * Calendar's popup has two separate layout contracts:
+ *  - its contents retain the long-standing agenda-left/month-right order;
+ *  - when the applet lives in Cinnamon's right panel zone, the popup itself
+ *    is right-aligned to the monitor work area rather than centred on the
+ *    clock actor. Cinnamon's stock PopupMenu centres on the source actor,
+ *    which leaves a wide Calendar popup visibly stranded from the screen edge.
+ */
+class CalendarPopupMenu extends Applet.AppletPopupMenu {
+    _calculatePosition() {
+        const [xPos, yPos] = super._calculatePosition();
+
+        if ((this._orientation !== St.Side.TOP &&
+             this._orientation !== St.Side.BOTTOM) ||
+            !this.launcher ||
+            this.launcher.locationLabel !== "right") {
+            return [xPos, yPos];
+        }
+
+        const monitor = Main.layoutManager.findMonitorForActor(this.sourceActor);
+        if (!monitor) {
+            return [xPos, yPos];
+        }
+
+        const workArea =
+            Main.layoutManager.getWorkAreaForMonitor(monitor.index);
+        const [, , naturalWidth] = this.actor.get_preferred_size();
+        if (!workArea || !Number.isFinite(naturalWidth) || naturalWidth <= 0) {
+            return [xPos, yPos];
+        }
+
+        const rightEdge = workArea.x + workArea.width;
+        return [Math.max(workArea.x, rightEdge - naturalWidth), yPos];
+    }
+}
+
 class CalendarPlusApplet extends Applet.Applet {
     constructor(orientation, panel_height, instance_id, expectedVersion) {
         super(orientation, panel_height, instance_id);
@@ -217,7 +253,7 @@ class CalendarPlusApplet extends Applet.Applet {
 
     _buildApplet() {
         this.menuManager = new PopupMenu.PopupMenuManager(this);
-        this.menu = new Applet.AppletPopupMenu(this, this.orientation);
+        this.menu = new CalendarPopupMenu(this, this.orientation);
         /*
          * PopupMenu.setCustomStyleClass() rebuilds the complete actor style
          * class list.  Keep Calendar's identity in that authoritative slot:
@@ -331,11 +367,12 @@ class CalendarPlusApplet extends Applet.Applet {
         calendarColumn.add_actor(this._calendar.actor);
 
         /*
-         * Keep the month view against the popup's left edge and the agenda to
-         * its right. Actor insertion order is the horizontal layout contract.
+         * Restore Calendar's established composition: agenda on the left,
+         * month view on the right. Popup screen-edge placement is handled by
+         * CalendarPopupMenu and must not be faked by swapping child actors.
          */
-        body.add_actor(calendarColumn);
         body.add_actor(this.event_list.actor);
+        body.add_actor(calendarColumn);
 
         this.menu.addMenuItem(new PopupMenu.PopupSeparatorMenuItem());
 

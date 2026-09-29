@@ -59,11 +59,19 @@ def main() -> None:
     assert "secondary_calendar" not in applet_source
     assert "_secondary_date" not in applet_source
 
-    # The month view is the primary popup surface: keep it on the left and
-    # place the agenda to its right. Actor insertion order defines that layout.
+    # Keep the established internal composition independent of popup placement:
+    # agenda on the left, month view on the right.
     calendar_insert = applet_source.index("body.add_actor(calendarColumn);")
     agenda_insert = applet_source.index("body.add_actor(this.event_list.actor);")
-    assert calendar_insert < agenda_insert
+    assert agenda_insert < calendar_insert
+
+    # Right-zone Calendar popups align the entire menu to the work-area edge.
+    # Do not regress this into swapping the calendar/agenda children again.
+    assert "class CalendarPopupMenu extends Applet.AppletPopupMenu" in applet_source
+    assert "new CalendarPopupMenu(this, this.orientation)" in applet_source
+    assert 'this.launcher.locationLabel !== "right"' in applet_source
+    assert "Main.layoutManager.getWorkAreaForMonitor(monitor.index)" in applet_source
+    assert "rightEdge - naturalWidth" in applet_source
 
     theme = schema["theme-mode"]
     assert theme["type"] == "combobox"

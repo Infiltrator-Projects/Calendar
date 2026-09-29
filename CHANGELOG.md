@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.0.77 - 2026-09-29
+
+- Restore Calendar's established popup composition with the agenda on the left and the month view on the right, undoing the unrelated 1.0.76 column-order regression.
+- Right-align the entire Calendar popup to the current monitor work-area edge when the applet is in Cinnamon's right panel zone, fixing the actual screen-edge placement instead of manipulating the contents.
+- Keep panel-clock width anchoring, popup placement and internal column order as separate contracts and add regression checks for all three.
+
 ## 1.0.76 - 2026-09-29
 
 - Anchor the Cinnamon panel clock to the right edge of its latched allocation so ordinary width growth opens to the left instead of moving the clock's right boundary.
