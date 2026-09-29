@@ -299,8 +299,6 @@ class CalendarPlusApplet extends Applet.Applet {
                 }
             });
         }
-        body.add_actor(this.event_list.actor);
-
         const calendarColumn = new St.BoxLayout({ vertical: true });
         this._calendarColumn = calendarColumn;
         this.go_home_button = new St.Button({
@@ -331,7 +329,13 @@ class CalendarPlusApplet extends Applet.Applet {
             () => this._updateClockAndDate()
         );
         calendarColumn.add_actor(this._calendar.actor);
+
+        /*
+         * Keep the month view against the popup's left edge and the agenda to
+         * its right. Actor insertion order is the horizontal layout contract.
+         */
         body.add_actor(calendarColumn);
+        body.add_actor(this.event_list.actor);
 
         this.menu.addMenuItem(new PopupMenu.PopupSeparatorMenuItem());
 
