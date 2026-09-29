@@ -47,7 +47,7 @@ jobs:
 
   native:
     name: Native / ${{ matrix.compiler }}
-    runs-on: ${{ matrix.compiler == 'gcc' && !startsWith(github.event.head_commit.message, 'Release ') && 'bigbedroom' || 'ubuntu-24.04' }}
+    runs-on: ubuntu-24.04
     timeout-minutes: 30
     strategy:
       fail-fast: false
@@ -55,27 +55,6 @@ jobs:
         compiler: [gcc, clang]
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-        if: runner.environment == 'self-hosted'
-        with:
-          submodules: false
-      - name: Resolve pinned Common revision
-        if: runner.environment == 'self-hosted'
-        id: common-pin
-        shell: bash
-        run: |
-          set -euo pipefail
-          sha="$(sed -n 's/^INFILTRATR_COMMON_COMMIT := //p' Makefile)"
-          test -n "$sha"
-          printf 'sha=%s\n' "$sha" >> "$GITHUB_OUTPUT"
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-        if: runner.environment == 'self-hosted'
-        with:
-          repository: Infiltrator-Projects/Infiltrator-Libraries
-          ref: ${{ steps.common-pin.outputs.sha }}
-          path: src/vendor/infiltratr-common
-          submodules: false
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-        if: runner.environment == 'github-hosted'
         with:
           submodules: true
       - name: Install build dependencies
@@ -114,6 +93,19 @@ jobs:
           CALENDAR_PLUS_LIVE_MODE: ${{ steps.live-cinnamon.outputs.mode }}
           DEB_BUILD_OPTIONS: nocheck
         run: tools/live-cinnamon-ci-smoke.sh
+
+  bigbedroom-live-probe:
+    name: BigBedroom / live Cinnamon probe
+    runs-on: bigbedroom
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          submodules: false
+      - name: Probe exact-source Cinnamon qualification
+        id: live-cinnamon
+        shell: bash
+        run: tools/live-cinnamon-ci-smoke.sh --probe
 
   icu-compat:
     name: ICU ${{ matrix.icu_major }} runtime
