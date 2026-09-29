@@ -440,11 +440,14 @@ def main() -> None:
     # New interactive surfaces remain reachable without a pointer.
     assert "class CalendarPlusApplet extends Applet.Applet" in applet_source
     assert "can_focus: true" in calendar_source
-    assert "can_focus: canLaunch" in event_source
     assert "find_program_in_path(this._calendarProgram)" in event_source
     assert "clickable: this._canLaunchCalendar" in event_source
     assert "reactive: this._canLaunchCalendar" in event_source
     assert "can_focus: this._canLaunchCalendar" in event_source
+    assert "set_clickable(canLaunch);" in event_source
+    assert "this.actor.reactive = enabled;" in event_source
+    assert "this.actor.can_focus = enabled;" in event_source
+    assert "row.set_clickable(this._canLaunchCalendar)" in event_source
     assert "accessible_role: Atk.Role.LIST_ITEM" in event_source
     assert "accessible_name:" in calendar_source
 
