@@ -153,10 +153,27 @@ class CalendarPopupMenu extends Applet.AppletPopupMenu {
             return [xPos, yPos];
         }
 
-        const workArea =
-            Main.layoutManager.getWorkAreaForMonitor(monitor.index);
+        /*
+         * Cinnamon 6.4 does not expose layoutManager.getWorkAreaForMonitor().
+         * Use the underlying Meta.Workspace API, which is available across
+         * every Cinnamon version Calendar supports. Fall back to the monitor
+         * bounds if workspace discovery ever becomes unavailable.
+         */
+        let workArea = null;
+        try {
+            const workspace = global.workspace_manager.get_active_workspace();
+            if (workspace) {
+                workArea = workspace.get_work_area_for_monitor(monitor.index);
+            }
+        } catch (error) {
+            workArea = null;
+        }
+        if (!workArea) {
+            workArea = monitor;
+        }
+
         const [, , naturalWidth] = this.actor.get_preferred_size();
-        if (!workArea || !Number.isFinite(naturalWidth) || naturalWidth <= 0) {
+        if (!Number.isFinite(naturalWidth) || naturalWidth <= 0) {
             return [xPos, yPos];
         }
 

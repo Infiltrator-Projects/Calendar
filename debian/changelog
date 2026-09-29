@@ -1,3 +1,13 @@
+infiltrator-calendar (1.0.78) unstable; urgency=medium
+
+  * Fix Calendar popup opening on Cinnamon 6.4 by using the supported
+    Meta.Workspace work-area API instead of a newer layout-manager helper.
+  * Preserve right-edge popup alignment and the restored agenda-left,
+    calendar-right internal composition.
+  * Add regression coverage preventing unsupported Cinnamon API use.
+
+ -- Shannon Smith <noreply@the-infiltratr.com>  Tue, 29 Sep 2026 21:10:00 +1000
+
 infiltrator-calendar (1.0.77) unstable; urgency=medium
 
   * Restore the established agenda-left, calendar-right popup composition.

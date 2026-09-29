@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.0.78 - 2026-09-29
+
+- Repair the 1.0.77 popup-open regression on Cinnamon 6.4 by replacing the newer `layoutManager.getWorkAreaForMonitor()` call with the cross-version Meta.Workspace `get_work_area_for_monitor()` API already used by Cinnamon itself.
+- Retain whole-popup right-edge placement and the established agenda-left/month-right composition.
+- Add a release regression guard that rejects the unsupported layout-manager helper from Calendar runtime source.
+
 ## 1.0.77 - 2026-09-29
 
 - Restore Calendar's established popup composition with the agenda on the left and the month view on the right, undoing the unrelated 1.0.76 column-order regression.

@@ -70,7 +70,9 @@ def main() -> None:
     assert "class CalendarPopupMenu extends Applet.AppletPopupMenu" in applet_source
     assert "new CalendarPopupMenu(this, this.orientation)" in applet_source
     assert 'this.launcher.locationLabel !== "right"' in applet_source
-    assert "Main.layoutManager.getWorkAreaForMonitor(monitor.index)" in applet_source
+    assert "global.workspace_manager.get_active_workspace()" in applet_source
+    assert "workspace.get_work_area_for_monitor(monitor.index)" in applet_source
+    assert "Main.layoutManager.getWorkAreaForMonitor" not in applet_source
     assert "rightEdge - naturalWidth" in applet_source
 
     theme = schema["theme-mode"]
