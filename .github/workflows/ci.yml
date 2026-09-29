@@ -54,6 +54,21 @@ jobs:
       matrix:
         compiler: [gcc, clang]
     steps:
+      - name: Prepare self-hosted checkout
+        if: runner.environment == 'self-hosted'
+        shell: bash
+        run: |
+          set -euo pipefail
+          # Some home runner services start with a deliberately minimal PATH.
+          # Make the system tool directories visible to checkout before asking
+          # it to resolve the Common submodule.
+          printf '%s\n' /usr/local/bin /usr/bin /bin >> "$GITHUB_PATH"
+          export PATH="/usr/local/bin:/usr/bin:/bin:$PATH"
+          if ! command -v git >/dev/null 2>&1; then
+            echo "Self-hosted Calendar runner is missing git." >&2
+            exit 1
+          fi
+          git --version
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           submodules: true
