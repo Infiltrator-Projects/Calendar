@@ -59,6 +59,12 @@ def main() -> None:
     assert "secondary_calendar" not in applet_source
     assert "_secondary_date" not in applet_source
 
+    # The month view is the primary popup surface: keep it on the left and
+    # place the agenda to its right. Actor insertion order defines that layout.
+    calendar_insert = applet_source.index("body.add_actor(calendarColumn);")
+    agenda_insert = applet_source.index("body.add_actor(this.event_list.actor);")
+    assert calendar_insert < agenda_insert
+
     theme = schema["theme-mode"]
     assert theme["type"] == "combobox"
     assert theme["default"] == "system"
