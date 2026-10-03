@@ -71,7 +71,7 @@ infiltrator-calendar (1.0.72) unstable; urgency=medium
 
   * Repair serialized event-range tests and add automatic bounded retry.
   * Preserve historical selections and harden local-day/timestamp boundaries.
-  * Coalesce rapid navigation without dropping steps.
+  * Coalesce rapid navigation without dropping user input.
   * Synchronize event-dot visibility and reduce redundant agenda work.
   * Use lightweight event-colour lookup for the month grid.
   * Harden extreme civil-year/ISO/Roman formatting boundaries.
@@ -81,9 +81,9 @@ infiltrator-calendar (1.0.72) unstable; urgency=medium
 
 infiltrator-calendar (1.0.71) unstable; urgency=medium
 
-  * Serialize CalendarServer visible-range requests so stale range traffic cannot overlap a newer refresh generation.
-  * Sanitize CalendarServer event colours before embedding them into Cinnamon CSS.
-  * Launch the native About dialog through a package-owned hidden desktop identity instead of a hard-coded /usr/libexec path.
+  * Serialize CalendarServer range requests to prevent stale overlap.
+  * Sanitize event colours before Cinnamon CSS rendering.
+  * Use a prefix-safe package-owned About desktop launcher.
 
  -- Shannon Smith <infiltratr@yandex.com>  Mon, 28 Sep 2026 09:58:00 +1000
 
@@ -91,8 +91,8 @@ infiltrator-calendar (1.0.70) unstable; urgency=medium
 
   * Remove tick-driven and duplicate CalendarServer agenda rebuilds.
   * Cache the coherent temporal policy and share Cinnamon desktop settings.
-  * Coalesce temporal-policy filesystem events and report policy-load failures.
-  * Reject out-of-range required geographic coordinates consistently.
+  * Coalesce policy filesystem events and report policy-load failures.
+  * Reject out-of-range coordinates for location-dependent clocks.
 
  -- Shannon Smith <infiltratr@yandex.com>  Mon, 28 Sep 2026 08:30:00 +1000
 
