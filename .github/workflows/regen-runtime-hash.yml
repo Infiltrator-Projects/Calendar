@@ -1,0 +1,31 @@
+name: Regenerate runtime integrity manifest
+
+on:
+  push:
+    branches:
+      - hal/repair-runtime-hash-1.0.79
+
+permissions:
+  contents: write
+
+jobs:
+  regenerate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: hal/repair-runtime-hash-1.0.79
+          fetch-depth: 0
+      - name: Regenerate manifest and remove helper workflow
+        run: |
+          python3 tools/update-runtime-hashes.py
+          git rm .github/workflows/regen-runtime-hash.yml
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add src/cinnamon/runtime-sources.sha256
+          if git diff --cached --quiet; then
+            echo "No manifest change was needed."
+            exit 1
+          fi
+          git commit -m "Release 1.0.79: refresh runtime integrity manifest"
+          git push origin HEAD:hal/repair-runtime-hash-1.0.79
