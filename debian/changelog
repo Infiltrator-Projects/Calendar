@@ -1,3 +1,14 @@
+infiltrator-calendar (1.0.79) unstable; urgency=medium
+
+  * Prevent a logically closed Calendar popup from remaining as a reactive
+    invisible Clutter actor over unrelated application windows.
+  * Disable popup input immediately on close, bound animated cleanup with a
+    fallback guard, and restore input only when the popup is opened again.
+  * Prevent late agenda pass-through signals from reactivating a closed popup
+    and add regression coverage for the closed-state input contract.
+
+ -- Shannon Smith <noreply@the-infiltratr.com>  Sat, 03 Oct 2026 19:40:00 +1000
+
 infiltrator-calendar (1.0.78) unstable; urgency=medium
 
   * Fix Calendar popup opening on Cinnamon 6.4 by using the supported
