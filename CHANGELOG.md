@@ -6,6 +6,12 @@ This changelog records user-visible, compatibility, architecture and validation 
 
 No unreleased changes.
 
+## 1.0.83 - 2026-10-07
+
+- Isolate CalendarServer visible-range request lifecycle state behind `EventRangeState`, so generation, admission, queued-force and retry transitions have one owner.
+- Route civil-day navigation and weekday calculation through native CalendarPlus APIs, removing duplicate JavaScript chronology logic.
+- Clarify event snapshot identity as an opaque `revision` rather than a timestamp and strengthen architecture/runtime regression coverage around these boundaries.
+
 ## 1.0.82 - 2026-10-06
 
 - Isolate Cinnamon popup compatibility from the applet composition root and avoid dependence on Cinnamon private animation state.

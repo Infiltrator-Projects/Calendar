@@ -1,3 +1,14 @@
+infiltrator-calendar (1.0.83) unstable; urgency=medium
+
+  * Isolate CalendarServer visible-range request lifecycle state behind
+    EventRangeState so request transitions have one owner.
+  * Route civil-day navigation and weekday calculation through native
+    CalendarPlus APIs instead of duplicate JavaScript chronology.
+  * Rename event snapshot identity to revision and strengthen regression
+    coverage around the refactored boundaries.
+
+ -- Shannon Smith <noreply@the-infiltratr.com>  Wed, 07 Oct 2026 09:53:40 +1000
+
 infiltrator-calendar (1.0.82) unstable; urgency=medium
 
   * Isolate Cinnamon popup compatibility from the applet composition root
