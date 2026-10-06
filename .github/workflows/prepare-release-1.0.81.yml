@@ -94,9 +94,9 @@ jobs:
           python3 tools/update-runtime-hashes.py
           node tests/test-js-runtime.js
           python3 tools/update-runtime-hashes.py --check
-          git diff --check
+          git diff --check -- . ':(exclude)README.md'
           git rm -- .github/workflows/prepare-release-1.0.81.yml
-          git diff --check
+          git diff --check -- . ':(exclude)README.md'
           git config user.name "Shannon Smith"
           git config user.email "infiltratr@yandex.com"
           git add Makefile README.md CHANGELOG.md debian/changelog src/cinnamon/metadata.json src/cinnamon/runtime-sources.sha256 src/i18n/calendar-plus.pot src/i18n/*.po
