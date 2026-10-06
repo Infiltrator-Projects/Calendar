@@ -41,3 +41,11 @@ This file records durable architectural decisions for Calendar. It complements `
 **Why.** Product naming and compatibility identity are different concerns.
 
 **Consequence.** Legacy internal identifiers may remain even when the visible product name is Calendar.
+
+## ADR-006 — Stateful desktop protocols get explicit state owners
+
+**Decision.** Multi-step desktop protocols with coupled transitions use a dedicated state owner rather than a constellation of controller flags. CalendarServer visible-range generation, admission, retry and queued-force state is owned by `EventRangeState`; the transport controller performs D-Bus and event-store work against that contract.
+
+**Why.** Independent booleans make valid states implicit and allow one callback to update only part of a transition. An explicit state owner makes lifecycle invariants testable without binding tests to transport-controller internals.
+
+**Consequence.** New CalendarServer lifecycle state belongs in the narrow state object when it participates in the range-request protocol. Presentation and transport code must not recreate parallel range-state flags.
