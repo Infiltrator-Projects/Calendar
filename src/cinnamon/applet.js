@@ -131,34 +131,48 @@ class LatchedWidthBin extends St.Bin {
 });
 
 /*
- * Calendar's popup has two separate layout contracts:
- *  - its contents retain the long-standing agenda-left/month-right order;
- *  - when the applet lives in Cinnamon's right panel zone, the popup itself
- *    is right-aligned to the monitor work area rather than centred on the
- *    clock actor. Cinnamon's stock PopupMenu centres on the source actor,
- *    which leaves a wide Calendar popup visibly stranded from the screen edge.
+ * Compatibility boundary for Cinnamon popup behaviour.
  *
- * Closed-state input is a third, non-negotiable contract. Cinnamon normally
- * hides a popup at the end of its close animation, but if that animation is
- * interrupted its actor can remain visibly mapped to Clutter while the menu's
- * logical isOpen flag is already false. A mapped reactive Calendar actor then
- * becomes an invisible input shield over unrelated windows. Keep the actor
- * non-reactive from the instant close begins and enforce the final hidden
- * state with a bounded guard timer if Cinnamon never completes the animation.
+ * CalendarPlusApplet deliberately talks only to the small public surface on
+ * this subclass (setEventPassthrough, setOrientation, open/close/toggle). Any
+ * Cinnamon-version-specific actor lifecycle, animation recovery or placement
+ * detail stays contained here instead of leaking throughout the applet.
  */
 class CalendarPopupMenu extends Applet.AppletPopupMenu {
-    constructor(...args) {
-        super(...args);
+    constructor(launcher, orientation) {
+        super(launcher, orientation);
+        this._calendarLauncher = launcher;
+        this._calendarOrientation = orientation;
         this._closeGuardSource = 0;
-        if (this.actor && !this.actor.is_finalized()) {
-            this.actor.reactive = false;
-        }
+        this._setActorReactive(false);
         this.connect("menu-animated-closed", () => {
             if (!this.isOpen) {
                 this._cancelCloseGuard();
                 this._finishClosedState();
             }
         });
+        this.connect("open-state-changed", (menu, open) => {
+            if (open) {
+                this._setActorReactive(true);
+            } else {
+                this._enforceClosedInputState();
+            }
+        });
+    }
+
+    _setActorReactive(reactive) {
+        if (this.actor && !this.actor.is_finalized()) {
+            this.actor.reactive = Boolean(reactive);
+        }
+    }
+
+    setEventPassthrough(enabled) {
+        this.passEvents = this.isOpen && Boolean(enabled);
+    }
+
+    setOrientation(orientation) {
+        this._calendarOrientation = orientation;
+        super.setOrientation(orientation);
     }
 
     _cancelCloseGuard() {
@@ -171,9 +185,7 @@ class CalendarPopupMenu extends Applet.AppletPopupMenu {
 
     _enforceClosedInputState() {
         this.passEvents = false;
-        if (this.actor && !this.actor.is_finalized()) {
-            this.actor.reactive = false;
-        }
+        this._setActorReactive(false);
     }
 
     _finishClosedState() {
@@ -193,9 +205,7 @@ class CalendarPopupMenu extends Applet.AppletPopupMenu {
     open(animate) {
         this._cancelCloseGuard();
         this.passEvents = false;
-        if (this.actor && !this.actor.is_finalized()) {
-            this.actor.reactive = true;
-        }
+        this._setActorReactive(true);
         super.open(animate);
     }
 
@@ -229,20 +239,22 @@ class CalendarPopupMenu extends Applet.AppletPopupMenu {
     destroy() {
         this._cancelCloseGuard();
         this._finishClosedState();
+        this._calendarLauncher = null;
         super.destroy();
     }
 
     _calculatePosition() {
         const [xPos, yPos] = super._calculatePosition();
+        const launcher = this._calendarLauncher;
 
-        if ((this._orientation !== St.Side.TOP &&
-             this._orientation !== St.Side.BOTTOM) ||
-            !this.launcher ||
-            this.launcher.locationLabel !== "right") {
+        if ((this._calendarOrientation !== St.Side.TOP &&
+             this._calendarOrientation !== St.Side.BOTTOM) ||
+            !launcher || launcher.locationLabel !== "right" ||
+            !launcher.actor) {
             return [xPos, yPos];
         }
 
-        const monitor = Main.layoutManager.findMonitorForActor(this.sourceActor);
+        const monitor = Main.layoutManager.findMonitorForActor(launcher.actor);
         if (!monitor) {
             return [xPos, yPos];
         }
@@ -402,8 +414,25 @@ class CalendarPlusApplet extends Applet.Applet {
         );
         this.events_manager = new EventManager.EventsManager(
             this.settings,
-            this.desktop_settings,
-            this.event_list
+            this.desktop_settings
+        );
+        this._eventSignals.connect(
+            this.events_manager,
+            "agenda-date-changed",
+            (manager, date) => {
+                if (this.event_list && date) {
+                    this.event_list.set_date(date);
+                }
+            }
+        );
+        this._eventSignals.connect(
+            this.events_manager,
+            "agenda-events-changed",
+            (manager, snapshot, reset, loading) => {
+                if (this.event_list) {
+                    this.event_list.set_events(snapshot, reset, loading);
+                }
+            }
         );
         this._eventSignals.connect(
             this.events_manager,
@@ -442,7 +471,7 @@ class CalendarPlusApplet extends Applet.Applet {
         ]) {
             this._eventSignals.connect(this.event_list, signal, () => {
                 if (this.menu) {
-                    this.menu.passEvents = this.menu.isOpen && passEvents;
+                    this.menu.setEventPassthrough(passEvents);
                 }
             });
         }
@@ -586,18 +615,8 @@ class CalendarPlusApplet extends Applet.Applet {
 
     _watchPointerAndMenu() {
         this._signals.connect(this.menu, "open-state-changed", (menu, open) => {
-            if (this._destroyed) {
+            if (this._destroyed || !open) {
                 return;
-            }
-            if (!open) {
-                menu.passEvents = false;
-                if (menu.actor && !menu.actor.is_finalized()) {
-                    menu.actor.reactive = false;
-                }
-                return;
-            }
-            if (menu.actor && !menu.actor.is_finalized()) {
-                menu.actor.reactive = true;
             }
             /*
              * Re-probe an intentionally exited CalendarServer when the user
