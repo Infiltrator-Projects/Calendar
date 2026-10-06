@@ -39,63 +39,84 @@ jobs:
           if "                                get_snapshot() {" not in text:
               if text.count(snapshot_needle) != 1:
                   raise SystemExit("EventStore mock insertion point changed")
-              text = text.replace(
-                  snapshot_needle,
-                  snapshot_insertion + snapshot_needle,
-              )
+              text = text.replace(snapshot_needle, snapshot_insertion + snapshot_needle)
 
-          first_pattern = re.compile(
-              r"    const eventList = \{\n"
-              r"        set_events\(snapshot, delayed, unavailable\) \{\n"
-              r"            presented\.push\(\[snapshot, delayed, unavailable\]\);\n"
-              r"        \},\n"
-              r"    \};\n"
-              r"    const manager = new EventsManager\(\n"
-              r"        \{ getValue\(\) \{ return true; \} \},\n"
-              r"        \{\},\n"
-              r"        eventList\n"
-              r"    \);\n"
-          )
-          first_replacement = (
-              "    const manager = new EventsManager(\n"
-              "        { getValue() { return true; } },\n"
-              "        {}\n"
-              "    );\n"
-              "    manager.emit = (signal, ...args) => {\n"
-              "        if (signal === \"agenda-events-changed\") {\n"
-              "            presented.push(args);\n"
-              "        }\n"
-              "    };\n"
-          )
-          text, first_count = first_pattern.subn(first_replacement, text, count=1)
-          if first_count != 1:
-              raise SystemExit("server-loss presentation test shape changed")
+          migrations = [
+              (
+                  re.compile(
+                      r"    const eventList = \{\n"
+                      r"        set_events\(snapshot, delayed, unavailable\) \{\n"
+                      r"            presented\.push\(\[snapshot, delayed, unavailable\]\);\n"
+                      r"        \},\n"
+                      r"    \};\n"
+                      r"    const manager = new EventsManager\(\n"
+                      r"        \{ getValue\(\) \{ return true; \} \},\n"
+                      r"        \{\},\n"
+                      r"        eventList\n"
+                      r"    \);\n"
+                  ),
+                  (
+                      "    const manager = new EventsManager(\n"
+                      "        { getValue() { return true; } },\n"
+                      "        {}\n"
+                      "    );\n"
+                      "    manager.emit = (signal, ...args) => {\n"
+                      "        if (signal === \"agenda-events-changed\") {\n"
+                      "            presented.push(args);\n"
+                      "        }\n"
+                      "    };\n"
+                  ),
+                  "server-loss presentation test",
+              ),
+              (
+                  re.compile(
+                      r"    const manager = new EventsManager\(\n"
+                      r"        \{ getValue\(\) \{ return true; \} \},\n"
+                      r"        \{\},\n"
+                      r"        \{\n"
+                      r"            set_events\(snapshot, delayed, unavailable\) \{\n"
+                      r"                presented\.push\(\[snapshot, delayed, unavailable\]\);\n"
+                      r"            \},\n"
+                      r"        \}\n"
+                      r"    \);\n"
+                  ),
+                  (
+                      "    const manager = new EventsManager(\n"
+                      "        { getValue() { return true; } },\n"
+                      "        {}\n"
+                      "    );\n"
+                      "    manager.emit = (signal, ...args) => {\n"
+                      "        if (signal === \"agenda-events-changed\") {\n"
+                      "            presented.push(args);\n"
+                      "        }\n"
+                      "    };\n"
+                  ),
+                  "no-calendar presentation test",
+              ),
+              (
+                  re.compile(
+                      r"    const eventList = \{\n"
+                      r"        set_date\(day\) \{ selectedDates\.push\(day\.to_unix\(\)\); \},\n"
+                      r"        set_events\(\) \{\},\n"
+                      r"    \};\n"
+                      r"    const manager = new EventsManager\(settings, \{\}, eventList\);\n"
+                  ),
+                  (
+                      "    const manager = new EventsManager(settings, {});\n"
+                      "    manager.emit = (signal, ...args) => {\n"
+                      "        if (signal === \"agenda-date-changed\") {\n"
+                      "            selectedDates.push(args[0].to_unix());\n"
+                      "        }\n"
+                      "    };\n"
+                  ),
+                  "presentation-state heading test",
+              ),
+          ]
 
-          second_pattern = re.compile(
-              r"    const manager = new EventsManager\(\n"
-              r"        \{ getValue\(\) \{ return true; \} \},\n"
-              r"        \{\},\n"
-              r"        \{\n"
-              r"            set_events\(snapshot, delayed, unavailable\) \{\n"
-              r"                presented\.push\(\[snapshot, delayed, unavailable\]\);\n"
-              r"            \},\n"
-              r"        \}\n"
-              r"    \);\n"
-          )
-          second_replacement = (
-              "    const manager = new EventsManager(\n"
-              "        { getValue() { return true; } },\n"
-              "        {}\n"
-              "    );\n"
-              "    manager.emit = (signal, ...args) => {\n"
-              "        if (signal === \"agenda-events-changed\") {\n"
-              "            presented.push(args);\n"
-              "        }\n"
-              "    };\n"
-          )
-          text, second_count = second_pattern.subn(second_replacement, text, count=1)
-          if second_count != 1:
-              raise SystemExit("no-calendar presentation test shape changed")
+          for pattern, replacement, label in migrations:
+              text, count = pattern.subn(replacement, text, count=1)
+              if count != 1:
+                  raise SystemExit(f"{label} shape changed")
 
           path.write_text(text, encoding="utf-8")
           PY
