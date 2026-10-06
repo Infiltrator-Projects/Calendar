@@ -5,9 +5,9 @@
  * CalendarServer transport and native event-store controller.
  *
  * This module owns no Cinnamon actors. CalendarServer tuples cross D-Bus once
- * and are immediately normalised by CalendarPlus.EventStore; an optional
- * agenda view receives detached snapshot records. Separating transport from
- * presentation makes event fetching testable without building the popup UI.
+ * and are immediately normalised by CalendarPlus.EventStore. Presentation is
+ * notified through narrow agenda signals so transport/state code never reaches
+ * into EventList or any other concrete view.
  */
 
 const CalendarPlus = imports.gi.CalendarPlus;
@@ -180,7 +180,7 @@ class EventSnapshot {
 }
 
 var EventsManager = class EventsManager {
-    constructor(settings, desktop_settings, event_list) {
+    constructor(settings, desktop_settings) {
         this.settings = settings;
         this.desktop_settings = desktop_settings;
         this._destroyed = false;
@@ -197,7 +197,6 @@ var EventsManager = class EventsManager {
         this._cached_state = STATUS_UNKNOWN;
         this._reload_id = 0;
         this._force_reload_pending = false;
-        this._event_list = event_list || null;
         this.current_range_start = null;
         this.current_range_end = null;
         /*
@@ -220,6 +219,23 @@ var EventsManager = class EventsManager {
         this._timezone_monitor = null;
         this._timezone_monitor_signal_id = 0;
         this._startTimezoneMonitor();
+    }
+
+    _publishAgendaDate(date) {
+        if (!this._destroyed && date !== null) {
+            this.emit("agenda-date-changed", date);
+        }
+    }
+
+    _publishAgendaEvents(snapshot, reset, loading = false) {
+        if (!this._destroyed) {
+            this.emit(
+                "agenda-events-changed",
+                snapshot,
+                Boolean(reset),
+                Boolean(loading)
+            );
+        }
     }
 
     start_events() {
@@ -306,9 +322,7 @@ var EventsManager = class EventsManager {
                 if (this.event_store !== null) {
                     this.event_store.clear();
                 }
-                if (this._event_list !== null) {
-                    this._event_list.set_events(null, false, true);
-                }
+                this._publishAgendaEvents(null, false, true);
                 global.logError(
                     `${APPLET_UUID}: could not connect to calendar server: ${error}`
                 );
@@ -345,14 +359,11 @@ var EventsManager = class EventsManager {
         }
         /*
          * The pane deliberately remains allocated while CalendarServer is
-         * reconnecting so popup geometry does not jump.  Clear presentation
-         * state at the same time as the native store; otherwise select_date()
-         * refuses to repaint while inactive and stale appointments can remain
-         * visible after the transport has disappeared.
+         * reconnecting so popup geometry does not jump. Clear presentation
+         * state at the same time as the native store; consumers decide how to
+         * render the loading/empty distinction from this narrow state signal.
          */
-        if (this._event_list !== null) {
-            this._event_list.set_events(null, false, !expectedEmpty);
-        }
+        this._publishAgendaEvents(null, false, !expectedEmpty);
         this.current_range_start = null;
         this.current_range_end = null;
         this.current_range_start_civil = null;
@@ -826,38 +837,32 @@ var EventsManager = class EventsManager {
          */
         if (day === null) {
             this.current_selected_date = null;
-            if (this._event_list !== null) {
-                const display = GLib.DateTime.new_utc(
-                    year, month, dayOfMonth, 12, 0, 0
-                );
-                if (display !== null) {
-                    this._event_list.set_date(display);
-                }
-                this._event_list.set_events(null, false);
+            const display = GLib.DateTime.new_utc(
+                year, month, dayOfMonth, 12, 0, 0
+            );
+            if (display !== null) {
+                this._publishAgendaDate(display);
             }
+            this._publishAgendaEvents(null, false);
             return;
         }
 
         /*
-         * Selection is presentation state, not transport state. Update the
+         * Selection is presentation state, not transport state. Publish the
          * agenda heading immediately even while CalendarServer is still being
-         * activated; the eventual server readiness only controls event data.
+         * activated; eventual server readiness only controls event data.
          */
         this.current_selected_date = day;
-        if (this._event_list !== null) {
-            this._event_list.set_date(day);
-        }
+        this._publishAgendaDate(day);
 
         if (!this.is_active()) {
             return;
         }
 
-        if (this._event_list !== null) {
-            this._event_list.set_events(
-                this._snapshot_for_date(day),
-                previousCivil === null || changedMonth || Boolean(force)
-            );
-        }
+        this._publishAgendaEvents(
+            this._snapshot_for_date(day),
+            previousCivil === null || changedMonth || Boolean(force)
+        );
     }
 
     _snapshot_for_date(day) {
@@ -973,7 +978,6 @@ var EventsManager = class EventsManager {
         this._serverSignals.disconnectAll();
         this._calendar_server = null;
 
-        this._event_list = null;
         if (this.event_store !== null) {
             this.event_store.clear();
             this.event_store = null;
