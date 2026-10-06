@@ -5,10 +5,12 @@
  * Narrow month-view event source.
  *
  * Calendar needs event availability, visible-range updates, day selection,
- * colours and three state signals. It does not need the concrete transport
- * controller. This adapter keeps Calendar independent from EventsManager's
- * transport lifecycle and cache implementation details.
+ * colours and three state notifications. It does not need the concrete
+ * transport controller. This adapter owns the signal translation as well as
+ * the method forwarding, so Calendar never connects to EventsManager itself.
  */
+
+const Signals = imports.signals;
 
 var CalendarEventSource = class CalendarEventSource {
     constructor(manager) {
@@ -16,16 +18,26 @@ var CalendarEventSource = class CalendarEventSource {
             throw new Error("Calendar event manager is required");
         }
         this._manager = manager;
+        this._managerConnections = [];
+
+        this._connectManagerSignal("events-updated", "events-updated");
+        this._connectManagerSignal(
+            "events-manager-ready",
+            "events-manager-ready"
+        );
+        this._connectManagerSignal(
+            "has-calendars-changed",
+            "has-calendars-changed"
+        );
     }
 
-    connect(signal, callback) {
-        return this._manager ? this._manager.connect(signal, callback) : 0;
-    }
-
-    disconnect(id) {
-        if (this._manager && id > 0) {
-            this._manager.disconnect(id);
-        }
+    _connectManagerSignal(sourceSignal, publicSignal) {
+        const id = this._manager.connect(sourceSignal, () => {
+            if (this._manager) {
+                this.emit(publicSignal);
+            }
+        });
+        this._managerConnections.push(id);
     }
 
     is_active() {
@@ -51,6 +63,19 @@ var CalendarEventSource = class CalendarEventSource {
     }
 
     destroy() {
+        if (this._manager) {
+            for (const id of this._managerConnections) {
+                if (id > 0) {
+                    try {
+                        this._manager.disconnect(id);
+                    } catch (error) {
+                        global.logError(error);
+                    }
+                }
+            }
+        }
+        this._managerConnections = [];
         this._manager = null;
     }
 };
+Signals.addSignalMethods(CalendarEventSource.prototype);
