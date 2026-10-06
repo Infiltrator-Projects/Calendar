@@ -6,6 +6,12 @@ This changelog records user-visible, compatibility, architecture and validation 
 
 No unreleased changes.
 
+## 1.0.82 - 2026-10-06
+
+- Isolate Cinnamon popup compatibility from the applet composition root and avoid dependence on Cinnamon private animation state.
+- Keep `applet.js` as a composition/controller root with panel clock, popup menu and popup body responsibilities enforced in dedicated modules.
+- Route month-view event notifications through the narrow `CalendarEventSource` adapter instead of coupling the calendar view to the concrete `EventsManager`.
+
 ## 1.0.81 - 2026-10-06
 
 - Move CalendarServer event indexing, snapshots and batched colour lookup behind the native `CalendarPlus.EventStore`, reducing duplicated event-state and interval logic in Cinnamon JavaScript.

@@ -1,3 +1,14 @@
+infiltrator-calendar (1.0.82) unstable; urgency=medium
+
+  * Isolate Cinnamon popup compatibility from the applet composition root
+    and remove dependence on Cinnamon private animation state.
+  * Keep panel clock, popup menu and popup body responsibilities in their
+    dedicated modules with composition-root regression coverage.
+  * Route month-view event notifications through CalendarEventSource rather
+    than coupling the calendar view to the concrete EventsManager.
+
+ -- Shannon Smith <noreply@the-infiltratr.com>  Tue, 06 Oct 2026 22:30:00 +1100
+
 infiltrator-calendar (1.0.81) unstable; urgency=medium
 
   * Move CalendarServer event indexing, snapshots and batched colour lookup
