@@ -49,3 +49,11 @@ This file records durable architectural decisions for Calendar. It complements `
 **Why.** Independent booleans make valid states implicit and allow one callback to update only part of a transition. An explicit state owner makes lifecycle invariants testable without binding tests to transport-controller internals.
 
 **Consequence.** New CalendarServer lifecycle state belongs in the narrow state object when it participates in the range-request protocol. Presentation and transport code must not recreate parallel range-state flags.
+
+## ADR-007 — Civil chronology has one native implementation
+
+**Decision.** Civil-day navigation and weekday calculation are native CalendarPlus responsibilities. Cinnamon JavaScript consumes the native APIs and must not maintain a second chronology implementation for the same operations.
+
+**Why.** Parallel date arithmetic creates silent divergence at calendar boundaries, skipped local dates and large year ranges, while the native implementation is already the tested chronology authority.
+
+**Consequence.** New civil-date arithmetic belongs below the JavaScript/native boundary. Cinnamon may coordinate navigation and presentation, but it delegates chronology semantics to CalendarPlus.
