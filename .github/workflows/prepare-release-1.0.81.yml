@@ -26,6 +26,7 @@ jobs:
           test "$(sed -n 's/^VERSION := //p' Makefile)" = "1.0.80"
           python3 - <<'PY'
           from pathlib import Path
+          import re
 
           def replace_once(path, old, new):
               p = Path(path)
@@ -82,12 +83,13 @@ jobs:
 
           paths = [Path("src/i18n/calendar-plus.pot")]
           paths.extend(sorted(Path("src/i18n").glob("*.po")))
+          header_pattern = re.compile(r"Project-Id-Version: Calendar [0-9]+\.[0-9]+\.[0-9]+")
           for path in paths:
               text = path.read_text(encoding="utf-8")
-              old_header = "Project-Id-Version: Calendar 1.0.80"
-              if text.count(old_header) != 1:
-                  raise SystemExit(f"{path}: unexpected Project-Id-Version header")
-              path.write_text(text.replace(old_header, "Project-Id-Version: Calendar 1.0.81", 1), encoding="utf-8")
+              updated, count = header_pattern.subn("Project-Id-Version: Calendar 1.0.81", text, count=1)
+              if count != 1:
+                  raise SystemExit(f"{path}: missing Calendar Project-Id-Version header")
+              path.write_text(updated, encoding="utf-8")
           PY
           python3 tools/update-runtime-hashes.py
           node tests/test-js-runtime.js
