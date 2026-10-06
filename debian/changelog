@@ -1,3 +1,13 @@
+infiltrator-calendar (1.0.80) unstable; urgency=medium
+
+  * Synchronize maintained documentation with Calendar 1.0.80 and
+    the pinned Infiltratr Common 1.19.36 foundation.
+  * Correct the evidence-backed 1.0.58 historical changelog label.
+  * Refresh release metadata and runtime-integrity hashes without
+    changing Calendar runtime behaviour.
+
+ -- Shannon Smith <noreply@the-infiltratr.com>  Tue, 06 Oct 2026 17:00:00 +1100
+
 infiltrator-calendar (1.0.79) unstable; urgency=medium
 
   * Prevent a logically closed Calendar popup from remaining as a reactive
@@ -168,7 +178,7 @@ infiltrator-calendar (1.0.59) unstable; urgency=medium
 
  -- Shannon Smith <noreply@the-infiltratr.com>  Fri, 25 Sep 2026 06:12:00 +1000
 
-infiltrator-calendar (1.0.59) unstable; urgency=medium
+infiltrator-calendar (1.0.58) unstable; urgency=medium
 
   * Stop the live panel clock from shrinking its width on ordinary ticks.
   * Request tabular numeral glyphs for stable numeric clock fields.

@@ -6,6 +6,12 @@ This changelog records user-visible, compatibility, architecture and validation 
 
 No unreleased changes.
 
+## 1.0.80 - 2026-10-06
+
+- Synchronize maintained documentation with the published Calendar release and the pinned Infiltratr Common 1.19.36 foundation.
+- Repair the evidence-backed 1.0.58 changelog label and remove stale release/version prose from current documentation and generated theme provenance comments.
+- Refresh release metadata and runtime-integrity hashes only; Calendar runtime behaviour is unchanged from 1.0.79.
+
 ## 1.0.79 - 2026-10-03
 
 - Prevent a logically closed Calendar popup from remaining as a reactive invisible Clutter actor over unrelated application windows.
