@@ -154,6 +154,21 @@ requireCondition(
     !CalendarPlus.date_is_work_day(2026, 8, 8),
     "Saturday was classified as a work day"
 );
+requireCondition(
+    CalendarPlus.date_weekday(2026, 8, 8) === 6,
+    "native weekday projection failed"
+);
+const [nextDayYear, nextDayMonth, nextDay] = calendar
+    .add_days_parts(2026, 8, 8, 1)
+    .deep_unpack();
+requireCondition(
+    nextDayYear === 2026 && nextDayMonth === 8 && nextDay === 9,
+    "native civil-day navigation failed"
+);
+requireCondition(
+    calendar.add_days_parts(2147483647, 12, 31, 1) === null,
+    "native civil-day navigation crossed the gint year boundary"
+);
 
 const [year, month, day] = calendar
     .add_months_parts(2026, 8, 8, 1)

@@ -33,6 +33,16 @@ gboolean calendar_plus_date_same(gint year_a,
                                  gint day_b);
 
 /**
+ * calendar_plus_date_weekday:
+ * @year: proleptic Gregorian year
+ * @month: Gregorian month
+ * @day: Gregorian day
+ *
+ * Returns: Sunday=0 through Saturday=6, or -1 for invalid input
+ */
+gint calendar_plus_date_weekday(gint year, gint month, gint day);
+
+/**
  * calendar_plus_date_is_work_day:
  * @year: proleptic Gregorian year
  * @month: Gregorian month
@@ -205,6 +215,23 @@ GVariant *calendar_plus_calendar_system_month_start_parts(
     gint gregorian_year,
     gint gregorian_month,
     gint gregorian_day);
+
+/**
+ * calendar_plus_calendar_system_add_days_parts:
+ * @self: a calendar converter
+ * @gregorian_year: proleptic Gregorian year
+ * @gregorian_month: Gregorian month from 1 through 12
+ * @gregorian_day: Gregorian day of month
+ * @amount: signed number of absolute Gregorian civil days
+ *
+ * Returns: (transfer full) (nullable): an `(iii)` Gregorian year/month/day
+ */
+GVariant *calendar_plus_calendar_system_add_days_parts(
+    CalendarPlusCalendarSystem *self,
+    gint gregorian_year,
+    gint gregorian_month,
+    gint gregorian_day,
+    gint amount);
 
 /**
  * calendar_plus_calendar_system_add_months_parts:

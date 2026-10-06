@@ -41,6 +41,9 @@ const RuntimeSupport = _loadRuntimeSupport();
 const SignalBag = RuntimeSupport.SignalBag;
 const midnight = RuntimeSupport.midnight;
 const sameInstant = RuntimeSupport.sameInstant;
+const EventRangeState = RuntimeSupport.loadLocalModule(
+    "eventRangeState"
+).EventRangeState;
 
 function _civilFields(date) {
     if (date === null) {
@@ -163,7 +166,7 @@ class EventRecord {
 class EventSnapshot {
     constructor(variant) {
         const [revision, rows] = variant.deep_unpack();
-        this.timestamp = revision;
+        this.revision = revision;
         this.events = [];
         for (const row of rows) {
             try {
@@ -191,7 +194,6 @@ var EventsManager = class EventsManager {
         this._calendar_server_generation = 0;
         this._reconnect_timer_id = 0;
         this._range_retry_timer_id = 0;
-        this._range_retry_attempt = 0;
         this._serverSignals = new SignalBag();
         this._cancellable = new Gio.Cancellable();
         this._cached_state = STATUS_UNKNOWN;
@@ -208,11 +210,7 @@ var EventsManager = class EventsManager {
         this.current_range_end_civil = null;
         this.current_selected_date = null;
         this.current_selected_civil = null;
-        this._range_request_generation = 0;
-        this._range_request_pending = false;
-        this._range_request_succeeded = false;
-        this._range_accepting_events = false;
-        this._queued_range_force = false;
+        this._rangeState = new EventRangeState();
         this.last_update_timestamp = 0;
         this.event_store = CalendarPlus.EventStore.new();
 
@@ -368,11 +366,7 @@ var EventsManager = class EventsManager {
         this.current_range_end = null;
         this.current_range_start_civil = null;
         this.current_range_end_civil = null;
-        this._range_request_generation += 1;
-        this._range_request_pending = false;
-        this._range_request_succeeded = false;
-        this._range_accepting_events = false;
-        this._queued_range_force = false;
+        this._rangeState.resetForServerLoss();
         this.last_update_timestamp = 0;
         this.emit("has-calendars-changed");
         this.emit("events-updated");
@@ -414,22 +408,18 @@ var EventsManager = class EventsManager {
 
     _scheduleRangeRetry() {
         if (this._destroyed || this._range_retry_timer_id > 0 ||
-            this._range_request_pending ||
+            this._rangeState.pending ||
             this.current_range_start === null ||
             this.current_range_end === null) {
             return;
         }
 
-        const delay = Math.min(
-            60,
-            Math.pow(2, Math.min(this._range_retry_attempt, 5))
-        );
-        this._range_retry_attempt += 1;
+        const delay = this._rangeState.nextRetryDelay();
         this._range_retry_timer_id = Mainloop.timeout_add_seconds(
             delay,
             () => {
                 this._range_retry_timer_id = 0;
-                if (!this._destroyed && !this._range_request_pending &&
+                if (!this._destroyed && !this._rangeState.pending &&
                     this._calendar_server !== null &&
                     this.current_range_start !== null &&
                     this.current_range_end !== null) {
@@ -473,7 +463,7 @@ var EventsManager = class EventsManager {
          * from the old CalendarServer view are not generation-tagged and must
          * not repopulate the index during the deferred forced reload.
          */
-        this._range_accepting_events = false;
+        this._rangeState.closeAdmission();
         this.event_store.refresh_timezone();
         this._invalidateCurrentRange(false);
         this.emit("events-updated");
@@ -491,14 +481,13 @@ var EventsManager = class EventsManager {
          * civil range. This removes idle-window races between invalidation and
          * queue_reload().
          */
-        this._range_accepting_events = false;
-        this._range_request_succeeded = false;
+        const requestPending = this._rangeState.invalidate();
         if (clearStore) {
             this.event_store.clear();
         }
 
-        if (this._range_request_pending) {
-            this._queued_range_force = true;
+        if (requestPending) {
+            this._rangeState.queueForce(true);
         } else if (this.current_range_start !== null &&
                    this.current_range_end !== null) {
             this.queue_reload(true);
@@ -507,7 +496,7 @@ var EventsManager = class EventsManager {
 
     _ingestEvents(payload) {
         if (this._destroyed || this.event_store === null ||
-            !this._range_accepting_events ||
+            !this._rangeState.acceptingEvents ||
             this.current_range_start === null ||
             this.current_range_end === null) {
             return;
@@ -597,7 +586,7 @@ var EventsManager = class EventsManager {
 
     _requestVisibleRange(first, last, force, clearStore) {
         if (this._destroyed || this._calendar_server === null ||
-            this.event_store === null || this._range_request_pending) {
+            this.event_store === null || this._rangeState.pending) {
             return;
         }
 
@@ -605,7 +594,7 @@ var EventsManager = class EventsManager {
             this.event_store.clear();
             this.emit("events-updated");
         }
-        this._range_accepting_events = false;
+        this._rangeState.closeAdmission();
 
         const exclusiveEnd = last.add_days(1);
         if (exclusiveEnd === null) {
@@ -615,9 +604,10 @@ var EventsManager = class EventsManager {
             return;
         }
 
-        const requestGeneration = ++this._range_request_generation;
-        this._range_request_pending = true;
-        this._range_request_succeeded = false;
+        const requestGeneration = this._rangeState.beginRequest();
+        if (requestGeneration === 0) {
+            return;
+        }
         const requestedStart = first;
         const requestedEnd = last;
         this.last_update_timestamp = GLib.get_monotonic_time();
@@ -634,7 +624,7 @@ var EventsManager = class EventsManager {
                     succeeded = true;
                 } catch (error) {
                     if (!this._destroyed &&
-                        requestGeneration === this._range_request_generation) {
+                        this._rangeState.isCurrent(requestGeneration)) {
                         global.logError(
                             `${APPLET_UUID}: event range request failed: ${error}`
                         );
@@ -642,23 +632,25 @@ var EventsManager = class EventsManager {
                 }
 
                 if (this._destroyed ||
-                    requestGeneration !== this._range_request_generation) {
+                    !this._rangeState.isCurrent(requestGeneration)) {
                     return;
                 }
 
-                this._range_request_pending = false;
-                this._range_request_succeeded = succeeded;
+                if (!this._rangeState.finishRequest(
+                        requestGeneration, succeeded)) {
+                    return;
+                }
 
                 const desiredChanged =
                     !sameInstant(requestedStart, this.current_range_start) ||
                     !sameInstant(requestedEnd, this.current_range_end);
-                if (desiredChanged || this._queued_range_force) {
-                    const queuedForce = this._queued_range_force;
-                    this._queued_range_force = false;
+                if (desiredChanged || this._rangeState.queuedForce) {
+                    const queuedForce =
+                        this._rangeState.consumeQueuedForce();
                     const nextStart = this.current_range_start;
                     const nextEnd = this.current_range_end;
                     this._cancelRangeRetry();
-                    this._range_retry_attempt = 0;
+                    this._rangeState.resetRetry();
                     if (nextStart !== null && nextEnd !== null) {
                         /*
                          * CalendarServer does not tag event signals with the
@@ -684,11 +676,11 @@ var EventsManager = class EventsManager {
                      * replaced the local store, so an empty refresh requires no
                      * silence timer or guessed "refresh complete" delay.
                      */
-                    this._range_accepting_events = true;
+                    this._rangeState.acceptCompletedRequest();
                     this._cancelRangeRetry();
-                    this._range_retry_attempt = 0;
+                    this._rangeState.resetRetry();
                 } else {
-                    this._range_accepting_events = false;
+                    this._rangeState.closeAdmission();
                     this._scheduleRangeRetry();
                 }
             }
@@ -723,8 +715,8 @@ var EventsManager = class EventsManager {
 
         const changed = !sameInstant(first, this.current_range_start) ||
             !sameInstant(last, this.current_range_end);
-        const needsRetry = !this._range_request_pending &&
-            !this._range_request_succeeded;
+        const needsRetry = !this._rangeState.pending &&
+            !this._rangeState.succeeded;
         if (!changed && !force && !needsRetry) {
             return;
         }
@@ -743,21 +735,20 @@ var EventsManager = class EventsManager {
         };
         if (changed) {
             this._cancelRangeRetry();
-            this._range_retry_attempt = 0;
+            this._rangeState.resetRetry();
         }
 
-        if (this._range_request_pending) {
+        if (this._rangeState.pending) {
             /*
              * Preserve only the newest desired range. This serializes
              * CalendarServer traffic and prevents an obsolete request from
              * overlapping the next request's refresh token.
              */
-            this._queued_range_force =
-                this._queued_range_force || Boolean(force) || changed;
+            this._rangeState.queueForce(Boolean(force) || changed);
             return;
         }
 
-        this._queued_range_force = false;
+        this._rangeState.clearQueuedForce();
         /*
          * Every actual CalendarServer request owns a fresh local generation.
          * Replacing the store up front makes an empty response correct by
@@ -930,11 +921,7 @@ var EventsManager = class EventsManager {
         this._destroyed = true;
         this._inited = false;
         this._calendar_server_generation += 1;
-        this._range_request_generation += 1;
-        this._range_request_pending = false;
-        this._range_request_succeeded = false;
-        this._range_accepting_events = false;
-        this._queued_range_force = false;
+        this._rangeState.destroy();
         this._calendar_server_connecting = false;
         this.current_range_start_civil = null;
         this.current_range_end_civil = null;

@@ -272,6 +272,12 @@ function evaluateEventsManager() {
         require(name) {
             if (name === "./runtimeSupport") {
                 return {
+                    loadLocalModule(moduleName) {
+                        if (moduleName === "eventRangeState") {
+                            return context.__eventRangeStateModule;
+                        }
+                        throw new Error(`unexpected local module ${moduleName}`);
+                    },
                     midnight(value) {
                         return dateTime.new_local(
                             value.get_year(),
@@ -423,6 +429,15 @@ function evaluateEventsManager() {
         },
     };
     vm.createContext(context);
+    const rangeStateSource = fs.readFileSync(
+        path.join(root, "src", "cinnamon", "eventRangeState.js"),
+        "utf8"
+    );
+    context.__eventRangeStateModule = vm.runInContext(
+        `(() => {\n${rangeStateSource}\nreturn { EventRangeState };\n})()`,
+        context,
+        { filename: "eventRangeState.js" }
+    );
     const source = fs.readFileSync(
         path.join(root, "src", "cinnamon", "eventManager.js"),
         "utf8"
@@ -654,6 +669,12 @@ function evaluateCalendar() {
                             } : null;
                         },
                     },
+                    date_weekday(year, month, day) {
+                        const value = new Date(0);
+                        value.setUTCHours(12, 0, 0, 0);
+                        value.setUTCFullYear(year, month - 1, day);
+                        return value.getUTCDay();
+                    },
                     date_same(yearA, monthA, dayA, yearB, monthB, dayB) {
                         function valid(year, month, day) {
                             if (!Number.isInteger(year) ||
@@ -702,7 +723,7 @@ function evaluateCalendar() {
         "utf8"
     );
     vm.runInContext(
-        `${source}\nglobalThis.__Calendar = Calendar;\nglobalThis.__localDate = _localDate;\nglobalThis.__representableLocalDate = _representableLocalDate;\nglobalThis.__addCivilDays = _addCivilDays;`,
+        `${source}\nglobalThis.__Calendar = Calendar;\nglobalThis.__localDate = _localDate;\nglobalThis.__representableLocalDate = _representableLocalDate;`,
         context,
         { filename: "calendar.js" }
     );
@@ -718,7 +739,6 @@ function evaluateCalendar() {
         Calendar: context.__Calendar,
         localDate: context.__localDate,
         representableLocalDate: context.__representableLocalDate,
-        addCivilDays: context.__addCivilDays,
         Clutter,
         settings,
         eventsManager,
@@ -1133,8 +1153,7 @@ function testCalendarRejectsNormalizedCivilDates() {
     const originalTimezone = process.env.TZ;
     process.env.TZ = "Pacific/Apia";
     try {
-        const { localDate, representableLocalDate, addCivilDays } =
-            evaluateCalendar();
+        const { localDate, representableLocalDate } = evaluateCalendar();
 
         assert.equal(
             localDate(2026, 2, 30),
@@ -1174,17 +1193,6 @@ function testCalendarRejectsNormalizedCivilDates() {
             null,
             "the extreme-year regression must not accidentally pass through Date"
         );
-        const extremeNext = addCivilDays(extreme, 1);
-        assert.notEqual(extremeNext, null);
-        assert.equal(extremeNext.getFullYear(), 2147483647);
-        assert.equal(extremeNext.getMonth() + 1, 12);
-        assert.equal(extremeNext.getDate(), 31);
-        assert.ok(extremeNext.getDay() >= 0 && extremeNext.getDay() <= 6);
-        assert.equal(
-            addCivilDays(extremeNext, 1),
-            null,
-            "keyboard day navigation must stop cleanly at the native year limit"
-        );
     } finally {
         if (originalTimezone === undefined) {
             delete process.env.TZ;
@@ -1192,6 +1200,31 @@ function testCalendarRejectsNormalizedCivilDates() {
             process.env.TZ = originalTimezone;
         }
     }
+}
+
+
+function testCalendarDayNavigationDelegatesToNative() {
+    const { Calendar } = evaluateCalendar();
+    const calendar = Object.create(Calendar.prototype);
+    let call = null;
+    calendar._calendarSystem = {
+        add_days_parts(year, month, day, amount) {
+            call = [year, month, day, amount];
+            if (amount === 2) {
+                return null;
+            }
+            return {
+                deep_unpack() { return [year, month, day + amount]; },
+            };
+        },
+    };
+    const source = new Date(2026, 7, 8, 12, 0, 0);
+    const next = calendar._dateByDays(source, 1);
+    assert.deepEqual(call, [2026, 8, 8, 1]);
+    assert.equal(next.getFullYear(), 2026);
+    assert.equal(next.getMonth() + 1, 8);
+    assert.equal(next.getDate(), 9);
+    assert.equal(calendar._dateByDays(source, 2), null);
 }
 
 function testCalendarRejectsUnsupportedProviderDate() {
@@ -1520,7 +1553,8 @@ function testRangeAdmissionRejectsLateOutOfRangeSignals() {
             return { to_unix() { return 3000; } };
         },
     };
-    manager._range_accepting_events = true;
+    manager._rangeState.finishRequest(manager._rangeState.beginRequest(), true);
+    manager._rangeState.acceptCompletedRequest();
 
     function eventVariant(start, end) {
         return {
@@ -1556,13 +1590,14 @@ function testRemovalSignalsInvalidateInsteadOfDeletingNewGeneration() {
 
     manager.current_range_start = { to_unix() { return 1000; } };
     manager.current_range_end = { to_unix() { return 2000; } };
-    manager._range_accepting_events = true;
+    manager._rangeState.finishRequest(manager._rangeState.beginRequest(), true);
+    manager._rangeState.acceptCompletedRequest();
     manager.queue_reload = (force) => { queuedForce = force; };
 
     manager._removeEvents("source:event");
     assert.equal(observations.clears, 1);
-    assert.equal(manager._range_accepting_events, false);
-    assert.equal(manager._range_request_succeeded, false);
+    assert.equal(manager._rangeState.acceptingEvents, false);
+    assert.equal(manager._rangeState.succeeded, false);
     assert.equal(
         queuedForce,
         true,
@@ -1570,9 +1605,9 @@ function testRemovalSignalsInvalidateInsteadOfDeletingNewGeneration() {
     );
 
     queuedForce = null;
-    manager._range_request_pending = true;
+    manager._rangeState.beginRequest();
     manager._removeEvents("source:event");
-    assert.equal(manager._queued_range_force, true);
+    assert.equal(manager._rangeState.queuedForce, true);
     assert.equal(
         queuedForce,
         null,
@@ -1590,13 +1625,14 @@ function testTimezoneReloadPreservesCivilRange() {
     manager.current_range_end = { to_unix() { return 2000; } };
     manager.current_range_start_civil = { year: 2026, month: 8, day: 2 };
     manager.current_range_end_civil = { year: 2026, month: 9, day: 12 };
-    manager._range_accepting_events = true;
+    manager._rangeState.finishRequest(manager._rangeState.beginRequest(), true);
+    manager._rangeState.acceptCompletedRequest();
     manager.set_visible_range = (first, last, force) => {
         calls.push([first, last, force]);
     };
 
     manager._timezoneChanged();
-    assert.equal(manager._range_accepting_events, false);
+    assert.equal(manager._rangeState.acceptingEvents, false);
     manager._ingestEvents({
         unpack() {
             return [{
@@ -1628,13 +1664,14 @@ function testCalendarSetChangeClosesAdmission() {
 
     manager.current_range_start = { to_unix() { return 1000; } };
     manager.current_range_end = { to_unix() { return 2000; } };
-    manager._range_accepting_events = true;
+    manager._rangeState.finishRequest(manager._rangeState.beginRequest(), true);
+    manager._rangeState.acceptCompletedRequest();
     manager.queue_reload = (force) => { queuedForce = force; };
 
     manager._calendarSetChanged();
     assert.equal(observations.clears, 1);
-    assert.equal(manager._range_accepting_events, false);
-    assert.equal(manager._range_request_succeeded, false);
+    assert.equal(manager._rangeState.acceptingEvents, false);
+    assert.equal(manager._rangeState.succeeded, false);
     assert.equal(queuedForce, true);
     manager.destroy();
 }
@@ -2123,6 +2160,7 @@ testMintFallbackClockFormatting();
 testConstructorAtomicity();
 testModuleLoaderCompatibility();
 testCalendarRejectsNormalizedCivilDates();
+testCalendarDayNavigationDelegatesToNative();
 testCalendarRejectsUnsupportedProviderDate();
 testCalendarGridFailureIsTransactional();
 testCalendarLifecycle();

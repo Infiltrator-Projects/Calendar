@@ -77,7 +77,7 @@ CalendarServer all-day end points enter as exclusive following-midnight values a
 
 The native event index is single-owner-thread state. Consumers obtain detached deep-copy snapshots rather than sharing mutable index internals. Snapshot revisions are opaque equality tokens; callers compare them for change detection rather than treating them as timestamps or ordering metadata.
 
-This design keeps CalendarServer lifecycle and transport behaviour out of portable event semantics while allowing the Cinnamon presentation layer to refresh safely from coherent Calendar-owned state.
+This design keeps CalendarServer lifecycle and transport behaviour out of portable event semantics while allowing the Cinnamon presentation layer to refresh safely from coherent Calendar-owned state. Cinnamon event transport also isolates visible-range request generation, admission, retry and queued-force transitions in a dedicated state object so CalendarServer callbacks cannot mutate an accidental constellation of controller flags.
 
 ## Location and astronomical state
 

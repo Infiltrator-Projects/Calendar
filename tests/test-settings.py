@@ -24,6 +24,7 @@ def main() -> None:
     calendar = read("calendar.js")
     event_view = read("eventView.js")
     event_manager = read("eventManager.js")
+    event_range_state = read("eventRangeState.js")
     event_port = read("calendarEventSource.js")
     panel_clock = read("panelClock.js")
     panel_view = read("panelView.js")
@@ -181,10 +182,14 @@ def main() -> None:
     # Native calendar/event logic remains native; JavaScript is the Cinnamon
     # presentation/transport boundary rather than a second arithmetic engine.
     assert "CalendarPlus.CalendarSystem.new(" in calendar
+    assert "this._calendarSystem.add_days_parts(" in calendar
     assert "this._calendarSystem.add_months_parts(" in calendar
     assert "this._calendarSystem.add_years_parts(" in calendar
     assert "system.build_grid(" in calendar
     assert "CalendarPlus.date_same(" in calendar
+    assert "CalendarPlus.date_weekday(" in calendar
+    assert "_addCivilDays" not in calendar
+    assert "_gregorianWeekday" not in calendar
     assert "CalendarPlus.date_is_work_day(" in calendar
     assert "while (cellsPlaced < 42)" not in calendar
     assert "CalendarPlus.EventStore.new()" in event_manager
@@ -192,6 +197,19 @@ def main() -> None:
     assert "this.event_store.get_snapshot(" in event_manager
     assert "this.event_store.get_color_range(" in event_manager
     assert "this.event_store.refresh_timezone()" in event_manager
+    assert "new EventRangeState()" in event_manager
+    for legacy_flag in (
+        "_range_request_generation", "_range_request_pending",
+        "_range_request_succeeded", "_range_accepting_events",
+        "_queued_range_force", "_range_retry_attempt",
+    ):
+        assert legacy_flag not in event_manager
+    for transition in (
+        "beginRequest()", "finishRequest(", "invalidate()",
+        "acceptCompletedRequest()", "nextRetryDelay()",
+        "resetForServerLoss()",
+    ):
+        assert transition in event_range_state
     assert "CalendarPlus.event_day_relation(" in event_manager
     assert "CalendarPlus.event_timing(" in event_manager
 

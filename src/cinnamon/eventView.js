@@ -328,7 +328,7 @@ var EventList = class EventList {
 
         const use24h = this.desktop_settings.get_boolean("clock-use-24h");
         const cacheKey = snapshot === null ? null :
-            `${snapshot.timestamp}:${this.selected_date.to_unix()}:${use24h ? 1 : 0}`;
+            `${snapshot.revision}:${this.selected_date.to_unix()}:${use24h ? 1 : 0}`;
 
         if (snapshot !== null && cacheKey === this._current_event_cache_key) {
             this.refresh_variations();

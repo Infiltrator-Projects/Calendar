@@ -63,17 +63,6 @@ const DATE_PARTS = Object.freeze({
     full: CalendarPlus.DatePart.FULL,
 });
 
-function _gregorianWeekday(year, month, day) {
-    const offsets = [0, 3, 2, 5, 0, 3, 5, 1, 4, 6, 2, 4];
-    let y = year;
-    if (month < 3) {
-        y -= 1;
-    }
-    const value = y + Math.floor(y / 4) - Math.floor(y / 100) +
-        Math.floor(y / 400) + offsets[month - 1] + day;
-    return ((value % 7) + 7) % 7;
-}
-
 class CivilDate {
     constructor(year, month, day) {
         this._year = year;
@@ -84,7 +73,7 @@ class CivilDate {
     getFullYear() { return this._year; }
     getMonth() { return this._month - 1; }
     getDate() { return this._day; }
-    getDay() { return _gregorianWeekday(this._year, this._month, this._day); }
+    getDay() { return CalendarPlus.date_weekday(this._year, this._month, this._day); }
 }
 
 function _dateFields(date) {
@@ -107,52 +96,6 @@ function _civilDateIsValid(year, month, day) {
         Number.isInteger(month) &&
         Number.isInteger(day) &&
         CalendarPlus.date_same(year, month, day, year, month, day);
-}
-
-function _addCivilDays(date, delta) {
-    if (!Number.isInteger(delta)) {
-        return null;
-    }
-    let [year, month, day] = _dateFields(date);
-    if (!_civilDateIsValid(year, month, day)) {
-        return null;
-    }
-
-    const step = delta < 0 ? -1 : 1;
-    let remaining = Math.abs(delta);
-    while (remaining-- > 0) {
-        if (step > 0) {
-            day += 1;
-            if (!_civilDateIsValid(year, month, day)) {
-                day = 1;
-                month += 1;
-                if (month > 12) {
-                    if (year === 2147483647) {
-                        return null;
-                    }
-                    month = 1;
-                    year += 1;
-                }
-            }
-        } else {
-            day -= 1;
-            if (day < 1) {
-                month -= 1;
-                if (month < 1) {
-                    if (year === -2147483648) {
-                        return null;
-                    }
-                    month = 12;
-                    year -= 1;
-                }
-                day = 31;
-                while (!_civilDateIsValid(year, month, day)) {
-                    day -= 1;
-                }
-            }
-        }
-    }
-    return _localDate(year, month, day);
 }
 
 function _representableLocalDate(year, month, day) {
@@ -542,12 +485,13 @@ var Calendar = class Calendar {
     }
 
     _dateByDays(date, delta) {
-        /*
-         * Day-key navigation is pure civil arithmetic. It therefore works for
-         * timezone-skipped dates and for the full native gint year domain
-         * without passing through JavaScript Date milliseconds.
-         */
-        return _addCivilDays(date, delta);
+        /* Native civil arithmetic preserves skipped local dates and gint bounds. */
+        if (!Number.isInteger(delta) || !this._calendarSystem) {
+            return null;
+        }
+        return _localDateFromVariant(
+            this._calendarSystem.add_days_parts(..._dateFields(date), delta)
+        );
     }
 
     _queueKeyboardDate(date) {

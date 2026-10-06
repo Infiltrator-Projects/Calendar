@@ -24,6 +24,16 @@ typedef gboolean (*DateOperation)(const CalendarPlusCalendarEngine *engine,
                                   CalendarPlusDate *result);
 
 static gboolean
+add_days_operation(const CalendarPlusCalendarEngine *engine,
+                   const CalendarPlusDate *date,
+                   gint amount,
+                   CalendarPlusDate *result)
+{
+    (void)engine;
+    return calendar_plus_date_add_days(date, amount, result);
+}
+
+static gboolean
 period_start_operation(const CalendarPlusCalendarEngine *engine,
                        const CalendarPlusDate *date,
                        gint amount,
@@ -64,6 +74,22 @@ calendar_plus_calendar_system_month_start_parts(
                                gregorian_day,
                                0,
                                period_start_operation);
+}
+
+GVariant *
+calendar_plus_calendar_system_add_days_parts(
+    CalendarPlusCalendarSystem *self,
+    gint gregorian_year,
+    gint gregorian_month,
+    gint gregorian_day,
+    gint amount)
+{
+    return navigate_to_variant(self,
+                               gregorian_year,
+                               gregorian_month,
+                               gregorian_day,
+                               amount,
+                               add_days_operation);
 }
 
 GVariant *

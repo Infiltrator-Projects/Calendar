@@ -148,3 +148,10 @@ CALENDAR_PLUS_2.7 {
     global:
         calendar_plus_event_store_get_color_range;
 } CALENDAR_PLUS_2.6;
+
+CALENDAR_PLUS_2.8 {
+    global:
+        calendar_plus_calendar_system_add_days_parts;
+        calendar_plus_date_add_days;
+        calendar_plus_date_weekday;
+} CALENDAR_PLUS_2.7;

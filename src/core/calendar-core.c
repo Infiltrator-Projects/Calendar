@@ -18,6 +18,7 @@
 #include "locale-weekend.h"
 #include "julian-day.h"
 
+#include <infiltratr/arithmetic.h>
 #include <infiltratr/temporal.h>
 
 struct _CalendarPlusCalendarEngine
@@ -80,6 +81,34 @@ calendar_plus_date_same(gint year_a,
     return calendar_plus_date_is_valid(&left) &&
            calendar_plus_date_is_valid(&right) &&
            year_a == year_b && month_a == month_b && day_a == day_b;
+}
+
+gint
+calendar_plus_date_weekday(gint year,
+                           gint month,
+                           gint day)
+{
+    const CalendarPlusDate date = { year, month, day };
+
+    if (!calendar_plus_date_is_valid(&date))
+        return -1;
+
+    return calendar_plus_iso_weekday(
+        calendar_plus_gregorian_to_jdn(year, month, day)) % 7;
+}
+
+gboolean
+calendar_plus_date_add_days(const CalendarPlusDate *date,
+                            gint amount,
+                            CalendarPlusDate *result)
+{
+    gint64 jdn;
+    gint64 shifted;
+
+    return result != NULL &&
+           date_to_jdn(date, &jdn) &&
+           infiltratr_i64_add_checked(jdn, (gint64)amount, &shifted) &&
+           date_from_jdn(shifted, result);
 }
 
 static gboolean

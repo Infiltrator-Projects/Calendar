@@ -197,6 +197,12 @@ gboolean calendar_plus_date_same(gint year_a,
                                  gint year_b,
                                  gint month_b,
                                  gint day_b);
+/** Returns: Sunday=0 through Saturday=6, or -1 for invalid input. */
+gint calendar_plus_date_weekday(gint year, gint month, gint day);
+/** Adds signed Gregorian civil days without passing through local time. */
+gboolean calendar_plus_date_add_days(const CalendarPlusDate *date,
+                                     gint amount,
+                                     CalendarPlusDate *result);
 /**
  * calendar_plus_date_is_work_day:
  * @year: Gregorian year
