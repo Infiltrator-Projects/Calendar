@@ -6,6 +6,12 @@ This changelog records user-visible, compatibility, architecture and validation 
 
 No unreleased changes.
 
+## 1.0.81 - 2026-10-06
+
+- Move CalendarServer event indexing, snapshots and batched colour lookup behind the native `CalendarPlus.EventStore`, reducing duplicated event-state and interval logic in Cinnamon JavaScript.
+- Keep the Cinnamon event manager focused on D-Bus transport and presentation signalling while preserving native generation, culling, timezone-refresh and agenda semantics.
+- Repair the JavaScript runtime harness for the native EventStore snapshot/colour contract and strengthen decoupling and popup-lifecycle regression validation.
+
 ## 1.0.80 - 2026-10-06
 
 - Synchronize maintained documentation with the published Calendar release and the pinned Infiltratr Common 1.19.36 foundation.

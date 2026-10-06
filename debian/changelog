@@ -1,3 +1,14 @@
+infiltrator-calendar (1.0.81) unstable; urgency=medium
+
+  * Move CalendarServer event indexing, snapshots and batched colour lookup
+    behind the native CalendarPlus.EventStore boundary.
+  * Remove duplicated event-state and interval processing from Cinnamon
+    JavaScript while preserving generation, culling and timezone semantics.
+  * Repair the JavaScript runtime EventStore harness and strengthen decoupling
+    and popup-lifecycle regression validation.
+
+ -- Shannon Smith <noreply@the-infiltratr.com>  Tue, 06 Oct 2026 20:45:00 +1100
+
 infiltrator-calendar (1.0.80) unstable; urgency=medium
 
   * Synchronize maintained documentation with Calendar 1.0.80 and
