@@ -1,0 +1,111 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
+# One-shot release preparation helper. This workflow removes itself from the
+# produced release commit; it exists only to make atomic edits against the live
+# repository tree without duplicating large source files through the API.
+name: prepare-release-1.0.81
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: write
+
+jobs:
+  prepare:
+    if: github.event.head_commit.message == 'Prepare Calendar 1.0.81 release'
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          submodules: true
+          fetch-depth: 0
+
+      - name: Prepare Calendar 1.0.81
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(sed -n 's/^VERSION := //p' Makefile)" = "1.0.80"
+          test "$(git log -1 --pretty=%s)" = "Prepare Calendar 1.0.81 release"
+
+          python3 - <<'PY'
+          from pathlib import Path
+
+          def replace_once(path, old, new):
+              p = Path(path)
+              text = p.read_text(encoding="utf-8")
+              count = text.count(old)
+              if count != 1:
+                  raise SystemExit(f"{path}: expected one occurrence of {old!r}, found {count}")
+              p.write_text(text.replace(old, new, 1), encoding="utf-8")
+
+          replace_once("Makefile", "VERSION := 1.0.80", "VERSION := 1.0.81")
+          replace_once(
+              "src/cinnamon/metadata.json",
+              '    "version": "1.0.80",',
+              '    "version": "1.0.81",',
+          )
+          replace_once(
+              "README.md",
+              "**Stable release:** 1.0.80  ",
+              "**Stable release:** 1.0.81  ",
+          )
+
+          changelog = Path("CHANGELOG.md")
+          text = changelog.read_text(encoding="utf-8")
+          marker = "## Unreleased\n\nNo unreleased changes.\n\n## 1.0.80 - 2026-10-06"
+          replacement = """## Unreleased
+
+No unreleased changes.
+
+## 1.0.81 - 2026-10-06
+
+- Move CalendarServer event indexing, snapshots and batched colour lookup behind the native `CalendarPlus.EventStore`, reducing duplicated event-state and interval logic in Cinnamon JavaScript.
+- Keep the Cinnamon event manager focused on D-Bus transport and presentation signalling while preserving native generation, culling, timezone-refresh and agenda semantics.
+- Repair the JavaScript runtime harness for the native EventStore snapshot/colour contract and strengthen decoupling and popup-lifecycle regression validation.
+
+## 1.0.80 - 2026-10-06"""
+          if text.count(marker) != 1:
+              raise SystemExit("CHANGELOG.md: unexpected Unreleased/1.0.80 boundary")
+          changelog.write_text(text.replace(marker, replacement, 1), encoding="utf-8")
+
+          debian = Path("debian/changelog")
+          old = debian.read_text(encoding="utf-8")
+          if not old.startswith("infiltrator-calendar (1.0.80) unstable; urgency=medium\n"):
+              raise SystemExit("debian/changelog: 1.0.80 is not the current top entry")
+          stanza = """infiltrator-calendar (1.0.81) unstable; urgency=medium
+
+  * Move CalendarServer event indexing, snapshots and batched colour lookup
+    behind the native CalendarPlus.EventStore boundary.
+  * Remove duplicated event-state and interval processing from Cinnamon
+    JavaScript while preserving generation, culling and timezone semantics.
+  * Repair the JavaScript runtime EventStore harness and strengthen decoupling
+    and popup-lifecycle regression validation.
+
+ -- Shannon Smith <noreply@the-infiltratr.com>  Tue, 06 Oct 2026 20:45:00 +1100
+
+"""
+          debian.write_text(stanza + old, encoding="utf-8")
+
+          for path in [Path("src/i18n/calendar-plus.pot"), *sorted(Path("src/i18n").glob("*.po"))]:
+              text = path.read_text(encoding="utf-8")
+              old_header = "Project-Id-Version: Calendar 1.0.80"
+              if text.count(old_header) != 1:
+                  raise SystemExit(f"{path}: unexpected Project-Id-Version header")
+              path.write_text(text.replace(old_header, "Project-Id-Version: Calendar 1.0.81", 1), encoding="utf-8")
+          PY
+
+          python3 tools/update-runtime-hashes.py
+          node tests/test-js-runtime.js
+          python3 tools/update-runtime-hashes.py --check
+          git diff --check
+
+          git rm -- .github/workflows/prepare-release-1.0.81.yml
+          git diff --check
+
+          git config user.name "Shannon Smith"
+          git config user.email "infiltratr@yandex.com"
+          git add Makefile README.md CHANGELOG.md debian/changelog src/cinnamon/metadata.json src/cinnamon/runtime-sources.sha256 src/i18n/calendar-plus.pot src/i18n/*.po
+          git diff --cached --stat
+          git commit -m "Release 1.0.81"
+          git push origin HEAD:refs/heads/release-prep-1.0.81-output
