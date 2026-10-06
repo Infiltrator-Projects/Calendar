@@ -8,7 +8,7 @@
 
 Calendar is a native Cinnamon panel clock and calendar with alternative clock modes, 30 selectable calendar systems and CalendarServer integration. Its installed Linux desktop identity, Cinnamon Applets manager entry, Linux Mint Software Manager package-name alias and Cinnamon-native About dialog all use the project-owned Calendar icon. The Calendar package owns and installs that artwork itself; no shared icon-helper package is required.
 
-**Stable release:** 1.0.78  
+**Stable release:** 1.0.79  
 **Runtime:** Cinnamon 6.4, 6.6 and 6.7  
 **Build-tested bases:** Debian 13, Linux Mint 22 and Ubuntu 24.04  
 **Shared foundation:** pinned Infiltratr Common 1.19.36, including canonical theme, typography and structural-metric contracts
@@ -126,7 +126,6 @@ make check
 
 A recursive Git clone carries the pinned Common submodule. If that vendor checkout is absent, normal `make` automatically retrieves the exact Common commit recorded by Calendar before building; it does not follow an unpinned moving branch.
 
-
 Additional gates include `make sanitize`, `make coverage`, `make static-analysis`, `make reproducible-build` and `make release-check`.
 
 CI qualifies the portable/native code, JavaScript boundary, ABI, packaging and reproducibility contracts. The exact revision intended for release must pass the required gates. Live Cinnamon behaviour remains a distinct integration boundary and is verified with the installed-session smoke tooling where a suitable runner/session is available.
@@ -155,7 +154,9 @@ chmod +x calendar-<version>-local-folder.run
 ./calendar-<version>-local-folder.run
 ```
 
-The About dialog reports the compiled build profile using Infiltratr Common's canonical label, matching System Monitor: repository builds show **Generic / APT package**, while local `.run` builds show **Native / local machine compile**.\n\nThe `.run` performs a two-pass local build. Pass 1 instruments Calendar and the pinned Common library with GCC profile generation, runs Calendar's automated tests plus a representative clock/calendar/event workload on the actual machine, then pass 2 rebuilds with the measured profile using `-fprofile-use -fprofile-correction -fprofile-partial-training`. The resulting Debian-managed package is therefore tuned to the local CPU rather than being a generic repository build. The correctness-preserving profile deliberately does not use `-Ofast` or `-ffast-math`.
+The About dialog reports the compiled build profile using Infiltratr Common's canonical label, matching System Monitor: repository builds show **Generic / APT package**, while local `.run` builds show **Native / local machine compile**.
+
+The `.run` performs a two-pass local build. Pass 1 instruments Calendar and the pinned Common library with GCC profile generation, runs Calendar's automated tests plus a representative clock/calendar/event workload on the actual machine, then pass 2 rebuilds with the measured profile using `-fprofile-use -fprofile-correction -fprofile-partial-training`. The resulting Debian-managed package is therefore tuned to the local CPU rather than being a generic repository build. The correctness-preserving profile deliberately does not use `-Ofast` or `-ffast-math`.
 
 After installation, add **Calendar** from **System Settings → Applets**.
 
@@ -187,6 +188,5 @@ Development is performed on `main`. Published tags and release assets are immuta
 Copyright © 1993-2026 Shannon Smith.
 
 Calendar is GPL-3.0-or-later. The pinned Infiltratr Common dependency uses the same licence. The complete project licence is in `LICENSE`; Debian packaging provenance is recorded in `debian/copyright`.
-
 
 The packaged Calendar icon follows the non-automotive Infiltrator desktop family: graphite tile with canonical `#00ADEF` linework. One verified source asset feeds Cinnamon, the desktop icon theme and Mint app-install metadata.
