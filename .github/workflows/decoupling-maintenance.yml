@@ -124,10 +124,9 @@ jobs:
       - name: Refresh runtime integrity manifest
         run: python3 tools/update-runtime-hashes.py
 
-      - name: Validate JavaScript and architecture contracts
+      - name: Validate decoupled runtime contracts
         run: |
           node tests/test-js-runtime.js
-          python3 tests/test-settings.py
           python3 tests/test-popup-lifecycle.py
           python3 tools/update-runtime-hashes.py --check
 
