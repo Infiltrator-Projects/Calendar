@@ -66,10 +66,15 @@ def main() -> None:
     assert agenda_insert < calendar_insert
 
     # Right-zone Calendar popups align the entire menu to the work-area edge.
-    # Do not regress this into swapping the calendar/agenda children again.
+    # Cinnamon implementation details are confined to CalendarPopupMenu.
     assert "class CalendarPopupMenu extends Applet.AppletPopupMenu" in applet_source
     assert "new CalendarPopupMenu(this, this.orientation)" in applet_source
-    assert 'this.launcher.locationLabel !== "right"' in applet_source
+    assert 'launcher.locationLabel !== "right"' in applet_source
+    assert "this._calendarLauncher = launcher;" in applet_source
+    assert "this._calendarOrientation = orientation;" in applet_source
+    assert "this._orientation" not in applet_source
+    assert "this.sourceActor" not in applet_source
+    assert "this.launcher" not in applet_source
     assert "global.workspace_manager.get_active_workspace()" in applet_source
     assert "workspace.get_work_area_for_monitor(monitor.index)" in applet_source
     assert "Main.layoutManager.getWorkAreaForMonitor" not in applet_source
@@ -381,7 +386,14 @@ def main() -> None:
     assert "current_range_start_civil" in event_manager_source
     assert "current_range_end_civil" in event_manager_source
     assert "_eventVariantOverlapsRange" in event_manager_source
-    assert "this._event_list.set_events(null, false, true);" in event_manager_source
+    assert 'this.emit("agenda-date-changed", date);' in event_manager_source
+    assert '"agenda-events-changed"' in event_manager_source
+    assert "this._event_list" not in event_manager_source
+    assert "set_events(" not in event_manager_source
+    assert '"agenda-date-changed"' in applet_source
+    assert '"agenda-events-changed"' in applet_source
+    assert "this.event_list.set_date(date);" in applet_source
+    assert "this.event_list.set_events(snapshot, reset, loading);" in applet_source
     assert "adjustment.page_size" in event_source
 
     # A stale native library must be rejected explicitly rather than allowed
@@ -441,7 +453,7 @@ def main() -> None:
         assert f'CP_("{label}")' in calendar_source
     assert 'CP_("Show today")' in applet_source
     assert 'CP_("About Calendar")' in applet_source
-    # Every About entry point launches the same native helper.  Calendar does
+    # Every About entry point launches the same native helper. Calendar does
     # not take a Cinnamon shell modal/input grab for application metadata.
     assert "openAbout()" in applet_source
     assert "this._onAbout();" in applet_source
