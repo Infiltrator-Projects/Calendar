@@ -1,5 +1,17 @@
 # Changelog
 
+This changelog records user-visible, compatibility, architecture and validation changes for Calendar. Detailed commit-by-commit history remains in Git.
+
+## Unreleased
+
+No unreleased changes.
+
+## 1.0.79 - 2026-10-03
+
+- Prevent a logically closed Calendar popup from remaining as a reactive invisible Clutter actor over unrelated application windows.
+- Disable popup input immediately on close, bound animated cleanup with a fallback guard, and restore input only when the popup is opened again.
+- Prevent late agenda pass-through signals from reactivating a closed popup and add regression coverage for the closed-state input contract.
+
 ## 1.0.78 - 2026-09-29
 
 - Repair the 1.0.77 popup-open regression on Cinnamon 6.4 by replacing the newer `layoutManager.getWorkAreaForMonitor()` call with the cross-version Meta.Workspace `get_work_area_for_monitor()` API already used by Cinnamon itself.
@@ -61,7 +73,6 @@
 - Sanitize CalendarServer event colours before embedding them into Cinnamon CSS.
 - Launch the native About dialog through a package-owned hidden desktop identity instead of a hard-coded /usr/libexec path.
 
-
 ## 1.0.70 - 2026-09-28
 
 - Stop ordinary wall-clock ticks from rebuilding selected-day event snapshots; refresh only lightweight agenda timing state between real event or date changes.
@@ -114,12 +125,10 @@
 - Give Calendar popup menu actions the suite-wide 30 px desktop control height while keeping their existing 6 px compact radius.
 - Preserve Cinnamon-native layout, temporal behaviour, calendar engines, dependencies and Common APIs unchanged.
 
-
 ## 1.0.62 - 2026-09-25
 
 - Give Calendar popup menu items Common's 6 px compact radius so Cinnamon actions share the suite's compact control geometry.
 - Keep Cinnamon-native layout, temporal behaviour, calendar engines, dependencies and Common APIs unchanged.
-
 
 ## 1.0.61 - 2026-09-25
 
@@ -136,7 +145,6 @@
 - Align calendar weekday headings with the suite-wide 10 px compact label scale.
 - Preserve Cinnamon-native layout, temporal behaviour, calendar engines, dependencies and Common APIs unchanged.
 
-
 ## 1.0.59 - 2026-09-24
 
 - Stabilise the Cinnamon panel clock so ordinary clock ticks can grow the latched allocation but never shrink it; width is reset only when a genuine layout input changes.
@@ -148,7 +156,6 @@
 - Align Cinnamon weekday headings with the suite-wide 11 px supporting-text scale.
 - Preserve Calendar behaviour, Cinnamon-native structure, chronology, event integration and dependencies unchanged.
 
-
 ## 1.0.56 - 2026-09-24
 
 - Align the selected-date heading in the Cinnamon event pane with the suite-wide 16 px section-heading scale.
@@ -158,7 +165,6 @@
 
 - Align the Cinnamon month heading with the 28 px publisher title scale.
 - Preserve Calendar behaviour, Cinnamon-native structure and dependencies unchanged.
-
 
 ## 1.0.54 - 2026-09-24
 
@@ -172,19 +178,12 @@
 - Give the Cinnamon month heading the Common brand/display typography role while retaining the normal Common UI face for dates, weekdays and event text.
 - Keep calendar, clock, event, Cinnamon integration and dependency behaviour unchanged.
 
-
 ## 1.0.52 - 2026-09-22
 
 - Replace the panel clock's direct `St.Bin.min_width` mutation with a registered latched-width container, preserving two-glyph hysteresis while avoiding the Clutter allocation warning fixed upstream by Cinnamon.
 - Advance the reviewed Cinnamon integration baseline to `40d419f2c0951ace9f69155700993f611f22eca1` after confirming the watched change is limited to that width-latch correction.
 - Pin the exact released Infiltratr Common 1.19.24 commit `748e089ae175329471d4cf375522c44081371bd5`; the release hardens existing graphics operations without adding or removing Common APIs and Calendar has no graphics-surface callers.
 - Record the exact Calendar 1.0.51 live Cinnamon qualification from Linux Mint 22.3/Cinnamon 6.6.9 while keeping location-dependent presentation explicitly unclaimed.
-
-This changelog records user-visible, compatibility, architecture and validation changes for Calendar. Detailed commit-by-commit history remains in Git.
-
-## Unreleased
-
-No unreleased changes.
 
 ## 1.0.51 - 2026-09-22
 
