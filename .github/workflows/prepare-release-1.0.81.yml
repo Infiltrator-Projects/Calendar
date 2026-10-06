@@ -1,7 +1,5 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
-# One-shot release preparation helper. This workflow removes itself from the
-# produced release commit; it exists only to make atomic edits against the live
-# repository tree without duplicating large source files through the API.
+# One-shot release preparation helper. It removes itself from the release tree.
 name: Prepare Calendar 1.0.81
 
 on:
@@ -26,7 +24,6 @@ jobs:
         run: |
           set -euo pipefail
           test "$(sed -n 's/^VERSION := //p' Makefile)" = "1.0.80"
-
           python3 - <<'PY'
           from pathlib import Path
 
@@ -45,17 +42,20 @@ jobs:
           changelog = Path("CHANGELOG.md")
           text = changelog.read_text(encoding="utf-8")
           marker = "## Unreleased\n\nNo unreleased changes.\n\n## 1.0.80 - 2026-10-06"
-          replacement = """## Unreleased
-
-No unreleased changes.
-
-## 1.0.81 - 2026-10-06
-
-- Move CalendarServer event indexing, snapshots and batched colour lookup behind the native `CalendarPlus.EventStore`, reducing duplicated event-state and interval logic in Cinnamon JavaScript.
-- Keep the Cinnamon event manager focused on D-Bus transport and presentation signalling while preserving native generation, culling, timezone-refresh and agenda semantics.
-- Repair the JavaScript runtime harness for the native EventStore snapshot/colour contract and strengthen decoupling and popup-lifecycle regression validation.
-
-## 1.0.80 - 2026-10-06"""
+          release_lines = [
+              "## Unreleased",
+              "",
+              "No unreleased changes.",
+              "",
+              "## 1.0.81 - 2026-10-06",
+              "",
+              "- Move CalendarServer event indexing, snapshots and batched colour lookup behind the native `CalendarPlus.EventStore`, reducing duplicated event-state and interval logic in Cinnamon JavaScript.",
+              "- Keep the Cinnamon event manager focused on D-Bus transport and presentation signalling while preserving native generation, culling, timezone-refresh and agenda semantics.",
+              "- Repair the JavaScript runtime harness for the native EventStore snapshot/colour contract and strengthen decoupling and popup-lifecycle regression validation.",
+              "",
+              "## 1.0.80 - 2026-10-06",
+          ]
+          replacement = "\n".join(release_lines)
           if text.count(marker) != 1:
               raise SystemExit("CHANGELOG.md: unexpected Unreleased/1.0.80 boundary")
           changelog.write_text(text.replace(marker, replacement, 1), encoding="utf-8")
@@ -64,19 +64,21 @@ No unreleased changes.
           old = debian.read_text(encoding="utf-8")
           if not old.startswith("infiltrator-calendar (1.0.80) unstable; urgency=medium\n"):
               raise SystemExit("debian/changelog: 1.0.80 is not the current top entry")
-          stanza = """infiltrator-calendar (1.0.81) unstable; urgency=medium
-
-  * Move CalendarServer event indexing, snapshots and batched colour lookup
-    behind the native CalendarPlus.EventStore boundary.
-  * Remove duplicated event-state and interval processing from Cinnamon
-    JavaScript while preserving generation, culling and timezone semantics.
-  * Repair the JavaScript runtime EventStore harness and strengthen decoupling
-    and popup-lifecycle regression validation.
-
- -- Shannon Smith <noreply@the-infiltratr.com>  Tue, 06 Oct 2026 20:45:00 +1100
-
-"""
-          debian.write_text(stanza + old, encoding="utf-8")
+          stanza_lines = [
+              "infiltrator-calendar (1.0.81) unstable; urgency=medium",
+              "",
+              "  * Move CalendarServer event indexing, snapshots and batched colour lookup",
+              "    behind the native CalendarPlus.EventStore boundary.",
+              "  * Remove duplicated event-state and interval processing from Cinnamon",
+              "    JavaScript while preserving generation, culling and timezone semantics.",
+              "  * Repair the JavaScript runtime EventStore harness and strengthen decoupling",
+              "    and popup-lifecycle regression validation.",
+              "",
+              " -- Shannon Smith <noreply@the-infiltratr.com>  Tue, 06 Oct 2026 20:45:00 +1100",
+              "",
+              "",
+          ]
+          debian.write_text("\n".join(stanza_lines) + old, encoding="utf-8")
 
           paths = [Path("src/i18n/calendar-plus.pot")]
           paths.extend(sorted(Path("src/i18n").glob("*.po")))
@@ -87,15 +89,12 @@ No unreleased changes.
                   raise SystemExit(f"{path}: unexpected Project-Id-Version header")
               path.write_text(text.replace(old_header, "Project-Id-Version: Calendar 1.0.81", 1), encoding="utf-8")
           PY
-
           python3 tools/update-runtime-hashes.py
           node tests/test-js-runtime.js
           python3 tools/update-runtime-hashes.py --check
           git diff --check
-
           git rm -- .github/workflows/prepare-release-1.0.81.yml
           git diff --check
-
           git config user.name "Shannon Smith"
           git config user.email "infiltratr@yandex.com"
           git add Makefile README.md CHANGELOG.md debian/changelog src/cinnamon/metadata.json src/cinnamon/runtime-sources.sha256 src/i18n/calendar-plus.pot src/i18n/*.po
