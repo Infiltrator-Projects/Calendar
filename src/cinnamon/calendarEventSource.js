@@ -7,7 +7,7 @@
  * Calendar needs event availability, visible-range updates, day selection,
  * colours and three state signals. It does not need the concrete transport
  * controller. This adapter keeps Calendar independent from EventsManager's
- * reconnect, D-Bus and cache implementation details.
+ * transport lifecycle and cache implementation details.
  */
 
 var CalendarEventSource = class CalendarEventSource {
