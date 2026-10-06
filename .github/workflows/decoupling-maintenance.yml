@@ -17,15 +17,17 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Update runtime harness for native event snapshots
+      - name: Update runtime harness for decoupled agenda state
         run: |
           python3 - <<'PY'
           from pathlib import Path
+          import re
 
           path = Path("tests/test-js-runtime.js")
           text = path.read_text(encoding="utf-8")
-          needle = "                                get_color_range(first, count, now, maximum) {"
-          insertion = (
+
+          snapshot_needle = "                                get_color_range(first, count, now, maximum) {"
+          snapshot_insertion = (
               "                                get_snapshot() {\n"
               "                                    return {\n"
               "                                        deep_unpack() {\n"
@@ -35,10 +37,67 @@ jobs:
               "                                },\n"
           )
           if "                                get_snapshot() {" not in text:
-              if text.count(needle) != 1:
+              if text.count(snapshot_needle) != 1:
                   raise SystemExit("EventStore mock insertion point changed")
-              text = text.replace(needle, insertion + needle)
-              path.write_text(text, encoding="utf-8")
+              text = text.replace(
+                  snapshot_needle,
+                  snapshot_insertion + snapshot_needle,
+              )
+
+          first_pattern = re.compile(
+              r"    const eventList = \{\n"
+              r"        set_events\(snapshot, delayed, unavailable\) \{\n"
+              r"            presented\.push\(\[snapshot, delayed, unavailable\]\);\n"
+              r"        \},\n"
+              r"    \};\n"
+              r"    const manager = new EventsManager\(\n"
+              r"        \{ getValue\(\) \{ return true; \} \},\n"
+              r"        \{\},\n"
+              r"        eventList\n"
+              r"    \);\n"
+          )
+          first_replacement = (
+              "    const manager = new EventsManager(\n"
+              "        { getValue() { return true; } },\n"
+              "        {}\n"
+              "    );\n"
+              "    manager.emit = (signal, ...args) => {\n"
+              "        if (signal === \"agenda-events-changed\") {\n"
+              "            presented.push(args);\n"
+              "        }\n"
+              "    };\n"
+          )
+          text, first_count = first_pattern.subn(first_replacement, text, count=1)
+          if first_count != 1:
+              raise SystemExit("server-loss presentation test shape changed")
+
+          second_pattern = re.compile(
+              r"    const manager = new EventsManager\(\n"
+              r"        \{ getValue\(\) \{ return true; \} \},\n"
+              r"        \{\},\n"
+              r"        \{\n"
+              r"            set_events\(snapshot, delayed, unavailable\) \{\n"
+              r"                presented\.push\(\[snapshot, delayed, unavailable\]\);\n"
+              r"            \},\n"
+              r"        \}\n"
+              r"    \);\n"
+          )
+          second_replacement = (
+              "    const manager = new EventsManager(\n"
+              "        { getValue() { return true; } },\n"
+              "        {}\n"
+              "    );\n"
+              "    manager.emit = (signal, ...args) => {\n"
+              "        if (signal === \"agenda-events-changed\") {\n"
+              "            presented.push(args);\n"
+              "        }\n"
+              "    };\n"
+          )
+          text, second_count = second_pattern.subn(second_replacement, text, count=1)
+          if second_count != 1:
+              raise SystemExit("no-calendar presentation test shape changed")
+
+          path.write_text(text, encoding="utf-8")
           PY
 
       - name: Refresh runtime integrity manifest
