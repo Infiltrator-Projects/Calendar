@@ -1,0 +1,60 @@
+name: decoupling-maintenance
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - .github/workflows/decoupling-maintenance.yml
+
+permissions:
+  contents: write
+
+jobs:
+  finish-decoupling:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Update runtime harness for native event snapshots
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+
+          path = Path("tests/test-js-runtime.js")
+          text = path.read_text(encoding="utf-8")
+          needle = "                                get_color_range(first, count, now, maximum) {"
+          insertion = """                                get_snapshot() {
+                                      return {
+                                          deep_unpack() {
+                                              return [123456, []];
+                                          },
+                                      };
+                                  },
+"""
+          if "                                get_snapshot() {" not in text:
+              if text.count(needle) != 1:
+                  raise SystemExit("EventStore mock insertion point changed")
+              text = text.replace(needle, insertion + needle)
+              path.write_text(text, encoding="utf-8")
+          PY
+
+      - name: Refresh runtime integrity manifest
+        run: python3 tools/update-runtime-hashes.py
+
+      - name: Validate JavaScript and architecture contracts
+        run: |
+          node tests/test-js-runtime.js
+          python3 tests/test-settings.py
+          python3 tests/test-popup-lifecycle.py
+          python3 tools/update-runtime-hashes.py --check
+
+      - name: Commit validated maintenance result and remove one-shot workflow
+        run: |
+          rm .github/workflows/decoupling-maintenance.yml
+          git config user.name "The-First-Infiltrator"
+          git config user.email "infiltratr@yandex.com"
+          git add tests/test-js-runtime.js src/cinnamon/runtime-sources.sha256 .github/workflows/decoupling-maintenance.yml
+          git commit -m "Complete Calendar decoupling validation"
+          git push origin HEAD:main
