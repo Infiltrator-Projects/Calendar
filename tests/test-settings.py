@@ -76,6 +76,7 @@ def main() -> None:
     assert "this._orientation" not in popup_menu
     assert "this.sourceActor" not in popup_menu
     assert "this.launcher" not in popup_menu
+    assert "this.animating" not in popup_menu
     assert "global.workspace_manager.get_active_workspace()" in popup_menu
     assert "workspace.get_work_area_for_monitor(monitor.index)" in popup_menu
     assert "Main.layoutManager.getWorkAreaForMonitor" not in popup_menu
@@ -94,15 +95,19 @@ def main() -> None:
     assert 'font-feature-settings: "tnum" 1;' in stylesheet
 
     # The month view receives a narrow event-source port rather than the D-Bus
-    # transport controller. The port deliberately exposes only the operations
-    # the month grid needs.
+    # transport controller. The adapter owns signal translation as well as the
+    # four operations the month grid needs, so Calendar never subscribes to the
+    # concrete EventsManager directly.
     assert "new PopupShell.CalendarEventSource(" in applet
     assert "this._calendarEventSource," in applet
     assert "this.events_manager,\n            this.desktop_settings" not in applet
     assert "var CalendarEventSource = class CalendarEventSource" in event_port
+    assert "Signals.addSignalMethods(CalendarEventSource.prototype);" in event_port
+    assert "this._manager.connect(sourceSignal" in event_port
+    assert "this._manager.disconnect(id);" in event_port
+    assert "connect(signal, callback)" not in event_port
     for operation in (
-        "connect(signal, callback)", "disconnect(id)", "is_active()",
-        "set_visible_range(firstDate, lastDate, force)",
+        "is_active()", "set_visible_range(firstDate, lastDate, force)",
         "get_colors_for_range(firstDate, dayCount, maxColors)",
         "select_date(date, force)",
     ):
