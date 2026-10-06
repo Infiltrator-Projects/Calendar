@@ -1,0 +1,109 @@
+name: Calendar 1.0.80 documentation release prep
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - .github/workflows/calendar-1080-prep.yml
+
+permissions:
+  contents: write
+
+jobs:
+  prepare-release:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out main
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Normalize 1.0.80 release metadata
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 <<'PY'
+          from pathlib import Path
+
+          def replace_once(path: str, old: str, new: str) -> None:
+              p = Path(path)
+              text = p.read_text(encoding="utf-8")
+              if new in text:
+                  return
+              if old not in text:
+                  raise SystemExit(f"expected text missing from {path}: {old!r}")
+              p.write_text(text.replace(old, new, 1), encoding="utf-8")
+
+          replace_once("Makefile", "VERSION := 1.0.79", "VERSION := 1.0.80")
+          replace_once("README.md", "**Stable release:** 1.0.79", "**Stable release:** 1.0.80")
+          replace_once('src/cinnamon/metadata.json', '"version": "1.0.79"', '"version": "1.0.80"')
+
+          for path in (
+              "src/i18n/calendar-plus.pot",
+              "src/i18n/en_AU.po",
+              "src/i18n/en_GB.po",
+              "src/i18n/en_US.po",
+          ):
+              replace_once(path, "Project-Id-Version: Calendar 1.0.79", "Project-Id-Version: Calendar 1.0.80")
+
+          changelog_path = Path("CHANGELOG.md")
+          changelog = changelog_path.read_text(encoding="utf-8")
+          if "## 1.0.80 - 2026-10-06" not in changelog:
+              marker = "## Unreleased\n\nNo unreleased changes.\n\n"
+              if marker not in changelog:
+                  raise SystemExit("CHANGELOG Unreleased marker missing")
+              entry = (
+                  "## 1.0.80 - 2026-10-06\n\n"
+                  "- Synchronize maintained documentation with the published Calendar release and the pinned Infiltratr Common 1.19.36 foundation.\n"
+                  "- Repair the evidence-backed 1.0.58 changelog label and remove stale release/version prose from current documentation and generated theme provenance comments.\n"
+                  "- Refresh release metadata and runtime-integrity hashes only; Calendar runtime behaviour is unchanged from 1.0.79.\n\n"
+              )
+              changelog = changelog.replace(marker, marker + entry, 1)
+              changelog_path.write_text(changelog, encoding="utf-8")
+
+          debian_path = Path("debian/changelog")
+          debian = debian_path.read_text(encoding="utf-8")
+          width_entry = (
+              "infiltrator-calendar (1.0.59) unstable; urgency=medium\n\n"
+              "  * Stop the live panel clock from shrinking its width on ordinary ticks.\n"
+          )
+          if width_entry in debian:
+              debian = debian.replace(
+                  width_entry,
+                  width_entry.replace("(1.0.59)", "(1.0.58)", 1),
+                  1,
+              )
+          if not debian.startswith("infiltrator-calendar (1.0.80) "):
+              entry = (
+                  "infiltrator-calendar (1.0.80) unstable; urgency=medium\n\n"
+                  "  * Synchronize maintained documentation with Calendar 1.0.80 and\n"
+                  "    the pinned Infiltratr Common 1.19.36 foundation.\n"
+                  "  * Correct the evidence-backed 1.0.58 historical changelog label.\n"
+                  "  * Refresh release metadata and runtime-integrity hashes without\n"
+                  "    changing Calendar runtime behaviour.\n\n"
+                  " -- Shannon Smith <noreply@the-infiltratr.com>  Tue, 06 Oct 2026 17:00:00 +1100\n\n"
+              )
+              debian = entry + debian
+          debian_path.write_text(debian, encoding="utf-8")
+          PY
+
+          python3 tools/update-runtime-hashes.py
+          python3 tools/update-runtime-hashes.py --check
+          python3 tests/test-release-model.py
+
+      - name: Commit prepared release tree
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "Calendar release automation"
+          git config user.email "noreply@the-infiltratr.com"
+          git add Makefile README.md CHANGELOG.md debian/changelog \
+            src/cinnamon/metadata.json src/cinnamon/runtime-sources.sha256 \
+            src/i18n/calendar-plus.pot src/i18n/en_AU.po src/i18n/en_GB.po src/i18n/en_US.po
+          if git diff --cached --quiet; then
+            echo "Release metadata already prepared."
+            exit 0
+          fi
+          git commit -m "release: prepare Calendar 1.0.80 documentation metadata"
+          git push origin HEAD:main
