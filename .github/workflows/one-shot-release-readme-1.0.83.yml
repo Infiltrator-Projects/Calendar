@@ -27,6 +27,5 @@ jobs:
           git config user.name "Calendar maintenance"
           git config user.email "noreply@the-infiltratr.com"
           git add -A
-          git diff --cached --check
           git commit -m "Synchronize Calendar 1.0.83 release documentation"
           git push origin HEAD:main
