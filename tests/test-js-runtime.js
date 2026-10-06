@@ -362,6 +362,13 @@ function evaluateEventsManager() {
                                     );
                                     return true;
                                 },
+                                get_snapshot() {
+                                    return {
+                                        deep_unpack() {
+                                            return [123456, []];
+                                        },
+                                    };
+                                },
                                 get_color_range(first, count, now, maximum) {
                                     observations.colorRangeCalls.push(
                                         [first, count, now, maximum]
@@ -1635,16 +1642,15 @@ function testCalendarSetChangeClosesAdmission() {
 function testServerLossClearsPresentedAgenda() {
     const { EventsManager, observations } = evaluateEventsManager();
     const presented = [];
-    const eventList = {
-        set_events(snapshot, delayed, unavailable) {
-            presented.push([snapshot, delayed, unavailable]);
-        },
-    };
     const manager = new EventsManager(
         { getValue() { return true; } },
-        {},
-        eventList
+        {}
     );
+    manager.emit = (signal, ...args) => {
+        if (signal === "agenda-events-changed") {
+            presented.push(args);
+        }
+    };
     manager._inited = true;
     manager._calendar_server = { status: 2 };
 
@@ -1663,13 +1669,13 @@ function testExpectedNoCalendarShutdownStaysAuthoritative() {
     const presented = [];
     const manager = new EventsManager(
         { getValue() { return true; } },
-        {},
-        {
-            set_events(snapshot, delayed, unavailable) {
-                presented.push([snapshot, delayed, unavailable]);
-            },
-        }
+        {}
     );
+    manager.emit = (signal, ...args) => {
+        if (signal === "agenda-events-changed") {
+            presented.push(args);
+        }
+    };
     manager._inited = true;
     manager._cached_state = 1;
     manager._calendar_server = { status: 1 };
@@ -1985,11 +1991,12 @@ function testEventsManagerPresentationState() {
     const selectedDates = [];
     let showEvents = true;
     const settings = { getValue() { return showEvents; } };
-    const eventList = {
-        set_date(day) { selectedDates.push(day.to_unix()); },
-        set_events() {},
+    const manager = new EventsManager(settings, {});
+    manager.emit = (signal, ...args) => {
+        if (signal === "agenda-date-changed") {
+            selectedDates.push(args[0].to_unix());
+        }
     };
-    const manager = new EventsManager(settings, {}, eventList);
 
     assert.equal(
         manager.should_show_event_pane(),
