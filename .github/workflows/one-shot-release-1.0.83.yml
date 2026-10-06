@@ -1,0 +1,54 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
+name: one-shot-calendar-release-1.0.83
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - .github/workflows/one-shot-release-1.0.83.yml
+
+permissions:
+  contents: write
+
+jobs:
+  prepare:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          submodules: recursive
+          fetch-depth: 0
+
+      - name: Apply guarded release metadata
+        run: python3 tools/one-shot-release-1.0.83.py
+
+      - name: Install build dependencies
+        env:
+          DEBIAN_FRONTEND: noninteractive
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends \
+            build-essential desktop-file-utils gettext gobject-introspection gjs \
+            gir1.2-glib-2.0-dev libglib2.0-dev libgtk-3-dev libicu-dev nodejs \
+            pkg-config python3 xz-utils
+
+      - name: Refresh generated release metadata
+        run: |
+          make update-pot
+          make update-runtime-hashes
+
+      - name: Validate prepared release tree
+        run: make clean check
+
+      - name: Commit prepared release tree and remove temporary machinery
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm -f .github/workflows/one-shot-release-1.0.83.yml
+          rm -f tools/one-shot-release-1.0.83.py
+          git config user.name "Calendar maintenance"
+          git config user.email "noreply@the-infiltratr.com"
+          git add -A
+          git diff --cached --check
+          git commit -m "Prepare Calendar 1.0.83 release"
+          git push origin HEAD:main
