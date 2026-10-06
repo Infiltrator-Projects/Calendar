@@ -76,12 +76,6 @@ var CalendarPopupMenu = class CalendarPopupMenu extends Applet.AppletPopupMenu {
         if (typeof this.actor.remove_all_transitions === "function") {
             this.actor.remove_all_transitions();
         }
-        /*
-         * Cinnamon exposes animating as part of AppletPopupMenu's practical
-         * compatibility surface. Keep that one recovery touch confined here;
-         * no feature/controller code depends on it.
-         */
-        this.animating = false;
         this.actor.hide();
         this.actor.set_size(-1, -1);
         this.actor.opacity = 255;
@@ -104,7 +98,13 @@ var CalendarPopupMenu = class CalendarPopupMenu extends Applet.AppletPopupMenu {
         super.close(animate);
         this._enforceClosedInputState();
 
-        if (!this.animating) {
+        /*
+         * Do not inspect AppletPopupMenu's private animation bookkeeping.
+         * A completed synchronous close is observable through the public actor
+         * state; an asynchronous close is completed by menu-animated-closed,
+         * with this bounded guard as a recovery path if Cinnamon drops it.
+         */
+        if (!this.actor || this.actor.is_finalized() || !this.actor.visible) {
             this._finishClosedState();
             return;
         }
