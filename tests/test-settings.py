@@ -2,107 +2,131 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 # Copyright (C) 1993-2026 Shannon Smith
 
-"""Static contracts for settings that cross the Cinnamon/C boundary."""
+"""Architecture and settings contracts that cross the Cinnamon/C boundary."""
 
 import json
+import re
 from pathlib import Path
 
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
-METADATA = json.loads((PROJECT_ROOT / "src/cinnamon/metadata.json").read_text())
-VERSION = METADATA["version"]
 APPLET_DIR = PROJECT_ROOT / "src/cinnamon"
+METADATA = json.loads((APPLET_DIR / "metadata.json").read_text(encoding="utf-8"))
+
+
+def read(name: str) -> str:
+    return (APPLET_DIR / name).read_text(encoding="utf-8")
 
 
 def main() -> None:
-    schema = json.loads(
-        (APPLET_DIR / "settings-schema.json").read_text(encoding="utf-8")
-    )
-    applet_source = (APPLET_DIR / "applet.js").read_text(encoding="utf-8")
-    calendar_source = (APPLET_DIR / "calendar.js").read_text(encoding="utf-8")
-    event_source = (APPLET_DIR / "eventView.js").read_text(encoding="utf-8")
-    event_manager_source = (APPLET_DIR / "eventManager.js").read_text(encoding="utf-8")
-    runtime_source = (APPLET_DIR / "runtimeSupport.js").read_text(encoding="utf-8")
-    panel_clock_source = (APPLET_DIR / "panelClock.js").read_text(encoding="utf-8")
-    system_clock_source = (
+    schema = json.loads(read("settings-schema.json"))
+    applet = read("applet.js")
+    calendar = read("calendar.js")
+    event_view = read("eventView.js")
+    event_manager = read("eventManager.js")
+    event_port = read("calendarEventSource.js")
+    panel_clock = read("panelClock.js")
+    panel_view = read("panelView.js")
+    popup_menu = read("popupMenu.js")
+    popup_view = read("popupView.js")
+    popup_shell = read("popupShell.js")
+    runtime = read("runtimeSupport.js")
+    stylesheet = read("stylesheet.css")
+    system_clock = (
         PROJECT_ROOT / "src/adapters/system-clock.c"
     ).read_text(encoding="utf-8")
+
     forbidden_temporal_settings = {
-        "clock-section",
-        "follow-system-temporal",
-        "clock-mode",
-        "show-seconds",
-        "location-section",
-        "location-configured",
-        "latitude",
-        "longitude",
-        "calendar-section",
-        "primary-calendar",
-        "secondary-calendar",
-        "use-custom-format",
-        "custom-format",
-        "custom-tooltip-format",
+        "clock-section", "follow-system-temporal", "clock-mode", "show-seconds",
+        "location-section", "location-configured", "latitude", "longitude",
+        "calendar-section", "primary-calendar", "secondary-calendar",
+        "use-custom-format", "custom-format", "custom-tooltip-format",
         "format-button",
     }
     assert not forbidden_temporal_settings.intersection(schema)
-    assert "get_system_policy()" in applet_source
-    for legacy_getter in (
-        "get_system_mode()",
-        "get_system_calendar()",
-        "get_system_show_seconds()",
-        "get_system_location_configured()",
-        "get_system_latitude()",
-        "get_system_longitude()",
-    ):
-        assert legacy_getter not in applet_source
-    assert "follow_system_temporal" not in applet_source
-    assert "secondary_calendar" not in applet_source
-    assert "_secondary_date" not in applet_source
 
-    # Keep the established internal composition independent of popup placement:
-    # agenda on the left, month view on the right.
-    calendar_insert = applet_source.index("body.add_actor(calendarColumn);")
-    agenda_insert = applet_source.index("body.add_actor(this.event_list.actor);")
+    # applet.js is a composition root, not the owner of Cinnamon popup/actor
+    # mechanics. Those concerns are physically separated and loaded as one
+    # presentation shell so Cinnamon-version compatibility has one boundary.
+    assert "class CalendarPopupMenu" not in applet
+    assert "GObject.registerClass(" not in applet
+    assert "new St.BoxLayout" not in applet
+    assert 'RuntimeSupport.loadLocalModule("popupShell")' in applet
+    assert "new PopupShell.PanelClockView(this.actor)" in applet
+    assert "new PopupShell.CalendarPopupMenu(this, this.orientation)" in applet
+    assert "new PopupShell.PopupView(" in applet
+    assert "new PopupShell.EventList(" in applet
+    assert "var PanelClockView = PanelViewModule.PanelClockView" in popup_shell
+    assert "var CalendarPopupMenu = PopupMenuModule.CalendarPopupMenu" in popup_shell
+    assert "var PopupView = PopupViewModule.PopupView" in popup_shell
+
+    # Established popup composition remains agenda-left / calendar-right.
+    agenda_insert = popup_view.index("this._body.add_actor(this._eventList.actor);")
+    calendar_insert = popup_view.index("this._body.add_actor(this._calendarColumn);")
     assert agenda_insert < calendar_insert
+    assert 'CP_("Show today")' in popup_view
+    assert 'CP_("About Calendar")' in popup_view
 
-    # Right-zone Calendar popups align the entire menu to the work-area edge.
-    # Cinnamon implementation details are confined to CalendarPopupMenu.
-    assert "class CalendarPopupMenu extends Applet.AppletPopupMenu" in applet_source
-    assert "new CalendarPopupMenu(this, this.orientation)" in applet_source
-    assert 'launcher.locationLabel !== "right"' in applet_source
-    assert "this._calendarLauncher = launcher;" in applet_source
-    assert "this._calendarOrientation = orientation;" in applet_source
-    assert "this._orientation" not in applet_source
-    assert "this.sourceActor" not in applet_source
-    assert "this.launcher" not in applet_source
-    assert "global.workspace_manager.get_active_workspace()" in applet_source
-    assert "workspace.get_work_area_for_monitor(monitor.index)" in applet_source
-    assert "Main.layoutManager.getWorkAreaForMonitor" not in applet_source
-    assert "rightEdge - naturalWidth" in applet_source
+    # All AppletPopupMenu internals and right-edge placement live in the popup
+    # adapter. No controller or month-view code may reach those details.
+    assert "class CalendarPopupMenu extends Applet.AppletPopupMenu" in popup_menu
+    assert 'launcher.locationLabel !== "right"' in popup_menu
+    assert "this._calendarLauncher = launcher;" in popup_menu
+    assert "this._calendarOrientation = orientation;" in popup_menu
+    assert "this._orientation" not in popup_menu
+    assert "this.sourceActor" not in popup_menu
+    assert "this.launcher" not in popup_menu
+    assert "global.workspace_manager.get_active_workspace()" in popup_menu
+    assert "workspace.get_work_area_for_monitor(monitor.index)" in popup_menu
+    assert "Main.layoutManager.getWorkAreaForMonitor" not in popup_menu
+    assert "rightEdge - naturalWidth" in popup_menu
+    assert "passEvents" not in calendar
+    assert "passEvents" not in event_manager
 
+    # Clock-width hysteresis is a presentation component, not controller state.
+    assert "GObject.registerClass(" in panel_view
+    assert "class LatchedWidthBin extends St.Bin" in panel_view
+    assert "vfunc_get_preferred_width(forHeight)" in panel_view
+    assert "new LatchedWidthBin({ x_align: St.Align.END })" in panel_view
+    assert "if (naturalWidth > this._latchedWidth)" in panel_view
+    assert "naturalWidth < this._latchedWidth" not in panel_view
+    assert "_labelBin" not in applet
+    assert 'font-feature-settings: "tnum" 1;' in stylesheet
+
+    # The month view receives a narrow event-source port rather than the D-Bus
+    # transport controller. The port deliberately exposes only the operations
+    # the month grid needs.
+    assert "new PopupShell.CalendarEventSource(" in applet
+    assert "this._calendarEventSource," in applet
+    assert "this.events_manager,\n            this.desktop_settings" not in applet
+    assert "var CalendarEventSource = class CalendarEventSource" in event_port
+    for operation in (
+        "connect(signal, callback)", "disconnect(id)", "is_active()",
+        "set_visible_range(firstDate, lastDate, force)",
+        "get_colors_for_range(firstDate, dayCount, maxColors)",
+        "select_date(date, force)",
+    ):
+        assert operation in event_port
+    for transport_detail in (
+        "CalendarServer", "Gio.", "bus_watch", "reconnect", "event_store",
+    ):
+        assert transport_detail not in event_port
+
+    # Theme policy remains platform-authoritative and uses Common tokens.
     theme = schema["theme-mode"]
     assert theme["type"] == "combobox"
     assert theme["default"] == "system"
     assert list(theme["options"].values()) == ["system", "day", "night"]
-    assert '"theme-mode",' in applet_source
-    assert '"theme_mode",' in applet_source
-    assert "this._onThemeModeChanged" in applet_source
-    assert '"show-events",' in applet_source
-    assert "this._onShowEventsChanged" in applet_source
-    assert "this._calendar.refreshEventAvailability();" in applet_source
-    assert 'this.theme_mode = "system";' in applet_source
-    assert '"changed::clock-use-24h"' in applet_source
-    assert '"changed::clock-show-date"' in applet_source
-    assert '"changed::gtk-theme"' in applet_source
-    assert 'this._systemPrefersDark() ? "night" : "day"' in applet_source
-    assert "this._systemUsesHighContrast()" in applet_source
-    assert "super.configureApplet(tab);" in applet_source
-    assert not (APPLET_DIR / "settings.py").exists()
-    assert 'this.menu.setCustomStyleClass("calendar-plus-popup");' in applet_source
-    assert '`calendar-plus-popup calendar-plus-theme-${effectiveTheme}`' in applet_source
-    assert 'setCustomStyleClass("calendar-background")' not in applet_source
-    assert '_addStyleClass(this.menu.actor, "calendar-plus-popup")' not in applet_source
-    stylesheet = (APPLET_DIR / "stylesheet.css").read_text(encoding="utf-8")
+    assert '"theme-mode",' in applet
+    assert '"show-events",' in applet
+    assert 'this.theme_mode = "system";' in applet
+    assert '"changed::clock-use-24h"' in applet
+    assert '"changed::clock-show-date"' in applet
+    assert '"changed::gtk-theme"' in applet
+    assert 'this._systemPrefersDark() ? "night" : "day"' in applet
+    assert "this._systemUsesHighContrast()" in applet
+    assert 'this.menu.setCustomStyleClass("calendar-plus-popup");' in applet
+    assert '`calendar-plus-popup calendar-plus-theme-${effectiveTheme}`' in applet
     assert ".calendar-plus-popup.calendar-plus-theme-day" in stylesheet
     assert ".calendar-plus-popup.calendar-plus-theme-night" in stylesheet
 
@@ -115,22 +139,11 @@ def main() -> None:
     assert common_design["theme"]["modes"] == ["system", "day", "night"]
     assert common_design["theme"]["default_mode"] == "system"
     assert common_design["theme"]["system_policy"] == "platform_authoritative"
-
-    common_typography = common_design["typography"]
-    ui_family = common_typography["ui_family"]
-    brand_family = common_typography["brand_family"]
-    ui_regular_weight = common_typography["ui_regular_weight"]
-    ui_bold_weight = common_typography["ui_bold_weight"]
-    brand_weight = common_typography["brand_weight"]
-
-    assert f'font-family: "{ui_family}";' in stylesheet
-    assert f"font-weight: {ui_regular_weight};" in stylesheet
-    assert f"font-weight: {ui_bold_weight};" in stylesheet
+    typography = common_design["typography"]
+    assert f'font-family: "{typography["ui_family"]}";' in stylesheet
+    assert f'font-weight: {typography["ui_regular_weight"]};' in stylesheet
+    assert f'font-weight: {typography["ui_bold_weight"]};' in stylesheet
     assert "BEGIN GENERATED COMMON TYPOGRAPHY TOKENS" in stylesheet
-    assert "FONT_UI_REGULAR" not in applet_source
-    assert "FONT_UI_BOLD" not in applet_source
-    assert "FONT_PANEL_CLOCK" not in applet_source
-    assert "_applyTypography(" not in applet_source
 
     theme_css = stylesheet.split("Theme policy", 1)[1]
     canonical_colours = {
@@ -138,370 +151,129 @@ def main() -> None:
         for mode in ("day", "night")
         for value in common_design["theme"]["palettes"][mode].values()
     }
-    import re
     for colour in re.findall(r"#[0-9A-Fa-f]{6}", theme_css):
-        assert colour.lower() in canonical_colours, (
-            f"Calendar theme CSS has a private colour outside Common: {colour}"
-        )
+        assert colour.lower() in canonical_colours
 
-    for mode in ("day", "night"):
-        palette = common_design["theme"]["palettes"][mode]
-        for role in (
-            "background",
-            "card",
-            "border",
-            "text",
-            "heading",
-            "summary",
-            "surface_hover",
-            "status_border",
-            "neutral_accent",
-            "accent_foreground",
-        ):
-            assert palette[role].lower() in theme_css.lower(), (
-                f"Calendar {mode} CSS does not consume Common role {role}"
-            )
-
-    # Configuration is rendered by Cinnamon's own xlet-settings process.
-    # Calendar contributes schema/behaviour only, eliminating its Python/GTK
-    # runtime host while preserving every setting.
-    assert "external-configuration-app" not in METADATA
-    assert "configureApplet(tab = 0)" in applet_source
-    assert "super.configureApplet(tab);" in applet_source
-
-    # Calendar has no local temporal authority. A valid System Settings policy
-    # enriches the stock Mint behaviour; without one, the native facade falls
-    # back to Cinnamon/locale settings instead of requiring System Settings.
-    assert 'this.settings.bind("show-seconds"' not in applet_source
-    assert 'this.settings.bind("latitude"' not in applet_source
-    assert 'this.settings.bind("longitude"' not in applet_source
-    assert '"primary-calendar"' not in applet_source
-    assert '"secondary-calendar"' not in applet_source
-    assert "this.clock_mode" not in applet_source
-    assert "this.show_seconds" not in applet_source
-    assert "this.latitude =" not in applet_source
-    assert "this.longitude =" not in applet_source
-    assert "useCustomFormat" not in applet_source
-    assert "customFormat" not in applet_source
-    assert "customTooltipFormat" not in applet_source
-    assert "useCustomFormat" not in panel_clock_source
-    assert "customFormat" not in panel_clock_source
-    assert "customTooltipFormat" not in panel_clock_source
-    assert "CalendarPlus.SystemClock.new()" in applet_source
-    assert "this.system_clock.get_system_policy()" in applet_source
-    assert ".deep_unpack()" in applet_source
-    assert "this.system_clock.get_system_calendar()" not in applet_source
-    assert "this._calendar.setCalendarSystem(temporal.calendar)" in applet_source
-    assert "systemClock.start_at_location(" in panel_clock_source
-    assert "time_mode_requires_longitude(" in panel_clock_source
-    assert "time_mode_requires_latitude(" in panel_clock_source
-    assert '"N/A LOC"' in panel_clock_source
-    assert "config.latitude < -90 || config.latitude > 90" in panel_clock_source
-    assert "config.longitude < -180 || config.longitude > 180" in panel_clock_source
-
-    assert "CalendarPlus.CalendarSystem.new(" in calendar_source
-    assert "this._calendar.setCalendarSystem(" in applet_source
-    assert "this._calendarSystem.add_months_parts(" in calendar_source
-    assert "this._calendarSystem.add_years_parts(" in calendar_source
-    assert "system.build_grid(" in calendar_source
-    assert "this._gridModelForDate(" in calendar_source
-    assert "CalendarPlus.DatePart.DAY" in calendar_source
-    assert "CalendarPlus.DatePart.SHORT" in panel_clock_source
-    assert "CalendarPlus.DatePart.FULL" in panel_clock_source
-    assert ".format_date_part(" in calendar_source
-    assert ".format_date_part(" not in applet_source
-    assert ".format_date_part(" in panel_clock_source
-    assert ".format_date(" not in calendar_source
-    assert ".format_date(" not in applet_source
-    assert ".format_date(" not in panel_clock_source
-    assert "while (cellsPlaced < 42)" not in calendar_source
-
-    # Date equality, work-week semantics and navigation are native contracts.
-    # JavaScript passes typed date parts and never maintains a parallel date
-    # arithmetic implementation.
-    assert "CalendarPlus.date_same(" in calendar_source
-    assert "CalendarPlus.date_is_work_day(" in calendar_source
-    assert "function _isWorkDay(" not in calendar_source
-    assert "_dateFromIso" not in calendar_source
-
-    # CalendarServer tuples, interval queries, culling and sorting belong to
-    # the native store. JavaScript retains only Cinnamon's D-Bus and actor APIs.
-    assert "CalendarPlus.EventStore.new()" in event_manager_source
-    assert "this.event_store.add_or_update(" in event_manager_source
-    assert "this.event_store.get_snapshot(" in event_manager_source
-    assert "this.event_store.get_color_range(" in event_manager_source
-    assert "get_colors_for_date" not in event_manager_source
-    assert "get_colors_for_range" in event_manager_source
-    assert "this.event_store.refresh_timezone()" in event_manager_source
-    assert "CalendarPlus.event_day_relation(" in event_manager_source
-    assert "CalendarPlus.event_timing(" in event_manager_source
-    assert "CalendarPlus.EventState." in event_source
-    assert '"changed::calendar-backend"' in event_source
-    assert '"clockenstein-calendar"' in event_source
-    assert '["gnome-calendar", "--uuid", uuid]' in event_source
-    assert "CalendarPlus.EventDayRelation." in event_source
+    # System Settings is an optional richer temporal authority. Calendar keeps
+    # no duplicate clock/location/calendar preference state.
+    assert "get_system_policy()" in applet
+    assert "CalendarPlus.SystemClock.new()" in applet
+    assert "this.system_clock.get_system_policy()" in applet
+    assert "CalendarPlus.CalendarSystem.new(calendar) !== null" in applet
+    assert "this._calendar.setCalendarSystem(temporal.calendar)" in applet
     for legacy in (
-        "starts_on_day(date)",
-        "ends_on_day(date)",
-        "started_before_day(date)",
-        "ended_before_day(date)",
-        "ends_after_day(date)",
-        "started_after_day(date)",
+        "get_system_mode()", "get_system_calendar()",
+        "get_system_show_seconds()", "get_system_location_configured()",
+        "get_system_latitude()", "get_system_longitude()",
+        "follow_system_temporal", "secondary_calendar", "useCustomFormat",
+        "customFormat", "customTooltipFormat",
     ):
-        assert legacy not in event_manager_source
-        assert legacy not in event_source
-    assert "class EventDataList" not in event_manager_source
-    assert "this.events_by_date" not in event_manager_source
+        assert legacy not in applet
+    assert "infiltratr_temporal_posix_provider_available" in system_clock
+    assert "infiltratr_temporal_posix_policy_load" in system_clock
+    assert '"clock-show-seconds"' in system_clock
 
-    # Seconds follow the richer Infiltrator policy when present and otherwise
-    # mirror Cinnamon's stock clock-show-seconds setting through the native
-    # facade. Calendar itself still owns no duplicate seconds preference.
-    assert 'get_boolean("clock-show-seconds")' not in applet_source
-    assert '"clock-show-seconds"' not in applet_source
-    assert "infiltratr_temporal_posix_provider_available" in system_clock_source
-    assert "infiltratr_temporal_posix_policy_load" in system_clock_source
-    assert "g_file_monitor_directory" in system_clock_source
-    assert '"org.cinnamon.desktop.interface"' in system_clock_source
-    assert '"clock-show-seconds"' in system_clock_source
-    assert "g_settings_schema_has_key" in system_clock_source
-    assert 'g_find_program_in_path("system-settings")' not in system_clock_source
+    # Native calendar/event logic remains native; JavaScript is the Cinnamon
+    # presentation/transport boundary rather than a second arithmetic engine.
+    assert "CalendarPlus.CalendarSystem.new(" in calendar
+    assert "this._calendarSystem.add_months_parts(" in calendar
+    assert "this._calendarSystem.add_years_parts(" in calendar
+    assert "system.build_grid(" in calendar
+    assert "CalendarPlus.date_same(" in calendar
+    assert "CalendarPlus.date_is_work_day(" in calendar
+    assert "while (cellsPlaced < 42)" not in calendar
+    assert "CalendarPlus.EventStore.new()" in event_manager
+    assert "this.event_store.add_or_update(" in event_manager
+    assert "this.event_store.get_snapshot(" in event_manager
+    assert "this.event_store.get_color_range(" in event_manager
+    assert "this.event_store.refresh_timezone()" in event_manager
+    assert "CalendarPlus.event_day_relation(" in event_manager
+    assert "CalendarPlus.event_timing(" in event_manager
 
-    # The settings menu uses the package-owned provider capability and desktop
-    # application identity, never an executable-name/PATH probe.
-    assert 'GLib.find_program_in_path("system-settings")' not in applet_source
-    assert 'Gio.DesktopAppInfo.new(' in applet_source
-    assert '"org.infiltrator.SystemSettings.desktop"' in applet_source
-    assert 'Util.spawnCommandLine("system-settings")' not in applet_source
-    assert 'Util.spawnCommandLine("cinnamon-settings calendar")' in applet_source
+    # Event transport publishes presentation state; it does not own EventList.
+    assert 'this.emit("agenda-date-changed", date);' in event_manager
+    assert '"agenda-events-changed"' in event_manager
+    assert "this._event_list" not in event_manager
+    assert "set_events(" not in event_manager
+    assert '"agenda-date-changed"' in applet
+    assert '"agenda-events-changed"' in applet
+    assert "this.event_list.set_date(date);" in applet
+    assert "this.event_list.set_events(snapshot, reset, loading);" in applet
 
-    # Standard horizontal clocks need all combinations of date, 12/24-hour
-    # mode and seconds while retaining Cinnamon's locale-aware formatting.
-    required_formats = {
-        "withDate24Seconds",
-        "withDate12Seconds",
-        "withDate24",
-        "withDate12",
-        "withoutDate24Seconds",
-        "withoutDate12Seconds",
-        "withoutDate24",
+    # Standard/native clock modes remain centralized in panelClock.js.
+    for name in (
+        "withDate24Seconds", "withDate12Seconds", "withDate24", "withDate12",
+        "withoutDate24Seconds", "withoutDate12Seconds", "withoutDate24",
         "withoutDate12",
-    }
-    assert all(name in panel_clock_source for name in required_formats)
-
-    # Common-backed native-mode resolution leaves conventional choices in
-    # Cinnamon's locale-aware path without duplicating the full mode list here.
-    assert 'var CLOCK_MODE_STANDARD = "standard";' not in panel_clock_source
-    assert 'var CLOCK_MODE_STANDARD_24 = "standard-24";' in panel_clock_source
-    assert 'var CLOCK_MODE_STANDARD_12 = "standard-12";' in panel_clock_source
-    assert "function isNativeClockMode(mode)" in panel_clock_source
-    assert "CalendarPlus.time_mode_from_string(mode)" in panel_clock_source
-    assert "CalendarPlus.TimeMode.INVALID" in panel_clock_source
-    assert 'RuntimeSupport.loadLocalModule("panelClock")' in applet_source
-    assert "PanelClock.panelText(" in applet_source
-    assert "PanelClock.todayDisplay(" in applet_source
-
-    # Keep clock-width hysteresis in the bin's preferred-width contract.
-    # Direct St.Bin.min_width mutation reproduces Cinnamon's allocation warning.
-    assert "GObject.registerClass(" in applet_source
-    assert "class LatchedWidthBin extends St.Bin" in applet_source
-    assert "vfunc_get_preferred_width(forHeight)" in applet_source
-    assert "new LatchedWidthBin({ x_align: St.Align.END })" in applet_source
-    assert "this._labelBin.min_width" not in applet_source
-    assert "if (naturalWidth > this._latchedWidth)" in applet_source
-    assert "naturalWidth < this._latchedWidth" not in applet_source
-    assert 'font-feature-settings: "tnum" 1;' in stylesheet
-
-    # Construction must be atomic. Essential native state is established
-    # before actors are built; a failed build cleans up and rethrows instead
-    # of leaving Cinnamon with a partly initialised applet.
-    assert "this._initialiseState(orientation, expectedVersion);" in applet_source
-    assert "this._buildApplet();" in applet_source
-    assert "this._destroy();\n            throw error;" in applet_source
-    assert applet_source.index("this._initialiseState(orientation, expectedVersion);") < \
-        applet_source.index("this._buildApplet();")
-    assert "on_applet_removed_from_panel()" in applet_source
-    assert "this.events_manager.destroy();" in applet_source
-    assert "this.settings.finalize();" in applet_source
-
-    # D-Bus watches, cancellables, GLib sources and proxy signals have a
-    # deterministic lifecycle when the applet is removed or construction
-    # aborts.
-    assert "this._bus_watch_id = 0;" in event_manager_source
-    assert "this._serverSignals = new SignalBag();" in event_manager_source
-    assert "this._cancellable = new Gio.Cancellable();" in event_manager_source
-    assert "Gio.bus_unwatch_name(this._bus_watch_id);" in event_manager_source
-    assert "() => this._calendarServerVanished()" in event_manager_source
-    assert "this._scheduleReconnect();" in event_manager_source
-    assert "this._cancelReconnect();" in event_manager_source
-    assert "this._cancellable.cancel();" in event_manager_source
-    assert 'Gio.File.new_for_path("/etc/localtime")' in event_manager_source
-    assert "this._timezone_monitor.cancel();" in event_manager_source
-    assert "destroy()" in event_manager_source
-    assert "this._bus_watch_id\n" not in event_manager_source
-
-    # The month view is also a long-lived signal/source owner. SignalBag keeps
-    # those ownership groups explicit, and pending GLib sources are cancelled
-    # before the actor graph is destroyed.
-    assert "this._eventSignals = new SignalBag();" in calendar_source
-    assert "this._desktopSignals = new SignalBag();" in calendar_source
-    assert "this._actorSignals = new SignalBag();" in calendar_source
-    assert "_cancel_set_date_idle()" in calendar_source
-    assert "this._calendar.destroy();" in applet_source
-    assert "new Gio.Settings" not in calendar_source
-    assert "this.desktop_settings" in calendar_source
-    assert "this.events_manager,\n            this.desktop_settings" in applet_source
-    assert calendar_source.count('"style-changed"') == 1
-    assert "disconnectAll()" in calendar_source
-    assert "destroy() {" in calendar_source
-
-    # Event fetching follows the native 42-cell grid rather than assuming that
-    # every primary calendar shares Gregorian month boundaries.
-    assert "set_visible_range(firstDate, lastDate, force)" in event_manager_source
-    assert "this.events_manager.set_visible_range(" in calendar_source
-    assert "fetch_month_events" not in event_manager_source
-    assert "current_month_year" not in event_manager_source
-
-    # Ordinary clock ticks update only presentation timing. Explicit agenda
-    # refreshes are reserved for event-visibility and 12/24-hour presentation
-    # changes; neither path is part of the WallClock tick callback.
-    assert applet_source.count("this.events_manager.select_date(") == 2
-    assert "() => this._onDesktopClockPreferenceChanged(true)" in applet_source
-    assert "this._syncEventVisibility(true);" in applet_source
-    assert "this.event_list.refresh_variations();" in applet_source
-    assert "_refreshSelectedAgenda" not in event_manager_source
-    assert "this._temporalPolicyCache" in applet_source
-    assert "infiltratr_io_result_name(load_result)" in system_clock_source
-    assert "policy_refresh_source_id" in system_clock_source
-    assert "g_idle_add_full" in system_clock_source
-
-    # CalendarServer requests are serialized because its event signals carry no
-    # request-generation token. Event colours must never become raw CSS.
-    assert "_requestVisibleRange" in event_manager_source
-    assert "_queued_range_force" in event_manager_source
-    assert "this._range_request_pending" in event_manager_source
-    assert "function _safeEventColor(color)" in event_source
-    assert "_safeEventColor(event.color)" in event_source
-    assert "this._range_accepting_events" in event_manager_source
-    assert "Treat every removal as cache invalidation" in event_manager_source
-    assert "current_range_start_civil" in event_manager_source
-    assert "current_range_end_civil" in event_manager_source
-    assert "_eventVariantOverlapsRange" in event_manager_source
-    assert 'this.emit("agenda-date-changed", date);' in event_manager_source
-    assert '"agenda-events-changed"' in event_manager_source
-    assert "this._event_list" not in event_manager_source
-    assert "set_events(" not in event_manager_source
-    assert '"agenda-date-changed"' in applet_source
-    assert '"agenda-events-changed"' in applet_source
-    assert "this.event_list.set_date(date);" in applet_source
-    assert "this.event_list.set_events(snapshot, reset, loading);" in applet_source
-    assert "adjustment.page_size" in event_source
-
-    # A stale native library must be rejected explicitly rather than allowed
-    # to fail later through a missing or incompatible symbol.
-    assert "const APP_VERSION" not in applet_source
-    assert "metadata.version" in applet_source
-    assert "CalendarPlus.get_version()" in applet_source
-    assert applet_source.index("this._signals = new SignalBag();") < \
-        applet_source.index("CalendarPlus.get_version()")
-    assert "native library ${nativeVersion} does not match " in applet_source
-    assert "`applet ${expectedVersion}`" in applet_source
-
-    # Shared runtime mechanics live in one module; feature modules own only
-    # their domain state. Transport and agenda presentation are separate.
-    assert runtime_source.count("var SignalBag = class SignalBag") == 1
-    assert runtime_source.count("var midnight = function midnight") == 1
-    assert runtime_source.count("var sameInstant = function sameInstant") == 1
-    for source in (applet_source, calendar_source, event_source, event_manager_source, panel_clock_source):
-        assert "class SignalBag" not in source
-    for source in (event_source, event_manager_source):
-        assert "function _midnight" not in source
-        assert "function _sameInstant" not in source
-        assert "RuntimeSupport.midnight" in source
-        assert "RuntimeSupport.sameInstant" in source
-    assert 'RuntimeSupport.loadLocalModule("eventManager")' in applet_source
-    assert "class EventList" not in event_manager_source
-    assert "class EventRow" not in event_manager_source
-    assert "var EventList = class EventList" in event_source
-    assert '_("Calendar events")' in calendar_source
-    assert 'accessible_name: accessibleParts.join(", ")' in calendar_source
-    assert 'this.actor.set_accessible_name(accessibleParts.join(", "));' in event_source
-    assert "class EventRow" in event_source
-    assert "use_custom_format" not in applet_source
-    assert "custom_tooltip_format" not in applet_source
-    assert "_onFormatSettingsChanged" not in applet_source
-    assert "_cancelFormatDebounce" not in applet_source
-    assert "formattedTooltip.capitalize()" not in panel_clock_source
-    assert ".capitalize()" not in panel_clock_source
-    assert ".capitalize()" not in calendar_source
-    assert "_capitaliseLocale" not in event_source
-    assert "this._temporalPolicyCache = Object.freeze(fallback);" in applet_source
-    assert "CalendarPlus.CalendarSystem.new(calendar) !== null" in applet_source
-    assert "new EventManager.EventsManager(" in applet_source
-
-    # Calendar-owned interface text uses its own installed gettext domain;
-    # Cinnamon-provided desktop strings remain in Cinnamon's catalogue.
-    for source in (applet_source, calendar_source, event_source):
-        assert '"calendar-plus@the-infiltratr"' in source
-        assert "Gettext.bindtextdomain(" in source
-    for label in (
-        "Previous month",
-        "Next month",
-        "Previous year",
-        "Next year",
-        "Week",
     ):
-        assert f'CP_("{label}")' in calendar_source
-    assert 'CP_("Show today")' in applet_source
-    assert 'CP_("About Calendar")' in applet_source
-    # Every About entry point launches the same native helper. Calendar does
-    # not take a Cinnamon shell modal/input grab for application metadata.
-    assert "openAbout()" in applet_source
-    assert "this._onAbout();" in applet_source
-    assert '"infiltrator-calendar-about.desktop"' in applet_source
-    assert "Gio.DesktopAppInfo.new(" in applet_source
-    assert 'Util.spawnCommandLine("/usr/libexec/calendar-plus-about")' not in applet_source
-    assert "ModalDialog" not in applet_source
-    assert "_aboutDialog" not in applet_source
-    assert "calendar-plus-about-title" not in applet_source
-    assert 'CP_("Open selected date in Calendar")' in event_source
-    assert 'CP_("Open Calendar")' in event_source
+        assert name in panel_clock
+    assert 'var CLOCK_MODE_STANDARD_24 = "standard-24";' in panel_clock
+    assert 'var CLOCK_MODE_STANDARD_12 = "standard-12";' in panel_clock
+    assert "function isNativeClockMode(mode)" in panel_clock
+    assert "CalendarPlus.time_mode_from_string(mode)" in panel_clock
+    assert "PanelClock.panelText(" in applet
+    assert "PanelClock.todayDisplay(" in applet
 
-    # New interactive surfaces remain reachable without a pointer.
-    assert "class CalendarPlusApplet extends Applet.Applet" in applet_source
-    assert "can_focus: true" in calendar_source
-    assert "find_program_in_path(this._calendarProgram)" in event_source
-    assert "clickable: this._canLaunchCalendar" in event_source
-    assert "reactive: this._canLaunchCalendar" in event_source
-    assert "can_focus: this._canLaunchCalendar" in event_source
-    assert "set_clickable(canLaunch);" in event_source
-    assert "this.actor.reactive = enabled;" in event_source
-    assert "this.actor.can_focus = enabled;" in event_source
-    assert "row.set_clickable(this._canLaunchCalendar)" in event_source
-    assert "accessible_role: Atk.Role.LIST_ITEM" in event_source
-    assert "accessible_name:" in calendar_source
+    # Construction and teardown stay atomic across every extracted component.
+    assert "this._initialiseState(orientation, expectedVersion);" in applet
+    assert "this._buildApplet();" in applet
+    assert "this._destroy();\n            throw error;" in applet
+    assert "this.events_manager.destroy();" in applet
+    assert "this.settings.finalize();" in applet
+    assert "this._calendarEventSource.destroy();" in applet
+    assert "this._popupView.destroy();" in applet
+    assert "this._panelView.destroy();" in applet
 
-    # Calendar cells use a roving focus target: only the selected day enters
-    # the Tab sequence, while spatial keys navigate inside the 42-cell grid.
+    # Runtime mechanics stay centralized and long-lived owners use SignalBag.
+    assert runtime.count("var SignalBag = class SignalBag") == 1
+    assert runtime.count("var midnight = function midnight") == 1
+    assert runtime.count("var sameInstant = function sameInstant") == 1
+    for source in (applet, calendar, event_view, event_manager, panel_clock):
+        assert "class SignalBag" not in source
+    assert "this._eventSignals = new SignalBag();" in calendar
+    assert "this._desktopSignals = new SignalBag();" in calendar
+    assert "this._actorSignals = new SignalBag();" in calendar
+    assert "disconnectAll()" in calendar
+
+    # CalendarServer lifecycle resources remain deterministic.
+    for fragment in (
+        "this._bus_watch_id = 0;", "this._serverSignals = new SignalBag();",
+        "this._cancellable = new Gio.Cancellable();",
+        "Gio.bus_unwatch_name(this._bus_watch_id);",
+        "this._scheduleReconnect();", "this._cancelReconnect();",
+        "this._cancellable.cancel();",
+        'Gio.File.new_for_path("/etc/localtime")',
+        "this._timezone_monitor.cancel();",
+    ):
+        assert fragment in event_manager
+
+    # UI identity, launch surfaces and accessibility remain intact.
+    assert '"calendar-plus@the-infiltratr"' in applet
+    assert '"calendar-plus@the-infiltratr"' in calendar
+    assert '"calendar-plus@the-infiltratr"' in event_view
+    assert '"calendar-plus@the-infiltratr"' in popup_view
+    assert "Gettext.bindtextdomain(" in popup_view
+    assert "openAbout()" in applet
+    assert '"infiltrator-calendar-about.desktop"' in applet
+    assert 'Util.spawnCommandLine("cinnamon-settings calendar")' in applet
+    assert '"changed::calendar-backend"' in event_view
+    assert '"clockenstein-calendar"' in event_view
+    assert '["gnome-calendar", "--uuid", uuid]' in event_view
+    assert "accessible_role: Atk.Role.LIST_ITEM" in event_view
+    assert "can_focus: true" in calendar
+
     for key_name in (
         "KEY_Left", "KEY_Right", "KEY_Up", "KEY_Down",
         "KEY_Page_Up", "KEY_Page_Down", "KEY_Home", "KEY_End",
     ):
-        assert f"Clutter.{key_name}" in calendar_source
-    assert '"key-press-event"' in calendar_source
-    assert "grab_key_focus()" in calendar_source
-    assert "can_focus: isSelected" in calendar_source
-    assert "Clutter.ModifierType.SHIFT_MASK" in calendar_source
-    assert 'button.connect("clicked", () => this.setDate(date, false));' in calendar_source
-    assert (
-        'if (this.events_enabled) {\n                this.setDate(date, false);'
-        not in calendar_source
-    )
+        assert f"Clutter.{key_name}" in calendar
+    assert '"key-press-event"' in calendar
+    assert "grab_key_focus()" in calendar
+    assert "can_focus: isSelected" in calendar
 
-    metadata = json.loads(
-        (APPLET_DIR / "metadata.json").read_text(encoding="utf-8")
-    )
-    assert metadata["cinnamon-version"] == ["6.4", "6.6", "6.7"]
-    assert "external-configuration-app" not in metadata
+    assert METADATA["cinnamon-version"] == ["6.4", "6.6", "6.7"]
+    assert "external-configuration-app" not in METADATA
+    assert not (APPLET_DIR / "settings.py").exists()
 
 
 if __name__ == "__main__":

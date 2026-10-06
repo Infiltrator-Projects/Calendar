@@ -4,28 +4,16 @@
 /*
  * Calendar panel controller.
  *
- * Architecture
- * ------------
- * Cinnamon owns actors, menus, settings bindings and desktop integration.
- * libcalendar-plus owns deterministic calendar arithmetic, non-standard time
- * systems and their boundary-aligned timer.  This file is intentionally the
- * narrow orchestration layer between those two worlds.
- *
- * Lifecycle invariant
- * -------------------
- * _initialiseState establishes every cleanup field before validating the
- * native version or building actors. Later construction can therefore fail
- * without making _destroy() guess which resources exist.
+ * This file is the composition root: it owns service lifetimes and wires
+ * narrow presentation/transport ports together. Cinnamon-version-specific
+ * popup behaviour, panel-label mechanics and popup actor composition live in
+ * dedicated modules rather than growing inside the controller.
  */
 
 const Applet = imports.ui.applet;
 const CalendarPlus = imports.gi.CalendarPlus;
 const CinnamonDesktop = imports.gi.CinnamonDesktop;
-const Clutter = imports.gi.Clutter;
 const Gio = imports.gi.Gio;
-const GLib = imports.gi.GLib;
-const GObject = imports.gi.GObject;
-const Pango = imports.gi.Pango;
 const St = imports.gi.St;
 const Gettext = imports.gettext;
 const Main = imports.ui.main;
@@ -35,7 +23,6 @@ const Util = imports.misc.util;
 
 const UUID = "calendar-plus@the-infiltratr";
 const CALENDAR_PLUS_GETTEXT_DOMAIN = UUID;
-const POPUP_CLOSE_GUARD_MS = 750;
 
 Gettext.bindtextdomain(CALENDAR_PLUS_GETTEXT_DOMAIN, "/usr/share/locale");
 const CalendarPlusGettext = Gettext.domain(CALENDAR_PLUS_GETTEXT_DOMAIN);
@@ -44,16 +31,6 @@ function CP_(text) {
     return CalendarPlusGettext.gettext(text);
 }
 
-function _addStyleClass(actor, styleClass) {
-    if (actor && typeof actor.add_style_class_name === "function") {
-        actor.add_style_class_name(styleClass);
-    }
-}
-
-/*
- * Bootstrap only the shared runtime helper here.  Once loaded, it owns the
- * Cinnamon 6.4/6.6/6.7 module-resolution seam for every feature module.
- */
 function _loadRuntimeSupport() {
     try {
         const Extension = imports.ui.extension;
@@ -66,227 +43,16 @@ function _loadRuntimeSupport() {
     } catch (error) {
         /* Fall through when Cinnamon's current-extension lookup is unavailable. */
     }
-
     return require("./runtimeSupport");
 }
 
 const RuntimeSupport = _loadRuntimeSupport();
 const SignalBag = RuntimeSupport.SignalBag;
+/* PopupShell owns RuntimeSupport.loadLocalModule("eventView") and the smaller presentation leaf modules. */
 const Calendar = RuntimeSupport.loadLocalModule("calendar");
 const EventManager = RuntimeSupport.loadLocalModule("eventManager");
-const EventView = RuntimeSupport.loadLocalModule("eventView");
-
 const PanelClock = RuntimeSupport.loadLocalModule("panelClock");
-
-/*
- * Keep the panel clock visually stable without forcing St.Bin.min_width.
- * Cinnamon moved this latch into the container's preferred-width contract
- * after Clutter began warning when a child's natural width fell below a
- * previously forced minimum. The label remains free to report its real
- * natural width; only the bin's request is latched.
- */
-const LatchedWidthBin = GObject.registerClass(
-class LatchedWidthBin extends St.Bin {
-    _init(params = {}) {
-        super._init(params);
-        this._latchedWidth = 0;
-    }
-
-    resetLatch() {
-        this._latchedWidth = 0;
-        this.updateLatch();
-    }
-
-    updateLatch() {
-        const label = this.get_child();
-        if (!label) {
-            return;
-        }
-
-        const [, naturalWidth] = label.get_preferred_width(-1);
-        if (naturalWidth <= 0) {
-            return;
-        }
-
-        /*
-         * A live clock must never contract on an ordinary tick: proportional
-         * glyph advances otherwise move neighbouring panel content and make
-         * the time appear to "breathe". Grow to the widest value observed for
-         * the current presentation, then shrink only through resetLatch() when
-         * a real layout input (mode/theme/orientation/panel size) changes.
-         */
-        if (naturalWidth > this._latchedWidth) {
-            this._latchedWidth = naturalWidth;
-            this.queue_relayout();
-        }
-    }
-
-    vfunc_get_preferred_width(forHeight) {
-        const [minimum, natural] = super.vfunc_get_preferred_width(forHeight);
-        return [
-            Math.max(minimum, this._latchedWidth),
-            Math.max(natural, this._latchedWidth),
-        ];
-    }
-});
-
-/*
- * Compatibility boundary for Cinnamon popup behaviour.
- *
- * CalendarPlusApplet deliberately talks only to the small public surface on
- * this subclass (setEventPassthrough, setOrientation, open/close/toggle). Any
- * Cinnamon-version-specific actor lifecycle, animation recovery or placement
- * detail stays contained here instead of leaking throughout the applet.
- */
-class CalendarPopupMenu extends Applet.AppletPopupMenu {
-    constructor(launcher, orientation) {
-        super(launcher, orientation);
-        this._calendarLauncher = launcher;
-        this._calendarOrientation = orientation;
-        this._closeGuardSource = 0;
-        this._setActorReactive(false);
-        this.connect("menu-animated-closed", () => {
-            if (!this.isOpen) {
-                this._cancelCloseGuard();
-                this._finishClosedState();
-            }
-        });
-        this.connect("open-state-changed", (menu, open) => {
-            if (open) {
-                this._setActorReactive(true);
-            } else {
-                this._enforceClosedInputState();
-            }
-        });
-    }
-
-    _setActorReactive(reactive) {
-        if (this.actor && !this.actor.is_finalized()) {
-            this.actor.reactive = Boolean(reactive);
-        }
-    }
-
-    setEventPassthrough(enabled) {
-        this.passEvents = this.isOpen && Boolean(enabled);
-    }
-
-    setOrientation(orientation) {
-        this._calendarOrientation = orientation;
-        super.setOrientation(orientation);
-    }
-
-    _cancelCloseGuard() {
-        if (this._closeGuardSource === 0) {
-            return;
-        }
-        GLib.source_remove(this._closeGuardSource);
-        this._closeGuardSource = 0;
-    }
-
-    _enforceClosedInputState() {
-        this.passEvents = false;
-        this._setActorReactive(false);
-    }
-
-    _finishClosedState() {
-        this._enforceClosedInputState();
-        if (this.isOpen || !this.actor || this.actor.is_finalized()) {
-            return;
-        }
-        if (typeof this.actor.remove_all_transitions === "function") {
-            this.actor.remove_all_transitions();
-        }
-        this.animating = false;
-        this.actor.hide();
-        this.actor.set_size(-1, -1);
-        this.actor.opacity = 255;
-    }
-
-    open(animate) {
-        this._cancelCloseGuard();
-        this.passEvents = false;
-        this._setActorReactive(true);
-        super.open(animate);
-    }
-
-    close(animate) {
-        if (!this.isOpen) {
-            this._cancelCloseGuard();
-            this._finishClosedState();
-            return;
-        }
-
-        super.close(animate);
-        this._enforceClosedInputState();
-
-        if (!this.animating) {
-            this._finishClosedState();
-            return;
-        }
-
-        this._cancelCloseGuard();
-        this._closeGuardSource = GLib.timeout_add(
-            GLib.PRIORITY_DEFAULT,
-            POPUP_CLOSE_GUARD_MS,
-            () => {
-                this._closeGuardSource = 0;
-                this._finishClosedState();
-                return GLib.SOURCE_REMOVE;
-            }
-        );
-    }
-
-    destroy() {
-        this._cancelCloseGuard();
-        this._finishClosedState();
-        this._calendarLauncher = null;
-        super.destroy();
-    }
-
-    _calculatePosition() {
-        const [xPos, yPos] = super._calculatePosition();
-        const launcher = this._calendarLauncher;
-
-        if ((this._calendarOrientation !== St.Side.TOP &&
-             this._calendarOrientation !== St.Side.BOTTOM) ||
-            !launcher || launcher.locationLabel !== "right" ||
-            !launcher.actor) {
-            return [xPos, yPos];
-        }
-
-        const monitor = Main.layoutManager.findMonitorForActor(launcher.actor);
-        if (!monitor) {
-            return [xPos, yPos];
-        }
-
-        /*
-         * Cinnamon 6.4 does not expose layoutManager.getWorkAreaForMonitor().
-         * Use the underlying Meta.Workspace API, which is available across
-         * every Cinnamon version Calendar supports. Fall back to the monitor
-         * bounds if workspace discovery ever becomes unavailable.
-         */
-        let workArea = null;
-        try {
-            const workspace = global.workspace_manager.get_active_workspace();
-            if (workspace) {
-                workArea = workspace.get_work_area_for_monitor(monitor.index);
-            }
-        } catch (error) {
-            workArea = null;
-        }
-        if (!workArea) {
-            workArea = monitor;
-        }
-
-        const [, , naturalWidth] = this.actor.get_preferred_size();
-        if (!Number.isFinite(naturalWidth) || naturalWidth <= 0) {
-            return [xPos, yPos];
-        }
-
-        const rightEdge = workArea.x + workArea.width;
-        return [Math.max(workArea.x, rightEdge - naturalWidth), yPos];
-    }
-}
+const PopupShell = RuntimeSupport.loadLocalModule("popupShell");
 
 class CalendarPlusApplet extends Applet.Applet {
     constructor(orientation, panel_height, instance_id, expectedVersion) {
@@ -294,34 +60,12 @@ class CalendarPlusApplet extends Applet.Applet {
 
         try {
             this._initialiseState(orientation, expectedVersion);
-            this._createPanelLabel();
             this.setAllowedLayout(Applet.AllowedLayout.BOTH);
             this._buildApplet();
         } catch (error) {
             this._destroy();
             throw error;
         }
-    }
-
-    _createPanelLabel() {
-        _addStyleClass(this.actor, "calendar-plus-applet");
-        const label = new St.Label({
-            style_class: "applet-label calendar-plus-panel-clock",
-        });
-        label.reactive = true;
-        label.track_hover = true;
-        label.clutter_text.ellipsize = Pango.EllipsizeMode.NONE;
-
-        // Keep the visible clock pinned to the panel's right edge. The
-        // width latch may grow to absorb wider ticks, but that spare width
-        // must open to the left rather than moving the clock's right edge.
-        const holder = new LatchedWidthBin({ x_align: St.Align.END });
-        holder.set_child(label);
-        this.actor.add(holder, { y_align: St.Align.MIDDLE, y_fill: false });
-        this.actor.set_label_actor(label);
-
-        this._clockLabel = label;
-        this._labelBin = holder;
     }
 
     _initialiseState(orientation, expectedVersion) {
@@ -341,9 +85,10 @@ class CalendarPlusApplet extends Applet.Applet {
         this.system_clock = null;
         this.events_manager = null;
         this.event_list = null;
+        this._calendarEventSource = null;
         this._calendar = null;
-        this._popupBody = null;
-        this._calendarColumn = null;
+        this._panelView = null;
+        this._popupView = null;
         this._resume_source = null;
         this._temporalPolicyCache = null;
 
@@ -351,11 +96,6 @@ class CalendarPlusApplet extends Applet.Applet {
         this._eventSignals = new SignalBag();
         this._resumeSignals = new SignalBag();
 
-        /*
-         * Version identity is a hard boundary, not a feature probe.  Mixing an
-         * applet with a stale typelib can otherwise fail much later through a
-         * missing symbol and leave Cinnamon with a partially built menu.
-         */
         const nativeVersion = CalendarPlus.get_version();
         if (typeof expectedVersion !== "string" || expectedVersion.length === 0) {
             throw new Error(`${UUID}: Cinnamon did not provide an applet version.`);
@@ -367,23 +107,16 @@ class CalendarPlusApplet extends Applet.Applet {
             );
         }
 
-        this._calendar_system =
-            CalendarPlus.CalendarSystem.new("gregorian");
+        this._calendar_system = CalendarPlus.CalendarSystem.new("gregorian");
         if (this._calendar_system === null) {
             throw new Error(`${UUID}: native Gregorian calendar unavailable`);
         }
     }
 
     _buildApplet() {
+        this._panelView = new PopupShell.PanelClockView(this.actor);
         this.menuManager = new PopupMenu.PopupMenuManager(this);
-        this.menu = new CalendarPopupMenu(this, this.orientation);
-        /*
-         * PopupMenu.setCustomStyleClass() rebuilds the complete actor style
-         * class list.  Keep Calendar's identity in that authoritative slot:
-         * adding calendar-plus-popup first and then calling setCustomStyleClass()
-         * silently removed it, so every Day/Night selector missed the visible
-         * popup actor.
-         */
+        this.menu = new PopupShell.CalendarPopupMenu(this, this.orientation);
         this.menu.setCustomStyleClass("calendar-plus-popup");
         this.menuManager.addMenu(this.menu);
 
@@ -408,7 +141,7 @@ class CalendarPlusApplet extends Applet.Applet {
             }
         );
 
-        this.event_list = new EventView.EventList(
+        this.event_list = new PopupShell.EventList(
             this.settings,
             this.desktop_settings
         );
@@ -416,6 +149,34 @@ class CalendarPlusApplet extends Applet.Applet {
             this.settings,
             this.desktop_settings
         );
+        this._calendarEventSource = new PopupShell.CalendarEventSource(
+            this.events_manager
+        );
+        this._calendar = new Calendar.Calendar(
+            this.settings,
+            this._calendarEventSource,
+            this.desktop_settings
+        );
+
+        this._wireAgenda();
+        this._popupView = new PopupShell.PopupView(
+            this.menu,
+            this.event_list,
+            this._calendar,
+            {
+                onResetCalendar: () => this._resetCalendar(),
+                onLaunchSettings: () => this._onLaunchSettings(),
+                onAbout: () => this._onAbout(),
+            }
+        );
+
+        this._bindSettings();
+        this._watchDesktopPreferences();
+        this._watchPointerAndMenu();
+        this._startResumeMonitor();
+    }
+
+    _wireAgenda() {
         this._eventSignals.connect(
             this.events_manager,
             "agenda-date-changed",
@@ -444,22 +205,6 @@ class CalendarPlusApplet extends Applet.Applet {
             "has-calendars-changed",
             () => this._syncEventVisibility(false)
         );
-
-        this._buildPopupContents();
-        this._bindSettings();
-        this._watchDesktopPreferences();
-        this._watchPointerAndMenu();
-        this._startResumeMonitor();
-    }
-
-    _buildPopupContents() {
-        const body = new St.BoxLayout({
-            style_class: "calendar-main-box",
-            vertical: false,
-        });
-        this._popupBody = body;
-        this.menu.addActor(body);
-
         this._eventSignals.connect(this.event_list, "launched-calendar", () => {
             if (this.menu) {
                 this.menu.toggle();
@@ -475,56 +220,11 @@ class CalendarPlusApplet extends Applet.Applet {
                 }
             });
         }
-        const calendarColumn = new St.BoxLayout({ vertical: true });
-        this._calendarColumn = calendarColumn;
-        this.go_home_button = new St.Button({
-            style_class: "calendar-today-home-button",
-            x_align: Clutter.ActorAlign.CENTER,
-            reactive: true,
-            can_focus: true,
-            accessible_name: CP_("Show today"),
-        });
-        this._today_box = new St.BoxLayout({ vertical: true });
-        this.go_home_button.set_child(this._today_box);
-        this.go_home_button.connect("clicked", () => this._resetCalendar());
-
-        this._day = new St.Label({ style_class: "calendar-today-day-label" });
-        this._date = new St.Label({ style_class: "calendar-today-date-label" });
-        this._today_box.add_actor(this._day);
-        this._today_box.add_actor(this._date);
-        calendarColumn.add_actor(this.go_home_button);
-
-        this._calendar = new Calendar.Calendar(
-            this.settings,
-            this.events_manager,
-            this.desktop_settings
-        );
         this._eventSignals.connect(
             this._calendar,
             "selected-date-changed",
             () => this._updateClockAndDate()
         );
-        calendarColumn.add_actor(this._calendar.actor);
-
-        /*
-         * Restore Calendar's established composition: agenda on the left,
-         * month view on the right. Popup screen-edge placement is handled by
-         * CalendarPopupMenu and must not be faked by swapping child actors.
-         */
-        body.add_actor(this.event_list.actor);
-        body.add_actor(calendarColumn);
-
-        this.menu.addMenuItem(new PopupMenu.PopupSeparatorMenuItem());
-
-        const dateTimeSettings = new PopupMenu.PopupMenuItem(
-            _("Date and Time Settings")
-        );
-        dateTimeSettings.connect("activate", () => this._onLaunchSettings());
-        this.menu.addMenuItem(dateTimeSettings);
-
-        const aboutItem = new PopupMenu.PopupMenuItem(CP_("About Calendar"));
-        aboutItem.connect("activate", () => this._onAbout());
-        this.menu.addMenuItem(aboutItem);
     }
 
     _bindSettings() {
@@ -618,12 +318,6 @@ class CalendarPlusApplet extends Applet.Applet {
             if (this._destroyed || !open) {
                 return;
             }
-            /*
-             * Re-probe an intentionally exited CalendarServer when the user
-             * opens the popup. This catches calendars added after an earlier
-             * authoritative STATUS_NO_CALENDARS without polling every few
-             * seconds while the popup is closed.
-             */
             this.events_manager.start_events();
             this._resetCalendar();
             this._rebalancePopupWidth();
@@ -671,12 +365,6 @@ class CalendarPlusApplet extends Applet.Applet {
         if (this._destroyed) {
             return;
         }
-
-        /*
-         * Native timers use monotonic scheduling.  Suspend pauses that clock,
-         * so restarting recalculates the next visible boundary from current
-         * civil time rather than firing with a stale pre-suspend remainder.
-         */
         const config = this._clockConfig();
         if (PanelClock.isNativeClockMode(config.mode) && this.system_clock) {
             this.system_clock.stop();
@@ -704,12 +392,6 @@ class CalendarPlusApplet extends Applet.Applet {
             effectiveTheme = this._systemPrefersDark() ? "night" : "day";
         }
 
-        /*
-         * Persist the effective theme inside PopupMenu's custom style class.
-         * Cinnamon rewrites menu.actor's style classes whenever orientation
-         * changes; add_style_class_name() therefore made forced themes fragile.
-         * setCustomStyleClass() is the supported durable ownership point.
-         */
         this.menu.setCustomStyleClass(
             `calendar-plus-popup calendar-plus-theme-${effectiveTheme}`
         );
@@ -801,12 +483,6 @@ class CalendarPlusApplet extends Applet.Applet {
             return resolved;
         } catch (error) {
             global.logError(error);
-            /*
-             * Cache the fallback for this policy generation.  A persistent
-             * malformed/unreadable policy must not be reparsed and relogged on
-             * every WallClock notification; policy-changed invalidates this
-             * cache when the authority changes again.
-             */
             this._temporalPolicyCache = Object.freeze(fallback);
             return this._temporalPolicyCache;
         }
@@ -814,12 +490,9 @@ class CalendarPlusApplet extends Applet.Applet {
 
     _syncCalendarSystem() {
         const temporal = this._systemTemporalPolicy();
-
         if (!this._calendar_system ||
             this._calendar_system.get_id() !== temporal.calendar) {
-            const candidate = CalendarPlus.CalendarSystem.new(
-                temporal.calendar
-            );
+            const candidate = CalendarPlus.CalendarSystem.new(temporal.calendar);
             if (candidate) {
                 this._calendar_system = candidate;
                 this._calendar.setCalendarSystem(temporal.calendar);
@@ -829,7 +502,6 @@ class CalendarPlusApplet extends Applet.Applet {
 
     _clockConfig() {
         const temporal = this._systemTemporalPolicy();
-
         return {
             mode: temporal.mode,
             showSeconds: temporal.showSeconds,
@@ -851,7 +523,7 @@ class CalendarPlusApplet extends Applet.Applet {
     }
 
     _updatePanelClock() {
-        if (this._destroyed || !this.clock) {
+        if (this._destroyed || !this.clock || !this._panelView) {
             return;
         }
 
@@ -869,52 +541,41 @@ class CalendarPlusApplet extends Applet.Applet {
             this._calendar_system
         );
         if (text) {
-            this._clockLabel.set_text(text);
-            this._updateLabelWidth();
+            this._panelView.setText(text);
         }
     }
 
     _updateClockAndDate() {
         if (this._destroyed || !this.clock || !this._calendar ||
-            !this.events_manager || !this.event_list || !this.go_home_button) {
+            !this.events_manager || !this.event_list || !this._popupView) {
             return;
         }
 
         this._updatePanelClock();
-
         const display = PanelClock.todayDisplay(
             this.clock,
             this._calendar_system,
             this._clockConfig()
         );
         const dayName = PanelClock.dayName(this.clock);
-
-        const selectedToday = this._calendar.todaySelected();
-        this.go_home_button.reactive = !selectedToday;
-        this.go_home_button.set_style_class_name(
-            selectedToday
-                ? "calendar-today-home-button"
-                : "calendar-today-home-button-enabled"
+        this._popupView.updateToday(
+            dayName,
+            display.shortDate,
+            this._calendar.todaySelected()
         );
 
-        this._day.set_text(dayName);
-        this._date.set_text(display.shortDate);
-        this.go_home_button.set_accessible_name(
-            `${CP_("Show today")}: ${dayName}, ${display.shortDate}`
-        );
-
-        const tooltip = display.tooltip;
-        this.set_applet_tooltip(tooltip);
+        this.set_applet_tooltip(display.tooltip);
         this.event_list.refresh_variations();
     }
 
     _syncEventVisibility(forceRefresh) {
-        if (!this.event_list || !this.events_manager || !this._calendar) {
+        if (!this.event_list || !this.events_manager ||
+            !this._calendar || !this._popupView) {
             return;
         }
-        this.event_list.actor.visible =
-            this.events_manager.should_show_event_pane();
-        this._rebalancePopupWidth();
+        this._popupView.setAgendaVisible(
+            this.events_manager.should_show_event_pane()
+        );
         if (forceRefresh && this.events_manager.is_active()) {
             this.events_manager.select_date(
                 this._calendar.getSelectedDate(),
@@ -924,41 +585,9 @@ class CalendarPlusApplet extends Applet.Applet {
     }
 
     _rebalancePopupWidth() {
-        if (this._destroyed || !this._calendarColumn || !this.event_list) {
-            return;
+        if (!this._destroyed && this._popupView) {
+            this._popupView.rebalanceWidth();
         }
-
-        /*
-         * Cinnamon's calendar theme gives the agenda a generous natural
-         * width. With the full month grid beside it, that can leave the month
-         * side cramped even though the popup still has room to grow. Measure
-         * the active theme rather than baking pixel dimensions into the applet:
-         * the month may grow toward the agenda's natural width, but never by
-         * more than 35 percent over its own natural request.
-         *
-         * Reset min_width before measurement so a previous font/theme result
-         * does not become part of the next natural-width request. That keeps
-         * the popup able to shrink again after a theme or scaling change.
-         */
-        this._calendarColumn.min_width = 0;
-        if (!this.event_list.actor.visible) {
-            return;
-        }
-
-        const [, agendaNatural] =
-            this.event_list.actor.get_preferred_width(-1);
-        const [, calendarNatural] =
-            this._calendarColumn.get_preferred_width(-1);
-        if (agendaNatural <= 0 || calendarNatural <= 0 ||
-            agendaNatural <= calendarNatural) {
-            return;
-        }
-
-        const target = Math.ceil(Math.min(
-            agendaNatural,
-            calendarNatural * 1.35
-        ));
-        this._calendarColumn.min_width = target;
     }
 
     _setKeybinding() {
@@ -1023,14 +652,8 @@ class CalendarPlusApplet extends Applet.Applet {
     }
 
     _resetLabelWidth() {
-        if (this._labelBin) {
-            this._labelBin.resetLatch();
-        }
-    }
-
-    _updateLabelWidth() {
-        if (this._labelBin) {
-            this._labelBin.updateLatch();
+        if (this._panelView) {
+            this._panelView.resetWidth();
         }
     }
 
@@ -1039,12 +662,6 @@ class CalendarPlusApplet extends Applet.Applet {
             this.menu.close();
         }
 
-        /*
-         * Provider capability, not PATH, decides whether our richer authority
-         * is installed. Launch through the package-owned desktop identity so an
-         * unrelated executable named "system-settings" cannot impersonate the
-         * authority. Mint remains the deterministic fallback.
-         */
         const temporal = this._systemTemporalPolicy();
         if (temporal.providerAvailable) {
             try {
@@ -1062,22 +679,10 @@ class CalendarPlusApplet extends Applet.Applet {
         Util.spawnCommandLine("cinnamon-settings calendar");
     }
 
-    /*
-     * Cinnamon's Applet base class normally opens its generic metadata dialog
-     * from the right-click context menu.  That dialog exposes the internal UUID
-     * and only a small subset of Calendar metadata.  Keep every About
-     * entry point on the same native dialog so the application presents one
-     * consistent identity regardless of how the user opens it.
-     */
     openAbout() {
         this._onAbout();
     }
 
-    /*
-     * Keep settings inside Cinnamon's own xlet-settings surface. Calendar
-     * contributes only the JSON schema and applet behaviour; it no longer
-     * ships a Python/GTK settings host of its own.
-     */
     configureApplet(tab = 0) {
         super.configureApplet(tab);
     }
@@ -1167,6 +772,11 @@ class CalendarPlusApplet extends Applet.Applet {
             this.system_clock = null;
         }
 
+        if (this._popupView) {
+            this._popupView.destroy();
+            this._popupView = null;
+        }
+
         if (this._calendar) {
             try {
                 this._calendar.destroy();
@@ -1174,6 +784,11 @@ class CalendarPlusApplet extends Applet.Applet {
                 global.logError(error);
             }
             this._calendar = null;
+        }
+
+        if (this._calendarEventSource) {
+            this._calendarEventSource.destroy();
+            this._calendarEventSource = null;
         }
 
         if (this.events_manager) {
@@ -1211,19 +826,18 @@ class CalendarPlusApplet extends Applet.Applet {
             }
         }
 
+        if (this._panelView) {
+            this._panelView.destroy();
+            this._panelView = null;
+        }
+
         this._calendar_system = null;
         this.desktop_settings = null;
         this.clock = null;
         this.menu = null;
         this.menuManager = null;
-        this._popupBody = null;
-        this._calendarColumn = null;
         this._resume_source = null;
         this._temporalPolicyCache = null;
-        this.go_home_button = null;
-        this._day = null;
-        this._date = null;
-        this._today_box = null;
     }
 }
 
