@@ -20,10 +20,17 @@ from pathlib import Path
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 APPLET_DIR = PROJECT_ROOT / "src/cinnamon"
 METADATA = json.loads((APPLET_DIR / "metadata.json").read_text(encoding="utf-8"))
+JS_BLOCK_COMMENT_RE = re.compile(r"/\*.*?\*/", re.DOTALL)
+JS_LINE_COMMENT_RE = re.compile(r"//.*?$", re.MULTILINE)
 
 
 def read(name: str) -> str:
     return (APPLET_DIR / name).read_text(encoding="utf-8")
+
+
+def js_code(source: str) -> str:
+    """Return JavaScript source with comments removed for dependency checks."""
+    return JS_LINE_COMMENT_RE.sub("", JS_BLOCK_COMMENT_RE.sub("", source))
 
 
 def require_tokens(source: str, *tokens: str) -> None:
@@ -70,7 +77,7 @@ def main() -> None:
 
     # Composition root: it wires modules, but concrete actor implementations
     # stay in the presentation leaves.
-    forbid_tokens(applet, "class CalendarPopupMenu", "class LatchedWidthBin")
+    forbid_tokens(js_code(applet), "class CalendarPopupMenu", "class LatchedWidthBin")
     assert {"calendar", "eventManager", "panelClock", "popupShell"}.issubset(
         loaded_modules(applet)
     )
@@ -86,8 +93,8 @@ def main() -> None:
     # Popup/Cinnamon compatibility stays isolated from the controller and month
     # view. The dedicated popup regression test covers the detailed mechanics.
     require_tokens(popup_menu, "class CalendarPopupMenu extends Applet.AppletPopupMenu")
-    forbid_tokens(calendar, "passEvents", "AppletPopupMenu")
-    forbid_tokens(event_manager, "passEvents", "AppletPopupMenu")
+    forbid_tokens(js_code(calendar), "passEvents", "AppletPopupMenu")
+    forbid_tokens(js_code(event_manager), "passEvents", "AppletPopupMenu")
 
     # The event transport controller must not know Cinnamon's concrete applet
     # settings object or preference keys. The composition root reduces the UI
@@ -95,7 +102,7 @@ def main() -> None:
     assert re.search(r"class EventsManager\s*\{\s*constructor\s*\(\s*\)", event_manager)
     require_tokens(event_manager, "set_enabled(enabled)", "this._enabled")
     forbid_tokens(
-        event_manager,
+        js_code(event_manager),
         "this.settings",
         "this.desktop_settings",
         "getValue(\"show-events\")",
@@ -110,13 +117,14 @@ def main() -> None:
     # Agenda presentation needs the desktop clock preference, not the complete
     # Calendar applet settings object.
     assert re.search(r"class EventList\s*\{\s*constructor\s*\(\s*desktop_settings\s*\)", event_view)
-    forbid_tokens(event_view, "this.settings", "constructor(settings,")
+    forbid_tokens(js_code(event_view), "this.settings", "constructor(settings,")
     assert re.search(
         r"new\s+PopupShell\.EventList\s*\(\s*this\.desktop_settings\s*\)", applet
     )
 
     # The month view receives a narrow event-source port; D-Bus and the native
-    # mutable event store remain behind EventsManager.
+    # mutable event store remain behind EventsManager. Comments may describe the
+    # boundary, so only executable JavaScript participates in negative checks.
     require_tokens(
         event_port,
         "var CalendarEventSource = class CalendarEventSource",
@@ -125,8 +133,11 @@ def main() -> None:
         "get_colors_for_range(firstDate, dayCount, maxColors)",
         "select_date(date, force)",
     )
-    forbid_tokens(event_port, "CalendarServer", "Gio.", "bus_watch", "event_store")
-    forbid_tokens(calendar, "CalendarServer", "Gio.", "bus_watch", "event_store", "EventManager")
+    forbid_tokens(js_code(event_port), "CalendarServer", "Gio.", "bus_watch", "event_store")
+    forbid_tokens(
+        js_code(calendar),
+        "CalendarServer", "Gio.", "bus_watch", "event_store", "EventManager"
+    )
 
     # Theme policy remains platform-authoritative and Common supplies the design
     # token catalogue. Verify semantic values rather than statement placement.
@@ -172,7 +183,7 @@ def main() -> None:
         "this._calendar.setCalendarSystem(temporal.calendar)",
     )
     forbid_tokens(
-        applet,
+        js_code(applet),
         "get_system_mode()",
         "get_system_calendar()",
         "get_system_show_seconds()",
@@ -205,7 +216,10 @@ def main() -> None:
         "CalendarPlus.date_weekday(",
         "CalendarPlus.date_is_work_day(",
     )
-    forbid_tokens(calendar, "_addCivilDays", "_gregorianWeekday", "while (cellsPlaced < 42)")
+    forbid_tokens(
+        js_code(calendar),
+        "_addCivilDays", "_gregorianWeekday", "while (cellsPlaced < 42)"
+    )
 
     # Request lifecycle state remains one object rather than a constellation of
     # controller flags.
@@ -216,7 +230,7 @@ def main() -> None:
     ):
         assert transition in event_range_state
     forbid_tokens(
-        event_manager,
+        js_code(event_manager),
         "_range_request_generation",
         "_range_request_pending",
         "_range_request_succeeded",
@@ -228,7 +242,7 @@ def main() -> None:
     # Runtime mechanics are centralized and long-lived owners use SignalBag.
     assert runtime.count("var SignalBag = class SignalBag") == 1
     for source in (applet, calendar, event_view, event_manager, panel_clock):
-        assert "class SignalBag" not in source
+        assert "class SignalBag" not in js_code(source)
     require_tokens(calendar, "new SignalBag()", "disconnectAll()")
     require_tokens(event_manager, "new SignalBag()", "disconnectAll()")
 
