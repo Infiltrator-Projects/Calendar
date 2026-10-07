@@ -7,7 +7,8 @@
  * This module owns no Cinnamon actors. CalendarServer tuples cross D-Bus once
  * and are immediately normalised by CalendarPlus.EventStore. Presentation is
  * notified through narrow agenda signals so transport/state code never reaches
- * into EventList or any other concrete view.
+ * into EventList or any other concrete view. User preference state crosses
+ * this boundary only as the abstract enabled flag supplied through set_enabled.
  */
 
 const CalendarPlus = imports.gi.CalendarPlus;
@@ -183,9 +184,8 @@ class EventSnapshot {
 }
 
 var EventsManager = class EventsManager {
-    constructor(settings, desktop_settings) {
-        this.settings = settings;
-        this.desktop_settings = desktop_settings;
+    constructor() {
+        this._enabled = true;
         this._destroyed = false;
         this._inited = false;
         this._bus_watch_id = 0;
@@ -217,6 +217,19 @@ var EventsManager = class EventsManager {
         this._timezone_monitor = null;
         this._timezone_monitor_signal_id = 0;
         this._startTimezoneMonitor();
+    }
+
+    set_enabled(enabled) {
+        if (this._destroyed) {
+            return;
+        }
+        const next = Boolean(enabled);
+        if (next === this._enabled) {
+            return;
+        }
+        this._enabled = next;
+        this.emit("has-calendars-changed");
+        this.emit("events-updated");
     }
 
     _publishAgendaDate(date) {
@@ -895,21 +908,21 @@ var EventsManager = class EventsManager {
         /*
          * Popup geometry must not depend on asynchronous D-Bus activation.
          * When events are enabled, reserve the agenda pane while CalendarServer
-         * is connecting or temporarily unavailable.  Collapse it only after an
+         * is connecting or temporarily unavailable. Collapse it only after an
          * authoritative server status says that no calendars exist.
          */
         const status = this._calendar_server !== null
             ? this._calendar_server.status
             : this._cached_state;
         return !this._destroyed &&
-            this.settings.getValue("show-events") &&
+            this._enabled &&
             status !== STATUS_NO_CALENDARS;
     }
 
     is_active() {
         return !this._destroyed &&
+            this._enabled &&
             this._inited &&
-            this.settings.getValue("show-events") &&
             this._calendar_server !== null &&
             this._calendar_server.status !== STATUS_NO_CALENDARS;
     }
@@ -919,6 +932,7 @@ var EventsManager = class EventsManager {
             return;
         }
         this._destroyed = true;
+        this._enabled = false;
         this._inited = false;
         this._calendar_server_generation += 1;
         this._rangeState.destroy();
@@ -971,8 +985,6 @@ var EventsManager = class EventsManager {
         }
 
         this._cancellable = null;
-        this.settings = null;
-        this.desktop_settings = null;
         this.current_selected_date = null;
         this.current_selected_civil = null;
         this.current_range_start = null;

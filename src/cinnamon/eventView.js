@@ -98,8 +98,10 @@ function _countdown(secondsUntilStart) {
 }
 
 var EventList = class EventList {
-    constructor(settings, desktop_settings) {
-        this.settings = settings;
+    constructor(desktop_settings) {
+        if (!desktop_settings) {
+            throw new Error("EventList: desktop settings are required.");
+        }
         this.desktop_settings = desktop_settings;
         this._destroyed = false;
         this.selected_date = GLib.DateTime.new_now_local();
@@ -450,7 +452,6 @@ var EventList = class EventList {
             this.actor.destroy();
             this.actor = null;
         }
-        this.settings = null;
         this.desktop_settings = null;
         this._backendSettings = null;
         this.selected_date = null;

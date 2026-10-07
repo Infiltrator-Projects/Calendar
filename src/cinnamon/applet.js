@@ -141,14 +141,8 @@ class CalendarPlusApplet extends Applet.Applet {
             }
         );
 
-        this.event_list = new PopupShell.EventList(
-            this.settings,
-            this.desktop_settings
-        );
-        this.events_manager = new EventManager.EventsManager(
-            this.settings,
-            this.desktop_settings
-        );
+        this.event_list = new PopupShell.EventList(this.desktop_settings);
+        this.events_manager = new EventManager.EventsManager();
         this._calendarEventSource = new PopupShell.CalendarEventSource(
             this.events_manager
         );
@@ -171,6 +165,7 @@ class CalendarPlusApplet extends Applet.Applet {
         );
 
         this._bindSettings();
+        this.events_manager.set_enabled(this.show_events);
         this._watchDesktopPreferences();
         this._watchPointerAndMenu();
         this._startResumeMonitor();
@@ -246,6 +241,7 @@ class CalendarPlusApplet extends Applet.Applet {
         if (this._destroyed || !this._calendar || !this.events_manager) {
             return;
         }
+        this.events_manager.set_enabled(this.show_events);
         this._calendar.refreshEventAvailability();
         this._syncEventVisibility(true);
     }
