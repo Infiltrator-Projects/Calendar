@@ -53,7 +53,9 @@ def main() -> int:
         actual = MANIFEST.read_text(encoding="utf-8") if MANIFEST.exists() else ""
         if actual != expected:
             raise SystemExit(
-                "src/cinnamon/runtime-sources.sha256 is stale; run make update-runtime-hashes"
+                "src/cinnamon/runtime-sources.sha256 is stale; "
+                "run make update-runtime-hashes\n\nExpected manifest:\n"
+                + expected
             )
         return 0
     MANIFEST.write_text(expected, encoding="utf-8")
