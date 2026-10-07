@@ -767,7 +767,7 @@ function evaluatePanelClock() {
                             "roman-temporal", "japanese-temporal",
                             "italian-hours", "babylonian-hours",
                             "indian-ghati", "chinese-ke", "nuremberg-hours",
-    "babylonian-ancient", "nuremberg-solar",
+                            "babylonian-ancient", "nuremberg-solar",
                         ];
                         return nativeModes.includes(mode) ? mode : 0;
                     },
@@ -1392,7 +1392,7 @@ function testCalendarKeyboardNavigation() {
 
 function testVisibleEventRange() {
     const { EventsManager, observations } = evaluateEventsManager();
-    const manager = new EventsManager({ getValue() { return true; } }, {});
+    const manager = new EventsManager();
     manager._inited = true;
     manager._calendar_server = {
         status: 2,
@@ -1446,7 +1446,7 @@ function testVisibleEventRange() {
 
 function testVisibleEventRangeFailureRecovery() {
     const { EventsManager, observations } = evaluateEventsManager();
-    const manager = new EventsManager({ getValue() { return true; } }, {});
+    const manager = new EventsManager();
     manager._inited = true;
     manager._calendar_server = {
         status: 2,
@@ -1511,7 +1511,7 @@ function testVisibleEventRangeFailureRecovery() {
 
 function testSuccessfulEmptyRangeReplacesPreviousGeneration() {
     const { EventsManager, observations } = evaluateEventsManager();
-    const manager = new EventsManager({ getValue() { return true; } }, {});
+    const manager = new EventsManager();
     manager._inited = true;
     manager._calendar_server = {
         status: 2,
@@ -1541,7 +1541,7 @@ function testSuccessfulEmptyRangeReplacesPreviousGeneration() {
 
 function testRangeAdmissionRejectsLateOutOfRangeSignals() {
     const { EventsManager, observations } = evaluateEventsManager();
-    const manager = new EventsManager({ getValue() { return true; } }, {});
+    const manager = new EventsManager();
     manager._inited = true;
     manager.current_range_start = {
         to_unix() { return 1000; },
@@ -1585,7 +1585,7 @@ function testRangeAdmissionRejectsLateOutOfRangeSignals() {
 
 function testRemovalSignalsInvalidateInsteadOfDeletingNewGeneration() {
     const { EventsManager, observations } = evaluateEventsManager();
-    const manager = new EventsManager({ getValue() { return true; } }, {});
+    const manager = new EventsManager();
     let queuedForce = null;
 
     manager.current_range_start = { to_unix() { return 1000; } };
@@ -1618,7 +1618,7 @@ function testRemovalSignalsInvalidateInsteadOfDeletingNewGeneration() {
 
 function testTimezoneReloadPreservesCivilRange() {
     const { EventsManager, observations } = evaluateEventsManager();
-    const manager = new EventsManager({ getValue() { return true; } }, {});
+    const manager = new EventsManager();
     const calls = [];
 
     manager.current_range_start = { to_unix() { return 1000; } };
@@ -1659,7 +1659,7 @@ function testTimezoneReloadPreservesCivilRange() {
 
 function testCalendarSetChangeClosesAdmission() {
     const { EventsManager, observations } = evaluateEventsManager();
-    const manager = new EventsManager({ getValue() { return true; } }, {});
+    const manager = new EventsManager();
     let queuedForce = null;
 
     manager.current_range_start = { to_unix() { return 1000; } };
@@ -1679,10 +1679,7 @@ function testCalendarSetChangeClosesAdmission() {
 function testServerLossClearsPresentedAgenda() {
     const { EventsManager, observations } = evaluateEventsManager();
     const presented = [];
-    const manager = new EventsManager(
-        { getValue() { return true; } },
-        {}
-    );
+    const manager = new EventsManager();
     manager.emit = (signal, ...args) => {
         if (signal === "agenda-events-changed") {
             presented.push(args);
@@ -1704,10 +1701,7 @@ function testServerLossClearsPresentedAgenda() {
 function testExpectedNoCalendarShutdownStaysAuthoritative() {
     const { EventsManager } = evaluateEventsManager();
     const presented = [];
-    const manager = new EventsManager(
-        { getValue() { return true; } },
-        {}
-    );
+    const manager = new EventsManager();
     manager.emit = (signal, ...args) => {
         if (signal === "agenda-events-changed") {
             presented.push(args);
@@ -1740,7 +1734,7 @@ function testBatchedEventColorBridge() {
         [],
         ["#445566", "#778899"],
     ];
-    const manager = new EventsManager({ getValue() { return true; } }, {});
+    const manager = new EventsManager();
     const result = manager.get_colors_for_range(
         new Date(Date.UTC(2026, 7, 2, 12, 0, 0)),
         3,
@@ -1985,7 +1979,7 @@ function testEventListCacheIdentity() {
     }
     function snapshot(summary) {
         return {
-            timestamp: 55,
+            revision: 55,
             get_event_list() {
                 return [{ summary, color: "#000000" }];
             },
@@ -2026,9 +2020,7 @@ function testEventListCacheIdentity() {
 function testEventsManagerPresentationState() {
     const { EventsManager } = evaluateEventsManager();
     const selectedDates = [];
-    let showEvents = true;
-    const settings = { getValue() { return showEvents; } };
-    const manager = new EventsManager(settings, {});
+    const manager = new EventsManager();
     manager.emit = (signal, ...args) => {
         if (signal === "agenda-date-changed") {
             selectedDates.push(args[0].to_unix());
@@ -2055,14 +2047,14 @@ function testEventsManagerPresentationState() {
     );
 
     manager._calendar_server = null;
-    showEvents = false;
+    manager.set_enabled(false);
     assert.equal(manager.should_show_event_pane(), false);
     manager.destroy();
 }
 
 function testEventsManagerPreservesPreEpochSelection() {
     const { EventsManager, observations } = evaluateEventsManager();
-    const manager = new EventsManager({ getValue() { return true; } }, {});
+    const manager = new EventsManager();
     const captured = [];
     manager.current_selected_civil = {
         year: 1969,
@@ -2087,8 +2079,7 @@ function testEventsManagerPreservesPreEpochSelection() {
 
 function testEventsManagerLifecycle() {
     const { EventsManager, observations } = evaluateEventsManager();
-    const settings = { getValue() { return true; } };
-    const manager = new EventsManager(settings, {});
+    const manager = new EventsManager();
 
     manager.start_events();
     manager.start_events();
@@ -2114,7 +2105,7 @@ function testEventsManagerLifecycle() {
 
 function testEventsManagerReconnect() {
     const { EventsManager, observations } = evaluateEventsManager();
-    const manager = new EventsManager({ getValue() { return true; } }, {});
+    const manager = new EventsManager();
     let nextSignalId = 1;
     const server = {
         status: 2,
