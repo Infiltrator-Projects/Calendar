@@ -12,7 +12,9 @@
 #include "time-formats-internal.h"
 #include "time-astronomy.h"
 
+#include <infiltratr/temporal.h>
 #include <math.h>
+#include <string.h>
 
 guint
 delay_sidereal_provider(gint64 unix_microseconds,
@@ -151,6 +153,80 @@ seasonal_period_at(gint64 unix_microseconds,
     return TRUE;
 }
 
+static gboolean
+roman_text_unchanged(gint64 unix_microseconds,
+                     gint utc_offset_seconds,
+                     gboolean show_seconds,
+                     gdouble latitude,
+                     gdouble longitude,
+                     guint delay_milliseconds,
+                     const char *initial)
+{
+    char text[128];
+    const gint64 future = unix_microseconds +
+        (gint64)delay_milliseconds * 1000;
+
+    return infiltratr_temporal_format_clock_mode(
+        "roman-temporal", future, utc_offset_seconds,
+        show_seconds != FALSE, false, true, latitude, longitude,
+        text, sizeof(text), NULL) && strcmp(text, initial) == 0;
+}
+
+static guint
+roman_display_boundary_delay(gint64 unix_microseconds,
+                             gint utc_offset_seconds,
+                             gboolean show_seconds,
+                             gdouble latitude,
+                             gdouble longitude,
+                             guint estimate)
+{
+    char initial[128];
+    const guint64 available =
+        ((guint64)G_MAXINT64 - (guint64)unix_microseconds) / 1000U;
+    const guint limit = (guint)MIN(available, (guint64)G_MAXUINT);
+    guint low = 0;
+    guint high;
+    guint search_limit;
+    guint step = 1;
+
+    if (limit == 0)
+        return 1;
+    if (!infiltratr_temporal_format_clock_mode(
+            "roman-temporal", unix_microseconds, utc_offset_seconds,
+            show_seconds != FALSE, false, true, latitude, longitude,
+            initial, sizeof(initial), NULL))
+        return estimate;
+
+    /* Apparent solar seconds and moving dawn/dusk are not SI seconds. Refine
+     * the analytical estimate against Common's actual text, so an early wake
+     * cannot skip a subdivision and leave the old label until the next one.
+     * This bounded calculation keeps the one-shot timer; it is not polling. */
+    high = MIN(MAX(estimate, 1U), limit);
+    search_limit = (guint)MIN((guint64)limit,
+                              (guint64)high + 3600000U);
+    while (roman_text_unchanged(unix_microseconds, utc_offset_seconds,
+                                show_seconds, latitude, longitude,
+                                high, initial))
+    {
+        if (high == search_limit)
+            return high;
+        low = high;
+        high = (guint)MIN((guint64)high + step, (guint64)search_limit);
+        step = step <= G_MAXUINT / 2U ? step * 2U : G_MAXUINT;
+    }
+    while (high - low > 1U)
+    {
+        const guint middle = low + (high - low) / 2U;
+        if (roman_text_unchanged(unix_microseconds, utc_offset_seconds,
+                                 show_seconds, latitude, longitude,
+                                 middle, initial))
+            low = middle;
+        else
+            high = middle;
+    }
+    return high;
+}
+
 guint
 delay_roman_temporal_provider(gint64 unix_microseconds,
                               gint utc_offset_seconds,
@@ -173,8 +249,10 @@ delay_roman_temporal_provider(gint64 unix_microseconds,
         return 3600000;
     }
 
-    return delay_continuous_microseconds_to_milliseconds(
-        period.seconds_to_next * G_USEC_PER_SEC);
+    return roman_display_boundary_delay(
+        unix_microseconds, utc_offset_seconds, show_seconds, latitude,
+        longitude, delay_continuous_microseconds_to_milliseconds(
+            period.seconds_to_next * G_USEC_PER_SEC));
 }
 
 /* Kansei-calendar dawn/dusk: solar centre 7°21′40″ below the horizon. */

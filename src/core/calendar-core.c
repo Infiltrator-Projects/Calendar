@@ -19,6 +19,7 @@
 #include "julian-day.h"
 
 #include <infiltratr/arithmetic.h>
+#include <infiltratr/core.h>
 #include <infiltratr/temporal.h>
 #include <string.h>
 
@@ -71,7 +72,7 @@ calendar_plus_format_date_v1(const char *calendar_id,
         g_free(text);
         return false;
     }
-    memcpy(buffer, text, size + 1);
+    infiltratr_copy_string(buffer, capacity, text);
     if (length != NULL)
         *length = size;
     g_free(text);

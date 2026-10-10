@@ -23,7 +23,7 @@ Temporal authority is explicitly guarded: the pinned Common 1.19.39 supplies the
 
 Automated CI remains authoritative for automated conformance of each commit. A live Cinnamon step that is unavailable is shown as skipped, not converted into a pass.
 
-The 1.0.84 automated temporal regressions cover the Chinese hourly `初`/`正` transition, Roman daylight uncia scheduling and the bounded native date-renderer ABI. These tests do not establish manual qualification of every calendar/clock combination in an installed Cinnamon session.
+The 1.0.84 automated temporal regressions cover the Chinese hourly `初`/`正` transition, the first actual displayed Roman whole-hour/uncia transition and the bounded native date-renderer ABI. These tests do not establish manual qualification of every calendar/clock combination in an installed Cinnamon session.
 
 ## Recorded live qualification
 

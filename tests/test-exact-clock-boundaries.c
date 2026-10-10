@@ -250,7 +250,7 @@ test_native_historical_precision_boundaries(void)
     g_assert_cmpuint(calendar_plus_time_delay_to_next_tick(
         CALENDAR_PLUS_TIME_MODE_CHINESE, 23 * 3600LL * G_USEC_PER_SEC,
         0, FALSE, 0.0), ==, 7200000);
-    const gint64 midday = 946728000LL * G_USEC_PER_SEC;
+    const gint64 midday = (946728000LL + 1200) * G_USEC_PER_SEC;
     const guint fine = calendar_plus_time_delay_to_next_tick_at_location(
         CALENDAR_PLUS_TIME_MODE_ROMAN_TEMPORAL, midday, 0, TRUE, 0.0, 0.0);
     const guint coarse = calendar_plus_time_delay_to_next_tick_at_location(
@@ -259,7 +259,18 @@ test_native_historical_precision_boundaries(void)
         CALENDAR_PLUS_TIME_MODE_ROMAN_TEMPORAL, midday, 0, TRUE, FALSE, 0.0, 0.0);
     g_assert_nonnull(strstr(fine_text, "uncia"));
     g_assert_cmpuint(fine, >, 0);
-    g_assert_cmpuint(fine, <=, coarse);
+    g_assert_cmpuint(fine, <, coarse);
+    /* A solar-phase estimate alone can wake before Common's label changes.
+     * The scheduled millisecond must be the first actual displayed change. */
+    const gint64 boundary = midday + (gint64)fine * 1000;
+    g_autofree gchar *before_tick = calendar_plus_format_time_at_location(
+        CALENDAR_PLUS_TIME_MODE_ROMAN_TEMPORAL, boundary - 1000,
+        0, TRUE, FALSE, 0.0, 0.0);
+    g_autofree gchar *at_tick = calendar_plus_format_time_at_location(
+        CALENDAR_PLUS_TIME_MODE_ROMAN_TEMPORAL, boundary,
+        0, TRUE, FALSE, 0.0, 0.0);
+    g_assert_cmpstr(before_tick, ==, fine_text);
+    g_assert_cmpstr(at_tick, !=, fine_text);
     const gint64 night = 946684800LL * G_USEC_PER_SEC;
     g_assert_cmpuint(calendar_plus_time_delay_to_next_tick_at_location(
         CALENDAR_PLUS_TIME_MODE_ROMAN_TEMPORAL, night, 0, TRUE, 0.0, 0.0),

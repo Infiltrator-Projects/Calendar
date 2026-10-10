@@ -398,10 +398,19 @@ test_tick_boundaries(void)
             calendar_plus_time_delay_to_next_tick_at_location(
                 japanese_mode, USECONDS(946728000), 0, FALSE, 0.0, 0.0);
 
-        /* Floating-point trig may round the boundary by a few milliseconds
-         * across libm implementations; the physical boundary is unchanged. */
-        g_assert_cmpuint(roman_delay, >=, 174200);
-        g_assert_cmpuint(roman_delay, <=, 174300);
+        /* Roman scheduling refines the solar-phase estimate into the first
+         * SI millisecond at which Common advances the displayed hour. */
+        g_assert_cmpuint(roman_delay, >=, 174250);
+        g_assert_cmpuint(roman_delay, <=, 174350);
+        g_autofree gchar *roman_before = calendar_plus_format_time_at_location(
+            roman_mode, USECONDS(946728000) + (gint64)roman_delay * 1000 - 1000,
+            0, FALSE, FALSE, 0.0, 0.0);
+        g_autofree gchar *roman_at = calendar_plus_format_time_at_location(
+            roman_mode, USECONDS(946728000) + (gint64)roman_delay * 1000,
+            0, FALSE, FALSE, 0.0, 0.0);
+        g_assert_cmpstr(roman_before, ==, "Hora VI");
+        g_assert_cmpstr(roman_at, ==, "Hora VII");
+        /* Japanese scheduling retains the existing solar-phase estimate. */
         g_assert_cmpuint(japanese_delay, >=, 174200);
         g_assert_cmpuint(japanese_delay, <=, 174300);
     }

@@ -10,6 +10,7 @@ No unreleased changes.
 
 - Pin Infiltratr Common 1.19.39 at `47c7f6fbe3560a7bd4b432c5cef2f7d0ab5cf419`, bringing native Chinese `時`/`初`/`正` clock forms and Roman daylight `unciae` to the panel clock.
 - Schedule Chinese finer precision at hourly half-shí boundaries and Roman finer precision at daylight uncia boundaries, while preserving the four-watch Roman night schedule.
+- Refine Roman wake-up estimates against Common's actual rendered transition; apparent-solar seconds and moving dawn/dusk cannot be treated as SI seconds without occasionally missing a label change.
 - Export the bounded `calendar_plus_format_date_v1` ABI from the existing native chronology engine so other applications can render the selected calendar through Common without duplicating conversion rules or loading GObject types.
 - Add native date-provider failure and historical clock-boundary regressions; refresh release metadata and runtime hashes.
 
