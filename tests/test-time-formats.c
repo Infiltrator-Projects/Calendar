@@ -236,21 +236,21 @@ test_historical_and_scientific_times(void)
 
     /* Zi spans 23:00-01:00 and Wu spans 11:00-13:00 civil time. */
     assert_time("chinese-time", USECONDS(0), 0,
-                FALSE, FALSE, 0.0, "子時");
+                FALSE, FALSE, 0.0, "Zǐ hour");
     assert_time("chinese-time", USECONDS(11 * 3600), 0,
-                FALSE, FALSE, 0.0, "午時");
+                FALSE, FALSE, 0.0, "Wǔ hour");
     /* Vertical layout changes separators, preserving native time notation. */
     assert_time("chinese-time", USECONDS(0), 0,
-                FALSE, TRUE, 0.0, "子\n時");
+                FALSE, TRUE, 0.0, "Zǐ\nHour");
     assert_time("chinese-time", USECONDS(23 * 3600), 0,
-                TRUE, FALSE, 0.0, "子初");
+                TRUE, FALSE, 0.0, "Zǐ, first half");
     assert_time("chinese-time", USECONDS(0), 0,
-                TRUE, FALSE, 0.0, "子正");
+                TRUE, FALSE, 0.0, "Zǐ, second half");
 
     /* J2000 is just before apparent noon at Greenwich in the compact solar
      * model, placing it in the sixth Roman hour and third daytime toki. */
     assert_time_at_location("roman-temporal", j2000, 0,
-                            FALSE, FALSE, 0.0, 0.0, "Hora VI");
+                            FALSE, FALSE, 0.0, 0.0, "Hour VI");
     assert_time_at_location("japanese-temporal", j2000, 0,
                             FALSE, FALSE, 0.0, 0.0, "巳 4 Snake");
     assert_time_at_location("japanese-temporal-early", j2000, 0,
@@ -267,12 +267,12 @@ test_historical_and_scientific_times(void)
     assert_time_at_location("indian-ghati", j2000, 0,
                             FALSE, FALSE, 0.0, 0.0, "15 ghaṭī · 1 pala");
     assert_time("chinese-ke", USECONDS(0), 0,
-                FALSE, FALSE, 0.0, "00刻");
+                FALSE, FALSE, 0.0, "00 kè");
     assert_time_at_location("nuremberg-hours", j2000, 0,
                             TRUE, FALSE, 0.0, 0.0,
                             "04:41:24 NUR-D");
     assert_time("chinese-ke", USECONDS(12 * 3600), 0,
-                FALSE, FALSE, 0.0, "50刻");
+                FALSE, FALSE, 0.0, "50 kè");
 
     /* At a pole near the June solstice no requested solar boundary exists. */
     assert_time_at_location("roman-temporal", USECONDS(962409600), 0,
@@ -408,8 +408,8 @@ test_tick_boundaries(void)
         g_autofree gchar *roman_at = calendar_plus_format_time_at_location(
             roman_mode, USECONDS(946728000) + (gint64)roman_delay * 1000,
             0, FALSE, FALSE, 0.0, 0.0);
-        g_assert_cmpstr(roman_before, ==, "Hora VI");
-        g_assert_cmpstr(roman_at, ==, "Hora VII");
+        g_assert_cmpstr(roman_before, ==, "Hour VI");
+        g_assert_cmpstr(roman_at, ==, "Hour VII");
         /* Japanese scheduling retains the existing solar-phase estimate. */
         g_assert_cmpuint(japanese_delay, >=, 174200);
         g_assert_cmpuint(japanese_delay, <=, 174300);
@@ -465,8 +465,8 @@ test_clock_lifecycle(void)
         clock, "roman-temporal", FALSE, FALSE, 0.0, 0.0);
     g_clear_pointer(&current_time, g_free);
     current_time = calendar_plus_system_clock_get_time(clock);
-    g_assert_true(g_str_has_prefix(current_time, "Hora") ||
-                  g_str_has_prefix(current_time, "Vigilia"));
+    g_assert_true(g_str_has_prefix(current_time, "Hour") ||
+                  g_str_has_prefix(current_time, "Watch"));
 
     calendar_plus_system_clock_start_at_location(
         clock, "roman-temporal", FALSE, FALSE, NAN, 0.0);

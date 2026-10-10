@@ -48,7 +48,13 @@ make_icu_locale(const gchar *calendar_keyword,
         locale_capacity <= 0)
         return FALSE;
 
-    infiltratr_copy_string(locale, (size_t)locale_capacity, uloc_getDefault());
+    /* Date and clock wording share the desktop's UI language, including a
+     * LANGUAGE preference that differs from LC_TIME/ICU's process default. */
+    const gchar *language = g_get_language_names()[0];
+    if (infiltratr_string_equal(language, "C") ||
+        infiltratr_string_equal(language, "POSIX"))
+        language = "en_US";
+    infiltratr_copy_string(locale, (size_t)locale_capacity, language);
     uloc_setKeywordValue("calendar",
                          calendar_keyword,
                          locale,

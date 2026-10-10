@@ -138,6 +138,40 @@ test_calendar_reference_vectors(void)
 
 
 static void
+test_ui_language_calendar_presentation(void)
+{
+    g_autofree gchar *saved_language = g_strdup(g_getenv("LANGUAGE"));
+    CalendarPlusCalendarEngine *engine = calendar_plus_calendar_engine_new("chinese");
+    const CalendarPlusDate date = { 2026, 10, 10 };
+    char bridge_text[512];
+
+    g_assert_nonnull(engine);
+    g_assert_true(g_setenv("LANGUAGE", "en_AU", TRUE));
+    g_autofree gchar *english = calendar_plus_calendar_engine_format_date(
+        engine, &date, CALENDAR_PLUS_DATE_PART_SHORT);
+    g_assert_cmpstr(english, ==, "1 Ninth Month 2026 (bing-wu)");
+    g_assert_true(calendar_plus_format_date_v1("chinese", 2026, 10, 10,
+        "short", bridge_text, sizeof(bridge_text), NULL));
+    g_assert_cmpstr(bridge_text, ==, english);
+
+    g_assert_true(g_setenv("LANGUAGE", "zh_TW", TRUE));
+    g_autofree gchar *chinese = calendar_plus_calendar_engine_format_date(
+        engine, &date, CALENDAR_PLUS_DATE_PART_SHORT);
+    g_assert_nonnull(strstr(chinese, "九月"));
+    g_assert_nonnull(strstr(chinese, "丙午"));
+    g_assert_null(strstr(chinese, "Ninth"));
+    g_assert_true(calendar_plus_format_date_v1("chinese", 2026, 10, 10,
+        "short", bridge_text, sizeof(bridge_text), NULL));
+    g_assert_cmpstr(bridge_text, ==, chinese);
+
+    if (saved_language != NULL)
+        g_assert_true(g_setenv("LANGUAGE", saved_language, TRUE));
+    else
+        g_unsetenv("LANGUAGE");
+    calendar_plus_calendar_engine_free(engine);
+}
+
+static void
 test_historical_calendar_edge_vectors(void)
 {
     const CalendarPlusCalendarProvider *roman =
@@ -1103,6 +1137,8 @@ main(int argc,
                     test_bounded_calendar_navigation_failure);
     g_test_add_func("/portable/calendar-reference-vectors",
                     test_calendar_reference_vectors);
+    g_test_add_func("/portable/ui-language-calendar-presentation",
+                    test_ui_language_calendar_presentation);
     g_test_add_func("/portable/historical-calendar-edge-vectors",
                     test_historical_calendar_edge_vectors);
     g_test_add_func("/portable/gregorian-proleptic-cutover",

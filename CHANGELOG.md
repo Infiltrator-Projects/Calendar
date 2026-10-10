@@ -6,6 +6,12 @@ This changelog records user-visible, compatibility, architecture and validation 
 
 No unreleased changes.
 
+## 1.0.85 - 2026-10-10
+
+- Pin Common 1.19.40 and render Chinese/Roman clock wording in the desktop UI language while preserving native time units, Roman numerals and clock boundaries.
+- Make ICU-backed calendar dates use the same UI-language preference as clock text, including LANGUAGE overrides of the process locale. English Chinese dates remain English; selecting a Chinese calendar does not change the language.
+- Cover English/Chinese date-provider parity and native-boundary scheduling with localized text. No calendar conversion, timestamp or persisted temporal selection changes.
+
 ## 1.0.84 - 2026-10-10
 
 - Pin Infiltratr Common 1.19.39 at `47c7f6fbe3560a7bd4b432c5cef2f7d0ab5cf419`, bringing native Chinese `時`/`初`/`正` clock forms and Roman daylight `unciae` to the panel clock.

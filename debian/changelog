@@ -1,3 +1,12 @@
+infiltrator-calendar (1.0.85) unstable; urgency=medium
+
+  * Pin Common 1.19.40 for UI-language-aware Chinese and Roman clocks.
+  * Align shared calendar date wording with the desktop UI language.
+  * Preserve native units, Roman numerals and exact clock boundaries.
+  * Qualify both languages through the native date-provider boundary.
+
+ -- Shannon Smith <noreply@the-infiltratr.com>  Sat, 10 Oct 2026 18:45:00 +1100
+
 infiltrator-calendar (1.0.84) unstable; urgency=medium
 
   * Pin Common 1.19.39 for native Chinese and Roman clock precision.

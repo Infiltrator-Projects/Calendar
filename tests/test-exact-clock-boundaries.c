@@ -238,8 +238,8 @@ test_native_historical_precision_boundaries(void)
         CALENDAR_PLUS_TIME_MODE_CHINESE, before, 0, TRUE, FALSE, 0.0);
     g_autofree gchar *next = calendar_plus_format_time(
         CALENDAR_PLUS_TIME_MODE_CHINESE, before + 1, 0, TRUE, FALSE, 0.0);
-    g_assert_cmpstr(initial, ==, "子正");
-    g_assert_cmpstr(next, ==, "丑初");
+    g_assert_cmpstr(initial, ==, "Zǐ, second half");
+    g_assert_cmpstr(next, ==, "Chǒu, first half");
     g_assert_cmpuint(calendar_plus_time_delay_to_next_tick(
         CALENDAR_PLUS_TIME_MODE_CHINESE, before, 0, TRUE, 0.0), ==, 1);
 
@@ -257,7 +257,7 @@ test_native_historical_precision_boundaries(void)
         CALENDAR_PLUS_TIME_MODE_ROMAN_TEMPORAL, midday, 0, FALSE, 0.0, 0.0);
     g_autofree gchar *fine_text = calendar_plus_format_time_at_location(
         CALENDAR_PLUS_TIME_MODE_ROMAN_TEMPORAL, midday, 0, TRUE, FALSE, 0.0, 0.0);
-    g_assert_nonnull(strstr(fine_text, "uncia"));
+    g_assert_nonnull(strstr(fine_text, "twelfth"));
     g_assert_cmpuint(fine, >, 0);
     g_assert_cmpuint(fine, <, coarse);
     /* A solar-phase estimate alone can wake before Common's label changes.
@@ -306,6 +306,7 @@ int
 main(int argc, char **argv)
 {
     g_test_init(&argc, &argv, NULL);
+    g_assert_true(g_setenv("LANGUAGE", "en_US", TRUE));
     g_test_add_func("/exact-clock/decimal-boundaries",
                     test_decimal_exact_boundaries);
     g_test_add_func("/exact-clock/hex-rational-boundary",

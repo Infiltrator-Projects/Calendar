@@ -258,8 +258,8 @@ calendar_plus_format_time_at_location(CalendarPlusTimeMode mode, gint64 unix_mic
 
     if (!location_is_valid_for_provider(provider, latitude, longitude))
         return g_strdup("");
-    if (!infiltratr_temporal_format_clock_mode(
-            provider->common_id,
+    if (!infiltratr_temporal_format_clock_mode_localized(
+            g_get_language_names()[0], provider->common_id,
             unix_microseconds,
             utc_offset_seconds,
             show_seconds,
