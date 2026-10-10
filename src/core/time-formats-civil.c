@@ -95,7 +95,7 @@ delay_binary_provider(gint64 unix_microseconds,
 guint
 delay_chinese_provider(gint64 unix_microseconds,
                        gint utc_offset_seconds,
-                       gboolean show_seconds G_GNUC_UNUSED,
+                       gboolean show_seconds,
                        gdouble latitude G_GNUC_UNUSED,
                        gdouble longitude)
 {
@@ -106,7 +106,7 @@ delay_chinese_provider(gint64 unix_microseconds,
     (void)longitude;
     return delay_for_integer_period(
         shifted,
-        (gint64)2 * SECONDS_PER_HOUR * G_USEC_PER_SEC);
+        (gint64)(show_seconds ? 1 : 2) * SECONDS_PER_HOUR * G_USEC_PER_SEC);
 }
 
 

@@ -236,12 +236,16 @@ test_historical_and_scientific_times(void)
 
     /* Zi spans 23:00-01:00 and Wu spans 11:00-13:00 civil time. */
     assert_time("chinese-time", USECONDS(0), 0,
-                FALSE, FALSE, 0.0, "子 Zǐ (Rat)");
+                FALSE, FALSE, 0.0, "子時");
     assert_time("chinese-time", USECONDS(11 * 3600), 0,
-                FALSE, FALSE, 0.0, "午 Wǔ (Horse)");
-    /* Vertical layout changes separators only; it preserves pinyin tones. */
+                FALSE, FALSE, 0.0, "午時");
+    /* Vertical layout changes separators, preserving native time notation. */
     assert_time("chinese-time", USECONDS(0), 0,
-                FALSE, TRUE, 0.0, "子\nZǐ\n(Rat)");
+                FALSE, TRUE, 0.0, "子\n時");
+    assert_time("chinese-time", USECONDS(23 * 3600), 0,
+                TRUE, FALSE, 0.0, "子初");
+    assert_time("chinese-time", USECONDS(0), 0,
+                TRUE, FALSE, 0.0, "子正");
 
     /* J2000 is just before apparent noon at Greenwich in the compact solar
      * model, placing it in the sixth Roman hour and third daytime toki. */

@@ -155,3 +155,8 @@ CALENDAR_PLUS_2.8 {
         calendar_plus_date_add_days;
         calendar_plus_date_weekday;
 } CALENDAR_PLUS_2.7;
+
+CALENDAR_PLUS_2.9 {
+    global:
+        calendar_plus_format_date_v1;
+} CALENDAR_PLUS_2.8;

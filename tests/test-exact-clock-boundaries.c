@@ -14,6 +14,7 @@
 #include "time-astronomy.h"
 
 #include <glib.h>
+#include <string.h>
 
 static void
 test_decimal_exact_boundaries(void)
@@ -229,6 +230,67 @@ test_roman_extreme_format_is_bounded(void)
     g_assert_cmpstr(large, ==, "2147483647");
 }
 
+static void
+test_native_historical_precision_boundaries(void)
+{
+    const gint64 before = 3600LL * G_USEC_PER_SEC - 1;
+    g_autofree gchar *initial = calendar_plus_format_time(
+        CALENDAR_PLUS_TIME_MODE_CHINESE, before, 0, TRUE, FALSE, 0.0);
+    g_autofree gchar *next = calendar_plus_format_time(
+        CALENDAR_PLUS_TIME_MODE_CHINESE, before + 1, 0, TRUE, FALSE, 0.0);
+    g_assert_cmpstr(initial, ==, "子正");
+    g_assert_cmpstr(next, ==, "丑初");
+    g_assert_cmpuint(calendar_plus_time_delay_to_next_tick(
+        CALENDAR_PLUS_TIME_MODE_CHINESE, before, 0, TRUE, 0.0), ==, 1);
+
+    /* The half-shi boundary changes fine text but not the double-hour label. */
+    g_assert_cmpuint(calendar_plus_time_delay_to_next_tick(
+        CALENDAR_PLUS_TIME_MODE_CHINESE, 23 * 3600LL * G_USEC_PER_SEC,
+        0, TRUE, 0.0), ==, 3600000);
+    g_assert_cmpuint(calendar_plus_time_delay_to_next_tick(
+        CALENDAR_PLUS_TIME_MODE_CHINESE, 23 * 3600LL * G_USEC_PER_SEC,
+        0, FALSE, 0.0), ==, 7200000);
+    const gint64 midday = 946728000LL * G_USEC_PER_SEC;
+    const guint fine = calendar_plus_time_delay_to_next_tick_at_location(
+        CALENDAR_PLUS_TIME_MODE_ROMAN_TEMPORAL, midday, 0, TRUE, 0.0, 0.0);
+    const guint coarse = calendar_plus_time_delay_to_next_tick_at_location(
+        CALENDAR_PLUS_TIME_MODE_ROMAN_TEMPORAL, midday, 0, FALSE, 0.0, 0.0);
+    g_autofree gchar *fine_text = calendar_plus_format_time_at_location(
+        CALENDAR_PLUS_TIME_MODE_ROMAN_TEMPORAL, midday, 0, TRUE, FALSE, 0.0, 0.0);
+    g_assert_nonnull(strstr(fine_text, "uncia"));
+    g_assert_cmpuint(fine, >, 0);
+    g_assert_cmpuint(fine, <=, coarse);
+    const gint64 night = 946684800LL * G_USEC_PER_SEC;
+    g_assert_cmpuint(calendar_plus_time_delay_to_next_tick_at_location(
+        CALENDAR_PLUS_TIME_MODE_ROMAN_TEMPORAL, night, 0, TRUE, 0.0, 0.0),
+        ==, calendar_plus_time_delay_to_next_tick_at_location(
+        CALENDAR_PLUS_TIME_MODE_ROMAN_TEMPORAL, night, 0, FALSE, 0.0, 0.0));
+}
+
+static void
+test_date_renderer_runtime_contract(void)
+{
+    char buffer[512] = "keep";
+    size_t length = 99;
+
+    g_assert_true(calendar_plus_format_date_v1("roman", 2026, 7, 29,
+        "short", buffer, sizeof(buffer), &length));
+    g_assert_cmpstr(buffer, ==, "a.d. XVII Kal. Aug., MMDCCLXXIX A.U.C.");
+    g_assert_cmpuint(length, ==, strlen(buffer));
+    strcpy(buffer, "keep");
+    length = 99;
+    g_assert_false(calendar_plus_format_date_v1("roman", 2026, 7, 29,
+        "short", buffer, 5, &length));
+    g_assert_false(calendar_plus_format_date_v1("roman", 2026, 2, 30,
+        "short", buffer, sizeof(buffer), &length));
+    g_assert_false(calendar_plus_format_date_v1("unknown", 2026, 7, 29,
+        "short", buffer, sizeof(buffer), &length));
+    g_assert_false(calendar_plus_format_date_v1("roman", 2026, 7, 29,
+        "invalid", buffer, sizeof(buffer), &length));
+    g_assert_cmpstr(buffer, ==, "keep");
+    g_assert_cmpuint(length, ==, 99);
+}
+
 int
 main(int argc, char **argv)
 {
@@ -249,5 +311,9 @@ main(int argc, char **argv)
                     test_extreme_navigation_is_bounded);
     g_test_add_func("/date-domain/roman-format-bounded",
                     test_roman_extreme_format_is_bounded);
+    g_test_add_func("/exact-clock/native-historical-precision",
+                    test_native_historical_precision_boundaries);
+    g_test_add_func("/date-domain/runtime-formatter-contract",
+                    test_date_renderer_runtime_contract);
     return g_test_run();
 }

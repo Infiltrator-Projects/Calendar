@@ -65,6 +65,7 @@ calendar_plus_event_store_new@CALENDAR_PLUS_1.0
 calendar_plus_event_store_refresh_timezone@CALENDAR_PLUS_1.2
 calendar_plus_event_store_remove@CALENDAR_PLUS_1.0
 calendar_plus_event_timing@CALENDAR_PLUS_1.1
+calendar_plus_format_date_v1@CALENDAR_PLUS_2.9
 calendar_plus_format_time@CALENDAR_PLUS_1.0
 calendar_plus_format_time_at_location@CALENDAR_PLUS_2.1
 calendar_plus_get_build_profile@CALENDAR_PLUS_2.5

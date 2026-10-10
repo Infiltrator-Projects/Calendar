@@ -4,6 +4,8 @@
 
 Calendar separates platform-neutral chronology, clock scheduling, astronomy and event semantics from Cinnamon presentation, GObject/GVariant/main-loop adapters and reusable Common mechanisms. That separation is a correctness boundary: desktop code should present completed Calendar-owned state rather than becoming a second implementation of chronology or timekeeping rules.
 
+The versioned `calendar_plus_format_date_v1` export is a narrow cross-application boundary over the native chronology engine. It accepts a calendar ID, a Gregorian civil date and `short`/`full` presentation, writes bounded UTF-8 into caller storage, and leaves output unchanged on failure. Common's POSIX adapter owns discovery and validation of that entry point. This route does not construct GObject calendar types or transfer chronology into Common.
+
 ## First-principles design
 
 Calendar begins with the behaviour that chronology, astronomy, historical evidence and time standards actually justify rather than treating an existing desktop calendar as the specification.
@@ -25,7 +27,7 @@ platform-neutral Calendar domain contracts
                     ↓
 chronology / clocks / astronomy / event semantics
 
-ICU / CLDR                    Infiltratr Common 1.19.36
+ICU / CLDR                    Infiltratr Common 1.19.39
      ↓                                  ↓
 locale/calendar authority     reusable checked arithmetic /
 where explicitly delegated    formatting / timing / loading /
@@ -113,7 +115,7 @@ UTF-8, locale and translation handling must not become hidden chronology policy.
 
 If Calendar contains a stronger implementation of a capability that is fundamentally generic, the correct direction is to improve Common so its generic contract preserves that correctness, performance and resilience. Once Common is at least as strong, Calendar should consume it and remove the duplicate implementation.
 
-Do not weaken specialised chronology merely to increase reuse. Equally, do not preserve a private generic helper indefinitely when its advantages can be incorporated into Common. Common 1.19.36 is therefore consumed wherever its public contract is genuinely stronger or more general: checked/saturating arithmetic, timing, strings, dynamic loading, project metadata and the shared design/typography contract. Calendar does not manufacture artificial callers for unrelated Common APIs such as POSIX hardware readers, byte order helpers or graphics surfaces.
+Do not weaken specialised chronology merely to increase reuse. Equally, do not preserve a private generic helper indefinitely when its advantages can be incorporated into Common. Common 1.19.39 is therefore consumed wherever its public contract is genuinely stronger or more general: checked/saturating arithmetic, timing, strings, dynamic loading, project metadata and the shared design/typography contract. Calendar does not manufacture artificial callers for unrelated Common APIs such as POSIX hardware readers, byte order helpers or graphics surfaces.
 
 ## Native ABI and compatibility
 

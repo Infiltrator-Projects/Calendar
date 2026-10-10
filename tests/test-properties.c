@@ -750,9 +750,9 @@ test_time_registry_contract(void)
         CALENDAR_PLUS_TIME_MODE_INVALID);
     g_assert_false(calendar_plus_time_mode_supports_seconds(
         CALENDAR_PLUS_TIME_MODE_UNIX));
-    g_assert_false(calendar_plus_time_mode_supports_seconds(
+    g_assert_true(calendar_plus_time_mode_supports_seconds(
         CALENDAR_PLUS_TIME_MODE_CHINESE));
-    g_assert_false(calendar_plus_time_mode_supports_seconds(
+    g_assert_true(calendar_plus_time_mode_supports_seconds(
         CALENDAR_PLUS_TIME_MODE_ROMAN_TEMPORAL));
     g_assert_false(calendar_plus_time_mode_supports_seconds(
         CALENDAR_PLUS_TIME_MODE_JAPANESE_TEMPORAL));

@@ -1,3 +1,12 @@
+infiltrator-calendar (1.0.84) unstable; urgency=medium
+
+  * Pin Common 1.19.39 for native Chinese and Roman clock precision.
+  * Refresh the panel at half-shi and daylight uncia boundaries.
+  * Export the toolkit-neutral versioned date-renderer ABI for Common consumers.
+  * Qualify bounded date output and preserve existing calendar chronology.
+
+ -- Shannon Smith <noreply@the-infiltratr.com>  Sat, 10 Oct 2026 18:00:00 +1100
+
 infiltrator-calendar (1.0.83) unstable; urgency=medium
 
   * Isolate CalendarServer visible-range request lifecycle state behind

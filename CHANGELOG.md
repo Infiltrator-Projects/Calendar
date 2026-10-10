@@ -6,6 +6,13 @@ This changelog records user-visible, compatibility, architecture and validation 
 
 No unreleased changes.
 
+## 1.0.84 - 2026-10-10
+
+- Pin Infiltratr Common 1.19.39 at `47c7f6fbe3560a7bd4b432c5cef2f7d0ab5cf419`, bringing native Chinese `時`/`初`/`正` clock forms and Roman daylight `unciae` to the panel clock.
+- Schedule Chinese finer precision at hourly half-shí boundaries and Roman finer precision at daylight uncia boundaries, while preserving the four-watch Roman night schedule.
+- Export the bounded `calendar_plus_format_date_v1` ABI from the existing native chronology engine so other applications can render the selected calendar through Common without duplicating conversion rules or loading GObject types.
+- Add native date-provider failure and historical clock-boundary regressions; refresh release metadata and runtime hashes.
+
 ## 1.0.83 - 2026-10-07
 
 - Isolate CalendarServer visible-range request lifecycle state behind `EventRangeState`, so generation, admission, queued-force and retry transitions have one owner.

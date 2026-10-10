@@ -20,11 +20,63 @@
 
 #include <infiltratr/arithmetic.h>
 #include <infiltratr/temporal.h>
+#include <string.h>
 
 struct _CalendarPlusCalendarEngine
 {
     const CalendarPlusCalendarProvider *provider;
 };
+
+bool
+calendar_plus_format_date_v1(const char *calendar_id,
+                            int32_t gregorian_year,
+                            int32_t gregorian_month,
+                            int32_t gregorian_day,
+                            const char *part,
+                            char *buffer,
+                            size_t capacity,
+                            size_t *length)
+{
+    const CalendarPlusDate date = {
+        gregorian_year, gregorian_month, gregorian_day
+    };
+    CalendarPlusDatePart date_part;
+    CalendarPlusCalendarEngine *engine;
+    gchar *text;
+    size_t size;
+
+    if (buffer == NULL || capacity == 0 || part == NULL ||
+        !calendar_plus_date_is_valid(&date))
+        return false;
+    if (strcmp(part, "short") == 0)
+        date_part = CALENDAR_PLUS_DATE_PART_SHORT;
+    else if (strcmp(part, "full") == 0)
+        date_part = CALENDAR_PLUS_DATE_PART_FULL;
+    else
+        return false;
+
+    engine = calendar_plus_calendar_engine_new(calendar_id);
+    if (engine == NULL)
+        return false;
+    text = calendar_plus_calendar_engine_format_date(engine, &date, date_part);
+    calendar_plus_calendar_engine_free(engine);
+    if (text == NULL || text[0] == '\0')
+    {
+        g_free(text);
+        return false;
+    }
+    size = strlen(text);
+    if (size >= capacity)
+    {
+        g_free(text);
+        return false;
+    }
+    memcpy(buffer, text, size + 1);
+    if (length != NULL)
+        *length = size;
+    g_free(text);
+    return true;
+}
 
 static gboolean
 date_to_jdn(const CalendarPlusDate *date,

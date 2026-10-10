@@ -154,7 +154,7 @@ seasonal_period_at(gint64 unix_microseconds,
 guint
 delay_roman_temporal_provider(gint64 unix_microseconds,
                               gint utc_offset_seconds,
-                              gboolean show_seconds G_GNUC_UNUSED,
+                              gboolean show_seconds,
                               gdouble latitude,
                               gdouble longitude)
 {
@@ -165,7 +165,8 @@ delay_roman_temporal_provider(gint64 unix_microseconds,
                             latitude,
                             longitude,
                             0.833,
-                            12,
+                            /* Twelve unciae within each of twelve horae. */
+                            show_seconds ? 144 : 12,
                             4,
                             &period))
     {

@@ -13,6 +13,9 @@
 #define CALENDAR_PLUS_CALENDAR_CORE_H
 
 #include "calendar-types.h"
+#include <stdbool.h>
+#include <stddef.h>
+#include <stdint.h>
 
 G_BEGIN_DECLS
 
@@ -99,6 +102,22 @@ gchar *calendar_plus_calendar_engine_format_date(
     const CalendarPlusCalendarEngine *engine,
     const CalendarPlusDate *date,
     CalendarPlusDatePart part);
+
+/*
+ * Versioned, toolkit-free runtime ABI consumed by Common's optional POSIX date
+ * bridge. Parts are "short" and "full". Caller owns buffer; buffer and length
+ * remain unchanged on invalid/unavailable output or insufficient capacity.
+ * This uses the same chronology as the engine/GObject/Cinnamon surfaces.
+ */
+bool calendar_plus_format_date_v1(
+    const char *calendar_id,
+    int32_t gregorian_year,
+    int32_t gregorian_month,
+    int32_t gregorian_day,
+    const char *part,
+    char *buffer,
+    size_t capacity,
+    size_t *length);
 /**
  * calendar_plus_calendar_engine_period_start:
  * @engine: calendar engine
