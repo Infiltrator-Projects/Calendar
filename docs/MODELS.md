@@ -38,10 +38,14 @@ These classes have different authorities and should not be described as though t
 | Gregorian, Hebrew, Persian, Indian, Coptic, Ethiopic, Buddhist, Japanese, Minguo, Islamic civil/tabular and Umm al-Qura arithmetic/navigation | Calendar deterministic native algorithms, with locale-sensitive formatting still delegated to ICU/CLDR |
 | Computational Islamic, Chinese and Dangi lunisolar conversion/navigation | ICU/CLDR calendar implementations |
 | Julian, ISO week, French Republican, Roman, Mayan, Badíʿ, International Fixed, World, Positivist, Revised Julian, Byzantine Anno Mundi, Egyptian civil (Nabonassar era) and traditional Armenian calendars | Calendar deterministic native algorithms |
-| French Republican decimal, Internet, Unix, hexadecimal, binary and Chinese hundred-kè clocks | Infiltratr Common 1.19.39 canonical clock renderer; Calendar retains exact display-boundary scheduling |
-| Sidereal, solar, Roman temporal, Edo seasonal, Italian, Babylonian-hour, Indian ghaṭī and Nuremberg clocks | Infiltratr Common 1.19.39 canonical clock renderer using configured coordinates; Calendar retains astronomical boundary scheduling |
+| French Republican decimal, Internet, Unix, hexadecimal, binary and Chinese hundred-kè clocks | Infiltratr Common 1.19.41 canonical clock renderer; Calendar retains exact display-boundary scheduling |
+| Sidereal, solar, Roman temporal, Edo seasonal, Italian, Babylonian-hour, Indian ghaṭī and Nuremberg clocks | Infiltratr Common 1.19.41 canonical clock renderer using configured coordinates; Calendar retains astronomical boundary scheduling |
 
 Sweden's 1700–1753 civil calendar is modelled explicitly, including 30 February 1712.
+
+Chinese and Dangi date/year labels use ICU/CLDR's localized native cyclic year names (`U`), such as `bing-wu`, `丙午` or `병오`. They do not add a related Gregorian year (`r`) or display a bare cycle-year counter (`y`). These traditional names repeat every sixty years; canonical civil coordinates and navigation retain the complete underlying date independently of the displayed name. The UI language controls wording without changing calendar day/month/year rules. Calendar's bounded date ABI supplies the same presentation to Common, Files and System Settings.
+
+Edo clock timestamps use Japanese branch names and traditional bell numerals, with surrounding wording in the UI language. Branch names distinguish the repeated day/night bell counts; English animal explanations belong outside timestamps. The two documented solar-boundary models remain separate. Conventional 12-hour clock markers follow the requested locale, including locale-specific ordering, through Common.
 
 ## Range and continuation matrix
 

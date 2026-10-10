@@ -6,6 +6,12 @@ This changelog records user-visible, compatibility, architecture and validation 
 
 No unreleased changes.
 
+## 1.0.86 - 2026-10-10
+
+- Render Chinese and Korean Dangi dates with localized native cyclic year names in full dates, short dates and year headings. Remove the added Gregorian reference year from Chinese dates and the unexplained numeric cycle counter from Dangi dates.
+- Pin Common 1.19.41 for traditional Edo bell numerals, UI-language-aware branch/clock wording and locale-correct 12-hour markers.
+- Qualify native date output and the shared bounded ABI across English, Chinese and Korean, including the lunar new-year boundary. Preserve calendar conversion, navigation and clock boundary calculations.
+
 ## 1.0.85 - 2026-10-10
 
 - Pin Common 1.19.40 and render Chinese/Roman clock wording in the desktop UI language while preserving native time units, Roman numerals and clock boundaries.

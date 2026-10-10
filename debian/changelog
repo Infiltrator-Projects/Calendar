@@ -1,3 +1,12 @@
+infiltrator-calendar (1.0.86) unstable; urgency=medium
+
+  * Use native cyclic year names in Chinese and Dangi date/year labels.
+  * Remove the Chinese Gregorian reference year and bare Dangi cycle counter.
+  * Pin Common 1.19.41 for native Edo bell counts and localized 12-hour markers.
+  * Qualify shared date output and lunar year boundaries across UI languages.
+
+ -- Shannon Smith <noreply@the-infiltratr.com>  Sat, 10 Oct 2026 19:40:05 +1100
+
 infiltrator-calendar (1.0.85) unstable; urgency=medium
 
   * Pin Common 1.19.40 for UI-language-aware Chinese and Roman clocks.

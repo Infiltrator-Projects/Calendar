@@ -183,6 +183,12 @@ pattern_for_part(CalendarPlusCalendarMode mode,
         mode == CALENDAR_PLUS_CALENDAR_MODE_BUDDHIST ||
         mode == CALENDAR_PLUS_CALENDAR_MODE_JAPANESE ||
         mode == CALENDAR_PLUS_CALENDAR_MODE_MINGUO;
+    /* These lunisolar calendars name years in their native sixty-year cycle.
+     * `r` would inject a Gregorian reference year; `y` alone is only an
+     * unexplained 1..60 counter. ICU's `U` supplies the localized year name. */
+    const gboolean cyclic_year =
+        mode == CALENDAR_PLUS_CALENDAR_MODE_CHINESE ||
+        mode == CALENDAR_PLUS_CALENDAR_MODE_DANGI;
     const gboolean omit_era =
         mode == CALENDAR_PLUS_CALENDAR_MODE_GREGORIAN ||
         mode == CALENDAR_PLUS_CALENDAR_MODE_PERSIAN ||
@@ -199,21 +205,21 @@ pattern_for_part(CalendarPlusCalendarMode mode,
         return "LLLL";
     if (part == CALENDAR_PLUS_DATE_PART_YEAR)
     {
-        if (mode == CALENDAR_PLUS_CALENDAR_MODE_CHINESE)
-            return "r (U)";
+        if (cyclic_year)
+            return "U";
         return era_calendar ? "G y" : "y";
     }
     if (part == CALENDAR_PLUS_DATE_PART_FULL)
     {
-        if (mode == CALENDAR_PLUS_CALENDAR_MODE_CHINESE)
-            return "EEEE, d MMMM r (U)";
+        if (cyclic_year)
+            return "EEEE, d MMMM U";
         if (era_calendar)
             return "EEEE, d MMMM G y";
         return omit_era ? "EEEE, d MMMM y" : "EEEE, d MMMM y G";
     }
 
-    if (mode == CALENDAR_PLUS_CALENDAR_MODE_CHINESE)
-        return "d MMMM r (U)";
+    if (cyclic_year)
+        return "d MMMM U";
     if (era_calendar)
         return "d MMMM G y";
     return omit_era ? "d MMMM y" : "d MMMM y G";

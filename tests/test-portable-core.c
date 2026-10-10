@@ -61,8 +61,8 @@ test_calendar_reference_vectors(void)
      * Stable civil/epoch anchors exercise every registered provider without
      * relying on locale-sensitive month names.  Most vectors are epoch/new-
      * year identities; Chinese year numbering is intentionally left open
-     * because ICU exposes the sexagenary-cycle year separately from the
-     * related Gregorian year used for display.
+     * because ICU exposes the sexagenary-cycle counter separately from the
+     * native year name used for display.
      */
     static const CalendarReferenceVector vectors[] = {
         { "gregorian", 2000, 1, 1, 2000, 1, 1 },
@@ -149,7 +149,7 @@ test_ui_language_calendar_presentation(void)
     g_assert_true(g_setenv("LANGUAGE", "en_AU", TRUE));
     g_autofree gchar *english = calendar_plus_calendar_engine_format_date(
         engine, &date, CALENDAR_PLUS_DATE_PART_SHORT);
-    g_assert_cmpstr(english, ==, "1 Ninth Month 2026 (bing-wu)");
+    g_assert_cmpstr(english, ==, "1 Ninth Month bing-wu");
     g_assert_true(calendar_plus_format_date_v1("chinese", 2026, 10, 10,
         "short", bridge_text, sizeof(bridge_text), NULL));
     g_assert_cmpstr(bridge_text, ==, english);
@@ -159,6 +159,7 @@ test_ui_language_calendar_presentation(void)
         engine, &date, CALENDAR_PLUS_DATE_PART_SHORT);
     g_assert_nonnull(strstr(chinese, "九月"));
     g_assert_nonnull(strstr(chinese, "丙午"));
+    g_assert_null(strstr(chinese, "2026"));
     g_assert_null(strstr(chinese, "Ninth"));
     g_assert_true(calendar_plus_format_date_v1("chinese", 2026, 10, 10,
         "short", bridge_text, sizeof(bridge_text), NULL));
@@ -169,6 +170,62 @@ test_ui_language_calendar_presentation(void)
     else
         g_unsetenv("LANGUAGE");
     calendar_plus_calendar_engine_free(engine);
+}
+
+static void
+test_native_cyclic_year_presentation(void)
+{
+    g_autofree gchar *saved_language = g_strdup(g_getenv("LANGUAGE"));
+    const gchar *calendars[] = { "chinese", "dangi" };
+    const CalendarPlusDate before_new_year = { 2026, 1, 1 };
+    const CalendarPlusDate new_year = { 2026, 2, 17 };
+    const CalendarPlusDate date = { 2026, 10, 10 };
+    const CalendarPlusDatePart parts[] = {
+        CALENDAR_PLUS_DATE_PART_SHORT,
+        CALENDAR_PLUS_DATE_PART_FULL,
+        CALENDAR_PLUS_DATE_PART_YEAR
+    };
+    char bridge[512];
+
+    for (gsize i = 0; i < G_N_ELEMENTS(calendars); i++)
+    {
+        CalendarPlusCalendarEngine *engine =
+            calendar_plus_calendar_engine_new(calendars[i]);
+        g_assert_nonnull(engine);
+        g_assert_true(g_setenv("LANGUAGE", "en_AU", TRUE));
+        for (gsize p = 0; p < G_N_ELEMENTS(parts); p++)
+        {
+            g_autofree gchar *text = calendar_plus_calendar_engine_format_date(
+                engine, &date, parts[p]);
+            g_assert_nonnull(strstr(text, "bing-wu"));
+            g_assert_null(strstr(text, "2026"));
+            g_assert_null(strstr(text, "43"));
+        }
+        g_autofree gchar *before = calendar_plus_calendar_engine_format_date(
+            engine, &before_new_year, CALENDAR_PLUS_DATE_PART_YEAR);
+        g_autofree gchar *after = calendar_plus_calendar_engine_format_date(
+            engine, &new_year, CALENDAR_PLUS_DATE_PART_YEAR);
+        g_assert_cmpstr(before, ==, "yi-si");
+        g_assert_cmpstr(after, ==, "bing-wu");
+        g_assert_true(calendar_plus_format_date_v1(calendars[i], 2026, 10, 10,
+            "full", bridge, sizeof(bridge), NULL));
+        g_assert_nonnull(strstr(bridge, "bing-wu"));
+        g_assert_null(strstr(bridge, "2026"));
+
+        g_assert_true(g_setenv("LANGUAGE", "zh_TW", TRUE));
+        g_autofree gchar *chinese = calendar_plus_calendar_engine_format_date(
+            engine, &date, CALENDAR_PLUS_DATE_PART_YEAR);
+        g_assert_cmpstr(chinese, ==, "丙午");
+        g_assert_true(g_setenv("LANGUAGE", "ko_KR", TRUE));
+        g_autofree gchar *korean = calendar_plus_calendar_engine_format_date(
+            engine, &date, CALENDAR_PLUS_DATE_PART_YEAR);
+        g_assert_cmpstr(korean, ==, "병오");
+        calendar_plus_calendar_engine_free(engine);
+    }
+    if (saved_language != NULL)
+        g_assert_true(g_setenv("LANGUAGE", saved_language, TRUE));
+    else
+        g_unsetenv("LANGUAGE");
 }
 
 static void
@@ -1139,6 +1196,8 @@ main(int argc,
                     test_calendar_reference_vectors);
     g_test_add_func("/portable/ui-language-calendar-presentation",
                     test_ui_language_calendar_presentation);
+    g_test_add_func("/portable/native-cyclic-year-presentation",
+                    test_native_cyclic_year_presentation);
     g_test_add_func("/portable/historical-calendar-edge-vectors",
                     test_historical_calendar_edge_vectors);
     g_test_add_func("/portable/gregorian-proleptic-cutover",

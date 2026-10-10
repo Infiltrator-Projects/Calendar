@@ -252,9 +252,9 @@ test_historical_and_scientific_times(void)
     assert_time_at_location("roman-temporal", j2000, 0,
                             FALSE, FALSE, 0.0, 0.0, "Hour VI");
     assert_time_at_location("japanese-temporal", j2000, 0,
-                            FALSE, FALSE, 0.0, 0.0, "巳 4 Snake");
+                            FALSE, FALSE, 0.0, 0.0, "Mi · 四 bells");
     assert_time_at_location("japanese-temporal-early", j2000, 0,
-                            FALSE, FALSE, 0.0, 0.0, "巳 4 Snake");
+                            FALSE, FALSE, 0.0, 0.0, "Mi · 四 bells");
 
     /*
      * Equal-hour sundial conventions keep ordinary 60-minute hours but move
