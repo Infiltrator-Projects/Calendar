@@ -67,6 +67,25 @@ jobs:
           path.write_text(source, encoding="utf-8")
           PY
           python3 tools/harden-top-three.py
+          python3 - <<'PY'
+          from pathlib import Path
+          path = Path("tests/test-settings.py")
+          source = path.read_text(encoding="utf-8")
+          old = '    assert re.search(r"class EventsManager\\s*\\{\\s*constructor\\s*\\(\\s*\\)", event_manager)\n'
+          new = (
+              '    assert re.search(\n'
+              '        r"class EventsManager\\s*\\{\\s*constructor\\s*\\(\\s*transport\\s*=\\s*null\\s*\\)",\n'
+              '        event_manager,\n'
+              '    )\n'
+              '    require_tokens(\n'
+              '        event_manager,\n'
+              '        "this._transport = transport || new CalendarServerTransport()",\n'
+              '    )\n'
+          )
+          if source.count(old) != 1:
+              raise SystemExit("could not locate obsolete EventsManager constructor assertion")
+          path.write_text(source.replace(old, new, 1), encoding="utf-8")
+          PY
           python3 tools/update-runtime-hashes.py
           git diff --check
 
