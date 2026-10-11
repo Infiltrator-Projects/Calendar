@@ -10,8 +10,15 @@ let nextId = 1;
 const timeouts = new Map();
 const idles = new Map();
 const observations = {
-    clears: 0, addCalls: [], rangeRequests: [], timezoneCancels: 0,
-    timezoneDisconnects: 0, transportDestroys: 0,
+    clears: 0,
+    addCalls: [],
+    rangeRequests: [],
+    timezoneCancels: 0,
+    timezoneDisconnects: 0,
+    transportDestroys: 0,
+    logs: [],
+    snapshotRows: [],
+    invalidLocalInstants: new Set(),
 };
 function addSignalMethods(prototype) {
     prototype.connect = function(signal, callback) {
@@ -20,7 +27,9 @@ function addSignalMethods(prototype) {
         this.__signals.set(id, [signal, callback]);
         return id;
     };
-    prototype.disconnect = function(id) { if (this.__signals) this.__signals.delete(id); };
+    prototype.disconnect = function(id) {
+        if (this.__signals) this.__signals.delete(id);
+    };
     prototype.emit = function(signal, ...args) {
         if (!this.__signals) return;
         for (const [name, callback] of this.__signals.values()) {
@@ -54,7 +63,11 @@ const DateTime = {
     new_utc(y, m, d, h, min, sec) {
         return new FakeDateTime(Date.UTC(y, m - 1, d, h, min, sec) / 1000);
     },
-    new_from_unix_local(value) { return new FakeDateTime(value); },
+    new_from_unix_local(value) {
+        return observations.invalidLocalInstants.has(value)
+            ? null
+            : new FakeDateTime(value);
+    },
     new_now_local() { return new FakeDateTime(0); },
 };
 class TimezoneMonitor {
@@ -99,15 +112,21 @@ const nativeBoundaryModule = {
 };
 const context = {
     console,
-    global: { logError() {} },
+    global: {
+        logError(error) { observations.logs.push(String(error)); },
+    },
     require(name) {
         assert.equal(name, "./runtimeSupport");
         return {
             SignalBag,
             midnight(value) {
-                return DateTime.new_local(value.get_year(), value.get_month(), value.get_day_of_month(), 0, 0, 0);
+                return DateTime.new_local(
+                    value.get_year(), value.get_month(), value.get_day_of_month(), 0, 0, 0
+                );
             },
-            sameInstant(a, b) { return a !== null && b !== null && a.to_unix() === b.to_unix(); },
+            sameInstant(a, b) {
+                return a !== null && b !== null && a.to_unix() === b.to_unix();
+            },
             loadLocalModule(moduleName) {
                 if (moduleName === "eventRangeState") return context.__rangeModule;
                 if (moduleName === "nativeBoundary") return nativeBoundaryModule;
@@ -126,14 +145,29 @@ const context = {
         ui: {},
         signals: { addSignalMethods },
         mainloop: {
-            timeout_add_seconds(delay, callback) { const id = nextId++; timeouts.set(id, callback); return id; },
-            idle_add(callback) { const id = nextId++; idles.set(id, callback); return id; },
-            source_remove(id) { timeouts.delete(id); idles.delete(id); },
+            timeout_add_seconds(delay, callback) {
+                const id = nextId++;
+                timeouts.set(id, callback);
+                return id;
+            },
+            idle_add(callback) {
+                const id = nextId++;
+                idles.set(id, callback);
+                return id;
+            },
+            source_remove(id) {
+                timeouts.delete(id);
+                idles.delete(id);
+            },
         },
         gi: {
             Gio: {
                 Cancellable: class { cancel() {} },
-                File: { new_for_path() { return { monitor_file() { return new TimezoneMonitor(); } }; } },
+                File: {
+                    new_for_path() {
+                        return { monitor_file() { return new TimezoneMonitor(); } };
+                    },
+                },
                 FileMonitorFlags: { NONE: 0 },
             },
             GLib: {
@@ -143,7 +177,9 @@ const context = {
             },
             CalendarPlus: {
                 event_day_relation() { return 0; },
-                event_timing() { return { deep_unpack() { return [0, 0, 0]; } }; },
+                event_timing() {
+                    return { deep_unpack() { return [0, 0, 0]; } };
+                },
                 EventStore: {
                     new() {
                         return {
@@ -153,8 +189,16 @@ const context = {
                                 observations.addCalls.push([event, timestamp, start, end]);
                                 return true;
                             },
-                            get_snapshot() { return { deep_unpack() { return [1, []]; } }; },
-                            get_color_range() { return { deep_unpack() { return []; } }; },
+                            get_snapshot() {
+                                return {
+                                    deep_unpack() {
+                                        return [1, observations.snapshotRows];
+                                    },
+                                };
+                            },
+                            get_color_range() {
+                                return { deep_unpack() { return []; } };
+                            },
                         };
                     },
                 },
@@ -180,6 +224,7 @@ vm.runInContext(
     { filename: "eventManager.js" }
 );
 const EventsManager = context.__EventsManager;
+
 const transport = new FakeTransport();
 transport.ready = true;
 transport.status = 2;
@@ -188,15 +233,30 @@ const first = new Date(Date.UTC(2026, 7, 2, 12, 0, 0));
 const last = new Date(Date.UTC(2026, 8, 12, 12, 0, 0));
 manager.set_visible_range(first, last, false);
 assert.equal(observations.rangeRequests.length, 1);
-assert.equal(observations.rangeRequests[0][1] - observations.rangeRequests[0][0], 42 * 86400 - 1);
+assert.equal(
+    observations.rangeRequests[0][1] - observations.rangeRequests[0][0],
+    42 * 86400 - 1
+);
 transport.complete(0, true);
 manager.set_visible_range(first, last, false);
-assert.equal(observations.rangeRequests.length, 1, "successful identical range must be stable");
+assert.equal(
+    observations.rangeRequests.length,
+    1,
+    "successful identical range must be stable"
+);
 manager.set_visible_range(first, last, true);
-assert.equal(observations.rangeRequests.length, 2, "forced refresh must cross the transport port");
+assert.equal(
+    observations.rangeRequests.length,
+    2,
+    "forced refresh must cross the transport port"
+);
 transport.complete(1, true);
 manager._ingestEvents({ unpack() { return [{ opaque: true }]; } });
-assert.equal(observations.addCalls.length, 1, "admitted rows must go directly to the native store boundary");
+assert.equal(
+    observations.addCalls.length,
+    1,
+    "admitted rows must go directly to the native store boundary"
+);
 manager.set_visible_range(first, last, true);
 transport.complete(2, false);
 assert.equal(timeouts.size, 1, "range failure must retain bounded retry behaviour");
@@ -211,10 +271,51 @@ assert.equal(manager._rangeState.acceptingEvents, false);
 assert.ok(observations.clears > 0, "transport loss must invalidate native cached rows");
 assert.ok(presented.some(([signal]) => signal === "has-calendars-changed"));
 transport.status = 1;
-assert.equal(manager.should_show_event_pane(), false, "authoritative empty status collapses the agenda");
+assert.equal(
+    manager.should_show_event_pane(),
+    false,
+    "authoritative empty status collapses the agenda"
+);
 manager.destroy();
 manager.destroy();
 assert.equal(observations.transportDestroys, 1);
 assert.equal(observations.timezoneDisconnects, 1);
 assert.equal(observations.timezoneCancels, 1);
+
+/*
+ * A snapshot is one coherent native contract generation. If a single decoded
+ * row cannot be represented locally, EventsManager must surface an unavailable
+ * agenda instead of silently presenting the remaining rows as complete data.
+ */
+const snapshotTransport = new FakeTransport();
+snapshotTransport.ready = true;
+snapshotTransport.status = 2;
+const snapshotManager = new EventsManager(snapshotTransport);
+const snapshotSignals = [];
+snapshotManager.emit = (signal, ...args) => snapshotSignals.push([signal, ...args]);
+observations.snapshotRows = [
+    ["valid", "#112233", "Valid", false, false, 100, 200, 100, 100, 1],
+    ["invalid", "#445566", "Invalid", false, false, 300, 400, 300, 300, 1],
+];
+observations.invalidLocalInstants.add(300);
+snapshotManager.select_date(new Date(Date.UTC(2026, 7, 2, 12, 0, 0)), false);
+const unavailable = snapshotSignals.find(
+    ([signal]) => signal === "agenda-events-changed"
+);
+assert.notEqual(unavailable, undefined, "snapshot failure must publish agenda state");
+assert.deepEqual(
+    unavailable.slice(1),
+    [null, false, true],
+    "a malformed snapshot row must make the whole agenda unavailable"
+);
+assert.ok(
+    observations.logs.some((message) =>
+        message.includes("native event snapshot contract violation")
+    ),
+    "snapshot contract failures must be diagnosable"
+);
+snapshotManager.destroy();
+observations.invalidLocalInstants.clear();
+observations.snapshotRows = [];
+
 console.log("EventsManager orchestration behaviour tests passed.");
