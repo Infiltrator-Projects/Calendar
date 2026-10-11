@@ -2,19 +2,16 @@
 // Copyright (C) 1993-2026 Shannon Smith
 
 /*
- * Native event-store and visible-range orchestration controller.
+ * Visible-range and selected-agenda orchestration controller.
  *
- * CalendarServer discovery, proxy lifetime and range-call transport are owned
- * by calendarServerTransport.js. This module owns no Cinnamon actors. External
- * event tuples cross the transport boundary once and are immediately normalised
- * by CalendarPlus.EventStore. Presentation is notified through narrow agenda
- * signals so event/cache state never reaches into EventList or another concrete
- * view. User preference state crosses this boundary only as the abstract
- * enabled flag supplied through set_enabled.
+ * CalendarServer discovery/proxy lifetime belong to calendarServerTransport.js.
+ * Mutable native-store and timezone-monitor lifetime belong to
+ * eventStoreController.js. This object owns only the state machine that joins
+ * those ports: desired range, request admission/retry, selected civil date and
+ * presentation-facing agenda signals.
  */
 
 const CalendarPlus = imports.gi.CalendarPlus;
-const Gio = imports.gi.Gio;
 const GLib = imports.gi.GLib;
 const Signals = imports.signals;
 const Mainloop = imports.mainloop;
@@ -52,6 +49,9 @@ const CalendarServerTransportModule = RuntimeSupport.loadLocalModule(
 const CalendarServerTransport = CalendarServerTransportModule.CalendarServerTransport;
 const STATUS_UNKNOWN = CalendarServerTransportModule.STATUS_UNKNOWN;
 const STATUS_NO_CALENDARS = CalendarServerTransportModule.STATUS_NO_CALENDARS;
+const EventStoreController = RuntimeSupport.loadLocalModule(
+    "eventStoreController"
+).EventStoreController;
 
 function _civilFields(date) {
     if (date === null) {
@@ -145,13 +145,14 @@ class EventSnapshot {
 }
 
 var EventsManager = class EventsManager {
-    constructor(transport = null) {
+    constructor(transport = null, eventStoreController = null) {
         this._enabled = true;
         this._destroyed = false;
         this._transport = transport || new CalendarServerTransport();
+        this._eventStore = eventStoreController || new EventStoreController();
         this._transportSignals = new SignalBag();
+        this._eventStoreSignals = new SignalBag();
         this._range_retry_timer_id = 0;
-        this._timezoneCancellable = new Gio.Cancellable();
         this._reload_id = 0;
         this._force_reload_pending = false;
         this.current_range_start = null;
@@ -167,12 +168,13 @@ var EventsManager = class EventsManager {
         this.current_selected_civil = null;
         this._rangeState = new EventRangeState();
         this.last_update_timestamp = 0;
-        this.event_store = CalendarPlus.EventStore.new();
 
-        this._timezone_monitor = null;
-        this._timezone_monitor_signal_id = 0;
         this._wireTransport();
-        this._startTimezoneMonitor();
+        this._eventStoreSignals.connect(
+            this._eventStore,
+            "timezone-changed",
+            () => this._timezoneChanged()
+        );
     }
 
     set_enabled(enabled) {
@@ -194,7 +196,7 @@ var EventsManager = class EventsManager {
         }
     }
 
-    _publishAgendaEvents(snapshot, reset, unavailable = false) {
+    _publishAgendaEvents({ snapshot = null, reset = false, unavailable = false } = {}) {
         if (!this._destroyed) {
             this.emit(
                 "agenda-events-changed",
@@ -255,10 +257,10 @@ var EventsManager = class EventsManager {
             return;
         }
         this._cancelRangeRetry();
-        if (this.event_store !== null) {
-            this.event_store.clear();
+        if (this._eventStore !== null) {
+            this._eventStore.clear();
         }
-        this._publishAgendaEvents(null, false, !Boolean(expectedEmpty));
+        this._publishAgendaEvents({ unavailable: !Boolean(expectedEmpty) });
         this.current_range_start = null;
         this.current_range_end = null;
         this.current_range_start_civil = null;
@@ -305,42 +307,23 @@ var EventsManager = class EventsManager {
         );
     }
 
-    _startTimezoneMonitor() {
-        try {
-            const timezone = Gio.File.new_for_path("/etc/localtime");
-            this._timezone_monitor = timezone.monitor_file(
-                Gio.FileMonitorFlags.NONE,
-                this._timezoneCancellable
-            );
-            this._timezone_monitor_signal_id = this._timezone_monitor.connect(
-                "changed",
-                () => this._timezoneChanged()
-            );
-        } catch (error) {
-            global.logError(
-                `${APPLET_UUID}: could not monitor system timezone: ${error}`
-            );
-        }
-    }
-
     _timezoneChanged() {
-        if (this._destroyed || this.event_store === null) {
+        if (this._destroyed || this._eventStore === null) {
             return;
         }
 
         /*
-         * Close admission before touching timezone-derived membership. Signals
-         * from the old CalendarServer view are not generation-tagged and must
-         * not repopulate the index during the deferred forced reload.
+         * EventStoreController has already recomputed timezone-derived civil
+         * membership. Close admission before requesting a fresh server view;
+         * old CalendarServer signals have no request-generation token.
          */
         this._rangeState.closeAdmission();
-        this.event_store.refresh_timezone();
         this._invalidateCurrentRange(false);
         this.emit("events-updated");
     }
 
     _invalidateCurrentRange(clearStore) {
-        if (this._destroyed || this.event_store === null) {
+        if (this._destroyed || this._eventStore === null) {
             return;
         }
 
@@ -353,7 +336,7 @@ var EventsManager = class EventsManager {
          */
         const requestPending = this._rangeState.invalidate();
         if (clearStore) {
-            this.event_store.clear();
+            this._eventStore.clear();
         }
 
         if (requestPending) {
@@ -365,7 +348,7 @@ var EventsManager = class EventsManager {
     }
 
     _ingestEvents(payload) {
-        if (this._destroyed || this.event_store === null ||
+        if (this._destroyed || this._eventStore === null ||
             !this._rangeState.acceptingEvents ||
             this.current_range_start === null ||
             this.current_range_end === null) {
@@ -376,23 +359,12 @@ var EventsManager = class EventsManager {
         if (exclusiveEnd === null) {
             return;
         }
-        const rangeStart = this.current_range_start.to_unix();
-        const rangeEnd = exclusiveEnd.to_unix() - 1;
-
-        let changed = false;
-        for (const eventVariant of payload.unpack()) {
-            /*
-             * CalendarServer has no request-generation token on event signals.
-             * The native transport adapter owns tuple parsing and range
-             * admission together so JavaScript never learns tuple positions.
-             */
-            changed = this.event_store.add_or_update_in_range(
-                eventVariant,
-                this.last_update_timestamp,
-                rangeStart,
-                rangeEnd
-            ) || changed;
-        }
+        const changed = this._eventStore.ingest(
+            payload,
+            this.last_update_timestamp,
+            this.current_range_start.to_unix(),
+            exclusiveEnd.to_unix() - 1
+        );
 
         if (changed) {
             this.emit("events-updated");
@@ -400,7 +372,7 @@ var EventsManager = class EventsManager {
     }
 
     _removeEvents(serializedIds) {
-        if (this._destroyed || this.event_store === null ||
+        if (this._destroyed || this._eventStore === null ||
             typeof serializedIds !== "string" || serializedIds.length === 0) {
             return;
         }
@@ -410,28 +382,18 @@ var EventsManager = class EventsManager {
          * generation or revision with which to prove that a late removal came
          * from the current EDS view. Treat every removal as cache invalidation
          * and rebuild the newest desired range instead of deleting an ID from a
-         * possibly newer generation. This is correct for both genuine current
-         * removals and delayed signals from a stopped view.
+         * possibly newer generation.
          */
         this._invalidateCurrentRange(true);
         this.emit("events-updated");
     }
 
     _calendarSetChanged() {
-        if (this._destroyed || this.event_store === null) {
+        if (this._destroyed || this._eventStore === null) {
             return;
         }
 
-        /*
-         * Client disappearance changes the membership of the event universe.
-         * A clean reload is safer than trying to infer which cached rows came
-         * from the removed EDS client.
-         *
-         * Keep the grid-owned desired range. A client-set change invalidates
-         * the result for that range, not the range itself. The shared
-         * invalidation path closes event admission before the deferred reload,
-         * including while another SetTimeRange call is still in flight.
-         */
+        /* Client disappearance changes the membership of the event universe. */
         this._invalidateCurrentRange(true);
         this.emit("events-updated");
     }
@@ -446,13 +408,13 @@ var EventsManager = class EventsManager {
 
     _requestVisibleRange(first, last, force, clearStore) {
         if (this._destroyed || this._transport === null ||
-            !this._transport.is_ready() || this.event_store === null ||
+            !this._transport.is_ready() || this._eventStore === null ||
             this._rangeState.pending) {
             return;
         }
 
         if (clearStore) {
-            this.event_store.clear();
+            this._eventStore.clear();
             this.emit("events-updated");
         }
         this._rangeState.closeAdmission();
@@ -524,7 +486,7 @@ var EventsManager = class EventsManager {
 
     set_visible_range(firstDate, lastDate, force) {
         if (this._destroyed || this._transport === null ||
-            !this._transport.is_ready() || this.event_store === null) {
+            !this._transport.is_ready() || this._eventStore === null) {
             return;
         }
 
@@ -574,21 +536,11 @@ var EventsManager = class EventsManager {
         }
 
         if (this._rangeState.pending) {
-            /*
-             * Preserve only the newest desired range. This serializes
-             * CalendarServer traffic and prevents an obsolete request from
-             * overlapping the next request's refresh token.
-             */
             this._rangeState.queueForce(Boolean(force) || changed);
             return;
         }
 
         this._rangeState.clearQueuedForce();
-        /*
-         * Every actual CalendarServer request owns a fresh local generation.
-         * Replacing the store up front makes an empty response correct by
-         * construction instead of relying on a timed stale-row cull.
-         */
         this._requestVisibleRange(first, last, force, true);
     }
 
@@ -607,12 +559,6 @@ var EventsManager = class EventsManager {
             this._force_reload_pending = false;
 
             if (!this._destroyed) {
-                /*
-                 * A forced queued reload means authoritative server data, not
-                 * merely repainting the selected agenda from the local cache.
-                 * The calendar view still owns range calculation; reuse the
-                 * last range it supplied rather than inventing one here.
-                 */
                 if (forceReload &&
                     this.current_range_start_civil !== null &&
                     this.current_range_end_civil !== null) {
@@ -669,15 +615,10 @@ var EventsManager = class EventsManager {
             if (display !== null) {
                 this._publishAgendaDate(display);
             }
-            this._publishAgendaEvents(null, false);
+            this._publishAgendaEvents();
             return;
         }
 
-        /*
-         * Selection is presentation state, not transport state. Publish the
-         * agenda heading immediately even while CalendarServer is still being
-         * activated; eventual server readiness only controls event data.
-         */
         this.current_selected_date = day;
         this._publishAgendaDate(day);
 
@@ -692,20 +633,20 @@ var EventsManager = class EventsManager {
             global.logError(
                 `${APPLET_UUID}: native event snapshot contract violation: ${error}`
             );
-            this._publishAgendaEvents(null, false, true);
+            this._publishAgendaEvents({ unavailable: true });
             return;
         }
-        this._publishAgendaEvents(
+        this._publishAgendaEvents({
             snapshot,
-            previousCivil === null || changedMonth || Boolean(force)
-        );
+            reset: previousCivil === null || changedMonth || Boolean(force),
+        });
     }
 
     _snapshot_for_date(day) {
-        if (this._destroyed || this.event_store === null || day === null) {
+        if (this._destroyed || this._eventStore === null || day === null) {
             return null;
         }
-        const snapshotVariant = this.event_store.get_snapshot(
+        const snapshotVariant = this._eventStore.snapshot_variant(
             day.to_unix(),
             GLib.DateTime.new_now_local().to_unix()
         );
@@ -717,7 +658,7 @@ var EventsManager = class EventsManager {
     }
 
     get_colors_for_range(js_date, dayCount, maximumColorsPerDay) {
-        if (this._destroyed || this.event_store === null ||
+        if (this._destroyed || this._eventStore === null ||
             !Number.isInteger(dayCount) || dayCount <= 0 ||
             !Number.isInteger(maximumColorsPerDay) ||
             maximumColorsPerDay < 0) {
@@ -729,7 +670,7 @@ var EventsManager = class EventsManager {
             return [];
         }
 
-        const variant = this.event_store.get_color_range(
+        const variant = this._eventStore.color_range_variant(
             day.to_unix(),
             dayCount,
             GLib.DateTime.new_now_local().to_unix(),
@@ -771,40 +712,16 @@ var EventsManager = class EventsManager {
             this._reload_id = 0;
         }
 
-        if (this._timezone_monitor !== null) {
-            if (this._timezone_monitor_signal_id > 0) {
-                try {
-                    this._timezone_monitor.disconnect(this._timezone_monitor_signal_id);
-                } catch (error) {
-                    global.logError(error);
-                }
-            }
-            try {
-                this._timezone_monitor.cancel();
-            } catch (error) {
-                global.logError(error);
-            }
-        }
-        this._timezone_monitor_signal_id = 0;
-        this._timezone_monitor = null;
-        if (this._timezoneCancellable !== null) {
-            try {
-                this._timezoneCancellable.cancel();
-            } catch (error) {
-                global.logError(error);
-            }
-            this._timezoneCancellable = null;
+        this._eventStoreSignals.disconnectAll();
+        if (this._eventStore !== null) {
+            this._eventStore.destroy();
+            this._eventStore = null;
         }
 
         this._transportSignals.disconnectAll();
         if (this._transport !== null) {
             this._transport.destroy();
             this._transport = null;
-        }
-
-        if (this.event_store !== null) {
-            this.event_store.clear();
-            this.event_store = null;
         }
 
         this.current_selected_date = null;
