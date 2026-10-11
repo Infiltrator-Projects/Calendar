@@ -14,6 +14,8 @@ The repository currently uses:
 
 The tests/ tree includes portable-core, exact clock-boundary, property, ABI, JavaScript runtime, settings and release-model tests. Live Cinnamon smoke testing is a separate integration boundary.
 
+The Cinnamon boundary suite includes behavioural tests for popup lifecycle/input ownership, effective temporal-policy resolution, CalendarServer transport/reconnect semantics and EventsManager orchestration through an injected transport port. Architecture checks enforce dependency direction and ownership without treating private source layout as a compatibility contract.
+
 Automated checks should cover ordinary behaviour, important boundaries, malformed/error cases and release/package contracts appropriate to the project.
 
 ## Manual and environment-dependent evidence
