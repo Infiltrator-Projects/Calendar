@@ -4,48 +4,24 @@
 /*
  * GObject/GJS facade over the injected platform-neutral clock engine.
  *
- * Temporal authority is published as one coherent snapshot. Provider presence
- * and the persisted temporal-v3 document are read into local state first; only
- * after resolution succeeds are the cached fields replaced and one
- * policy-changed signal emitted. This prevents GJS from observing a mixture of
- * two policy generations during an atomic System Settings update.
- *
- * Three monitors cover the authority boundary: the policy directory itself,
- * its parent so first creation/removal is observed, and the installed provider
- * marker. All are cancelled before object teardown. Cinnamon's seconds setting
- * is consulted only when the richer provider/policy pair is not authoritative.
+ * Clock scheduling and formatting stay in CalendarPlusClockEngine. Effective
+ * temporal-policy discovery, persistence fallback and filesystem/settings
+ * monitoring live in the private CalendarPlusTemporalPolicySource adapter.
+ * This facade composes the two responsibilities and publishes their signals to
+ * GJS without owning either subsystem's implementation details.
  */
 
 #include "system-clock.h"
 
 #include "clock-engine.h"
 #include "clock-glib-adapter.h"
-#include "system-clock-private.h"
-
-#include <gio/gio.h>
-#include <infiltratr/core.h>
-#include <infiltratr/posix.h>
-#include <infiltratr/posix_path.h>
-#include <infiltratr/temporal.h>
-#include <infiltratr/temporal_posix.h>
+#include "temporal-policy-source.h"
 
 struct _CalendarPlusSystemClock
 {
     GObject parent_instance;
-
     CalendarPlusClockEngine *engine;
-    GSettings *cinnamon_interface_settings;
-
-    gchar *policy_directory;
-    gchar *provider_marker_basename;
-    GFileMonitor *policy_directory_monitor;
-    GFileMonitor *config_home_monitor;
-    GFileMonitor *provider_directory_monitor;
-    guint policy_refresh_source_id;
-
-    InfiltratrTemporalPolicyV3 effective_policy;
-    gboolean provider_available;
-    gboolean infiltrator_authority;
+    CalendarPlusTemporalPolicySource *policy_source;
 };
 
 enum
@@ -63,134 +39,6 @@ G_DEFINE_TYPE(CalendarPlusSystemClock,
               calendar_plus_system_clock,
               G_TYPE_OBJECT)
 
-static gboolean
-policy_equal(const InfiltratrTemporalPolicyV3 *left,
-             const InfiltratrTemporalPolicyV3 *right)
-{
-    return left != NULL && right != NULL &&
-           left->version == right->version &&
-           infiltratr_string_equal(left->clock_mode, right->clock_mode) &&
-           infiltratr_string_equal(left->calendar, right->calendar) &&
-           left->show_seconds == right->show_seconds &&
-           left->location_configured == right->location_configured &&
-           left->latitude == right->latitude &&
-           left->longitude == right->longitude;
-}
-
-gboolean
-calendar_plus_system_clock_resolve_effective_policy(
-    gboolean provider_available,
-    gboolean policy_found,
-    const InfiltratrTemporalPolicyV3 *persisted_policy,
-    gboolean cinnamon_show_seconds,
-    InfiltratrTemporalPolicyV3 *effective_policy,
-    gboolean *infiltrator_authority)
-{
-    if (effective_policy == NULL || infiltrator_authority == NULL ||
-        !infiltratr_temporal_policy_v3_default(effective_policy))
-    {
-        return FALSE;
-    }
-
-    *infiltrator_authority = FALSE;
-    if (provider_available && policy_found && persisted_policy != NULL)
-    {
-        *effective_policy = *persisted_policy;
-        *infiltrator_authority = TRUE;
-        return TRUE;
-    }
-
-    effective_policy->show_seconds = cinnamon_show_seconds != FALSE;
-    return TRUE;
-}
-
-static gboolean
-cinnamon_show_seconds(CalendarPlusSystemClock *self)
-{
-    if (self->cinnamon_interface_settings == NULL)
-        return FALSE;
-
-    return g_settings_get_boolean(
-        self->cinnamon_interface_settings, "clock-show-seconds");
-}
-
-static gboolean
-refresh_effective_policy(CalendarPlusSystemClock *self,
-                         gboolean emit_signal)
-{
-    InfiltratrTemporalPolicyV3 persisted;
-    InfiltratrTemporalPolicyV3 next;
-    bool found = false;
-    gboolean next_provider_available;
-    gboolean next_infiltrator_authority = FALSE;
-    gboolean changed;
-    InfiltratrIoResult load_result = INFILTRATR_IO_NOT_FOUND;
-
-    g_return_val_if_fail(CALENDAR_PLUS_IS_SYSTEM_CLOCK(self), FALSE);
-
-    next_provider_available =
-        infiltratr_temporal_posix_provider_available() ? TRUE : FALSE;
-
-    if (next_provider_available)
-    {
-        load_result = infiltratr_temporal_posix_policy_load(
-            &persisted, &found);
-        if (load_result != INFILTRATR_IO_OK &&
-            load_result != INFILTRATR_IO_NOT_FOUND)
-        {
-            g_warning("Calendar: unable to read temporal policy: %s",
-                      infiltratr_io_result_name(load_result));
-        }
-    }
-
-    if (!calendar_plus_system_clock_resolve_effective_policy(
-            next_provider_available,
-            load_result == INFILTRATR_IO_OK && found,
-            load_result == INFILTRATR_IO_OK && found ? &persisted : NULL,
-            cinnamon_show_seconds(self),
-            &next,
-            &next_infiltrator_authority))
-    {
-        return FALSE;
-    }
-
-    changed =
-        !policy_equal(&self->effective_policy, &next) ||
-        self->provider_available != next_provider_available ||
-        self->infiltrator_authority != next_infiltrator_authority;
-
-    self->effective_policy = next;
-    self->provider_available = next_provider_available;
-    self->infiltrator_authority = next_infiltrator_authority;
-
-    if (emit_signal && changed)
-        g_signal_emit(self, signals[SIGNAL_POLICY_CHANGED], 0);
-    return TRUE;
-}
-
-static gboolean
-refresh_effective_policy_deferred(gpointer user_data)
-{
-    CalendarPlusSystemClock *self = CALENDAR_PLUS_SYSTEM_CLOCK(user_data);
-
-    self->policy_refresh_source_id = 0;
-    (void)refresh_effective_policy(self, TRUE);
-    return G_SOURCE_REMOVE;
-}
-
-static void
-schedule_effective_policy_refresh(CalendarPlusSystemClock *self)
-{
-    if (self->policy_refresh_source_id != 0)
-        return;
-
-    self->policy_refresh_source_id =
-        g_idle_add_full(G_PRIORITY_DEFAULT_IDLE,
-                        refresh_effective_policy_deferred,
-                        self,
-                        NULL);
-}
-
 static void
 on_engine_tick(gpointer user_data)
 {
@@ -200,177 +48,19 @@ on_engine_tick(gpointer user_data)
 }
 
 static void
-cancel_monitor(GFileMonitor **monitor)
-{
-    if (monitor == NULL || *monitor == NULL)
-        return;
-
-    g_file_monitor_cancel(*monitor);
-    g_object_unref(*monitor);
-    *monitor = NULL;
-}
-
-static gboolean
-file_has_basename(GFile *file, const gchar *basename)
-{
-    g_autofree gchar *actual = NULL;
-
-    if (file == NULL || basename == NULL)
-        return FALSE;
-    actual = g_file_get_basename(file);
-    return infiltratr_string_equal(actual, basename);
-}
-
-static void
-on_policy_directory_changed(GFileMonitor *monitor G_GNUC_UNUSED,
-                            GFile *file G_GNUC_UNUSED,
-                            GFile *other_file G_GNUC_UNUSED,
-                            GFileMonitorEvent event_type G_GNUC_UNUSED,
-                            gpointer user_data)
+on_policy_changed(gpointer user_data)
 {
     CalendarPlusSystemClock *self = CALENDAR_PLUS_SYSTEM_CLOCK(user_data);
 
-    schedule_effective_policy_refresh(self);
+    g_signal_emit(self, signals[SIGNAL_POLICY_CHANGED], 0);
 }
 
-static void
-setup_policy_directory_monitor(CalendarPlusSystemClock *self)
+static const InfiltratrTemporalPolicyV3 *
+effective_policy(CalendarPlusSystemClock *self)
 {
-    g_autoptr(GFile) directory = NULL;
-    g_autoptr(GError) error = NULL;
-
-    cancel_monitor(&self->policy_directory_monitor);
-    if (self->policy_directory == NULL)
-        return;
-
-    directory = g_file_new_for_path(self->policy_directory);
-    self->policy_directory_monitor =
-        g_file_monitor_directory(directory,
-                                 G_FILE_MONITOR_NONE,
-                                 NULL,
-                                 &error);
-    if (self->policy_directory_monitor != NULL)
-    {
-        g_signal_connect(self->policy_directory_monitor,
-                         "changed",
-                         G_CALLBACK(on_policy_directory_changed),
-                         self);
-    }
-    else
-    {
-        g_warning("Calendar: unable to monitor temporal policy directory '%s': %s",
-                  self->policy_directory,
-                  error != NULL ? error->message : "unknown monitor error");
-    }
-}
-
-static void
-on_config_home_changed(GFileMonitor *monitor G_GNUC_UNUSED,
-                       GFile *file,
-                       GFile *other_file,
-                       GFileMonitorEvent event_type G_GNUC_UNUSED,
-                       gpointer user_data)
-{
-    CalendarPlusSystemClock *self = CALENDAR_PLUS_SYSTEM_CLOCK(user_data);
-    const gchar *policy_basename =
-        self->policy_directory != NULL
-            ? infiltratr_path_basename(self->policy_directory)
-            : NULL;
-
-    if (policy_basename == NULL ||
-        (!file_has_basename(file, policy_basename) &&
-         !file_has_basename(other_file, policy_basename)))
-    {
-        return;
-    }
-
-    setup_policy_directory_monitor(self);
-    schedule_effective_policy_refresh(self);
-}
-
-static void
-on_provider_directory_changed(GFileMonitor *monitor G_GNUC_UNUSED,
-                              GFile *file,
-                              GFile *other_file,
-                              GFileMonitorEvent event_type G_GNUC_UNUSED,
-                              gpointer user_data)
-{
-    CalendarPlusSystemClock *self = CALENDAR_PLUS_SYSTEM_CLOCK(user_data);
-
-    if (self->provider_marker_basename == NULL ||
-        (!file_has_basename(file, self->provider_marker_basename) &&
-         !file_has_basename(other_file, self->provider_marker_basename)))
-    {
-        return;
-    }
-
-    schedule_effective_policy_refresh(self);
-}
-
-static void
-on_cinnamon_seconds_changed(GSettings *settings G_GNUC_UNUSED,
-                            gchar *key G_GNUC_UNUSED,
-                            gpointer user_data)
-{
-    CalendarPlusSystemClock *self = CALENDAR_PLUS_SYSTEM_CLOCK(user_data);
-
-    (void)refresh_effective_policy(self, TRUE);
-}
-
-static GFileMonitor *
-monitor_directory_path(const gchar *path,
-                       GCallback callback,
-                       gpointer user_data)
-{
-    g_autoptr(GFile) directory = NULL;
-    g_autoptr(GError) error = NULL;
-    GFileMonitor *monitor;
-
-    if (path == NULL || callback == NULL)
-        return NULL;
-
-    directory = g_file_new_for_path(path);
-    monitor = g_file_monitor_directory(directory,
-                                       G_FILE_MONITOR_NONE,
-                                       NULL,
-                                       &error);
-    if (monitor != NULL)
-    {
-        g_signal_connect(monitor, "changed", callback, user_data);
-    }
-    else
-    {
-        g_warning("Calendar: unable to monitor directory '%s': %s",
-                  path,
-                  error != NULL ? error->message : "unknown monitor error");
-    }
-    return monitor;
-}
-
-static GSettings *
-create_cinnamon_interface_settings(void)
-{
-    GSettingsSchemaSource *source = g_settings_schema_source_get_default();
-    GSettingsSchema *schema;
-    GSettings *settings;
-
-    if (source == NULL)
-        return NULL;
-
-    schema = g_settings_schema_source_lookup(
-        source, "org.cinnamon.desktop.interface", TRUE);
-    if (schema == NULL)
-        return NULL;
-
-    if (!g_settings_schema_has_key(schema, "clock-show-seconds"))
-    {
-        g_settings_schema_unref(schema);
-        return NULL;
-    }
-
-    settings = g_settings_new_full(schema, NULL, NULL);
-    g_settings_schema_unref(schema);
-    return settings;
+    return self != NULL
+        ? calendar_plus_temporal_policy_source_get_policy(self->policy_source)
+        : NULL;
 }
 
 static void
@@ -378,24 +68,8 @@ calendar_plus_system_clock_dispose(GObject *object)
 {
     CalendarPlusSystemClock *self = CALENDAR_PLUS_SYSTEM_CLOCK(object);
 
-    if (self->policy_refresh_source_id != 0)
-    {
-        g_source_remove(self->policy_refresh_source_id);
-        self->policy_refresh_source_id = 0;
-    }
-
-    cancel_monitor(&self->policy_directory_monitor);
-    cancel_monitor(&self->config_home_monitor);
-    cancel_monitor(&self->provider_directory_monitor);
-
-    g_clear_pointer(&self->policy_directory, g_free);
-    g_clear_pointer(&self->provider_marker_basename, g_free);
-    if (self->cinnamon_interface_settings != NULL)
-    {
-        g_object_unref(self->cinnamon_interface_settings);
-        self->cinnamon_interface_settings = NULL;
-    }
-
+    calendar_plus_temporal_policy_source_free(self->policy_source);
+    self->policy_source = NULL;
     calendar_plus_clock_engine_free(self->engine);
     self->engine = NULL;
     G_OBJECT_CLASS(calendar_plus_system_clock_parent_class)->dispose(object); // NOLINT(bugprone-casting-through-void)
@@ -434,64 +108,14 @@ calendar_plus_system_clock_init(CalendarPlusSystemClock *self)
 {
     CalendarPlusClockTimeSource time_source;
     CalendarPlusClockScheduler scheduler;
-    char policy_directory[4096];
-    char policy_parent[4096];
-    char provider_marker[4096];
-    char provider_directory[4096];
 
     calendar_plus_clock_glib_interfaces(&time_source, &scheduler);
     self->engine = calendar_plus_clock_engine_new(&time_source,
                                                   &scheduler,
                                                   on_engine_tick,
                                                   self);
-    self->cinnamon_interface_settings =
-        create_cinnamon_interface_settings();
-    if (self->cinnamon_interface_settings != NULL)
-    {
-        g_signal_connect(self->cinnamon_interface_settings,
-                         "changed::clock-show-seconds",
-                         G_CALLBACK(on_cinnamon_seconds_changed),
-                         self);
-    }
-
-    if (infiltratr_temporal_posix_policy_directory(
-            policy_directory, sizeof(policy_directory)))
-    {
-        self->policy_directory = g_strdup(policy_directory);
-        setup_policy_directory_monitor(self);
-        if (infiltratr_path_dirname(
-                policy_directory, policy_parent, sizeof(policy_parent)))
-        {
-            self->config_home_monitor =
-                monitor_directory_path(policy_parent,
-                                       G_CALLBACK(on_config_home_changed),
-                                       self);
-        }
-    }
-
-    if (infiltratr_temporal_posix_provider_marker_path(
-            provider_marker, sizeof(provider_marker)))
-    {
-        const gchar *provider_basename =
-            infiltratr_path_basename(provider_marker);
-        if (provider_basename != NULL)
-            self->provider_marker_basename = g_strdup(provider_basename);
-
-        if (infiltratr_path_dirname(
-                provider_marker,
-                provider_directory,
-                sizeof(provider_directory)))
-        {
-            self->provider_directory_monitor =
-                monitor_directory_path(
-                    provider_directory,
-                    G_CALLBACK(on_provider_directory_changed),
-                    self);
-        }
-    }
-
-    (void)infiltratr_temporal_policy_v3_default(&self->effective_policy);
-    (void)refresh_effective_policy(self, FALSE);
+    self->policy_source = calendar_plus_temporal_policy_source_new(
+        on_policy_changed, self);
 }
 
 CalendarPlusSystemClock *
@@ -560,70 +184,94 @@ calendar_plus_system_clock_is_running(CalendarPlusSystemClock *self)
 GVariant *
 calendar_plus_system_clock_get_system_policy(CalendarPlusSystemClock *self)
 {
+    const InfiltratrTemporalPolicyV3 *policy;
     const gchar *authority;
 
     g_return_val_if_fail(CALENDAR_PLUS_IS_SYSTEM_CLOCK(self), NULL);
+    policy = effective_policy(self);
+    if (policy == NULL)
+        return NULL;
 
-    authority = self->infiltrator_authority
+    authority = calendar_plus_temporal_policy_source_get_infiltrator_authority(
+        self->policy_source)
         ? "infiltrator-system-settings"
         : "mint-cinnamon";
 
     return g_variant_ref_sink(g_variant_new(
         "(ssbbddsb)",
-        self->effective_policy.clock_mode,
-        self->effective_policy.calendar,
-        self->effective_policy.show_seconds,
-        self->effective_policy.location_configured,
-        self->effective_policy.latitude,
-        self->effective_policy.longitude,
+        policy->clock_mode,
+        policy->calendar,
+        policy->show_seconds,
+        policy->location_configured,
+        policy->latitude,
+        policy->longitude,
         authority,
-        self->provider_available));
+        calendar_plus_temporal_policy_source_get_provider_available(
+            self->policy_source)));
 }
 
 gchar *
 calendar_plus_system_clock_get_system_mode(CalendarPlusSystemClock *self)
 {
+    const InfiltratrTemporalPolicyV3 *policy;
+
     g_return_val_if_fail(CALENDAR_PLUS_IS_SYSTEM_CLOCK(self),
                          g_strdup("standard"));
-    return g_strdup(self->effective_policy.clock_mode);
+    policy = effective_policy(self);
+    return g_strdup(policy != NULL ? policy->clock_mode : "standard");
 }
 
 gchar *
 calendar_plus_system_clock_get_system_calendar(CalendarPlusSystemClock *self)
 {
+    const InfiltratrTemporalPolicyV3 *policy;
+
     g_return_val_if_fail(CALENDAR_PLUS_IS_SYSTEM_CLOCK(self),
                          g_strdup("gregorian"));
-    return g_strdup(self->effective_policy.calendar);
+    policy = effective_policy(self);
+    return g_strdup(policy != NULL ? policy->calendar : "gregorian");
 }
 
 gboolean
 calendar_plus_system_clock_get_system_show_seconds(
     CalendarPlusSystemClock *self)
 {
+    const InfiltratrTemporalPolicyV3 *policy;
+
     g_return_val_if_fail(CALENDAR_PLUS_IS_SYSTEM_CLOCK(self), FALSE);
-    return self->effective_policy.show_seconds;
+    policy = effective_policy(self);
+    return policy != NULL && policy->show_seconds;
 }
 
 gboolean
 calendar_plus_system_clock_get_system_location_configured(
     CalendarPlusSystemClock *self)
 {
+    const InfiltratrTemporalPolicyV3 *policy;
+
     g_return_val_if_fail(CALENDAR_PLUS_IS_SYSTEM_CLOCK(self), FALSE);
-    return self->effective_policy.location_configured;
+    policy = effective_policy(self);
+    return policy != NULL && policy->location_configured;
 }
 
 gdouble
 calendar_plus_system_clock_get_system_latitude(
     CalendarPlusSystemClock *self)
 {
+    const InfiltratrTemporalPolicyV3 *policy;
+
     g_return_val_if_fail(CALENDAR_PLUS_IS_SYSTEM_CLOCK(self), 0.0);
-    return self->effective_policy.latitude;
+    policy = effective_policy(self);
+    return policy != NULL ? policy->latitude : 0.0;
 }
 
 gdouble
 calendar_plus_system_clock_get_system_longitude(
     CalendarPlusSystemClock *self)
 {
+    const InfiltratrTemporalPolicyV3 *policy;
+
     g_return_val_if_fail(CALENDAR_PLUS_IS_SYSTEM_CLOCK(self), 0.0);
-    return self->effective_policy.longitude;
+    policy = effective_policy(self);
+    return policy != NULL ? policy->longitude : 0.0;
 }
