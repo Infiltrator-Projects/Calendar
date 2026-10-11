@@ -4,17 +4,14 @@
 /*
  * Native event-store and visible-range orchestration controller.
  *
- * CalendarServer discovery, proxy lifetime and range-call transport are owned
- * by calendarServerTransport.js. This module owns no Cinnamon actors. External
- * event tuples cross the transport boundary once and are immediately normalised
- * by CalendarPlus.EventStore. Presentation is notified through narrow agenda
- * signals so event/cache state never reaches into EventList or another concrete
- * view. User preference state crosses this boundary only as the abstract
- * enabled flag supplied through set_enabled.
+ * CalendarServer discovery/proxy lifetime belong to calendarServerTransport.js,
+ * while filesystem timezone observation belongs to timezoneMonitor.js. This
+ * controller owns event-cache semantics, desired range/selection state and the
+ * signals exposed to presentation. External tuples cross the boundary once and
+ * are immediately normalized by CalendarPlus.EventStore.
  */
 
 const CalendarPlus = imports.gi.CalendarPlus;
-const Gio = imports.gi.Gio;
 const GLib = imports.gi.GLib;
 const Signals = imports.signals;
 const Mainloop = imports.mainloop;
@@ -52,6 +49,9 @@ const CalendarServerTransportModule = RuntimeSupport.loadLocalModule(
 const CalendarServerTransport = CalendarServerTransportModule.CalendarServerTransport;
 const STATUS_UNKNOWN = CalendarServerTransportModule.STATUS_UNKNOWN;
 const STATUS_NO_CALENDARS = CalendarServerTransportModule.STATUS_NO_CALENDARS;
+const TimezoneMonitor = RuntimeSupport.loadLocalModule(
+    "timezoneMonitor"
+).TimezoneMonitor;
 
 function _civilFields(date) {
     if (date === null) {
@@ -131,11 +131,6 @@ class EventSnapshot {
     constructor(variant) {
         const decoded = NativeBoundary.decodeEventSnapshot(variant);
         this.revision = decoded.revision;
-        /*
-         * A native snapshot is one coherent contract generation. Do not render
-         * an apparently valid subset if one row violates that contract: partial
-         * success would make corruption look like missing appointments.
-         */
         this.events = decoded.events.map((row) => new EventRecord(row));
     }
 
@@ -145,22 +140,18 @@ class EventSnapshot {
 }
 
 var EventsManager = class EventsManager {
-    constructor(transport = null) {
+    constructor(transport = null, timezoneMonitor = null) {
         this._enabled = true;
         this._destroyed = false;
         this._transport = transport || new CalendarServerTransport();
+        this._timezoneMonitor = timezoneMonitor || new TimezoneMonitor();
         this._transportSignals = new SignalBag();
+        this._timezoneSignals = new SignalBag();
         this._range_retry_timer_id = 0;
-        this._timezoneCancellable = new Gio.Cancellable();
         this._reload_id = 0;
         this._force_reload_pending = false;
         this.current_range_start = null;
         this.current_range_end = null;
-        /*
-         * Keep civil endpoints separately from transport instants. A timezone
-         * change can change the Unix instant that represents local midnight
-         * without changing which Gregorian cells the calendar requested.
-         */
         this.current_range_start_civil = null;
         this.current_range_end_civil = null;
         this.current_selected_date = null;
@@ -169,10 +160,8 @@ var EventsManager = class EventsManager {
         this.last_update_timestamp = 0;
         this.event_store = CalendarPlus.EventStore.new();
 
-        this._timezone_monitor = null;
-        this._timezone_monitor_signal_id = 0;
         this._wireTransport();
-        this._startTimezoneMonitor();
+        this._wireTimezone();
     }
 
     set_enabled(enabled) {
@@ -236,6 +225,15 @@ var EventsManager = class EventsManager {
             "status-changed",
             (transport, status) => this._statusChanged(status)
         );
+    }
+
+    _wireTimezone() {
+        this._timezoneSignals.connect(
+            this._timezoneMonitor,
+            "changed",
+            () => this._timezoneChanged()
+        );
+        this._timezoneMonitor.start();
     }
 
     start_events() {
@@ -305,34 +303,11 @@ var EventsManager = class EventsManager {
         );
     }
 
-    _startTimezoneMonitor() {
-        try {
-            const timezone = Gio.File.new_for_path("/etc/localtime");
-            this._timezone_monitor = timezone.monitor_file(
-                Gio.FileMonitorFlags.NONE,
-                this._timezoneCancellable
-            );
-            this._timezone_monitor_signal_id = this._timezone_monitor.connect(
-                "changed",
-                () => this._timezoneChanged()
-            );
-        } catch (error) {
-            global.logError(
-                `${APPLET_UUID}: could not monitor system timezone: ${error}`
-            );
-        }
-    }
-
     _timezoneChanged() {
         if (this._destroyed || this.event_store === null) {
             return;
         }
 
-        /*
-         * Close admission before touching timezone-derived membership. Signals
-         * from the old CalendarServer view are not generation-tagged and must
-         * not repopulate the index during the deferred forced reload.
-         */
         this._rangeState.closeAdmission();
         this.event_store.refresh_timezone();
         this._invalidateCurrentRange(false);
@@ -344,13 +319,6 @@ var EventsManager = class EventsManager {
             return;
         }
 
-        /*
-         * All event-universe invalidations share one ordering invariant:
-         * close admission first, mark the accepted request stale, then either
-         * queue a replacement behind the in-flight request or reload the newest
-         * civil range. This removes idle-window races between invalidation and
-         * queue_reload().
-         */
         const requestPending = this._rangeState.invalidate();
         if (clearStore) {
             this.event_store.clear();
@@ -381,11 +349,6 @@ var EventsManager = class EventsManager {
 
         let changed = false;
         for (const eventVariant of payload.unpack()) {
-            /*
-             * CalendarServer has no request-generation token on event signals.
-             * The native transport adapter owns tuple parsing and range
-             * admission together so JavaScript never learns tuple positions.
-             */
             changed = this.event_store.add_or_update_in_range(
                 eventVariant,
                 this.last_update_timestamp,
@@ -404,15 +367,6 @@ var EventsManager = class EventsManager {
             typeof serializedIds !== "string" || serializedIds.length === 0) {
             return;
         }
-
-        /*
-         * CalendarServer removal signals contain IDs only: there is no range
-         * generation or revision with which to prove that a late removal came
-         * from the current EDS view. Treat every removal as cache invalidation
-         * and rebuild the newest desired range instead of deleting an ID from a
-         * possibly newer generation. This is correct for both genuine current
-         * removals and delayed signals from a stopped view.
-         */
         this._invalidateCurrentRange(true);
         this.emit("events-updated");
     }
@@ -421,17 +375,6 @@ var EventsManager = class EventsManager {
         if (this._destroyed || this.event_store === null) {
             return;
         }
-
-        /*
-         * Client disappearance changes the membership of the event universe.
-         * A clean reload is safer than trying to infer which cached rows came
-         * from the removed EDS client.
-         *
-         * Keep the grid-owned desired range. A client-set change invalidates
-         * the result for that range, not the range itself. The shared
-         * invalidation path closes event admission before the deferred reload,
-         * including while another SetTimeRange call is still in flight.
-         */
         this._invalidateCurrentRange(true);
         this.emit("events-updated");
     }
@@ -574,21 +517,11 @@ var EventsManager = class EventsManager {
         }
 
         if (this._rangeState.pending) {
-            /*
-             * Preserve only the newest desired range. This serializes
-             * CalendarServer traffic and prevents an obsolete request from
-             * overlapping the next request's refresh token.
-             */
             this._rangeState.queueForce(Boolean(force) || changed);
             return;
         }
 
         this._rangeState.clearQueuedForce();
-        /*
-         * Every actual CalendarServer request owns a fresh local generation.
-         * Replacing the store up front makes an empty response correct by
-         * construction instead of relying on a timed stale-row cull.
-         */
         this._requestVisibleRange(first, last, force, true);
     }
 
@@ -607,12 +540,6 @@ var EventsManager = class EventsManager {
             this._force_reload_pending = false;
 
             if (!this._destroyed) {
-                /*
-                 * A forced queued reload means authoritative server data, not
-                 * merely repainting the selected agenda from the local cache.
-                 * The calendar view still owns range calculation; reuse the
-                 * last range it supplied rather than inventing one here.
-                 */
                 if (forceReload &&
                     this.current_range_start_civil !== null &&
                     this.current_range_end_civil !== null) {
@@ -655,12 +582,6 @@ var EventsManager = class EventsManager {
             day: dayOfMonth,
         };
 
-        /*
-         * A jurisdiction can skip an entire civil date. The calendar grid still
-         * owns that date coordinate, but there is no Unix interval to query for
-         * appointments. Present the date itself using UTC as a formatting-only
-         * carrier and keep its agenda empty.
-         */
         if (day === null) {
             this.current_selected_date = null;
             const display = GLib.DateTime.new_utc(
@@ -673,11 +594,6 @@ var EventsManager = class EventsManager {
             return;
         }
 
-        /*
-         * Selection is presentation state, not transport state. Publish the
-         * agenda heading immediately even while CalendarServer is still being
-         * activated; eventual server readiness only controls event data.
-         */
         this.current_selected_date = day;
         this._publishAgendaDate(day);
 
@@ -771,29 +687,10 @@ var EventsManager = class EventsManager {
             this._reload_id = 0;
         }
 
-        if (this._timezone_monitor !== null) {
-            if (this._timezone_monitor_signal_id > 0) {
-                try {
-                    this._timezone_monitor.disconnect(this._timezone_monitor_signal_id);
-                } catch (error) {
-                    global.logError(error);
-                }
-            }
-            try {
-                this._timezone_monitor.cancel();
-            } catch (error) {
-                global.logError(error);
-            }
-        }
-        this._timezone_monitor_signal_id = 0;
-        this._timezone_monitor = null;
-        if (this._timezoneCancellable !== null) {
-            try {
-                this._timezoneCancellable.cancel();
-            } catch (error) {
-                global.logError(error);
-            }
-            this._timezoneCancellable = null;
+        this._timezoneSignals.disconnectAll();
+        if (this._timezoneMonitor !== null) {
+            this._timezoneMonitor.destroy();
+            this._timezoneMonitor = null;
         }
 
         this._transportSignals.disconnectAll();
