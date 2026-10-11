@@ -30,6 +30,7 @@ jobs:
           python3 tools/repair-decoupled-calendar-lifecycle.py
           python3 tools/repair-decoupled-event-list-cache-test.py
           python3 tools/repair-native-range-delegation-test.py
+          python3 tools/update-translations.py
           python3 tools/update-runtime-hashes.py
 
       - name: Install validation dependencies
