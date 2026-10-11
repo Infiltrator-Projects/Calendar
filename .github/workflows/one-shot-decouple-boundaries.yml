@@ -29,6 +29,7 @@ jobs:
           python3 tools/repair-decoupled-loader-count.py
           python3 tools/repair-decoupled-calendar-lifecycle.py
           python3 tools/repair-decoupled-event-list-cache-test.py
+          python3 tools/repair-native-range-delegation-test.py
           python3 tools/update-runtime-hashes.py
 
       - name: Install validation dependencies
@@ -54,6 +55,7 @@ jobs:
           rm -f tools/repair-decoupled-loader-count.py
           rm -f tools/repair-decoupled-calendar-lifecycle.py
           rm -f tools/repair-decoupled-event-list-cache-test.py
+          rm -f tools/repair-native-range-delegation-test.py
           git config user.name "Calendar maintenance"
           git config user.email "noreply@the-infiltratr.com"
           git add -A
