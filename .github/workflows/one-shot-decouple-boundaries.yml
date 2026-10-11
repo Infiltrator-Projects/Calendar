@@ -24,6 +24,7 @@ jobs:
         run: |
           python3 tools/repair-one-shot-decouple.py
           python3 tools/one-shot-decouple-boundaries.py
+          python3 tools/repair-decoupled-js-tests.py
           python3 tools/update-runtime-hashes.py
 
       - name: Install validation dependencies
@@ -44,6 +45,7 @@ jobs:
           rm -f .github/workflows/one-shot-decouple-boundaries.yml
           rm -f tools/one-shot-decouple-boundaries.py
           rm -f tools/repair-one-shot-decouple.py
+          rm -f tools/repair-decoupled-js-tests.py
           git config user.name "Calendar maintenance"
           git config user.email "noreply@the-infiltratr.com"
           git add -A
