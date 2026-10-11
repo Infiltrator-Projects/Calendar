@@ -6,6 +6,12 @@ This changelog records user-visible, compatibility, architecture and validation 
 
 No unreleased changes.
 
+## 1.0.88 - 2026-10-11
+
+- Extract CalendarServer discovery, reconnect and SetTimeRange transport from EventsManager; event/cache semantics now consume a narrow transport port.
+- Move effective temporal-policy decoding, validation and caching out of applet.js into a dedicated boundary so the applet remains a composition root.
+- Replace source-layout popup assertions and private EventsManager transport tests with behavioural module tests; architecture checks now enforce ownership rather than implementation spelling.
+
 ## 1.0.87 - 2026-10-11
 
 - Make the native event adapter the sole owner of CalendarServer tuple decoding and visible-range admission; Cinnamon JavaScript no longer depends on external tuple positions.

@@ -12,16 +12,12 @@
  */
 
 const CalendarPlus = imports.gi.CalendarPlus;
-const Cinnamon = imports.gi.Cinnamon;
 const Gio = imports.gi.Gio;
 const GLib = imports.gi.GLib;
 const Signals = imports.signals;
 const Mainloop = imports.mainloop;
 
 const APPLET_UUID = "calendar-plus@the-infiltratr";
-const STATUS_UNKNOWN = 0;
-const STATUS_NO_CALENDARS = 1;
-const CALENDAR_SERVER_BUS_NAME = "org.cinnamon.CalendarServer";
 
 function _loadRuntimeSupport() {
     try {
@@ -48,6 +44,12 @@ const EventRangeState = RuntimeSupport.loadLocalModule(
 const NativeBoundary = RuntimeSupport.loadLocalModule(
     "nativeBoundary"
 ).NativeBoundary;
+const CalendarServerTransportModule = RuntimeSupport.loadLocalModule(
+    "calendarServerTransport"
+);
+const CalendarServerTransport = CalendarServerTransportModule.CalendarServerTransport;
+const STATUS_UNKNOWN = CalendarServerTransportModule.STATUS_UNKNOWN;
+const STATUS_NO_CALENDARS = CalendarServerTransportModule.STATUS_NO_CALENDARS;
 
 function _civilFields(date) {
     if (date === null) {
@@ -143,19 +145,13 @@ class EventSnapshot {
 }
 
 var EventsManager = class EventsManager {
-    constructor() {
+    constructor(transport = null) {
         this._enabled = true;
         this._destroyed = false;
-        this._inited = false;
-        this._bus_watch_id = 0;
-        this._calendar_server = null;
-        this._calendar_server_connecting = false;
-        this._calendar_server_generation = 0;
-        this._reconnect_timer_id = 0;
+        this._transport = transport || new CalendarServerTransport();
+        this._transportSignals = new SignalBag();
         this._range_retry_timer_id = 0;
-        this._serverSignals = new SignalBag();
-        this._cancellable = new Gio.Cancellable();
-        this._cached_state = STATUS_UNKNOWN;
+        this._timezoneCancellable = new Gio.Cancellable();
         this._reload_id = 0;
         this._force_reload_pending = false;
         this.current_range_start = null;
@@ -175,6 +171,7 @@ var EventsManager = class EventsManager {
 
         this._timezone_monitor = null;
         this._timezone_monitor_signal_id = 0;
+        this._wireTransport();
         this._startTimezoneMonitor();
     }
 
@@ -208,132 +205,60 @@ var EventsManager = class EventsManager {
         }
     }
 
-    start_events() {
-        if (this._destroyed || this._inited) {
-            return;
-        }
-
-        /*
-         * Cinnamon now owns backend selection behind CalendarServer.  Watch
-         * that stable service itself so a backend/server restart reconnects
-         * immediately, while still connecting directly to allow D-Bus
-         * activation instead of waiting for Evolution Data Server first.
-         */
-        if (this._bus_watch_id === 0) {
-            this._bus_watch_id = Gio.bus_watch_name(
-                Gio.BusType.SESSION,
-                CALENDAR_SERVER_BUS_NAME,
-                Gio.BusNameWatcherFlags.NONE,
-                () => this._connectCalendarServer(),
-                () => this._calendarServerVanished()
-            );
-        }
-        this._connectCalendarServer();
-    }
-
-    _connectCalendarServer() {
-        if (this._destroyed || this._calendar_server !== null ||
-            this._calendar_server_connecting) {
-            return;
-        }
-
-        this._cancelReconnect();
-        this._calendar_server_connecting = true;
-        const generation = this._calendar_server_generation;
-        Cinnamon.CalendarServerProxy.new_for_bus(
-            Gio.BusType.SESSION,
-            Gio.DBusProxyFlags.NONE,
-            CALENDAR_SERVER_BUS_NAME,
-            "/org/cinnamon/CalendarServer",
-            this._cancellable,
-            (object, result) => this._calendarServerReady(result, generation)
+    _wireTransport() {
+        this._transportSignals.connect(
+            this._transport,
+            "ready",
+            () => this._transportReady()
+        );
+        this._transportSignals.connect(
+            this._transport,
+            "unavailable",
+            (transport, expectedEmpty) => this._transportUnavailable(expectedEmpty)
+        );
+        this._transportSignals.connect(
+            this._transport,
+            "events-added-or-updated",
+            (transport, payload) => this._ingestEvents(payload)
+        );
+        this._transportSignals.connect(
+            this._transport,
+            "events-removed",
+            (transport, ids) => this._removeEvents(ids)
+        );
+        this._transportSignals.connect(
+            this._transport,
+            "calendar-set-changed",
+            () => this._calendarSetChanged()
+        );
+        this._transportSignals.connect(
+            this._transport,
+            "status-changed",
+            (transport, status) => this._statusChanged(status)
         );
     }
 
-    _calendarServerReady(result, generation) {
-        try {
-            const server = Cinnamon.CalendarServerProxy.new_for_bus_finish(result);
-            if (this._destroyed || generation !== this._calendar_server_generation) {
-                return;
-            }
-
-            this._calendar_server_connecting = false;
-            this._serverSignals.connect(
-                server,
-                "events-added-or-updated",
-                (proxy, payload) => this._ingestEvents(payload)
-            );
-            this._serverSignals.connect(
-                server,
-                "events-removed",
-                (proxy, ids) => this._removeEvents(ids)
-            );
-            this._serverSignals.connect(
-                server,
-                "client-disappeared",
-                () => this._calendarSetChanged()
-            );
-            this._serverSignals.connect(
-                server,
-                "notify::status",
-                () => this._statusChanged()
-            );
-
-            this._calendar_server = server;
-            this._cached_state = server.status;
-            this._inited = true;
-            this.emit("events-manager-ready");
-        } catch (error) {
-            if (!this._destroyed && generation === this._calendar_server_generation) {
-                this._calendar_server_connecting = false;
-                this._serverSignals.disconnectAll();
-                this._calendar_server = null;
-                this._inited = false;
-                if (this.event_store !== null) {
-                    this.event_store.clear();
-                }
-                this._publishAgendaEvents(null, false, true);
-                global.logError(
-                    `${APPLET_UUID}: could not connect to calendar server: ${error}`
-                );
-                this._scheduleReconnect();
-            }
+    start_events() {
+        if (!this._destroyed && this._transport !== null) {
+            this._transport.start();
         }
     }
 
-    _calendarServerVanished() {
+    _transportReady() {
+        if (!this._destroyed) {
+            this.emit("events-manager-ready");
+        }
+    }
+
+    _transportUnavailable(expectedEmpty) {
         if (this._destroyed) {
             return;
         }
-
-        /*
-         * STATUS_NO_CALENDARS is authoritative and CalendarServer deliberately
-         * exits after publishing it. Preserve that state across the expected
-         * disappearance instead of misclassifying it as transport failure.
-         */
-        const expectedEmpty = this._cached_state === STATUS_NO_CALENDARS;
-
-        this._calendar_server_generation += 1;
-        this._calendar_server_connecting = false;
-        this._cancelReconnect();
-        this._serverSignals.disconnectAll();
-        this._calendar_server = null;
-        this._inited = false;
-        if (!expectedEmpty) {
-            this._cached_state = STATUS_UNKNOWN;
-        }
         this._cancelRangeRetry();
-
         if (this.event_store !== null) {
             this.event_store.clear();
         }
-        /*
-         * The pane deliberately remains allocated while CalendarServer is
-         * reconnecting so popup geometry does not jump. Clear presentation
-         * state at the same time as the native store; consumers decide how to
-         * render the loading/empty distinction from this narrow state signal.
-         */
-        this._publishAgendaEvents(null, false, !expectedEmpty);
+        this._publishAgendaEvents(null, false, !Boolean(expectedEmpty));
         this.current_range_start = null;
         this.current_range_end = null;
         this.current_range_start_civil = null;
@@ -342,33 +267,6 @@ var EventsManager = class EventsManager {
         this.last_update_timestamp = 0;
         this.emit("has-calendars-changed");
         this.emit("events-updated");
-        /*
-         * Unexpected loss gets bounded reconnects. An authoritative empty
-         * service is re-probed on the next user-driven start_events() call or
-         * immediately if the watched bus name reappears.
-         */
-        if (!expectedEmpty) {
-            this._scheduleReconnect();
-        }
-    }
-
-    _scheduleReconnect() {
-        if (this._destroyed || this._reconnect_timer_id > 0) {
-            return;
-        }
-
-        this._reconnect_timer_id = Mainloop.timeout_add_seconds(5, () => {
-            this._reconnect_timer_id = 0;
-            this._connectCalendarServer();
-            return GLib.SOURCE_REMOVE;
-        });
-    }
-
-    _cancelReconnect() {
-        if (this._reconnect_timer_id > 0) {
-            Mainloop.source_remove(this._reconnect_timer_id);
-            this._reconnect_timer_id = 0;
-        }
     }
 
     _cancelRangeRetry() {
@@ -392,7 +290,7 @@ var EventsManager = class EventsManager {
             () => {
                 this._range_retry_timer_id = 0;
                 if (!this._destroyed && !this._rangeState.pending &&
-                    this._calendar_server !== null &&
+                    this._transport !== null && this._transport.is_ready() &&
                     this.current_range_start !== null &&
                     this.current_range_end !== null) {
                     this._requestVisibleRange(
@@ -412,7 +310,7 @@ var EventsManager = class EventsManager {
             const timezone = Gio.File.new_for_path("/etc/localtime");
             this._timezone_monitor = timezone.monitor_file(
                 Gio.FileMonitorFlags.NONE,
-                this._cancellable
+                this._timezoneCancellable
             );
             this._timezone_monitor_signal_id = this._timezone_monitor.connect(
                 "changed",
@@ -539,23 +437,18 @@ var EventsManager = class EventsManager {
         this.emit("events-updated");
     }
 
-    _statusChanged() {
-        if (this._destroyed || this._calendar_server === null) {
+    _statusChanged(next) {
+        if (this._destroyed || next === STATUS_UNKNOWN) {
             return;
         }
-        const next = this._calendar_server.status;
-        if (next === this._cached_state || next === STATUS_UNKNOWN) {
-            return;
-        }
-
-        this._cached_state = next;
         this.queue_reload(true);
         this.emit("has-calendars-changed");
     }
 
     _requestVisibleRange(first, last, force, clearStore) {
-        if (this._destroyed || this._calendar_server === null ||
-            this.event_store === null || this._rangeState.pending) {
+        if (this._destroyed || this._transport === null ||
+            !this._transport.is_ready() || this.event_store === null ||
+            this._rangeState.pending) {
             return;
         }
 
@@ -581,30 +474,15 @@ var EventsManager = class EventsManager {
         const requestedEnd = last;
         this.last_update_timestamp = GLib.get_monotonic_time();
 
-        this._calendar_server.call_set_time_range(
+        const started = this._transport.request_range(
             first.to_unix(),
             exclusiveEnd.to_unix() - 1,
             Boolean(force),
-            null,
-            (server, result) => {
-                let succeeded = false;
-                try {
-                    server.call_set_time_range_finish(result);
-                    succeeded = true;
-                } catch (error) {
-                    if (!this._destroyed &&
-                        this._rangeState.isCurrent(requestGeneration)) {
-                        global.logError(
-                            `${APPLET_UUID}: event range request failed: ${error}`
-                        );
-                    }
-                }
-
-                if (this._destroyed ||
+            (succeeded, currentTransport) => {
+                if (this._destroyed || !currentTransport ||
                     !this._rangeState.isCurrent(requestGeneration)) {
                     return;
                 }
-
                 if (!this._rangeState.finishRequest(
                         requestGeneration, succeeded)) {
                     return;
@@ -614,19 +492,12 @@ var EventsManager = class EventsManager {
                     !sameInstant(requestedStart, this.current_range_start) ||
                     !sameInstant(requestedEnd, this.current_range_end);
                 if (desiredChanged || this._rangeState.queuedForce) {
-                    const queuedForce =
-                        this._rangeState.consumeQueuedForce();
+                    const queuedForce = this._rangeState.consumeQueuedForce();
                     const nextStart = this.current_range_start;
                     const nextEnd = this.current_range_end;
                     this._cancelRangeRetry();
                     this._rangeState.resetRetry();
                     if (nextStart !== null && nextEnd !== null) {
-                        /*
-                         * CalendarServer does not tag event signals with the
-                         * originating range request. Never overlap two range
-                         * calls: after the older request has completed, clear
-                         * its rows before issuing the newest desired range.
-                         */
                         this._requestVisibleRange(
                             nextStart,
                             nextEnd,
@@ -638,13 +509,6 @@ var EventsManager = class EventsManager {
                 }
 
                 if (succeeded) {
-                    /*
-                     * CalendarServer accepts the range before its asynchronous
-                     * backend starts emitting. Event admission opens only after
-                     * that acceptance boundary. Every real request has already
-                     * replaced the local store, so an empty refresh requires no
-                     * silence timer or guessed "refresh complete" delay.
-                     */
                     this._rangeState.acceptCompletedRequest();
                     this._cancelRangeRetry();
                     this._rangeState.resetRetry();
@@ -654,11 +518,14 @@ var EventsManager = class EventsManager {
                 }
             }
         );
+        if (!started && this._rangeState.finishRequest(requestGeneration, false)) {
+            this._scheduleRangeRetry();
+        }
     }
 
     set_visible_range(firstDate, lastDate, force) {
-        if (this._destroyed || this._calendar_server === null ||
-            this.event_store === null) {
+        if (this._destroyed || this._transport === null ||
+            !this._transport.is_ready() || this.event_store === null) {
             return;
         }
 
@@ -861,15 +728,9 @@ var EventsManager = class EventsManager {
     }
 
     should_show_event_pane() {
-        /*
-         * Popup geometry must not depend on asynchronous D-Bus activation.
-         * When events are enabled, reserve the agenda pane while CalendarServer
-         * is connecting or temporarily unavailable. Collapse it only after an
-         * authoritative server status says that no calendars exist.
-         */
-        const status = this._calendar_server !== null
-            ? this._calendar_server.status
-            : this._cached_state;
+        const status = this._transport !== null
+            ? this._transport.status
+            : STATUS_UNKNOWN;
         return !this._destroyed &&
             this._enabled &&
             status !== STATUS_NO_CALENDARS;
@@ -878,9 +739,9 @@ var EventsManager = class EventsManager {
     is_active() {
         return !this._destroyed &&
             this._enabled &&
-            this._inited &&
-            this._calendar_server !== null &&
-            this._calendar_server.status !== STATUS_NO_CALENDARS;
+            this._transport !== null &&
+            this._transport.is_ready() &&
+            this._transport.status !== STATUS_NO_CALENDARS;
     }
 
     destroy() {
@@ -889,26 +750,10 @@ var EventsManager = class EventsManager {
         }
         this._destroyed = true;
         this._enabled = false;
-        this._inited = false;
-        this._calendar_server_generation += 1;
         this._rangeState.destroy();
-        this._calendar_server_connecting = false;
         this.current_range_start_civil = null;
         this.current_range_end_civil = null;
 
-        if (this._bus_watch_id > 0) {
-            Gio.bus_unwatch_name(this._bus_watch_id);
-            this._bus_watch_id = 0;
-        }
-        if (this._cancellable !== null) {
-            try {
-                this._cancellable.cancel();
-            } catch (error) {
-                global.logError(error);
-            }
-        }
-
-        this._cancelReconnect();
         this._cancelRangeRetry();
         if (this._reload_id > 0) {
             Mainloop.source_remove(this._reload_id);
@@ -931,16 +776,26 @@ var EventsManager = class EventsManager {
         }
         this._timezone_monitor_signal_id = 0;
         this._timezone_monitor = null;
+        if (this._timezoneCancellable !== null) {
+            try {
+                this._timezoneCancellable.cancel();
+            } catch (error) {
+                global.logError(error);
+            }
+            this._timezoneCancellable = null;
+        }
 
-        this._serverSignals.disconnectAll();
-        this._calendar_server = null;
+        this._transportSignals.disconnectAll();
+        if (this._transport !== null) {
+            this._transport.destroy();
+            this._transport = null;
+        }
 
         if (this.event_store !== null) {
             this.event_store.clear();
             this.event_store = null;
         }
 
-        this._cancellable = null;
         this.current_selected_date = null;
         this.current_selected_civil = null;
         this.current_range_start = null;

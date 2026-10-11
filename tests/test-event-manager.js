@@ -1,0 +1,220 @@
+#!/usr/bin/env node
+// SPDX-License-Identifier: GPL-3.0-or-later
+"use strict";
+const assert = require("node:assert/strict");
+const fs = require("node:fs");
+const path = require("node:path");
+const vm = require("node:vm");
+const root = path.resolve(__dirname, "..");
+let nextId = 1;
+const timeouts = new Map();
+const idles = new Map();
+const observations = {
+    clears: 0, addCalls: [], rangeRequests: [], timezoneCancels: 0,
+    timezoneDisconnects: 0, transportDestroys: 0,
+};
+function addSignalMethods(prototype) {
+    prototype.connect = function(signal, callback) {
+        if (!this.__signals) this.__signals = new Map();
+        const id = nextId++;
+        this.__signals.set(id, [signal, callback]);
+        return id;
+    };
+    prototype.disconnect = function(id) { if (this.__signals) this.__signals.delete(id); };
+    prototype.emit = function(signal, ...args) {
+        if (!this.__signals) return;
+        for (const [name, callback] of this.__signals.values()) {
+            if (name === signal) callback(this, ...args);
+        }
+    };
+}
+class SignalBag {
+    constructor() { this.entries = []; }
+    connect(object, signal, callback) {
+        const id = object.connect(signal, callback);
+        this.entries.push([object, id]);
+        return id;
+    }
+    disconnectAll() {
+        for (const [object, id] of this.entries.splice(0)) object.disconnect(id);
+    }
+}
+class FakeDateTime {
+    constructor(unix) { this.unix = unix; }
+    to_unix() { return this.unix; }
+    get_year() { return new Date(this.unix * 1000).getUTCFullYear(); }
+    get_month() { return new Date(this.unix * 1000).getUTCMonth() + 1; }
+    get_day_of_month() { return new Date(this.unix * 1000).getUTCDate(); }
+    add_days(days) { return new FakeDateTime(this.unix + days * 86400); }
+}
+const DateTime = {
+    new_local(y, m, d, h, min, sec) {
+        return new FakeDateTime(Date.UTC(y, m - 1, d, h, min, sec) / 1000);
+    },
+    new_utc(y, m, d, h, min, sec) {
+        return new FakeDateTime(Date.UTC(y, m - 1, d, h, min, sec) / 1000);
+    },
+    new_from_unix_local(value) { return new FakeDateTime(value); },
+    new_now_local() { return new FakeDateTime(0); },
+};
+class TimezoneMonitor {
+    connect() { return 77; }
+    disconnect() { observations.timezoneDisconnects += 1; }
+    cancel() { observations.timezoneCancels += 1; }
+}
+class FakeTransport {
+    constructor() {
+        this.status = 0;
+        this.ready = false;
+        this.requests = [];
+        addSignalMethods(Object.getPrototypeOf(this));
+    }
+    is_ready() { return this.ready; }
+    start() {}
+    request_range(start, end, force, callback) {
+        if (!this.ready) return false;
+        this.requests.push({ start, end, force, callback });
+        observations.rangeRequests.push([start, end, force]);
+        return true;
+    }
+    complete(index, succeeded, current = true) {
+        this.requests[index].callback(succeeded, current);
+    }
+    destroy() { observations.transportDestroys += 1; }
+}
+const nativeBoundaryModule = {
+    NativeBoundary: {
+        decodeEventSnapshot(variant) {
+            const [revision, rows] = variant.deep_unpack();
+            return {
+                revision,
+                events: rows.map((row) => ({
+                    id: row[0], color: row[1], summary: row[2], allDay: row[3],
+                    multiDay: row[4], startUnix: row[5], endUnix: row[6],
+                    startDayUnix: row[7], endDayUnix: row[8], modified: row[9],
+                })),
+            };
+        },
+    },
+};
+const context = {
+    console,
+    global: { logError() {} },
+    require(name) {
+        assert.equal(name, "./runtimeSupport");
+        return {
+            SignalBag,
+            midnight(value) {
+                return DateTime.new_local(value.get_year(), value.get_month(), value.get_day_of_month(), 0, 0, 0);
+            },
+            sameInstant(a, b) { return a !== null && b !== null && a.to_unix() === b.to_unix(); },
+            loadLocalModule(moduleName) {
+                if (moduleName === "eventRangeState") return context.__rangeModule;
+                if (moduleName === "nativeBoundary") return nativeBoundaryModule;
+                if (moduleName === "calendarServerTransport") {
+                    return {
+                        CalendarServerTransport: FakeTransport,
+                        STATUS_UNKNOWN: 0,
+                        STATUS_NO_CALENDARS: 1,
+                    };
+                }
+                throw new Error(`unexpected module ${moduleName}`);
+            },
+        };
+    },
+    imports: {
+        ui: {},
+        signals: { addSignalMethods },
+        mainloop: {
+            timeout_add_seconds(delay, callback) { const id = nextId++; timeouts.set(id, callback); return id; },
+            idle_add(callback) { const id = nextId++; idles.set(id, callback); return id; },
+            source_remove(id) { timeouts.delete(id); idles.delete(id); },
+        },
+        gi: {
+            Gio: {
+                Cancellable: class { cancel() {} },
+                File: { new_for_path() { return { monitor_file() { return new TimezoneMonitor(); } }; } },
+                FileMonitorFlags: { NONE: 0 },
+            },
+            GLib: {
+                DateTime,
+                SOURCE_REMOVE: false,
+                get_monotonic_time() { return 123456; },
+            },
+            CalendarPlus: {
+                event_day_relation() { return 0; },
+                event_timing() { return { deep_unpack() { return [0, 0, 0]; } }; },
+                EventStore: {
+                    new() {
+                        return {
+                            clear() { observations.clears += 1; },
+                            refresh_timezone() {},
+                            add_or_update_in_range(event, timestamp, start, end) {
+                                observations.addCalls.push([event, timestamp, start, end]);
+                                return true;
+                            },
+                            get_snapshot() { return { deep_unpack() { return [1, []]; } }; },
+                            get_color_range() { return { deep_unpack() { return []; } }; },
+                        };
+                    },
+                },
+            },
+        },
+    },
+};
+vm.createContext(context);
+const rangeSource = fs.readFileSync(
+    path.join(root, "src", "cinnamon", "eventRangeState.js"), "utf8"
+);
+context.__rangeModule = vm.runInContext(
+    `(() => {${rangeSource}\nreturn { EventRangeState };})()`,
+    context,
+    { filename: "eventRangeState.js" }
+);
+const managerSource = fs.readFileSync(
+    path.join(root, "src", "cinnamon", "eventManager.js"), "utf8"
+);
+vm.runInContext(
+    `${managerSource}\nglobalThis.__EventsManager = EventsManager;`,
+    context,
+    { filename: "eventManager.js" }
+);
+const EventsManager = context.__EventsManager;
+const transport = new FakeTransport();
+transport.ready = true;
+transport.status = 2;
+const manager = new EventsManager(transport);
+const first = new Date(Date.UTC(2026, 7, 2, 12, 0, 0));
+const last = new Date(Date.UTC(2026, 8, 12, 12, 0, 0));
+manager.set_visible_range(first, last, false);
+assert.equal(observations.rangeRequests.length, 1);
+assert.equal(observations.rangeRequests[0][1] - observations.rangeRequests[0][0], 42 * 86400 - 1);
+transport.complete(0, true);
+manager.set_visible_range(first, last, false);
+assert.equal(observations.rangeRequests.length, 1, "successful identical range must be stable");
+manager.set_visible_range(first, last, true);
+assert.equal(observations.rangeRequests.length, 2, "forced refresh must cross the transport port");
+transport.complete(1, true);
+manager._ingestEvents({ unpack() { return [{ opaque: true }]; } });
+assert.equal(observations.addCalls.length, 1, "admitted rows must go directly to the native store boundary");
+manager.set_visible_range(first, last, true);
+transport.complete(2, false);
+assert.equal(timeouts.size, 1, "range failure must retain bounded retry behaviour");
+const retry = timeouts.values().next().value;
+timeouts.clear();
+retry();
+assert.equal(observations.rangeRequests.length, 4);
+const presented = [];
+manager.emit = (signal, ...args) => presented.push([signal, ...args]);
+transport.emit("unavailable", false);
+assert.equal(manager._rangeState.acceptingEvents, false);
+assert.ok(observations.clears > 0, "transport loss must invalidate native cached rows");
+assert.ok(presented.some(([signal]) => signal === "has-calendars-changed"));
+transport.status = 1;
+assert.equal(manager.should_show_event_pane(), false, "authoritative empty status collapses the agenda");
+manager.destroy();
+manager.destroy();
+assert.equal(observations.transportDestroys, 1);
+assert.equal(observations.timezoneDisconnects, 1);
+assert.equal(observations.timezoneCancels, 1);
+console.log("EventsManager orchestration behaviour tests passed.");

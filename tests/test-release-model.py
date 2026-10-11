@@ -162,7 +162,11 @@ def main() -> None:
         "custom-tooltip-format",
     ):
         assert temporal_key not in settings_schema
-    assert "get_system_policy()" in applet
+    temporal_policy = read("src/cinnamon/temporalPolicy.js")
+    assert "TemporalPolicy.TemporalPolicyResolver" in applet
+    assert "get_system_policy()" not in applet
+    assert "get_system_policy()" in temporal_policy
+    assert "NativeBoundary.decodeTemporalPolicy" in temporal_policy
     assert "infiltratr_temporal_posix_provider_available" in system_clock_source
     assert "infiltratr_temporal_posix_policy_load" in system_clock_source
     assert "g_file_monitor_directory" in system_clock_source

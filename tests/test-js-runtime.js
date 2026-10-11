@@ -2204,18 +2204,8 @@ testTimedMultiDayEventRemainsCurrent();
 testEventListScrollUsesViewport();
 testEventListUnavailableState();
 testEventListCacheIdentity();
-testVisibleEventRange();
-testVisibleEventRangeFailureRecovery();
-testSuccessfulEmptyRangeReplacesPreviousGeneration();
-testRangeAdmissionDelegatesOpaqueRowsToNativeBoundary();
-testRemovalSignalsInvalidateInsteadOfDeletingNewGeneration();
-testTimezoneReloadPreservesCivilRange();
-testCalendarSetChangeClosesAdmission();
-testServerLossClearsPresentedAgenda();
-testExpectedNoCalendarShutdownStaysAuthoritative();
-testBatchedEventColorBridge();
-testEventsManagerPresentationState();
-testEventsManagerPreservesPreEpochSelection();
-testEventsManagerLifecycle();
-testEventsManagerReconnect();
+/* EventsManager and CalendarServer transport are exercised through injected
+ * behavioural ports in test-event-manager.js and test-calendar-server-transport.js.
+ * Keeping those tests separate prevents private transport layout from becoming
+ * part of the presentation runtime contract again. */
 console.log("JavaScript runtime lifecycle tests passed.");

@@ -53,9 +53,11 @@ def main() -> None:
     calendar = read("calendar.js")
     event_view = read("eventView.js")
     event_manager = read("eventManager.js")
+    event_transport = read("calendarServerTransport.js")
     event_range_state = read("eventRangeState.js")
     event_port = read("calendarEventSource.js")
     native_boundary = read("nativeBoundary.js")
+    temporal_policy = read("temporalPolicy.js")
     panel_clock = read("panelClock.js")
     panel_view = read("panelView.js")
     popup_menu = read("popupMenu.js")
@@ -80,8 +82,9 @@ def main() -> None:
     # stay in the presentation leaves.
     forbid_tokens(js_code(applet), "class CalendarPopupMenu", "class LatchedWidthBin")
     assert {
-        "calendar", "eventManager", "nativeBoundary", "panelClock", "popupShell"
+        "calendar", "eventManager", "panelClock", "popupShell", "temporalPolicy"
     }.issubset(loaded_modules(applet))
+    assert "nativeBoundary" not in loaded_modules(applet)
     require_tokens(
         popup_shell,
         "CalendarEventSourceModule.CalendarEventSource",
@@ -100,7 +103,14 @@ def main() -> None:
     # The event transport controller must not know Cinnamon's concrete applet
     # settings object or preference keys. The composition root reduces the UI
     # preference to one abstract enabled boolean.
-    assert re.search(r"class EventsManager\s*\{\s*constructor\s*\(\s*\)", event_manager)
+    assert re.search(
+        r"class EventsManager\s*\{\s*constructor\s*\(\s*transport\s*=\s*null\s*\)",
+        event_manager,
+    )
+    require_tokens(
+        event_manager,
+        "this._transport = transport || new CalendarServerTransport()",
+    )
     require_tokens(event_manager, "set_enabled(enabled)", "this._enabled")
     forbid_tokens(
         js_code(event_manager),
@@ -136,8 +146,17 @@ def main() -> None:
         "select_date(date, force)",
     )
     forbid_tokens(js_code(event_port), "CalendarServer", "Gio.", "bus_watch", "event_store")
-    forbid_tokens(js_code(event_manager), "eventVariant.deep_unpack", "row[3]", "row[4]", "row[5]")
-    require_tokens(event_manager, "add_or_update_in_range(", "NativeBoundary.decodeEventSnapshot")
+    forbid_tokens(
+        js_code(event_manager),
+        "CalendarServerProxy", "bus_watch_name", "call_set_time_range(",
+        "_calendar_server", "eventVariant.deep_unpack", "row[3]", "row[4]", "row[5]",
+    )
+    require_tokens(
+        event_transport,
+        "CalendarServerProxy", "bus_watch_name", "request_range(",
+        'emit("events-added-or-updated"', 'emit("unavailable"',
+    )
+    require_tokens(event_manager, "CalendarServerTransport", "add_or_update_in_range(", "NativeBoundary.decodeEventSnapshot")
     forbid_tokens(
         js_code(calendar),
         "CalendarServer", "Gio.", "bus_watch", "event_store", "EventManager"
@@ -183,8 +202,14 @@ def main() -> None:
     require_tokens(
         applet,
         "CalendarPlus.SystemClock.new()",
-        "get_system_policy()",
+        "TemporalPolicy.TemporalPolicyResolver",
         "this._calendar.setCalendarSystem(temporal.calendar)",
+    )
+    forbid_tokens(js_code(applet), "get_system_policy()", "decodeTemporalPolicy", "deep_unpack")
+    require_tokens(
+        temporal_policy,
+        "get_system_policy()", "NativeBoundary.decodeTemporalPolicy",
+        '"mint-cinnamon"', '"infiltrator-system-settings"',
     )
     forbid_tokens(
         js_code(applet),

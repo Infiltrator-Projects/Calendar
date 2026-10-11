@@ -49,9 +49,7 @@ function _loadRuntimeSupport() {
 
 const RuntimeSupport = _loadRuntimeSupport();
 const SignalBag = RuntimeSupport.SignalBag;
-const NativeBoundary = RuntimeSupport.loadLocalModule(
-    "nativeBoundary"
-).NativeBoundary;
+const TemporalPolicy = RuntimeSupport.loadLocalModule("temporalPolicy");
 /* PopupShell owns RuntimeSupport.loadLocalModule("eventView") and the smaller presentation leaf modules. */
 const Calendar = RuntimeSupport.loadLocalModule("calendar");
 const EventManager = RuntimeSupport.loadLocalModule("eventManager");
@@ -95,7 +93,7 @@ class CalendarPlusApplet extends Applet.Applet {
         this._panelView = null;
         this._popupView = null;
         this._resume_source = null;
-        this._temporalPolicyCache = null;
+        this._temporalPolicy = null;
 
         this._signals = new SignalBag();
         this._eventSignals = new SignalBag();
@@ -132,6 +130,10 @@ class CalendarPlusApplet extends Applet.Applet {
 
         this.clock = new CinnamonDesktop.WallClock();
         this.system_clock = CalendarPlus.SystemClock.new();
+        this._temporalPolicy = new TemporalPolicy.TemporalPolicyResolver(
+            this.system_clock,
+            PanelClock.isNativeClockMode
+        );
         this._signals.connect(
             this.system_clock,
             "tick",
@@ -141,7 +143,7 @@ class CalendarPlusApplet extends Applet.Applet {
             this.system_clock,
             "policy-changed",
             () => {
-                this._temporalPolicyCache = null;
+                this._temporalPolicy.invalidate();
                 this._onSettingsChanged();
             }
         );
@@ -456,86 +458,8 @@ class CalendarPlusApplet extends Applet.Applet {
         this._syncEventVisibility(false);
     }
 
-    _systemTemporalPolicy() {
-        const fallback = {
-            mode: "standard",
-            showSeconds: false,
-            locationConfigured: false,
-            latitude: 0.0,
-            longitude: 0.0,
-            calendar: "gregorian",
-            authority: "mint-cinnamon",
-            providerAvailable: false,
-        };
-
-        if (!this.system_clock) {
-            return fallback;
-        }
-        if (this._temporalPolicyCache !== null) {
-            return this._temporalPolicyCache;
-        }
-
-        try {
-            const variant = this.system_clock.get_system_policy();
-            if (!variant) {
-                throw new Error("missing effective temporal policy");
-            }
-            const decoded = NativeBoundary.decodeTemporalPolicy(variant);
-            const {
-                mode,
-                calendar,
-                showSeconds,
-                locationConfigured,
-                latitude,
-                longitude,
-                authority,
-                providerAvailable,
-            } = decoded;
-
-            const numericLatitude = Number(latitude);
-            const numericLongitude = Number(longitude);
-            const modeIsValid =
-                mode === "standard" ||
-                mode === PanelClock.CLOCK_MODE_STANDARD_24 ||
-                mode === PanelClock.CLOCK_MODE_STANDARD_12 ||
-                PanelClock.isNativeClockMode(mode);
-            const calendarIsValid =
-                typeof calendar === "string" &&
-                calendar.length > 0 &&
-                CalendarPlus.CalendarSystem.new(calendar) !== null;
-
-            if (typeof mode !== "string" || !modeIsValid ||
-                !calendarIsValid ||
-                !Number.isFinite(numericLatitude) ||
-                numericLatitude < -90 || numericLatitude > 90 ||
-                !Number.isFinite(numericLongitude) ||
-                numericLongitude < -180 || numericLongitude > 180 ||
-                (authority !== "mint-cinnamon" &&
-                 authority !== "infiltrator-system-settings")) {
-                throw new Error("invalid effective temporal policy");
-            }
-
-            const resolved = Object.freeze({
-                mode,
-                showSeconds: Boolean(showSeconds),
-                locationConfigured: Boolean(locationConfigured),
-                latitude: numericLatitude,
-                longitude: numericLongitude,
-                calendar,
-                authority,
-                providerAvailable: Boolean(providerAvailable),
-            });
-            this._temporalPolicyCache = resolved;
-            return resolved;
-        } catch (error) {
-            global.logError(error);
-            this._temporalPolicyCache = Object.freeze(fallback);
-            return this._temporalPolicyCache;
-        }
-    }
-
     _syncCalendarSystem() {
-        const temporal = this._systemTemporalPolicy();
+        const temporal = this._temporalPolicy.get();
         if (!this._calendar_system ||
             this._calendar_system.get_id() !== temporal.calendar) {
             const candidate = CalendarPlus.CalendarSystem.new(temporal.calendar);
@@ -547,18 +471,11 @@ class CalendarPlusApplet extends Applet.Applet {
     }
 
     _clockConfig() {
-        const temporal = this._systemTemporalPolicy();
-        return {
-            mode: temporal.mode,
-            showSeconds: temporal.showSeconds,
-            locationConfigured: temporal.locationConfigured,
-            latitude: temporal.latitude,
-            longitude: temporal.longitude,
+        return this._temporalPolicy.clockConfig({
             vertical: this._isVerticalPanel(),
             use24h: this._desktopUses24h(),
             showDate: this._desktopShowsDate(),
-            primaryCalendar: temporal.calendar,
-        };
+        });
     }
 
     _syncSystemClock() {
@@ -709,7 +626,7 @@ class CalendarPlusApplet extends Applet.Applet {
             this.menu.close();
         }
 
-        const temporal = this._systemTemporalPolicy();
+        const temporal = this._temporalPolicy.get();
         if (temporal.providerAvailable) {
             try {
                 const appInfo = Gio.DesktopAppInfo.new(
@@ -884,7 +801,7 @@ class CalendarPlusApplet extends Applet.Applet {
         this.menu = null;
         this.menuManager = null;
         this._resume_source = null;
-        this._temporalPolicyCache = null;
+        this._temporalPolicy = null;
     }
 }
 
