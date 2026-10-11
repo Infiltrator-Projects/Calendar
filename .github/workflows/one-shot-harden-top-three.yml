@@ -32,6 +32,24 @@ jobs:
       - name: Apply focused hardening
         run: |
           set -euo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+          path = Path("tools/harden-top-three.py")
+          source = path.read_text(encoding="utf-8")
+          needle = '''    forbidden = (
+                  "CalendarServerProxy", "bus_watch_name", "_calendar_server",
+          '''
+          insertion = '''    text = replace_once(
+                  text,
+                  "        if (this._destroyed || this._calendar_server === null ||\\n            this.event_store === null) {\\n",
+                  "        if (this._destroyed || this._transport === null ||\\n            !this._transport.is_ready() || this.event_store === null) {\\n",
+                  "visible range through transport readiness",
+              )
+          '''
+          if source.count(needle) != 1:
+              raise SystemExit("could not locate eventManager transport guard insertion point")
+          path.write_text(source.replace(needle, insertion + needle, 1), encoding="utf-8")
+          PY
           python3 tools/harden-top-three.py
           python3 tools/update-runtime-hashes.py
           git diff --check
