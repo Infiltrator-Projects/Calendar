@@ -1,3 +1,12 @@
+infiltrator-calendar (1.0.89) unstable; urgency=medium
+
+  * Split temporal-policy monitoring from the SystemClock facade.
+  * Isolate timezone observation from EventsManager event/range orchestration.
+  * Replace brittle architecture spelling checks with ownership contracts.
+  * Add pull-request validation before main-line release qualification.
+
+ -- Shannon Smith <infiltratr@yandex.com>  Sun, 11 Oct 2026 23:10:00 +0000
+
 infiltrator-calendar (1.0.88) unstable; urgency=medium
 
   * Extract CalendarServer transport from the event/cache controller.

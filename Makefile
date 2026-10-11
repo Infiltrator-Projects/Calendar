@@ -9,7 +9,7 @@ G_IR_COMPILER ?= g-ir-compiler
 PREFIX ?= /usr
 DESTDIR ?=
 
-VERSION := 1.0.88
+VERSION := 1.0.89
 UUID := calendar-plus@the-infiltratr
 APPLET_SRC_DIR := src/cinnamon
 ICON_NAME := infiltratr-calendar
@@ -212,7 +212,7 @@ MATH_LIBS = -lm
 GIR_INCLUDE_PATH ?= $(shell $(PKG_CONFIG) --variable=libdir glib-2.0)/gir-1.0
 GIR_SHARE_INCLUDE_PATH ?= $(PREFIX)/share/gir-1.0
 
-SOURCE_DATE_EPOCH ?= 1788254700
+SOURCE_DATE_EPOCH ?= 1791763200
 COVERAGE_MIN_LINES ?= 80
 COVERAGE_MIN_BRANCHES ?= 60
 DIST_FILES := \
