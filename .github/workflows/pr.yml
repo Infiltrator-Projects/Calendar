@@ -33,3 +33,24 @@ jobs:
         run: make clean check
       - name: Sanitizer regression gate
         run: make sanitize
+
+  release-package:
+    if: startsWith(github.event.pull_request.title, 'Release Calendar ')
+    needs: [validate]
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          submodules: true
+      - name: Install packaging dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            build-essential debhelper desktop-file-utils devscripts gettext gobject-introspection gjs \
+            gir1.2-glib-2.0-dev libglib2.0-dev libgtk-3-dev libicu-dev nodejs \
+            pkg-config python3 xz-utils lintian shellcheck
+      - name: Validate release package and reproducibility
+        env:
+          CALENDAR_RELEASE_SOURCE_ALREADY_QUALIFIED: "1"
+        run: make release-check
