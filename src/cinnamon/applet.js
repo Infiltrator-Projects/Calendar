@@ -12,6 +12,7 @@
 
 const Applet = imports.ui.applet;
 const CalendarPlus = imports.gi.CalendarPlus;
+const Cinnamon = imports.gi.Cinnamon;
 const CinnamonDesktop = imports.gi.CinnamonDesktop;
 const Gio = imports.gi.Gio;
 const St = imports.gi.St;
@@ -48,6 +49,9 @@ function _loadRuntimeSupport() {
 
 const RuntimeSupport = _loadRuntimeSupport();
 const SignalBag = RuntimeSupport.SignalBag;
+const NativeBoundary = RuntimeSupport.loadLocalModule(
+    "nativeBoundary"
+).NativeBoundary;
 /* PopupShell owns RuntimeSupport.loadLocalModule("eventView") and the smaller presentation leaf modules. */
 const Calendar = RuntimeSupport.loadLocalModule("calendar");
 const EventManager = RuntimeSupport.loadLocalModule("eventManager");
@@ -74,6 +78,7 @@ class CalendarPlusApplet extends Applet.Applet {
         this._added_to_panel = false;
         this._keybinding_set = false;
         this.show_events = true;
+        this.show_week_numbers = false;
         this.theme_mode = "system";
         this.keyOpen = "";
 
@@ -141,15 +146,18 @@ class CalendarPlusApplet extends Applet.Applet {
             }
         );
 
-        this.event_list = new PopupShell.EventList(this.desktop_settings);
+        this.show_week_numbers = Boolean(
+            this.settings.getValue("show-week-numbers")
+        );
+        this.event_list = new PopupShell.EventList(this._desktopUses24h());
         this.events_manager = new EventManager.EventsManager();
         this._calendarEventSource = new PopupShell.CalendarEventSource(
             this.events_manager
         );
         this._calendar = new Calendar.Calendar(
-            this.settings,
             this._calendarEventSource,
-            this.desktop_settings
+            Cinnamon.util_get_week_start(),
+            this.show_week_numbers
         );
 
         this._wireAgenda();
@@ -229,6 +237,11 @@ class CalendarPlusApplet extends Applet.Applet {
             this._onShowEventsChanged
         );
         this.settings.bind(
+            "show-week-numbers",
+            "show_week_numbers",
+            this._onShowWeekNumbersChanged
+        );
+        this.settings.bind(
             "theme-mode",
             "theme_mode",
             this._onThemeModeChanged
@@ -246,6 +259,18 @@ class CalendarPlusApplet extends Applet.Applet {
         this._syncEventVisibility(true);
     }
 
+    _onShowWeekNumbersChanged() {
+        if (!this._destroyed && this._calendar) {
+            this._calendar.setShowWeekNumbers(this.show_week_numbers);
+        }
+    }
+
+    _onWeekStartChanged() {
+        if (!this._destroyed && this._calendar) {
+            this._calendar.setWeekStart(Cinnamon.util_get_week_start());
+        }
+    }
+
     _onThemeModeChanged() {
         if (this._destroyed) {
             return;
@@ -260,6 +285,7 @@ class CalendarPlusApplet extends Applet.Applet {
             return;
         }
         this._resetLabelWidth();
+        this.event_list.set_use_24h(this._desktopUses24h());
         this._configureWallClock();
         this._updateClockAndDate();
         if (refreshAgenda && this.events_manager.is_active()) {
@@ -271,6 +297,11 @@ class CalendarPlusApplet extends Applet.Applet {
     }
 
     _watchDesktopPreferences() {
+        this._signals.connect(
+            this.desktop_settings,
+            "changed::first-day-of-week",
+            () => this._onWeekStartChanged()
+        );
         this._signals.connect(
             this.desktop_settings,
             "changed::clock-use-24h",
@@ -286,6 +317,24 @@ class CalendarPlusApplet extends Applet.Applet {
             "changed::gtk-theme",
             () => this._onThemeModeChanged()
         );
+    }
+
+    _desktopUses24h() {
+        try {
+            return this.desktop_settings &&
+                this.desktop_settings.get_boolean("clock-use-24h");
+        } catch (error) {
+            return false;
+        }
+    }
+
+    _desktopShowsDate() {
+        try {
+            return this.desktop_settings &&
+                this.desktop_settings.get_boolean("clock-show-date");
+        } catch (error) {
+            return false;
+        }
     }
 
     _systemThemeName() {
@@ -431,7 +480,8 @@ class CalendarPlusApplet extends Applet.Applet {
             if (!variant) {
                 throw new Error("missing effective temporal policy");
             }
-            const [
+            const decoded = NativeBoundary.decodeTemporalPolicy(variant);
+            const {
                 mode,
                 calendar,
                 showSeconds,
@@ -440,7 +490,7 @@ class CalendarPlusApplet extends Applet.Applet {
                 longitude,
                 authority,
                 providerAvailable,
-            ] = variant.deep_unpack();
+            } = decoded;
 
             const numericLatitude = Number(latitude);
             const numericLongitude = Number(longitude);
@@ -505,7 +555,8 @@ class CalendarPlusApplet extends Applet.Applet {
             latitude: temporal.latitude,
             longitude: temporal.longitude,
             vertical: this._isVerticalPanel(),
-            desktopSettings: this.desktop_settings,
+            use24h: this._desktopUses24h(),
+            showDate: this._desktopShowsDate(),
             primaryCalendar: temporal.calendar,
         };
     }

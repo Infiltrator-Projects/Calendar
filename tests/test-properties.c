@@ -519,6 +519,46 @@ test_event_color_range_skipped_civil_day(void)
 }
 
 static void
+test_event_store_range_admission(void)
+{
+    const gint64 range_start = local_unix(2026, 7, 29, 0);
+    const gint64 range_end = local_unix(2026, 7, 29, 23) + 3599;
+    g_autoptr(CalendarPlusEventStore) store =
+        calendar_plus_event_store_new();
+    g_autoptr(GVariant) inside =
+        event_variant("inside",
+                      local_unix(2026, 7, 29, 9),
+                      local_unix(2026, 7, 29, 10));
+    g_autoptr(GVariant) outside =
+        event_variant("outside",
+                      local_unix(2026, 7, 30, 9),
+                      local_unix(2026, 7, 30, 10));
+    g_autoptr(GVariant) all_day_touching = g_variant_ref_sink(
+        g_variant_new("(sssbxxx)",
+                      "all-day-touching", "#445566", "summary", TRUE,
+                      local_unix(2026, 7, 28, 0),
+                      range_start,
+                      (gint64)1));
+    g_autoptr(GVariant) snapshot = NULL;
+    g_autoptr(GVariant) rows = NULL;
+    gint64 revision = 0;
+
+    g_assert_true(calendar_plus_event_store_add_or_update_in_range(
+        store, inside, 10, range_start, range_end));
+    g_assert_false(calendar_plus_event_store_add_or_update_in_range(
+        store, outside, 10, range_start, range_end));
+    g_assert_false(calendar_plus_event_store_add_or_update_in_range(
+        store, all_day_touching, 10, range_start, range_end));
+    g_assert_false(calendar_plus_event_store_add_or_update_in_range(
+        store, inside, 10, range_end, range_start));
+
+    snapshot = calendar_plus_event_store_get_snapshot(
+        store, range_start, local_unix(2026, 7, 29, 12));
+    g_variant_get(snapshot, "(x@a(sssbbxxxxx))", &revision, &rows);
+    g_assert_cmpuint(g_variant_n_children(rows), ==, 1);
+}
+
+static void
 test_event_color_range(void)
 {
     const gint64 first_day = local_unix(2026, 7, 29, 0);
@@ -954,6 +994,8 @@ main(int argc,
                     test_event_store_clear_contract);
     g_test_add_func("/properties/event-color-range",
                     test_event_color_range);
+    g_test_add_func("/properties/event-range-admission",
+                    test_event_store_range_admission);
     g_test_add_func("/properties/event-stale-revision",
                     test_event_stale_revision_rejected);
     g_test_add_func("/properties/event-color-range-skipped-day",

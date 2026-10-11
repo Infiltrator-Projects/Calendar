@@ -88,6 +88,30 @@ gboolean calendar_plus_event_store_add_or_update(
     gint64 update_timestamp);
 
 /**
+ * calendar_plus_event_store_add_or_update_in_range:
+ * @self: an event store
+ * @event_data: a Cinnamon CalendarServer event tuple
+ * @update_timestamp: monotonic timestamp for the current server refresh
+ * @range_start_unix: inclusive first accepted Unix instant
+ * @range_end_unix: inclusive last accepted Unix instant
+ *
+ * Parses the external CalendarServer tuple once in the native transport
+ * adapter, rejects rows that cannot overlap the newest requested range and
+ * then applies the same normalisation as calendar_plus_event_store_add_or_update().
+ * JavaScript therefore never depends on CalendarServer tuple positions.
+ * All-day CalendarServer end points remain exclusive; timed end points are
+ * inclusive.
+ *
+ * Returns: %TRUE when an admitted row changed visible event data
+ */
+gboolean calendar_plus_event_store_add_or_update_in_range(
+    CalendarPlusEventStore *self,
+    GVariant *event_data,
+    gint64 update_timestamp,
+    gint64 range_start_unix,
+    gint64 range_end_unix);
+
+/**
  * calendar_plus_event_store_remove:
  * @self: an event store
  * @serialized_ids: event identifiers separated by `::`

@@ -120,14 +120,14 @@ function clockForFormat(clock, format) {
     }
 }
 
-function uses24HourClock(mode, desktopSettings) {
+function uses24HourClock(mode, use24h) {
     if (mode === CLOCK_MODE_STANDARD_24) {
         return true;
     }
     if (mode === CLOCK_MODE_STANDARD_12) {
         return false;
     }
-    return desktopSettings.get_boolean("clock-use-24h");
+    return Boolean(use24h);
 }
 
 function defaultHorizontalFormat(config) {
@@ -139,8 +139,8 @@ function defaultHorizontalFormat(config) {
      */
     const showDate =
         config.primaryCalendar === "gregorian" &&
-        config.desktopSettings.get_boolean("clock-show-date");
-    const use24 = uses24HourClock(config.mode, config.desktopSettings);
+        Boolean(config.showDate);
+    const use24 = uses24HourClock(config.mode, config.use24h);
     const seconds = config.showSeconds && !isNativeClockMode(config.mode);
 
     if (showDate) {
@@ -171,7 +171,7 @@ function configureWallClock(clock, config) {
 
     let format;
     if (config.vertical) {
-        const hour = uses24HourClock(config.mode, config.desktopSettings)
+        const hour = uses24HourClock(config.mode, config.use24h)
             ? "%H"
             : "%l";
         const seconds = config.showSeconds && !isNativeClockMode(config.mode);
@@ -240,7 +240,7 @@ function nativePanelText(clock, systemClock, config) {
 function selectedCalendarPanelDate(primaryCalendarSystem, config) {
     if (!primaryCalendarSystem || config.vertical ||
         config.primaryCalendar === "gregorian" ||
-        !config.desktopSettings.get_boolean("clock-show-date")) {
+        !Boolean(config.showDate)) {
         return null;
     }
 

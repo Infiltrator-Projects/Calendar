@@ -98,11 +98,8 @@ function _countdown(secondsUntilStart) {
 }
 
 var EventList = class EventList {
-    constructor(desktop_settings) {
-        if (!desktop_settings) {
-            throw new Error("EventList: desktop settings are required.");
-        }
-        this.desktop_settings = desktop_settings;
+    constructor(use24h) {
+        this._use24h = Boolean(use24h);
         this._destroyed = false;
         this.selected_date = GLib.DateTime.new_now_local();
         this._no_events_timeout_id = 0;
@@ -311,6 +308,14 @@ var EventList = class EventList {
         );
     }
 
+    set_use_24h(use24h) {
+        const next = Boolean(use24h);
+        if (next !== this._use24h) {
+            this._use24h = next;
+            this._current_event_cache_key = null;
+        }
+    }
+
     refresh_variations() {
         if (this._destroyed || this._rows.length === 0) {
             return;
@@ -328,7 +333,7 @@ var EventList = class EventList {
         }
         this._cancelScroll();
 
-        const use24h = this.desktop_settings.get_boolean("clock-use-24h");
+        const use24h = this._use24h;
         const cacheKey = snapshot === null ? null :
             `${snapshot.revision}:${this.selected_date.to_unix()}:${use24h ? 1 : 0}`;
 
@@ -452,7 +457,6 @@ var EventList = class EventList {
             this.actor.destroy();
             this.actor = null;
         }
-        this.desktop_settings = null;
         this._backendSettings = null;
         this.selected_date = null;
     }

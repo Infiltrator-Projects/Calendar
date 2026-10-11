@@ -9,7 +9,7 @@ G_IR_COMPILER ?= g-ir-compiler
 PREFIX ?= /usr
 DESTDIR ?=
 
-VERSION := 1.0.86
+VERSION := 1.0.87
 UUID := calendar-plus@the-infiltratr
 APPLET_SRC_DIR := src/cinnamon
 ICON_NAME := infiltratr-calendar
@@ -504,6 +504,7 @@ validate-js: validate-settings-generated
 	assert json.load(open(p / "metadata.json", encoding="utf-8"))["uuid"] == "$(UUID)"'
 	python3 tests/test-settings.py
 	python3 tests/test-popup-lifecycle.py
+	node tests/test-native-boundary.js
 	node tests/test-js-runtime.js
 	@for source in "$(APPLET_SRC_DIR)"/*.js; do node --check "$$source"; done
 	@! grep -R -n -E 'const UUID = "calendar@cinnamon\.org"' "$(APPLET_SRC_DIR)" || { \

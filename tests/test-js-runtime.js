@@ -74,6 +74,23 @@ function evaluateApplet(nativeVersion = version, loaderMode = "legacy") {
     }
     const extensionModules = {
         calendar: {}, eventManager: {}, eventView: {},
+        nativeBoundary: {
+            NativeBoundary: {
+                decodeTemporalPolicy(variant) {
+                    const row = variant.deep_unpack();
+                    return {
+                        mode: row[0],
+                        calendar: row[1],
+                        showSeconds: row[2],
+                        locationConfigured: row[3],
+                        latitude: row[4],
+                        longitude: row[5],
+                        authority: row[6],
+                        providerAvailable: row[7],
+                    };
+                },
+            },
+        },
         panelClock: { CLOCK_MODE_STANDARD: "standard" },
     };
     const runtimeSupport = {
@@ -276,6 +293,25 @@ function evaluateEventsManager() {
                         if (moduleName === "eventRangeState") {
                             return context.__eventRangeStateModule;
                         }
+                        if (moduleName === "nativeBoundary") {
+                            return {
+                                NativeBoundary: {
+                                    decodeEventSnapshot(variant) {
+                                        const [revision, rows] = variant.deep_unpack();
+                                        return {
+                                            revision,
+                                            events: rows.map((row) => ({
+                                                id: row[0], color: row[1],
+                                                summary: row[2], allDay: row[3],
+                                                multiDay: row[4], startUnix: row[5],
+                                                endUnix: row[6], startDayUnix: row[7],
+                                                endDayUnix: row[8], modified: row[9],
+                                            })),
+                                        };
+                                    },
+                                },
+                            };
+                        }
                         throw new Error(`unexpected local module ${moduleName}`);
                     },
                     midnight(value) {
@@ -365,6 +401,14 @@ function evaluateEventsManager() {
                                 add_or_update(event, timestamp) {
                                     observations.addOrUpdateCalls.push(
                                         [event, timestamp]
+                                    );
+                                    return true;
+                                },
+                                add_or_update_in_range(
+                                    event, timestamp, rangeStart, rangeEnd
+                                ) {
+                                    observations.addOrUpdateCalls.push(
+                                        [event, timestamp, rangeStart, rangeEnd]
                                     );
                                     return true;
                                 },
@@ -634,7 +678,31 @@ function evaluateCalendar() {
         log() {},
         require(name) {
             if (name === "./runtimeSupport") {
-                return { SignalBag: class SignalBag {
+                return {
+                    loadLocalModule(moduleName) {
+                        if (moduleName !== "nativeBoundary") {
+                            throw new Error(`unexpected local module ${moduleName}`);
+                        }
+                        return {
+                            NativeBoundary: {
+                                decodeCivilDate(variant) {
+                                    const row = variant.deep_unpack();
+                                    return { year: row[0], month: row[1], day: row[2] };
+                                },
+                                decodeCalendarGrid(variant) {
+                                    return variant.deep_unpack().map((row) => ({
+                                        dayLabel: row[0], year: row[1], month: row[2],
+                                        day: row[3], row: row[4], column: row[5],
+                                        weekNumber: row[6], isWorkDay: row[7],
+                                        isToday: row[8], isSelected: row[9],
+                                        isCurrentPeriod: row[10], isTopRow: row[11],
+                                        isLeftEdge: row[12],
+                                    }));
+                                },
+                            },
+                        };
+                    },
+                    SignalBag: class SignalBag {
                     constructor() { this.entries = []; }
                     connect(object, signal, callback) {
                         const id = object.connect(signal, callback);
@@ -841,9 +909,8 @@ function testPanelClockDefensiveFormatting() {
         longitude: 0,
         locationConfigured: true,
         vertical: false,
-        desktopSettings: {
-            get_boolean(key) { return key === "clock-use-24h"; },
-        },
+        use24h: true,
+        showDate: false,
         primaryCalendar: "gregorian",
     };
 
@@ -873,13 +940,8 @@ function testPanelClockDefensiveFormatting() {
     const selectedCalendarConfig = {
         ...conventional,
         primaryCalendar: "positivist",
-        desktopSettings: {
-            get_boolean(key) {
-                if (key === "clock-use-24h") return false;
-                if (key === "clock-show-date") return true;
-                throw new Error(`unexpected Cinnamon key: ${key}`);
-            },
-        },
+        use24h: false,
+        showDate: true,
     };
     assert.equal(
         PanelClock.panelText(
@@ -954,11 +1016,6 @@ function testPanelClockDefensiveFormatting() {
 
 function testPanelClockPreservesLocaleCasingAndNullFormats() {
     const { PanelClock, systemClock } = evaluatePanelClock();
-    const settings = {
-        get_boolean(key) {
-            return key === "clock-use-24h" || key === "clock-show-date";
-        },
-    };
     const clock = {
         get_clock() { return "maanantai 12:34"; },
         get_clock_for_format() { return null; },
@@ -970,7 +1027,8 @@ function testPanelClockPreservesLocaleCasingAndNullFormats() {
         longitude: 0,
         locationConfigured: false,
         vertical: false,
-        desktopSettings: settings,
+        use24h: true,
+        showDate: true,
         primaryCalendar: "gregorian",
     };
 
@@ -997,19 +1055,13 @@ function testMintFallbackClockFormatting() {
                 return true;
             },
         };
-        const desktopSettings = {
-            get_boolean(key) {
-                if (key === "clock-use-24h") return use24h;
-                if (key === "clock-show-date") return showDate;
-                throw new Error(`unexpected Cinnamon key: ${key}`);
-            },
-        };
         PanelClock.configureWallClock(clock, {
             mode,
             showSeconds,
             vertical,
             primaryCalendar,
-            desktopSettings,
+            use24h,
+            showDate,
         });
         return format;
     }
@@ -1132,7 +1184,7 @@ function testModuleLoaderCompatibility() {
         "Cinnamon 6.4/6.6 must bootstrap runtimeSupport through require()"
     );
     assert.equal(LegacyAppletClass.loaderObservations.extensionCalls, 0);
-    assert.equal(LegacyAppletClass.loaderObservations.featureCalls, 4);
+    assert.equal(LegacyAppletClass.loaderObservations.featureCalls, 5);
 
     const ExtensionAppletClass = evaluateApplet(version, "extension");
     assert.equal(
@@ -1145,7 +1197,7 @@ function testModuleLoaderCompatibility() {
         0,
         "the 6.7 path must not fall through to the legacy loader"
     );
-    assert.equal(ExtensionAppletClass.loaderObservations.featureCalls, 4);
+    assert.equal(ExtensionAppletClass.loaderObservations.featureCalls, 5);
 }
 
 
@@ -1273,7 +1325,7 @@ function testCalendarGridFailureIsTransactional() {
 function testCalendarLifecycle() {
     const { Calendar, settings, eventsManager, desktopSettings, observations } =
         evaluateCalendar();
-    const calendar = new Calendar(settings, eventsManager, desktopSettings);
+    const calendar = new Calendar(eventsManager, 0, false);
 
     calendar._update_id = 41;
     calendar._set_date_idle_id = 42;
@@ -1287,8 +1339,8 @@ function testCalendarLifecycle() {
     );
     assert.equal(
         observations.desktopDisconnects,
-        1,
-        "calendar must disconnect its desktop-settings signal"
+        0,
+        "calendar must not own desktop-settings signals below the composition root"
     );
     assert.equal(
         observations.eventDisconnects,
@@ -1311,7 +1363,7 @@ function testCalendarLifecycle() {
 function testCalendarNavigationCoalescing() {
     const { Calendar, settings, eventsManager, desktopSettings, observations } =
         evaluateCalendar();
-    const calendar = new Calendar(settings, eventsManager, desktopSettings);
+    const calendar = new Calendar(eventsManager, 0, false);
     const applied = [];
     calendar.setDate = (date) => applied.push(date.getTime());
 
@@ -1539,7 +1591,7 @@ function testSuccessfulEmptyRangeReplacesPreviousGeneration() {
     manager.destroy();
 }
 
-function testRangeAdmissionRejectsLateOutOfRangeSignals() {
+function testRangeAdmissionDelegatesOpaqueRowsToNativeBoundary() {
     const { EventsManager, observations } = evaluateEventsManager();
     const manager = new EventsManager();
     manager._inited = true;
@@ -1556,30 +1608,25 @@ function testRangeAdmissionRejectsLateOutOfRangeSignals() {
     manager._rangeState.finishRequest(manager._rangeState.beginRequest(), true);
     manager._rangeState.acceptCompletedRequest();
 
-    function eventVariant(start, end) {
-        return {
-            deep_unpack() {
-                return ["id", "#112233", "event", false, start, end, 10];
-            },
-        };
-    }
+    const firstOpaqueRow = Object.freeze({ transportRow: "first" });
+    const secondOpaqueRow = Object.freeze({ transportRow: "second" });
     manager._ingestEvents({
         unpack() {
-            return [
-                eventVariant(100, 200),
-                eventVariant(1500, 1600),
-            ];
+            return [firstOpaqueRow, secondOpaqueRow];
         },
     });
+
     assert.equal(
         observations.addOrUpdateCalls.length,
-        1,
-        "late rows wholly outside the newest desired range must be rejected"
+        2,
+        "JavaScript must delegate every admitted transport row to native range filtering"
     );
-    assert.deepEqual(
-        observations.addOrUpdateCalls[0][0].deep_unpack().slice(4, 6),
-        [1500, 1600]
-    );
+    assert.equal(observations.addOrUpdateCalls[0][0], firstOpaqueRow);
+    assert.equal(observations.addOrUpdateCalls[1][0], secondOpaqueRow);
+    for (const call of observations.addOrUpdateCalls) {
+        assert.equal(call[2], 1000, "native admission receives range start");
+        assert.equal(call[3], 2999, "native admission receives inclusive range end");
+    }
     manager.destroy();
 }
 
@@ -1937,7 +1984,6 @@ function testEventListCacheIdentity() {
     }
     replaceEventRow(FakeRow);
 
-    let use24h = true;
     const view = Object.create(EventList.prototype);
     const actors = [];
     Object.assign(view, {
@@ -1946,12 +1992,7 @@ function testEventListCacheIdentity() {
         _rows: [],
         _current_event_cache_key: null,
         _canLaunchCalendar: false,
-        desktop_settings: {
-            get_boolean(key) {
-                assert.equal(key, "clock-use-24h");
-                return use24h;
-            },
-        },
+        _use24h: true,
         selected_date_label: {
             set_label() {},
             set_accessible_name() {},
@@ -2001,7 +2042,7 @@ function testEventListCacheIdentity() {
     );
 
     const tuesdayRow = view._rows[0];
-    use24h = false;
+    view.set_use_24h(false);
     view.set_events(snapshot("Tuesday event"), false);
     assert.notEqual(
         view._rows[0],
@@ -2166,7 +2207,7 @@ testEventListCacheIdentity();
 testVisibleEventRange();
 testVisibleEventRangeFailureRecovery();
 testSuccessfulEmptyRangeReplacesPreviousGeneration();
-testRangeAdmissionRejectsLateOutOfRangeSignals();
+testRangeAdmissionDelegatesOpaqueRowsToNativeBoundary();
 testRemovalSignalsInvalidateInsteadOfDeletingNewGeneration();
 testTimezoneReloadPreservesCivilRange();
 testCalendarSetChangeClosesAdmission();
