@@ -9,7 +9,7 @@ G_IR_COMPILER ?= g-ir-compiler
 PREFIX ?= /usr
 DESTDIR ?=
 
-VERSION := 1.0.88
+VERSION := 1.0.89
 UUID := calendar-plus@the-infiltratr
 APPLET_SRC_DIR := src/cinnamon
 ICON_NAME := infiltratr-calendar
@@ -374,7 +374,6 @@ $(BUILD_DIR)/$(ABOUT_BINARY): src/app/about-dialog.c src/app/project-info.c \
 $(ABOUT_DESKTOP): $(ABOUT_DESKTOP_TEMPLATE)
 	@mkdir -p "$(BUILD_DIR)"
 	@sed 's|@ABOUT_EXEC@|$(PREFIX)/libexec/$(ABOUT_BINARY)|g' "$<" > "$@"
-
 
 translations:
 	@mkdir -p "$(BUILD_DIR)/locale"
