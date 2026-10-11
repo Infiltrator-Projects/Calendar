@@ -805,7 +805,7 @@ calendar-plus (1.0.8) trixie; urgency=medium
   * Delegate generic signed saturating add/subtract directly to Common and keep
     Calendar-owned arithmetic only where Calendar-specific policy remains.
   * Keep event revision advancement defined at the signed-integer boundary and
-  * Add regression coverage for extreme solar-instant inputs.
+    add regression coverage for extreme solar-instant inputs.
   * Refresh deterministic gettext and runtime-integrity metadata required by
     the complete release gates.
 
@@ -894,7 +894,8 @@ calendar-plus (1.0.0) trixie; urgency=medium
 
   * Establish Calendar Plus 1.0 as the first stable public release.
   * Ship the completed catalogue of 30 calendar systems and 21 clock choices.
-  * Retain the completed MB Corpo typography, temporal policy, specialised clock rendering and Cinnamon preferred-width ownership model.
+  * Retain the completed MB Corpo typography integration across the panel,
+    popup, settings host and native About dialog.
   * Retain the exact Infiltratr Common 1.15.4 public-library dependency.
   * Make the hardware-native .run installer handle the one-time 3.x-to-1.0
     APT version reset automatically instead of failing at install time.
