@@ -51,6 +51,9 @@ function _loadRuntimeSupport() {
 
 const RuntimeSupport = _loadRuntimeSupport();
 const SignalBag = RuntimeSupport.SignalBag;
+const NativeBoundary = RuntimeSupport.loadLocalModule(
+    "nativeBoundary"
+).NativeBoundary;
 
 const FIRST_WEEKDAY_KEY = "first-day-of-week";
 const WEEK_NUMBER_WIDTH_DIGITS = 3;
@@ -142,8 +145,8 @@ function _localDateFromVariant(parts) {
     if (parts === null) {
         return null;
     }
-    const [year, month, day] = parts.deep_unpack();
-    return _localDate(year, month, day);
+    const civil = NativeBoundary.decodeCivilDate(parts);
+    return _localDate(civil.year, civil.month, civil.day);
 }
 
 function _weekdayAbbreviation(dayIndex) {
@@ -153,17 +156,18 @@ function _weekdayAbbreviation(dayIndex) {
 }
 
 var Calendar = class Calendar {
-    constructor(settings, events_manager, desktop_settings) {
-        this.settings = settings;
-        this.events_manager = events_manager;
-        this.desktop_settings = desktop_settings;
-        if (!this.desktop_settings) {
-            throw new Error("Calendar: desktop settings are required.");
+    constructor(event_source, weekStart, showWeekNumbers) {
+        if (!event_source) {
+            throw new Error("Calendar: event source is required.");
         }
+        this.event_source = event_source;
         this._destroyed = false;
         this._update_id = 0;
         this._set_date_idle_id = 0;
-        this._weekStart = Cinnamon.util_get_week_start();
+        this._weekStart = Number.isInteger(weekStart) && weekStart >= 0 && weekStart <= 6
+            ? weekStart
+            : 0;
+        this.show_week_numbers = Boolean(showWeekNumbers);
         this._digitWidth = NaN;
         this._calendarSystemId = "gregorian";
         this._calendarSystem = CalendarPlus.CalendarSystem.new("gregorian");
@@ -174,7 +178,6 @@ var Calendar = class Calendar {
 
         this._actorSignals = new SignalBag();
         this._eventSignals = new SignalBag();
-        this._desktopSignals = new SignalBag();
 
         this.actor = new St.Table({
             homogeneous: false,
@@ -182,25 +185,12 @@ var Calendar = class Calendar {
             reactive: true,
         });
 
-        this.settings.bindWithObject(
-            this,
-            "show-week-numbers",
-            "show_week_numbers",
-            this._onSettingsChange
-        );
-
-        this._desktopSignals.connect(
-            this.desktop_settings,
-            `changed::${FIRST_WEEKDAY_KEY}`,
-            () => this._onSettingsChange(null, FIRST_WEEKDAY_KEY)
-        );
-
         for (const signal of [
             "events-updated",
             "events-manager-ready",
             "has-calendars-changed",
         ]) {
-            this._eventSignals.connect(this.events_manager, signal, () => {
+            this._eventSignals.connect(this.event_source, signal, () => {
                 if (signal === "events-updated") {
                     this._queue_update();
                 } else {
@@ -325,13 +315,25 @@ var Calendar = class Calendar {
         });
     }
 
-    _onSettingsChange(object, key) {
+    setShowWeekNumbers(showWeekNumbers) {
         if (this._destroyed) {
             return;
         }
-        if (key === FIRST_WEEKDAY_KEY) {
-            this._weekStart = Cinnamon.util_get_week_start();
+        const next = Boolean(showWeekNumbers);
+        if (next === this.show_week_numbers) {
+            return;
         }
+        this.show_week_numbers = next;
+        this._buildHeader();
+        this._update(false);
+    }
+
+    setWeekStart(weekStart) {
+        if (this._destroyed || !Number.isInteger(weekStart) ||
+            weekStart < 0 || weekStart > 6 || weekStart === this._weekStart) {
+            return;
+        }
+        this._weekStart = weekStart;
         this._buildHeader();
         this._update(false);
     }
@@ -344,7 +346,7 @@ var Calendar = class Calendar {
         if (this._destroyed) {
             return;
         }
-        this.events_enabled = this.events_manager.is_active();
+        this.events_enabled = this.event_source.is_active();
         this._queue_update();
     }
 
@@ -600,7 +602,7 @@ var Calendar = class Calendar {
         this._yearLabel.text = this.formatDate(this._selectedDate, "year");
         this._removeCells();
 
-        const records = model.deep_unpack();
+        const records = NativeBoundary.decodeCalendarGrid(model);
         let eventColorsByCell = [];
         let firstDate = null;
         let lastDate = null;
@@ -617,7 +619,7 @@ var Calendar = class Calendar {
             for (let index = 0; index < records.length; index++) {
                 const record = records[index];
                 const candidate = _representableLocalDate(
-                    record[1], record[2], record[3]
+                    record.year, record.month, record.day
                 );
                 if (candidate !== null) {
                     firstDate = candidate;
@@ -628,7 +630,7 @@ var Calendar = class Calendar {
             for (let index = records.length - 1; index >= 0; index--) {
                 const record = records[index];
                 const candidate = _representableLocalDate(
-                    record[1], record[2], record[3]
+                    record.year, record.month, record.day
                 );
                 if (candidate !== null) {
                     lastDate = candidate;
@@ -637,13 +639,13 @@ var Calendar = class Calendar {
             }
 
             if (firstDate !== null && lastDate !== null) {
-                this.events_manager.set_visible_range(
+                this.event_source.set_visible_range(
                     firstDate,
                     lastDate,
                     forceReload
                 );
                 if (this.events_enabled && firstRepresentableIndex >= 0) {
-                    const colors = this.events_manager.get_colors_for_range(
+                    const colors = this.event_source.get_colors_for_range(
                         firstDate,
                         records.length - firstRepresentableIndex,
                         MAX_EVENT_DOTS
@@ -669,11 +671,11 @@ var Calendar = class Calendar {
             this._addGridCell(records[index], eventColorsByCell[index] || []);
         }
 
-        this.events_manager.select_date(this._selectedDate, forceReload);
+        this.event_source.select_date(this._selectedDate, forceReload);
     }
 
     _addGridCell(record, eventColors) {
-        const [
+        const {
             dayLabel,
             year,
             month,
@@ -687,7 +689,7 @@ var Calendar = class Calendar {
             isCurrentPeriod,
             isTopRow,
             isLeftEdge,
-        ] = record;
+        } = record;
 
         const date = _localDate(year, month, day);
         if (date === null) {
@@ -860,7 +862,6 @@ var Calendar = class Calendar {
         this._destroyed = true;
         this._cancel_update();
         this._cancel_set_date_idle();
-        this._desktopSignals.disconnectAll();
         this._eventSignals.disconnectAll();
         this._actorSignals.disconnectAll();
 
@@ -869,9 +870,7 @@ var Calendar = class Calendar {
             this.actor = null;
         }
         this._calendarSystem = null;
-        this.desktop_settings = null;
-        this.events_manager = null;
-        this.settings = null;
+        this.event_source = null;
         this._selectedDate = null;
         this._pendingDate = null;
     }

@@ -55,6 +55,7 @@ def main() -> None:
     event_manager = read("eventManager.js")
     event_range_state = read("eventRangeState.js")
     event_port = read("calendarEventSource.js")
+    native_boundary = read("nativeBoundary.js")
     panel_clock = read("panelClock.js")
     panel_view = read("panelView.js")
     popup_menu = read("popupMenu.js")
@@ -78,9 +79,9 @@ def main() -> None:
     # Composition root: it wires modules, but concrete actor implementations
     # stay in the presentation leaves.
     forbid_tokens(js_code(applet), "class CalendarPopupMenu", "class LatchedWidthBin")
-    assert {"calendar", "eventManager", "panelClock", "popupShell"}.issubset(
-        loaded_modules(applet)
-    )
+    assert {
+        "calendar", "eventManager", "nativeBoundary", "panelClock", "popupShell"
+    }.issubset(loaded_modules(applet))
     require_tokens(
         popup_shell,
         "CalendarEventSourceModule.CalendarEventSource",
@@ -114,13 +115,14 @@ def main() -> None:
         r"events_manager\.set_enabled\s*\(\s*this\.show_events\s*\)", applet
     )
 
-    # Agenda presentation needs the desktop clock preference, not the complete
-    # Calendar applet settings object.
-    assert re.search(r"class EventList\s*\{\s*constructor\s*\(\s*desktop_settings\s*\)", event_view)
-    forbid_tokens(js_code(event_view), "this.settings", "constructor(settings,")
-    assert re.search(
-        r"new\s+PopupShell\.EventList\s*\(\s*this\.desktop_settings\s*\)", applet
-    )
+    # Lower presentation modules consume resolved scalar preferences rather
+    # than live applet/desktop settings objects.
+    assert re.search(r"class EventList\s*\{\s*constructor\s*\(\s*use24h\s*\)", event_view)
+    require_tokens(event_view, "set_use_24h(use24h)", "this._use24h")
+    forbid_tokens(js_code(event_view), "this.settings", "this.desktop_settings")
+    forbid_tokens(js_code(calendar), "this.settings", "this.desktop_settings", "bindWithObject")
+    forbid_tokens(js_code(panel_clock), "desktopSettings", "get_boolean(\"clock-use-24h\")")
+    require_tokens(calendar, "setShowWeekNumbers(showWeekNumbers)", "setWeekStart(weekStart)")
 
     # The month view receives a narrow event-source port; D-Bus and the native
     # mutable event store remain behind EventsManager. Comments may describe the
@@ -134,6 +136,8 @@ def main() -> None:
         "select_date(date, force)",
     )
     forbid_tokens(js_code(event_port), "CalendarServer", "Gio.", "bus_watch", "event_store")
+    forbid_tokens(js_code(event_manager), "eventVariant.deep_unpack", "row[3]", "row[4]", "row[5]")
+    require_tokens(event_manager, "add_or_update_in_range(", "NativeBoundary.decodeEventSnapshot")
     forbid_tokens(
         js_code(calendar),
         "CalendarServer", "Gio.", "bus_watch", "event_store", "EventManager"
@@ -218,8 +222,12 @@ def main() -> None:
     )
     forbid_tokens(
         js_code(calendar),
-        "_addCivilDays", "_gregorianWeekday", "while (cellsPlaced < 42)"
+        "_addCivilDays", "_gregorianWeekday", "while (cellsPlaced < 42)",
+        "model.deep_unpack", "record[1]", "record[2]", "record[3]"
     )
+    require_tokens(calendar, "NativeBoundary.decodeCalendarGrid", "NativeBoundary.decodeCivilDate")
+    require_tokens(native_boundary, "decodeTemporalPolicy", "decodeCalendarGrid", "decodeEventSnapshot")
+    forbid_tokens(js_code(applet), "variant.deep_unpack")
 
     # Request lifecycle state remains one object rather than a constellation of
     # controller flags.

@@ -108,10 +108,13 @@ calendar_plus_event_timing(gint64 start_unix,
                       timing.seconds_until_end));
 }
 
-gboolean
-calendar_plus_event_store_add_or_update(CalendarPlusEventStore *self,
-                                        GVariant *event_data,
-                                        gint64 update_timestamp)
+static gboolean
+event_input_from_variant(GVariant *event_data,
+                         gint64 update_timestamp,
+                         CalendarPlusEventInput *input,
+                         gchar **id,
+                         gchar **color,
+                         gchar **summary)
 {
     g_autoptr(GVariant) tuple = NULL;
     g_autoptr(GVariant) id_value = NULL;
@@ -121,14 +124,12 @@ calendar_plus_event_store_add_or_update(CalendarPlusEventStore *self,
     g_autoptr(GVariant) start_value = NULL;
     g_autoptr(GVariant) end_value = NULL;
     g_autoptr(GVariant) modified_value = NULL;
-    g_autofree gchar *id = NULL;
-    g_autofree gchar *color = NULL;
-    g_autofree gchar *summary = NULL;
-    CalendarPlusEventInput input;
 
-    g_return_val_if_fail(CALENDAR_PLUS_IS_EVENT_STORE(self), FALSE);
-    if (event_data == NULL)
+    if (event_data == NULL || input == NULL || id == NULL || color == NULL ||
+        summary == NULL)
+    {
         return FALSE;
+    }
 
     tuple = unwrap_variant(event_data);
     if (g_variant_classify(tuple) != G_VARIANT_CLASS_TUPLE ||
@@ -145,29 +146,101 @@ calendar_plus_event_store_add_or_update(CalendarPlusEventStore *self,
     end_value = event_child(tuple, 5);
     modified_value = event_child(tuple, 6);
 
-    id = variant_dup_string_limited(id_value,
-                                    CALENDAR_PLUS_EVENT_MAX_ID_BYTES,
-                                    FALSE);
-    color = variant_dup_string_limited(color_value,
-                                       CALENDAR_PLUS_EVENT_MAX_COLOR_BYTES,
-                                       FALSE);
-    summary = variant_dup_string_limited(
+    *id = variant_dup_string_limited(id_value,
+                                     CALENDAR_PLUS_EVENT_MAX_ID_BYTES,
+                                     FALSE);
+    *color = variant_dup_string_limited(color_value,
+                                        CALENDAR_PLUS_EVENT_MAX_COLOR_BYTES,
+                                        FALSE);
+    *summary = variant_dup_string_limited(
         summary_value, CALENDAR_PLUS_EVENT_MAX_SUMMARY_BYTES, TRUE);
 
-    input.id = id;
-    input.color = color;
-    input.summary = summary;
-    input.update_timestamp = update_timestamp;
-    if (id == NULL || color == NULL || summary == NULL ||
+    input->id = *id;
+    input->color = *color;
+    input->summary = *summary;
+    input->update_timestamp = update_timestamp;
+    if (*id == NULL || *color == NULL || *summary == NULL ||
         !g_variant_is_of_type(all_day_value, G_VARIANT_TYPE_BOOLEAN) ||
-        !variant_get_int64(start_value, &input.start_unix) ||
-        !variant_get_int64(end_value, &input.end_unix) ||
-        !variant_get_int64(modified_value, &input.modified))
+        !variant_get_int64(start_value, &input->start_unix) ||
+        !variant_get_int64(end_value, &input->end_unix) ||
+        !variant_get_int64(modified_value, &input->modified))
     {
         return FALSE;
     }
 
-    input.all_day = g_variant_get_boolean(all_day_value);
+    input->all_day = g_variant_get_boolean(all_day_value);
+    return TRUE;
+}
+
+static gboolean
+event_input_overlaps_range(const CalendarPlusEventInput *input,
+                           gint64 range_start_unix,
+                           gint64 range_end_unix)
+{
+    if (input == NULL || range_end_unix < range_start_unix)
+        return FALSE;
+
+    if (input->all_day)
+    {
+        return input->start_unix <= range_end_unix &&
+               input->end_unix > range_start_unix;
+    }
+    return input->start_unix <= range_end_unix &&
+           input->end_unix >= range_start_unix;
+}
+
+gboolean
+calendar_plus_event_store_add_or_update(CalendarPlusEventStore *self,
+                                        GVariant *event_data,
+                                        gint64 update_timestamp)
+{
+    g_autofree gchar *id = NULL;
+    g_autofree gchar *color = NULL;
+    g_autofree gchar *summary = NULL;
+    CalendarPlusEventInput input = { 0 };
+
+    g_return_val_if_fail(CALENDAR_PLUS_IS_EVENT_STORE(self), FALSE);
+    if (!event_input_from_variant(event_data,
+                                  update_timestamp,
+                                  &input,
+                                  &id,
+                                  &color,
+                                  &summary))
+    {
+        return FALSE;
+    }
+
+    return calendar_plus_event_index_upsert(
+        calendar_plus_event_store_get_index(self), &input);
+}
+
+gboolean
+calendar_plus_event_store_add_or_update_in_range(
+    CalendarPlusEventStore *self,
+    GVariant *event_data,
+    gint64 update_timestamp,
+    gint64 range_start_unix,
+    gint64 range_end_unix)
+{
+    g_autofree gchar *id = NULL;
+    g_autofree gchar *color = NULL;
+    g_autofree gchar *summary = NULL;
+    CalendarPlusEventInput input = { 0 };
+
+    g_return_val_if_fail(CALENDAR_PLUS_IS_EVENT_STORE(self), FALSE);
+    if (!event_input_from_variant(event_data,
+                                  update_timestamp,
+                                  &input,
+                                  &id,
+                                  &color,
+                                  &summary) ||
+        !event_input_overlaps_range(&input,
+                                    range_start_unix,
+                                    range_end_unix))
+    {
+        return FALSE;
+    }
+
     return calendar_plus_event_index_upsert(
         calendar_plus_event_store_get_index(self), &input);
 }

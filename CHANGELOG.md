@@ -6,6 +6,13 @@ This changelog records user-visible, compatibility, architecture and validation 
 
 No unreleased changes.
 
+## 1.0.87 - 2026-10-11
+
+- Make the native event adapter the sole owner of CalendarServer tuple decoding and visible-range admission; Cinnamon JavaScript no longer depends on external tuple positions.
+- Terminate live applet and desktop settings at the composition root. Calendar, agenda and panel-clock modules receive only the scalar policy they require.
+- Add a named native-boundary decoder for civil dates, temporal policy, calendar-grid rows and event snapshots so positional GVariant layouts no longer leak through presentation code.
+- Add native admission, JavaScript boundary-shape and architecture regressions for the decoupled contracts.
+
 ## 1.0.86 - 2026-10-10
 
 - Render Chinese and Korean Dangi dates with localized native cyclic year names in full dates, short dates and year headings. Remove the added Gregorian reference year from Chinese dates and the unexplained numeric cycle counter from Dangi dates.

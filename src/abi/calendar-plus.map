@@ -160,3 +160,8 @@ CALENDAR_PLUS_2.9 {
     global:
         calendar_plus_format_date_v1;
 } CALENDAR_PLUS_2.8;
+
+CALENDAR_PLUS_2.10 {
+    global:
+        calendar_plus_event_store_add_or_update_in_range;
+} CALENDAR_PLUS_2.9;

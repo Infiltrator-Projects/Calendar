@@ -45,6 +45,9 @@ const sameInstant = RuntimeSupport.sameInstant;
 const EventRangeState = RuntimeSupport.loadLocalModule(
     "eventRangeState"
 ).EventRangeState;
+const NativeBoundary = RuntimeSupport.loadLocalModule(
+    "nativeBoundary"
+).NativeBoundary;
 
 function _civilFields(date) {
     if (date === null) {
@@ -80,67 +83,23 @@ function _jsDateToLocalDateTime(date) {
     return value;
 }
 
-function _eventVariantOverlapsRange(eventVariant, rangeStart, rangeEnd) {
-    try {
-        if (eventVariant === null ||
-            typeof eventVariant.deep_unpack !== "function") {
-            return true;
-        }
-        const row = eventVariant.deep_unpack();
-        if (!Array.isArray(row) || row.length < 7) {
-            return true;
-        }
-
-        const allDay = Boolean(row[3]);
-        const start = Number(row[4]);
-        const end = Number(row[5]);
-        if (!Number.isFinite(start) || !Number.isFinite(end)) {
-            return true;
-        }
-
-        return allDay
-            ? start <= rangeEnd && end > rangeStart
-            : start <= rangeEnd && end >= rangeStart;
-    } catch (error) {
-        /*
-         * Structural/type validation remains native. If transport inspection
-         * cannot prove that a row lies outside the desired range, pass it to C
-         * rather than creating a second tuple validator in JavaScript.
-         */
-        return true;
-    }
-}
-
 class EventRecord {
     constructor(row) {
-        const [
-            id,
-            color,
-            summary,
-            allDay,
-            multiDay,
-            startUnix,
-            endUnix,
-            startDayUnix,
-            endDayUnix,
-            modified,
-        ] = row;
+        this.id = row.id;
+        this.color = row.color;
+        this.summary = row.summary;
+        this.all_day = row.allDay;
+        this.multi_day = row.multiDay;
+        this.start_unix = row.startUnix;
+        this.end_unix = row.endUnix;
+        this.start_day_unix = row.startDayUnix;
+        this.end_day_unix = row.endDayUnix;
+        this.modified = row.modified;
 
-        this.id = id;
-        this.color = color;
-        this.summary = summary;
-        this.all_day = allDay;
-        this.multi_day = multiDay;
-        this.start_unix = startUnix;
-        this.end_unix = endUnix;
-        this.start_day_unix = startDayUnix;
-        this.end_day_unix = endDayUnix;
-        this.modified = modified;
-
-        this.start = GLib.DateTime.new_from_unix_local(startUnix);
-        this.end = GLib.DateTime.new_from_unix_local(endUnix);
-        this.start_date = GLib.DateTime.new_from_unix_local(startDayUnix);
-        this.end_date = GLib.DateTime.new_from_unix_local(endDayUnix);
+        this.start = GLib.DateTime.new_from_unix_local(row.startUnix);
+        this.end = GLib.DateTime.new_from_unix_local(row.endUnix);
+        this.start_date = GLib.DateTime.new_from_unix_local(row.startDayUnix);
+        this.end_date = GLib.DateTime.new_from_unix_local(row.endDayUnix);
         if (this.start === null || this.end === null ||
             this.start_date === null || this.end_date === null) {
             throw new Error("Calendar event is outside the local DateTime domain");
@@ -166,10 +125,10 @@ class EventRecord {
 
 class EventSnapshot {
     constructor(variant) {
-        const [revision, rows] = variant.deep_unpack();
-        this.revision = revision;
+        const decoded = NativeBoundary.decodeEventSnapshot(variant);
+        this.revision = decoded.revision;
         this.events = [];
-        for (const row of rows) {
+        for (const row of decoded.events) {
             try {
                 this.events.push(new EventRecord(row));
             } catch (error) {
@@ -526,17 +485,14 @@ var EventsManager = class EventsManager {
         for (const eventVariant of payload.unpack()) {
             /*
              * CalendarServer has no request-generation token on event signals.
-             * Reject rows that cannot belong to the newest desired range before
-             * they reach the native index. Native code remains authoritative
-             * for tuple validation and interval normalization.
+             * The native transport adapter owns tuple parsing and range
+             * admission together so JavaScript never learns tuple positions.
              */
-            if (!_eventVariantOverlapsRange(
-                    eventVariant, rangeStart, rangeEnd)) {
-                continue;
-            }
-            changed = this.event_store.add_or_update(
+            changed = this.event_store.add_or_update_in_range(
                 eventVariant,
-                this.last_update_timestamp
+                this.last_update_timestamp,
+                rangeStart,
+                rangeEnd
             ) || changed;
         }
 
