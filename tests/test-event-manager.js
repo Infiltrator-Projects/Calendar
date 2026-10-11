@@ -250,11 +250,12 @@ vm.createContext(context);
 const eventStoreSource = fs.readFileSync(
     path.join(root, "src", "cinnamon", "eventStoreController.js"), "utf8"
 );
-vm.runInContext(
-    `${eventStoreSource}\nglobalThis.__EventStoreController = EventStoreController;`,
+const eventStoreModule = vm.runInContext(
+    `(() => {${eventStoreSource}\nreturn { EventStoreController };})()`,
     context,
     { filename: "eventStoreController.js" }
 );
+context.__EventStoreController = eventStoreModule.EventStoreController;
 
 /* EventStoreController owns native store and timezone resource lifetime. */
 const nativeStore = {
@@ -302,12 +303,12 @@ context.__rangeModule = vm.runInContext(
 const managerSource = fs.readFileSync(
     path.join(root, "src", "cinnamon", "eventManager.js"), "utf8"
 );
-vm.runInContext(
-    `${managerSource}\nglobalThis.__EventsManager = EventsManager;`,
+const managerModule = vm.runInContext(
+    `(() => {${managerSource}\nreturn { EventsManager };})()`,
     context,
     { filename: "eventManager.js" }
 );
-const EventsManager = context.__EventsManager;
+const EventsManager = managerModule.EventsManager;
 
 const transport = new FakeTransport();
 transport.ready = true;
