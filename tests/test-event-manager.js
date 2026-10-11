@@ -70,11 +70,16 @@ const DateTime = {
     },
     new_now_local() { return new FakeDateTime(0); },
 };
-class TimezoneMonitor {
-    connect() { return 77; }
-    disconnect() { observations.timezoneDisconnects += 1; }
-    cancel() { observations.timezoneCancels += 1; }
+class FakeTimezoneSource {
+    start() { this.started = true; }
+    destroy() { observations.timezoneCancels += 1; }
 }
+addSignalMethods(FakeTimezoneSource.prototype);
+const originalTimezoneDisconnect = FakeTimezoneSource.prototype.disconnect;
+FakeTimezoneSource.prototype.disconnect = function(id) {
+    observations.timezoneDisconnects += 1;
+    originalTimezoneDisconnect.call(this, id);
+};
 class FakeTransport {
     constructor() {
         this.status = 0;
@@ -137,6 +142,9 @@ const context = {
                         STATUS_NO_CALENDARS: 1,
                     };
                 }
+                if (moduleName === "timezoneMonitor") {
+                    return { TimezoneMonitor: FakeTimezoneSource };
+                }
                 throw new Error(`unexpected module ${moduleName}`);
             },
         };
@@ -161,15 +169,6 @@ const context = {
             },
         },
         gi: {
-            Gio: {
-                Cancellable: class { cancel() {} },
-                File: {
-                    new_for_path() {
-                        return { monitor_file() { return new TimezoneMonitor(); } };
-                    },
-                },
-                FileMonitorFlags: { NONE: 0 },
-            },
             GLib: {
                 DateTime,
                 SOURCE_REMOVE: false,
@@ -282,11 +281,6 @@ assert.equal(observations.transportDestroys, 1);
 assert.equal(observations.timezoneDisconnects, 1);
 assert.equal(observations.timezoneCancels, 1);
 
-/*
- * A snapshot is one coherent native contract generation. If a single decoded
- * row cannot be represented locally, EventsManager must surface an unavailable
- * agenda instead of silently presenting the remaining rows as complete data.
- */
 const snapshotTransport = new FakeTransport();
 snapshotTransport.ready = true;
 snapshotTransport.status = 2;
