@@ -256,6 +256,12 @@ setup_policy_directory_monitor(CalendarPlusSystemClock *self)
                          G_CALLBACK(on_policy_directory_changed),
                          self);
     }
+    else
+    {
+        g_warning("Calendar: unable to monitor temporal policy directory '%s': %s",
+                  self->policy_directory,
+                  error != NULL ? error->message : "unknown monitor error");
+    }
 }
 
 static void
@@ -329,7 +335,15 @@ monitor_directory_path(const gchar *path,
                                        NULL,
                                        &error);
     if (monitor != NULL)
+    {
         g_signal_connect(monitor, "changed", callback, user_data);
+    }
+    else
+    {
+        g_warning("Calendar: unable to monitor directory '%s': %s",
+                  path,
+                  error != NULL ? error->message : "unknown monitor error");
+    }
     return monitor;
 }
 

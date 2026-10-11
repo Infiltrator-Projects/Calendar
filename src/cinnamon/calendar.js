@@ -272,7 +272,7 @@ var Calendar = class Calendar {
                 return;
             }
             this._selectedDate = _cloneDate(date);
-            this.emit("selected-date-changed", this._selectedDate);
+            this.emit("selected-date-changed", _cloneDate(this._selectedDate));
         }
         if (changed || forceReload) {
             this._update(Boolean(forceReload), model);
@@ -280,7 +280,7 @@ var Calendar = class Calendar {
     }
 
     getSelectedDate() {
-        return this._selectedDate;
+        return _cloneDate(this._selectedDate);
     }
 
     todaySelected() {
@@ -671,7 +671,7 @@ var Calendar = class Calendar {
             this._addGridCell(records[index], eventColorsByCell[index] || []);
         }
 
-        this.event_source.select_date(this._selectedDate, forceReload);
+        this.event_source.select_date(_cloneDate(this._selectedDate), forceReload);
     }
 
     _addGridCell(record, eventColors) {

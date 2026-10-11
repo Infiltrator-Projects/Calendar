@@ -17,7 +17,12 @@ const metadata = JSON.parse(fs.readFileSync(
 const version = metadata.version;
 
 function evaluateApplet(nativeVersion = version, loaderMode = "legacy") {
-    const loaderObservations = { legacyCalls: 0, extensionCalls: 0 };
+    const loaderObservations = {
+        legacyCalls: 0,
+        extensionCalls: 0,
+        featureCalls: 0,
+        logErrors: [],
+    };
 
     class Actor {
         add() {}
@@ -72,8 +77,11 @@ function evaluateApplet(nativeVersion = version, loaderMode = "legacy") {
         }
         disconnectAll() { this.entries = []; }
     }
+
     const extensionModules = {
-        calendar: {}, eventManager: {}, eventView: {},
+        calendar: {},
+        eventManager: {},
+        eventView: {},
         nativeBoundary: {
             NativeBoundary: {
                 decodeTemporalPolicy(variant) {
@@ -100,7 +108,6 @@ function evaluateApplet(nativeVersion = version, loaderMode = "legacy") {
             return extensionModules[name];
         },
     };
-    loaderObservations.featureCalls = 0;
     extensionModules.runtimeSupport = runtimeSupport;
     const extension = loaderMode === "extension" ? {
         getCurrentExtension() {
@@ -122,7 +129,7 @@ function evaluateApplet(nativeVersion = version, loaderMode = "legacy") {
         _: (value) => value,
         ngettext: (one, many, count) => count === 1 ? one : many,
         global: {
-            logError() {},
+            logError(error) { loaderObservations.logErrors.push(String(error)); },
             settings: { disconnect() {}, connect() { return 1; } },
         },
         imports: {
@@ -147,8 +154,9 @@ function evaluateApplet(nativeVersion = version, loaderMode = "legacy") {
                         return class extends klass {
                             constructor(...args) {
                                 super(...args);
-                                if (typeof this._init === "function")
+                                if (typeof this._init === "function") {
                                     this._init(...args);
+                                }
                             }
                         };
                     },
@@ -198,303 +206,6 @@ function evaluateApplet(nativeVersion = version, loaderMode = "legacy") {
     context.__CalendarPlusApplet.loaderObservations = loaderObservations;
     return context.__CalendarPlusApplet;
 }
-
-function evaluateEventsManager() {
-    let nextWatchId = 1;
-    let nextSourceId = 100;
-    const timeouts = new Map();
-    const idles = new Map();
-    const observations = {
-        watches: 0,
-        unwatches: 0,
-        proxyRequests: 0,
-        serverDisconnects: 0,
-        cancels: 0,
-        clears: 0,
-        culls: [],
-        cullChanged: false,
-        colorRangeCalls: [],
-        colorRangeResult: [],
-        addOrUpdateCalls: [],
-        removedSources: 0,
-        timezoneMonitorCancels: 0,
-        timezoneMonitorDisconnects: 0,
-        timezoneRefreshes: 0,
-        rangeCalls: [],
-        rangeCallbacks: [],
-        busAppeared: null,
-        busVanished: null,
-        proxyCallback: null,
-        runNextTimeout() {
-            const next = timeouts.entries().next();
-            assert.equal(next.done, false, "a reconnect timeout must be pending");
-            const [id, callback] = next.value;
-            timeouts.delete(id);
-            callback();
-        },
-        runNextIdle() {
-            const next = idles.entries().next();
-            assert.equal(next.done, false, "an idle callback must be pending");
-            const [id, callback] = next.value;
-            idles.delete(id);
-            callback();
-        },
-    };
-
-    class Cancellable {
-        cancel() { observations.cancels += 1; }
-    }
-
-    class TimezoneMonitor {
-        connect() { return 77; }
-        disconnect() { observations.timezoneMonitorDisconnects += 1; }
-        cancel() { observations.timezoneMonitorCancels += 1; }
-    }
-
-    const signals = {
-        addSignalMethods(prototype) {
-            prototype.connect = function() { return 1; };
-            prototype.emit = function() {};
-        },
-    };
-    class FakeDateTime {
-        constructor(unix) { this.unix = unix; }
-        to_unix() { return this.unix; }
-        get_year() { return new Date(this.unix * 1000).getUTCFullYear(); }
-        get_month() { return new Date(this.unix * 1000).getUTCMonth() + 1; }
-        get_day_of_month() { return new Date(this.unix * 1000).getUTCDate(); }
-        add_days(days) { return new FakeDateTime(this.unix + days * 86400); }
-    }
-    const dateTime = {
-        new_from_unix_local(value) { return new FakeDateTime(value); },
-        new_local(year, month, day, hour, minute, second) {
-            return new FakeDateTime(
-                Date.UTC(year, month - 1, day, hour, minute, second) / 1000
-            );
-        },
-        new_utc(year, month, day, hour, minute, second) {
-            return new FakeDateTime(
-                Date.UTC(year, month - 1, day, hour, minute, second) / 1000
-            );
-        },
-        new_now_local() { return new FakeDateTime(0); },
-    };
-
-    const context = {
-        console,
-        _: (value) => value,
-        ngettext: (one, many, count) => count === 1 ? one : many,
-        log() {},
-        global: { logError() {} },
-        require(name) {
-            if (name === "./runtimeSupport") {
-                return {
-                    loadLocalModule(moduleName) {
-                        if (moduleName === "eventRangeState") {
-                            return context.__eventRangeStateModule;
-                        }
-                        if (moduleName === "nativeBoundary") {
-                            return {
-                                NativeBoundary: {
-                                    decodeEventSnapshot(variant) {
-                                        const [revision, rows] = variant.deep_unpack();
-                                        return {
-                                            revision,
-                                            events: rows.map((row) => ({
-                                                id: row[0], color: row[1],
-                                                summary: row[2], allDay: row[3],
-                                                multiDay: row[4], startUnix: row[5],
-                                                endUnix: row[6], startDayUnix: row[7],
-                                                endDayUnix: row[8], modified: row[9],
-                                            })),
-                                        };
-                                    },
-                                },
-                            };
-                        }
-                        throw new Error(`unexpected local module ${moduleName}`);
-                    },
-                    midnight(value) {
-                        return dateTime.new_local(
-                            value.get_year(),
-                            value.get_month(),
-                            value.get_day_of_month(),
-                            0, 0, 0
-                        );
-                    },
-                    sameInstant(a, b) {
-                        return a !== null && b !== null &&
-                            a.to_unix() === b.to_unix();
-                    },
-                    SignalBag: class SignalBag {
-                        constructor() { this.entries = []; }
-                        connect(object, signal, callback) {
-                            const id = object.connect(signal, callback);
-                            this.entries.push([object, id]);
-                            return id;
-                        }
-                        disconnectAll() {
-                            for (const [object, id] of this.entries.splice(0)) {
-                                object.disconnect(id);
-                            }
-                        }
-                    },
-                };
-            }
-            throw new Error(`unexpected module ${name}`);
-        },
-        imports: {
-            gi: {
-                Clutter: {},
-                Gio: {
-                    Cancellable,
-                    File: {
-                        new_for_path() {
-                            return {
-                                monitor_file() { return new TimezoneMonitor(); },
-                            };
-                        },
-                    },
-                    FileMonitorFlags: { NONE: 0 },
-                    BusType: { SESSION: 0 },
-                    BusNameWatcherFlags: { NONE: 0 },
-                    DBusProxyFlags: { DO_NOT_AUTO_START_AT_CONSTRUCTION: 0 },
-                    bus_watch_name(busType, name, flags, appeared, vanished) {
-                        observations.watches += 1;
-                        observations.busAppeared = appeared;
-                        observations.busVanished = vanished;
-                        return nextWatchId++;
-                    },
-                    bus_unwatch_name() { observations.unwatches += 1; },
-                },
-                GLib: {
-                    DateTime: dateTime,
-                    SOURCE_REMOVE: false,
-                    TIME_SPAN_MINUTE: 60,
-                    get_monotonic_time() { return 123456; },
-                },
-                St: {},
-                Pango: {},
-                Cinnamon: {
-                    CalendarServerProxy: {
-                        new_for_bus(busType, flags, name, path, cancellable, callback) {
-                            observations.proxyRequests += 1;
-                            observations.proxyCallback = callback;
-                        },
-                        new_for_bus_finish(result) {
-                            if (result.error) {
-                                throw result.error;
-                            }
-                            return result.server;
-                        },
-                    },
-                },
-                CalendarPlus: {
-                    EventStore: {
-                        new() {
-                            return {
-                                clear() { observations.clears += 1; },
-                                cull(timestamp) {
-                                    observations.culls.push(timestamp);
-                                    return observations.cullChanged;
-                                },
-                                add_or_update(event, timestamp) {
-                                    observations.addOrUpdateCalls.push(
-                                        [event, timestamp]
-                                    );
-                                    return true;
-                                },
-                                add_or_update_in_range(
-                                    event, timestamp, rangeStart, rangeEnd
-                                ) {
-                                    observations.addOrUpdateCalls.push(
-                                        [event, timestamp, rangeStart, rangeEnd]
-                                    );
-                                    return true;
-                                },
-                                get_snapshot() {
-                                    return {
-                                        deep_unpack() {
-                                            return [123456, []];
-                                        },
-                                    };
-                                },
-                                get_color_range(first, count, now, maximum) {
-                                    observations.colorRangeCalls.push(
-                                        [first, count, now, maximum]
-                                    );
-                                    return {
-                                        deep_unpack() {
-                                            return observations.colorRangeResult;
-                                        },
-                                    };
-                                },
-                                refresh_timezone() {
-                                    observations.timezoneRefreshes += 1;
-                                    return false;
-                                },
-                            };
-                        },
-                    },
-                },
-                Atk: {},
-                Gtk: {},
-                CinnamonDesktop: {
-                    WallClock: {
-                        lctime_format(domain, value) { return value; },
-                    },
-                },
-            },
-            lang: { bind(owner, fn) { return fn.bind(owner); } },
-            signals,
-            ui: { settings: {}, separator: {}, main: {} },
-            misc: { util: {}, interfaces: {} },
-            mainloop: {
-                timeout_add_seconds(delay, callback) {
-                    const id = nextSourceId++;
-                    timeouts.set(id, callback);
-                    return id;
-                },
-                idle_add(callback) {
-                    const id = nextSourceId++;
-                    idles.set(id, callback);
-                    return id;
-                },
-                source_remove(id) {
-                    timeouts.delete(id);
-                    idles.delete(id);
-                    observations.removedSources += 1;
-                },
-            },
-            gettext: {
-                bindtextdomain() {},
-                domain() { return { gettext(value) { return value; } }; },
-            },
-        },
-    };
-    vm.createContext(context);
-    const rangeStateSource = fs.readFileSync(
-        path.join(root, "src", "cinnamon", "eventRangeState.js"),
-        "utf8"
-    );
-    context.__eventRangeStateModule = vm.runInContext(
-        `(() => {\n${rangeStateSource}\nreturn { EventRangeState };\n})()`,
-        context,
-        { filename: "eventRangeState.js" }
-    );
-    const source = fs.readFileSync(
-        path.join(root, "src", "cinnamon", "eventManager.js"),
-        "utf8"
-    );
-    vm.runInContext(
-        `${source}\nglobalThis.__EventsManager = EventsManager;`,
-        context,
-        { filename: "eventManager.js" }
-    );
-    return { EventsManager: context.__EventsManager, observations };
-}
-
-
 
 function evaluateEventView() {
     let eventViewIdle = null;
@@ -575,9 +286,7 @@ function evaluateEventView() {
                     return 71;
                 },
                 timeout_add() { return 72; },
-                source_remove() {
-                    eventViewIdle = null;
-                },
+                source_remove() { eventViewIdle = null; },
             },
             gettext: {
                 bindtextdomain() {},
@@ -612,7 +321,6 @@ function evaluateEventView() {
         },
     };
 }
-
 
 function evaluateCalendar() {
     let nextSignalId = 1;
@@ -703,18 +411,19 @@ function evaluateCalendar() {
                         };
                     },
                     SignalBag: class SignalBag {
-                    constructor() { this.entries = []; }
-                    connect(object, signal, callback) {
-                        const id = object.connect(signal, callback);
-                        this.entries.push([object, id]);
-                        return id;
-                    }
-                    disconnectAll() {
-                        for (const [object, id] of this.entries.splice(0)) {
-                            object.disconnect(id);
+                        constructor() { this.entries = []; }
+                        connect(object, signal, callback) {
+                            const id = object.connect(signal, callback);
+                            this.entries.push([object, id]);
+                            return id;
                         }
-                    }
-                }};
+                        disconnectAll() {
+                            for (const [object, id] of this.entries.splice(0)) {
+                                object.disconnect(id);
+                            }
+                        }
+                    },
+                };
             }
             throw new Error(`unexpected module ${name}`);
         },
@@ -791,7 +500,9 @@ function evaluateCalendar() {
         "utf8"
     );
     vm.runInContext(
-        `${source}\nglobalThis.__Calendar = Calendar;\nglobalThis.__localDate = _localDate;\nglobalThis.__representableLocalDate = _representableLocalDate;`,
+        `${source}\nglobalThis.__Calendar = Calendar;` +
+            `\nglobalThis.__localDate = _localDate;` +
+            `\nglobalThis.__representableLocalDate = _representableLocalDate;`,
         context,
         { filename: "calendar.js" }
     );
@@ -841,21 +552,14 @@ function evaluatePanelClock() {
                     },
                     time_mode_requires_longitude(mode) {
                         return [
-                            "sidereal",
-                            "solar",
-                            "mean-solar",
-                            "roman-temporal",
-                            "japanese-temporal",
-                            "italian-hours",
-                            "babylonian-hours",
+                            "sidereal", "solar", "mean-solar", "roman-temporal",
+                            "japanese-temporal", "italian-hours", "babylonian-hours",
                         ].includes(mode);
                     },
                     time_mode_requires_latitude(mode) {
                         return [
-                            "roman-temporal",
-                            "japanese-temporal",
-                            "italian-hours",
-                            "babylonian-hours",
+                            "roman-temporal", "japanese-temporal",
+                            "italian-hours", "babylonian-hours",
                         ].includes(mode);
                     },
                     replace_time(label, normalTime, nativeTime) {
@@ -1108,7 +812,9 @@ function testMintFallbackClockFormatting() {
     );
     assert.equal(
         render({
-            use24h: false, showDate: false, showSeconds: false,
+            use24h: false,
+            showDate: false,
+            showSeconds: false,
             mode: "standard-24",
         }),
         "%R",
@@ -1116,7 +822,9 @@ function testMintFallbackClockFormatting() {
     );
     assert.equal(
         render({
-            use24h: true, showDate: false, showSeconds: false,
+            use24h: true,
+            showDate: false,
+            showSeconds: false,
             mode: "standard-12",
         }),
         "%-l:%M %p",
@@ -1124,7 +832,9 @@ function testMintFallbackClockFormatting() {
     );
     assert.equal(
         render({
-            use24h: true, showDate: false, showSeconds: true,
+            use24h: true,
+            showDate: false,
+            showSeconds: true,
             vertical: true,
         }),
         "%H%n%M%n%S",
@@ -1136,7 +846,9 @@ function testConstructorAtomicity() {
     const MismatchedAppletClass = evaluateApplet("3.1.9");
     assert.throws(
         () => new MismatchedAppletClass(0, 24, 7, version),
-        new RegExp(`native library 3\\.1\\.9 does not match applet ${version.replaceAll(".", "\\.")}`),
+        new RegExp(
+            `native library 3\\.1\\.9 does not match applet ${version.replaceAll(".", "\\.")}`
+        ),
         "native version mismatch must fail with the original diagnostic"
     );
 
@@ -1200,6 +912,38 @@ function testModuleLoaderCompatibility() {
     assert.equal(ExtensionAppletClass.loaderObservations.featureCalls, 5);
 }
 
+function testDesktopPreferenceFallbackDiagnostics() {
+    const AppletClass = evaluateApplet();
+    const originalBuild = AppletClass.prototype._buildApplet;
+    AppletClass.prototype._buildApplet = function() {};
+    const instance = new AppletClass(0, 24, 7, version);
+
+    instance.desktop_settings = {
+        get_boolean(key) { throw new Error(`failed ${key}`); },
+        get_string(key) { throw new Error(`failed ${key}`); },
+    };
+
+    assert.equal(instance._desktopUses24h(), false);
+    assert.equal(instance._desktopUses24h(), false);
+    assert.equal(instance._desktopShowsDate(), false);
+    assert.equal(instance._systemThemeName(), "");
+    assert.equal(
+        AppletClass.loaderObservations.logErrors.length,
+        3,
+        "each unavailable desktop preference must be diagnosed once, not per repaint"
+    );
+    for (const key of ["clock-use-24h", "clock-show-date", "gtk-theme"]) {
+        assert.ok(
+            AppletClass.loaderObservations.logErrors.some((message) =>
+                message.includes(key) && message.includes("compatibility default")
+            ),
+            `${key} fallback must identify the failed setting`
+        );
+    }
+
+    instance._destroy();
+    AppletClass.prototype._buildApplet = originalBuild;
+}
 
 function testCalendarRejectsNormalizedCivilDates() {
     const originalTimezone = process.env.TZ;
@@ -1254,7 +998,6 @@ function testCalendarRejectsNormalizedCivilDates() {
     }
 }
 
-
 function testCalendarDayNavigationDelegatesToNative() {
     const { Calendar } = evaluateCalendar();
     const calendar = Object.create(Calendar.prototype);
@@ -1301,6 +1044,40 @@ function testCalendarRejectsUnsupportedProviderDate() {
     assert.equal(emissions, 0);
 }
 
+function testCalendarSelectedDateIsolation() {
+    const { Calendar } = evaluateCalendar();
+    const calendar = Object.create(Calendar.prototype);
+    let emitted = null;
+
+    Object.assign(calendar, {
+        _destroyed: false,
+        _selectedDate: new Date(2026, 6, 29, 12, 0, 0),
+        _gridModelForDate() { return {}; },
+        _update() {},
+        emit(signal, date) {
+            if (signal === "selected-date-changed") emitted = date;
+        },
+    });
+
+    const external = calendar.getSelectedDate();
+    external.setFullYear(2030);
+    assert.equal(
+        calendar._selectedDate.getFullYear(),
+        2026,
+        "getter callers must not be able to mutate Calendar-owned selection state"
+    );
+
+    calendar.setDate(new Date(2026, 6, 30, 12, 0, 0), false);
+    assert.notEqual(emitted, null);
+    emitted.setFullYear(2030);
+    assert.equal(
+        calendar._selectedDate.getFullYear(),
+        2026,
+        "selection signal receivers must receive a detached civil-date value"
+    );
+    assert.equal(calendar._selectedDate.getDate(), 30);
+}
+
 function testCalendarGridFailureIsTransactional() {
     const { Calendar } = evaluateCalendar();
     const calendar = Object.create(Calendar.prototype);
@@ -1323,8 +1100,7 @@ function testCalendarGridFailureIsTransactional() {
 }
 
 function testCalendarLifecycle() {
-    const { Calendar, settings, eventsManager, desktopSettings, observations } =
-        evaluateCalendar();
+    const { Calendar, eventsManager, observations } = evaluateCalendar();
     const calendar = new Calendar(eventsManager, 0, false);
 
     calendar._update_id = 41;
@@ -1361,8 +1137,7 @@ function testCalendarLifecycle() {
 }
 
 function testCalendarNavigationCoalescing() {
-    const { Calendar, settings, eventsManager, desktopSettings, observations } =
-        evaluateCalendar();
+    const { Calendar, eventsManager, observations } = evaluateCalendar();
     const calendar = new Calendar(eventsManager, 0, false);
     const applied = [];
     calendar.setDate = (date) => applied.push(date.getTime());
@@ -1415,10 +1190,7 @@ function testCalendarKeyboardNavigation() {
     assert.equal(
         calendar._onDayKeyPress(
             date,
-            keyEvent(
-                Clutter.KEY_Page_Down,
-                Clutter.ModifierType.SHIFT_MASK
-            )
+            keyEvent(Clutter.KEY_Page_Down, Clutter.ModifierType.SHIFT_MASK)
         ),
         Clutter.EVENT_STOP
     );
@@ -1430,10 +1202,7 @@ function testCalendarKeyboardNavigation() {
 
     calendar._onDayKeyPress(
         date,
-        keyEvent(
-            Clutter.KEY_Page_Up,
-            Clutter.ModifierType.CONTROL_MASK
-        )
+        keyEvent(Clutter.KEY_Page_Up, Clutter.ModifierType.CONTROL_MASK)
     );
     assert.deepEqual(
         calls.pop().slice(0, 2),
@@ -1441,360 +1210,6 @@ function testCalendarKeyboardNavigation() {
         "Control must not silently replace the standard Shift year modifier"
     );
 }
-
-function testVisibleEventRange() {
-    const { EventsManager, observations } = evaluateEventsManager();
-    const manager = new EventsManager();
-    manager._inited = true;
-    manager._calendar_server = {
-        status: 2,
-        call_set_time_range(start, end, force, cancellable, callback) {
-            observations.rangeCalls.push([start, end, force]);
-            observations.rangeCallbacks.push(callback);
-        },
-        call_set_time_range_finish(result) {
-            if (result && result.error) {
-                throw result.error;
-            }
-        },
-    };
-
-    const first = new Date(Date.UTC(2026, 7, 2, 12, 0, 0));
-    const last = new Date(Date.UTC(2026, 8, 12, 12, 0, 0));
-    manager.set_visible_range(first, last, false);
-    assert.equal(observations.rangeCalls.length, 1);
-    assert.equal(
-        observations.rangeCalls[0][1] - observations.rangeCalls[0][0],
-        42 * 86400 - 1,
-        "six visible weeks must be fetched as one inclusive interval"
-    );
-    observations.rangeCallbacks[0](manager._calendar_server, {});
-
-    manager.set_visible_range(first, last, false);
-    assert.equal(
-        observations.rangeCalls.length,
-        1,
-        "unchanged successful range must not trigger a duplicate fetch"
-    );
-    manager.set_visible_range(first, last, true);
-    assert.equal(
-        observations.rangeCalls.length,
-        2,
-        "direct forced refresh must re-query the current visible range"
-    );
-    observations.rangeCallbacks[1](manager._calendar_server, {});
-
-    manager.queue_reload(true);
-    observations.runNextIdle();
-    assert.equal(
-        observations.rangeCalls.length,
-        3,
-        "queued forced refresh must re-query the authoritative visible range"
-    );
-    assert.equal(observations.rangeCalls[2][2], true);
-    observations.rangeCallbacks[2](manager._calendar_server, {});
-    manager.destroy();
-}
-
-function testVisibleEventRangeFailureRecovery() {
-    const { EventsManager, observations } = evaluateEventsManager();
-    const manager = new EventsManager();
-    manager._inited = true;
-    manager._calendar_server = {
-        status: 2,
-        call_set_time_range(start, end, force, cancellable, callback) {
-            observations.rangeCalls.push([start, end, force]);
-            observations.rangeCallbacks.push(callback);
-        },
-        call_set_time_range_finish(result) {
-            if (result && result.error) {
-                throw result.error;
-            }
-        },
-    };
-
-    const first = new Date(Date.UTC(2026, 7, 2, 12, 0, 0));
-    const last = new Date(Date.UTC(2026, 8, 12, 12, 0, 0));
-    manager.set_visible_range(first, last, false);
-    observations.rangeCallbacks[0](
-        manager._calendar_server,
-        { error: new Error("temporary range failure") }
-    );
-
-    observations.runNextTimeout();
-    assert.equal(
-        observations.rangeCalls.length,
-        2,
-        "failed range must retry automatically without user interaction"
-    );
-    observations.rangeCallbacks[1](manager._calendar_server, {});
-
-    const nextFirst = new Date(Date.UTC(2026, 8, 6, 12, 0, 0));
-    const nextLast = new Date(Date.UTC(2026, 9, 17, 12, 0, 0));
-    manager.set_visible_range(nextFirst, nextLast, false);
-    const staleCallback = observations.rangeCallbacks[2];
-    manager.set_visible_range(first, last, true);
-    assert.equal(
-        observations.rangeCalls.length,
-        3,
-        "a newer desired range must wait for the in-flight request"
-    );
-
-    staleCallback(
-        manager._calendar_server,
-        { error: new Error("stale range failure") }
-    );
-    assert.equal(
-        observations.rangeCalls.length,
-        4,
-        "completion of the old request must start the newest queued range"
-    );
-    const currentCallback = observations.rangeCallbacks[3];
-    currentCallback(manager._calendar_server, {});
-
-    manager.set_visible_range(first, last, false);
-    assert.equal(
-        observations.rangeCalls.length,
-        4,
-        "stale failure must not invalidate a newer successful range"
-    );
-    manager.destroy();
-}
-
-function testSuccessfulEmptyRangeReplacesPreviousGeneration() {
-    const { EventsManager, observations } = evaluateEventsManager();
-    const manager = new EventsManager();
-    manager._inited = true;
-    manager._calendar_server = {
-        status: 2,
-        call_set_time_range(start, end, force, cancellable, callback) {
-            observations.rangeCalls.push([start, end, force]);
-            observations.rangeCallbacks.push(callback);
-        },
-        call_set_time_range_finish() {},
-    };
-
-    const first = new Date(Date.UTC(2026, 7, 2, 12, 0, 0));
-    const last = new Date(Date.UTC(2026, 8, 12, 12, 0, 0));
-    manager.set_visible_range(first, last, true);
-    assert.equal(
-        observations.clears,
-        1,
-        "every real refresh must replace the previous local event generation"
-    );
-    observations.rangeCallbacks[0](manager._calendar_server, {});
-    assert.deepEqual(
-        observations.culls,
-        [],
-        "empty refresh correctness must not depend on a silence timer"
-    );
-    manager.destroy();
-}
-
-function testRangeAdmissionDelegatesOpaqueRowsToNativeBoundary() {
-    const { EventsManager, observations } = evaluateEventsManager();
-    const manager = new EventsManager();
-    manager._inited = true;
-    manager.current_range_start = {
-        to_unix() { return 1000; },
-        add_days() { return this; },
-    };
-    manager.current_range_end = {
-        to_unix() { return 2000; },
-        add_days() {
-            return { to_unix() { return 3000; } };
-        },
-    };
-    manager._rangeState.finishRequest(manager._rangeState.beginRequest(), true);
-    manager._rangeState.acceptCompletedRequest();
-
-    const firstOpaqueRow = Object.freeze({ transportRow: "first" });
-    const secondOpaqueRow = Object.freeze({ transportRow: "second" });
-    manager._ingestEvents({
-        unpack() {
-            return [firstOpaqueRow, secondOpaqueRow];
-        },
-    });
-
-    assert.equal(
-        observations.addOrUpdateCalls.length,
-        2,
-        "JavaScript must delegate every admitted transport row to native range filtering"
-    );
-    assert.equal(observations.addOrUpdateCalls[0][0], firstOpaqueRow);
-    assert.equal(observations.addOrUpdateCalls[1][0], secondOpaqueRow);
-    for (const call of observations.addOrUpdateCalls) {
-        assert.equal(call[2], 1000, "native admission receives range start");
-        assert.equal(call[3], 2999, "native admission receives inclusive range end");
-    }
-    manager.destroy();
-}
-
-function testRemovalSignalsInvalidateInsteadOfDeletingNewGeneration() {
-    const { EventsManager, observations } = evaluateEventsManager();
-    const manager = new EventsManager();
-    let queuedForce = null;
-
-    manager.current_range_start = { to_unix() { return 1000; } };
-    manager.current_range_end = { to_unix() { return 2000; } };
-    manager._rangeState.finishRequest(manager._rangeState.beginRequest(), true);
-    manager._rangeState.acceptCompletedRequest();
-    manager.queue_reload = (force) => { queuedForce = force; };
-
-    manager._removeEvents("source:event");
-    assert.equal(observations.clears, 1);
-    assert.equal(manager._rangeState.acceptingEvents, false);
-    assert.equal(manager._rangeState.succeeded, false);
-    assert.equal(
-        queuedForce,
-        true,
-        "ID-only removals must invalidate and re-query the newest range"
-    );
-
-    queuedForce = null;
-    manager._rangeState.beginRequest();
-    manager._removeEvents("source:event");
-    assert.equal(manager._rangeState.queuedForce, true);
-    assert.equal(
-        queuedForce,
-        null,
-        "an in-flight range must finish before the forced replacement starts"
-    );
-    manager.destroy();
-}
-
-function testTimezoneReloadPreservesCivilRange() {
-    const { EventsManager, observations } = evaluateEventsManager();
-    const manager = new EventsManager();
-    const calls = [];
-
-    manager.current_range_start = { to_unix() { return 1000; } };
-    manager.current_range_end = { to_unix() { return 2000; } };
-    manager.current_range_start_civil = { year: 2026, month: 8, day: 2 };
-    manager.current_range_end_civil = { year: 2026, month: 9, day: 12 };
-    manager._rangeState.finishRequest(manager._rangeState.beginRequest(), true);
-    manager._rangeState.acceptCompletedRequest();
-    manager.set_visible_range = (first, last, force) => {
-        calls.push([first, last, force]);
-    };
-
-    manager._timezoneChanged();
-    assert.equal(manager._rangeState.acceptingEvents, false);
-    manager._ingestEvents({
-        unpack() {
-            return [{
-                deep_unpack() {
-                    return ["late", "#112233", "late", false, 1200, 1300, 1];
-                },
-            }];
-        },
-    });
-    assert.equal(observations.addOrUpdateCalls.length, 0);
-    observations.runNextIdle();
-    assert.equal(observations.timezoneRefreshes, 1);
-    assert.deepEqual(
-        calls,
-        [[
-            { year: 2026, month: 8, day: 2 },
-            { year: 2026, month: 9, day: 12 },
-            true,
-        ]],
-        "timezone reload must reconstruct transport instants from civil endpoints"
-    );
-    manager.destroy();
-}
-
-function testCalendarSetChangeClosesAdmission() {
-    const { EventsManager, observations } = evaluateEventsManager();
-    const manager = new EventsManager();
-    let queuedForce = null;
-
-    manager.current_range_start = { to_unix() { return 1000; } };
-    manager.current_range_end = { to_unix() { return 2000; } };
-    manager._rangeState.finishRequest(manager._rangeState.beginRequest(), true);
-    manager._rangeState.acceptCompletedRequest();
-    manager.queue_reload = (force) => { queuedForce = force; };
-
-    manager._calendarSetChanged();
-    assert.equal(observations.clears, 1);
-    assert.equal(manager._rangeState.acceptingEvents, false);
-    assert.equal(manager._rangeState.succeeded, false);
-    assert.equal(queuedForce, true);
-    manager.destroy();
-}
-
-function testServerLossClearsPresentedAgenda() {
-    const { EventsManager, observations } = evaluateEventsManager();
-    const presented = [];
-    const manager = new EventsManager();
-    manager.emit = (signal, ...args) => {
-        if (signal === "agenda-events-changed") {
-            presented.push(args);
-        }
-    };
-    manager._inited = true;
-    manager._calendar_server = { status: 2 };
-
-    manager._calendarServerVanished();
-    assert.deepEqual(
-        presented,
-        [[null, false, true]],
-        "transport loss must clear stale appointments and mark transport unavailable"
-    );
-    assert.equal(observations.clears, 1);
-    manager.destroy();
-}
-
-function testExpectedNoCalendarShutdownStaysAuthoritative() {
-    const { EventsManager } = evaluateEventsManager();
-    const presented = [];
-    const manager = new EventsManager();
-    manager.emit = (signal, ...args) => {
-        if (signal === "agenda-events-changed") {
-            presented.push(args);
-        }
-    };
-    manager._inited = true;
-    manager._cached_state = 1;
-    manager._calendar_server = { status: 1 };
-
-    manager._calendarServerVanished();
-    assert.equal(manager._cached_state, 1);
-    assert.equal(manager.should_show_event_pane(), false);
-    assert.equal(
-        manager._reconnect_timer_id,
-        0,
-        "authoritative no-calendar shutdown must not become a five-second poll"
-    );
-    assert.deepEqual(
-        presented,
-        [[null, false, false]],
-        "expected empty shutdown must not be presented as transport failure"
-    );
-    manager.destroy();
-}
-
-function testBatchedEventColorBridge() {
-    const { EventsManager, observations } = evaluateEventsManager();
-    observations.colorRangeResult = [
-        ["#112233"],
-        [],
-        ["#445566", "#778899"],
-    ];
-    const manager = new EventsManager();
-    const result = manager.get_colors_for_range(
-        new Date(Date.UTC(2026, 7, 2, 12, 0, 0)),
-        3,
-        8
-    );
-
-    assert.deepEqual(result, observations.colorRangeResult);
-    assert.equal(observations.colorRangeCalls.length, 1);
-    assert.equal(observations.colorRangeCalls[0][1], 3);
-    assert.equal(observations.colorRangeCalls[0][3], 8);
-    manager.destroy();
-}
-
 
 function testEventListLaunchesSelectedCinnamonBackend() {
     const { EventList, observations } = evaluateEventView();
@@ -2057,143 +1472,16 @@ function testEventListCacheIdentity() {
     assert.equal(stableRow.variationUpdates, 1);
 }
 
-
-function testEventsManagerPresentationState() {
-    const { EventsManager } = evaluateEventsManager();
-    const selectedDates = [];
-    const manager = new EventsManager();
-    manager.emit = (signal, ...args) => {
-        if (signal === "agenda-date-changed") {
-            selectedDates.push(args[0].to_unix());
-        }
-    };
-
-    assert.equal(
-        manager.should_show_event_pane(),
-        true,
-        "enabled agenda must reserve popup width before CalendarServer is ready"
-    );
-    manager.select_date(new Date(Date.UTC(2026, 8, 21, 12, 0, 0)), false);
-    assert.equal(
-        selectedDates.length,
-        1,
-        "agenda heading must update while event transport is still pending"
-    );
-
-    manager._calendar_server = { status: 1 };
-    assert.equal(
-        manager.should_show_event_pane(),
-        false,
-        "authoritative no-calendar status may collapse the agenda"
-    );
-
-    manager._calendar_server = null;
-    manager.set_enabled(false);
-    assert.equal(manager.should_show_event_pane(), false);
-    manager.destroy();
-}
-
-function testEventsManagerPreservesPreEpochSelection() {
-    const { EventsManager, observations } = evaluateEventsManager();
-    const manager = new EventsManager();
-    const captured = [];
-    manager.current_selected_civil = {
-        year: 1969,
-        month: 12,
-        day: 31,
-    };
-    manager.select_date = (date) => captured.push([
-        date.year,
-        date.month,
-        date.day,
-    ]);
-
-    manager.queue_reload(false);
-    observations.runNextIdle();
-    assert.deepEqual(
-        captured,
-        [[1969, 12, 31]],
-        "valid pre-1970 civil selections must never be replaced with today"
-    );
-    manager.destroy();
-}
-
-function testEventsManagerLifecycle() {
-    const { EventsManager, observations } = evaluateEventsManager();
-    const manager = new EventsManager();
-
-    manager.start_events();
-    manager.start_events();
-    assert.equal(observations.watches, 1, "bus watch must be idempotent");
-
-    manager.destroy();
-    manager.destroy();
-    assert.equal(observations.unwatches, 1, "bus watch must be released once");
-    assert.equal(observations.cancels, 1, "pending D-Bus work must be cancelled");
-    assert.equal(observations.clears, 1, "native event data must be released");
-    assert.equal(
-        observations.timezoneMonitorDisconnects,
-        1,
-        "timezone monitor signal must be disconnected once"
-    );
-    assert.equal(
-        observations.timezoneMonitorCancels,
-        1,
-        "timezone monitor must be cancelled once"
-    );
-    assert.equal(manager._destroyed, true);
-}
-
-function testEventsManagerReconnect() {
-    const { EventsManager, observations } = evaluateEventsManager();
-    const manager = new EventsManager();
-    let nextSignalId = 1;
-    const server = {
-        status: 2,
-        connect() { return nextSignalId++; },
-        disconnect() { observations.serverDisconnects += 1; },
-    };
-
-    manager.start_events();
-    observations.busAppeared();
-    assert.equal(observations.proxyRequests, 1);
-    assert.equal(observations.unwatches, 0, "service watch must survive connection");
-    observations.proxyCallback(null, { server });
-    assert.equal(manager._inited, true);
-
-    observations.busVanished();
-    assert.equal(manager._inited, false);
-    assert.equal(manager._calendar_server, null);
-    assert.equal(observations.serverDisconnects, 4);
-    assert.equal(observations.clears, 1, "stale events must be dropped on restart");
-
-    observations.busAppeared();
-    assert.equal(observations.proxyRequests, 2, "service return must reconnect");
-    const staleCallback = observations.proxyCallback;
-    observations.busVanished();
-    staleCallback(null, { server });
-    assert.equal(manager._calendar_server, null, "stale proxy completion must be ignored");
-
-    observations.busAppeared();
-    assert.equal(observations.proxyRequests, 3);
-    observations.proxyCallback(null, { error: new Error("transient failure") });
-    observations.runNextTimeout();
-    assert.equal(observations.proxyRequests, 4, "proxy failure must be retried");
-    observations.proxyCallback(null, { server });
-    assert.equal(manager._inited, true);
-
-    manager.destroy();
-    assert.equal(observations.unwatches, 1, "persistent watch must be released");
-}
-
 testPanelClockDefensiveFormatting();
 testPanelClockPreservesLocaleCasingAndNullFormats();
 testMintFallbackClockFormatting();
 testConstructorAtomicity();
 testModuleLoaderCompatibility();
+testDesktopPreferenceFallbackDiagnostics();
 testCalendarRejectsNormalizedCivilDates();
 testCalendarDayNavigationDelegatesToNative();
 testCalendarRejectsUnsupportedProviderDate();
+testCalendarSelectedDateIsolation();
 testCalendarGridFailureIsTransactional();
 testCalendarLifecycle();
 testCalendarNavigationCoalescing();

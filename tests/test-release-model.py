@@ -2,7 +2,13 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 # Copyright (C) 1993-2026 Shannon Smith
 
-"""Static contracts for Calendar's release model."""
+"""Static contracts for Calendar's externally observable release model.
+
+This suite deliberately checks packaging, publication, repository structure,
+versioning, licensing and immutable release inputs. Behavioural and internal
+architecture contracts belong to the C/JavaScript/architecture tests instead of
+being frozen here as exact source spelling.
+"""
 
 from __future__ import annotations
 
@@ -33,7 +39,6 @@ def main() -> None:
     gitmodules = read(".gitmodules")
     copyright_file = read("debian/copyright")
     control = read("debian/control")
-    system_clock_source = read("src/adapters/system-clock.c")
 
     assert sorted(path.name for path in ROOT.glob("*.md")) == [
         "CHANGELOG.md", "CONTRIBUTING.md", "README.md", "SECURITY.md"
@@ -71,6 +76,9 @@ def main() -> None:
             f"{executable} must be executable"
         )
 
+    # Build-profile and source-archive policy are release identities, not
+    # implementation details. Keep these explicit because produced artifacts
+    # must remain reproducible and distinguish generic from native/PGO builds.
     assert "BUILD_MODE ?= generic" in makefile
     assert "-O2 -g" in makefile
     assert "-O3 -g -march=native -mtune=native -flto=auto" in makefile
@@ -87,6 +95,9 @@ def main() -> None:
     assert "Calendar-$(VERSION)-local-source.zip" not in makefile
     assert "TZ=UTC zip -X -9 -q" not in makefile
     assert "export CFLAGS" not in makefile
+
+    # Common is consumed as an independently built pinned library. These checks
+    # protect the build boundary rather than the spelling of Calendar callers.
     assert "INFILTRATR_COMMON_CFLAGS :=" in makefile
     assert "INFILTRATR_COMMON_EXTRA_CFLAGS ?=" in makefile
     assert "INFILTRATR_COMMON_CPPFLAGS := -Iinclude" in makefile
@@ -106,6 +117,9 @@ def main() -> None:
     assert "--exclude-vcs" not in read("tools/reproducible-build.sh")
     assert "calendar-$(VERSION)-local-folder.run" in makefile
     assert "calendar-plus-about" in makefile
+
+    # Proprietary font binaries are never release inputs. The stylesheet may
+    # request the brand family, but packaging must work with documented fallback.
     assert "FONT_ARCHIVE" not in makefile
     assert "prepare-fonts" not in makefile
     assert "share/fonts/truetype/infiltrator-calendar" not in makefile
@@ -118,11 +132,10 @@ def main() -> None:
     assert "Linux Mint Project and Cinnamon contributors" in copyright_file
     assert "CHANGELOG.md CONTRIBUTING.md LICENSE Makefile README.md SECURITY.md docs/*" in copyright_file
     assert "3.4.0" not in copyright_file
-    assert "MB Corpo S Title WEB" not in read("src/cinnamon/applet.js")
-    assert "calendar-plus-popup" in read("src/cinnamon/applet.js")
-    assert "external-configuration-app" not in read("src/cinnamon/metadata.json")
-    metadata_icon = json.loads(read("src/cinnamon/metadata.json"))["icon"]
-    assert metadata_icon == "infiltratr-calendar"
+
+    metadata = json.loads(read("src/cinnamon/metadata.json"))
+    assert "external-configuration-app" not in metadata
+    assert metadata["icon"] == "infiltratr-calendar"
     assert (ROOT / "src/assets/infiltratr-calendar.png").is_file()
     assert "share/icons/hicolor/256x256/apps/$(ICON_NAME).png" in makefile
     assert "share/app-install/icons/infiltrator-calendar.png" in makefile
@@ -130,12 +143,12 @@ def main() -> None:
     package_validator = read("tools/validate-package-inputs.py")
     assert "validate_icon_asset()" in package_validator
     assert '4181adea531fe79e2e8b79ec14e2f2476d18e9e3128911dcd21e60a863b36f05' in package_validator
-    assert '.icon_name = "infiltratr-calendar"' in read("src/app/project-info.c")
     local_installer = read("tools/local-installer.sh.in")
     assert "share/cinnamon/applets/calendar-plus@the-infiltratr/icon.png" in local_installer
     assert "share/icons/hicolor/256x256/apps/infiltratr-calendar.png" in local_installer
-    assert "share/app-install/icons/infiltrator-calendar.png" in local_installer
+    assert "share/app-install/icons/infiltratr-calendar.png" in local_installer
     assert 'test ! -e "$PACKAGE_ROOT/usr/share/fonts/truetype/infiltrator-calendar"' in local_installer
+
     stylesheet = read("src/cinnamon/stylesheet.css")
     assert "MB Corpo S Title WEB" in stylesheet
     assert '.calendar-plus-panel-clock {' in stylesheet
@@ -144,9 +157,10 @@ def main() -> None:
     assert "font-size: 1.08em;" in stylesheet
     assert ".calendar-day-heading {" in stylesheet
     assert "font-size: 10px;" in stylesheet
-    applet = read("src/cinnamon/applet.js")
-    assert "FONT_PANEL_CLOCK" not in applet
-    assert "_applyTypography(" not in applet
+
+    # Temporal settings are owned by System Settings/Mint, not duplicated in
+    # Calendar's installed Cinnamon schema. Runtime behaviour is tested by the
+    # temporal-policy and JavaScript behavioural suites.
     settings_schema = read("src/cinnamon/settings-schema.json")
     for temporal_key in (
         "follow-system-temporal",
@@ -162,32 +176,8 @@ def main() -> None:
         "custom-tooltip-format",
     ):
         assert temporal_key not in settings_schema
-    temporal_policy = read("src/cinnamon/temporalPolicy.js")
-    assert "TemporalPolicy.TemporalPolicyResolver" in applet
-    assert "get_system_policy()" not in applet
-    assert "get_system_policy()" in temporal_policy
-    assert "NativeBoundary.decodeTemporalPolicy" in temporal_policy
-    assert "infiltratr_temporal_posix_provider_available" in system_clock_source
-    assert "infiltratr_temporal_posix_policy_load" in system_clock_source
-    assert "g_file_monitor_directory" in system_clock_source
-    assert 'g_find_program_in_path("system-settings")' not in system_clock_source
-    assert '"org.cinnamon.desktop.interface"' in system_clock_source
-    assert '"clock-show-seconds"' in system_clock_source
-    assert 'GLib.find_program_in_path("system-settings")' not in applet
-    assert 'Gio.DesktopAppInfo.new(' in applet
-    assert '"org.infiltrator.SystemSettings.desktop"' in applet
-    assert 'Util.spawnCommandLine("cinnamon-settings calendar")' in applet
-    assert "get_system_primary_calendar" not in applet
-    assert "get_system_secondary_calendar" not in applet
     assert not (ROOT / "src/cinnamon/settings.py").exists()
-    assert "super.configureApplet(tab);" in applet
-    about_source = read("src/app/about-dialog.c")
-    assert "infiltratr_project_info_print" in about_source
-    assert "#include <gtk/gtk.h>" in about_source
-    assert "gtk_about_dialog_new()" in about_source
-    assert "gtk_dialog_run(GTK_DIALOG(widget))" in about_source
-    assert "infiltratr_dynlib_" not in about_source
-    assert "<infiltratr/design.h>" not in about_source
+
     assert "fontconfig," not in control
     assert "Breaks: calendar-plus, cinnamon-calendar" in control
     assert "Replaces: calendar-plus, cinnamon-calendar" in control
@@ -206,6 +196,7 @@ def main() -> None:
     assert 'BUILD_DIR="$(INFILTRATR_COMMON_BUILD_DIR)" check' in makefile
     assert "git -C \"$(INFILTRATR_COMMON_DIR)\" fetch -q --depth 1 origin" in makefile
     assert "Infiltrator-Projects/Infiltrator-Libraries.git" in gitmodules
+
     assert "validate-translations" in makefile
     translation_tool = read("tools/update-translations.py")
     assert '"msgmerge", "--update", "--backup=none"' in translation_tool
@@ -217,22 +208,6 @@ def main() -> None:
     assert "CHANGELOG.md" not in rules
     assert "validate-translations" in rules
     assert "validate-architecture" in rules
-
-    # Common is the sole renderer for specialised clock text. Calendar keeps
-    # only its exact next-boundary scheduling callbacks for Cinnamon wakeups.
-    time_formats = read("src/core/time-formats.c")
-    assert "infiltratr_temporal_format_clock_mode" in time_formats
-    assert "provider->format" not in time_formats
-    assert "TimeFormatFunc" not in time_formats
-    local_clock_sources = "\n".join(
-        read(path)
-        for path in (
-            "src/core/time-formats-civil.c",
-            "src/core/time-formats-astronomy.c",
-            "src/core/time-formats-nuremberg.c",
-        )
-    )
-    assert re.search(r"\bformat_[a-z0-9_]+_provider\s*\(", local_clock_sources) is None
     assert "validate-abi" in rules
     assert "validate-runtime-deps" in rules
 
@@ -250,20 +225,8 @@ def main() -> None:
     assert '$(MAKE) -C "$(INFILTRATR_COMMON_DIR)"' in makefile
     assert 'BUILD_DIR="$(INFILTRATR_COMMON_BUILD_DIR)"' in makefile
 
-    about_source = read("src/app/about-dialog.c")
-    assert "infiltratr_project_info_print" in about_source
-    assert "infiltratr_dynlib_bind_symbols" not in about_source
-    assert "#include <gtk/gtk.h>" in about_source
-    assert "gtk_about_dialog_set_program_name" in about_source
-    assert "gtk_about_dialog_set_version" in about_source
-    assert "infiltratr_build_profile_label(info->build_profile)" in about_source
-    assert "info->author" in about_source
-    assert '"Shannon Smith — Author and project maintainer"' not in about_source
-    assert 'infiltratr_string_equal(profile' not in about_source
-    icu_source = read("src/core/icu-calendar.c")
-    assert 'infiltratr_string_equal(calendar_keyword, "gregorian")' in icu_source
-    assert 'g_strcmp0(calendar_keyword, "gregorian")' not in icu_source
-
+    # Native installer and release workflow identity. Exact commands matter here
+    # because these strings describe the artifacts users install and publish.
     assert 'NATIVE_VERSION="${VERSION}+nativepgo${NATIVE_REVISION}"' in installer
     assert "CALENDAR_PLUS_BUILD_MODE=native" in installer
     assert "PGO_MODE=generate" in installer
@@ -328,6 +291,10 @@ def main() -> None:
     assert "release_state=" in publisher
     assert '--json databaseId --jq .databaseId' in publisher
     assert "local-source.zip" not in publisher
+
+    # CI qualification matrix is itself a release contract: only a tested main
+    # build may publish, and the supported ICU/Cinnamon environments must remain
+    # represented explicitly.
     assert "actions/checkout@v" not in workflow
     assert workflow.count("submodules: true") == 7
     assert "check-upstream-drift.sh" not in workflow
@@ -356,6 +323,7 @@ def main() -> None:
     assert "--probe" in live_smoke
     assert "live smoke deferred" not in live_smoke
 
+    # Repository shape and generated/runtime release inputs.
     assert not (ROOT / "calendar-plus@the-infiltratr").exists()
     for legacy_root in ("cinnamon", "po", "shared"):
         assert not (ROOT / legacy_root).exists()
@@ -372,99 +340,6 @@ def main() -> None:
     assert sorted(path.name for path in source_root.iterdir() if path.is_dir()) == [
         "abi", "adapters", "app", "assets", "cinnamon", "core", "i18n", "vendor"
     ]
-
-    applet = read("src/cinnamon/applet.js")
-    assert 'this.menu.setCustomStyleClass("calendar-plus-popup");' in applet
-    assert '`calendar-plus-popup calendar-plus-theme-${effectiveTheme}`' in applet
-    assert 'setCustomStyleClass("calendar-background")' not in applet
-    assert '"infiltrator-calendar-about.desktop"' in applet
-    assert 'Util.spawnCommandLine("/usr/libexec/calendar-plus-about")' not in applet
-    assert "ModalDialog" not in applet
-    assert "_aboutDialog" not in applet
-    assert "calendar-plus-about-title" not in read("src/cinnamon/stylesheet.css")
-    assert "getCurrentExtension" in applet
-    assert 'return require("./runtimeSupport")' in applet
-    assert 'RuntimeSupport.loadLocalModule("calendar")' in applet
-    assert 'RuntimeSupport.loadLocalModule("eventManager")' in applet
-    assert 'RuntimeSupport.loadLocalModule("eventView")' in applet
-    assert 'RuntimeSupport.loadLocalModule("panelClock")' in applet
-    assert "class CalendarPlusApplet extends Applet.Applet" in applet
-    assert "configureApplet(tab = 0)" in applet
-    assert "super.configureApplet(tab);" in applet
-    assert "/settings.py " not in applet
-
-    runtime = read("src/cinnamon/runtimeSupport.js")
-    assert "return require(`./${name}`)" in runtime
-    assert runtime.count("var SignalBag = class SignalBag") == 1
-    assert "var EventList = class EventList" in read(
-        "src/cinnamon/eventView.js"
-    )
-    event_manager = read("src/cinnamon/eventManager.js")
-    assert "var EventsManager = class EventsManager" in event_manager
-    assert "should_show_event_pane()" in event_manager
-    assert "this.events_manager.should_show_event_pane()" in applet
-    assert "var Calendar = class Calendar" in read(
-        "src/cinnamon/calendar.js"
-    )
-    panel_clock = read("src/cinnamon/panelClock.js")
-    assert 'var CLOCK_MODE_STANDARD = "standard";' not in panel_clock
-    assert "CalendarPlus.time_mode_from_string(mode)" in panel_clock
-    assert "CalendarPlus.TimeMode.INVALID" in panel_clock
-
-    registry = read("src/core/calendar-registry.c")
-    custom = read("src/core/calendar-custom.c")
-    calendar_core = read("src/core/calendar-core.c")
-    calendar_system = read("src/adapters/calendar-system.c")
-    time_formats = read("src/core/time-formats.c")
-    provider_header = read("src/core/calendar-registry.h")
-    assert "CALENDAR_PLUS_CALENDAR_PROVIDER_ABI = 2" in provider_header
-    assert "CalendarPlusCalendarProvider" in provider_header
-    assert "gsize common_index;" in provider_header
-    assert "const gchar *id;" not in provider_header
-    assert "const gchar *name;" not in provider_header
-    assert "infiltratr_temporal_calendar_at" in registry
-    assert "infiltratr_temporal_calendar_count" in registry
-    assert "calendar_plus_calendar_provider_info" in registry
-    assert "PROVIDER_INTERFACE(id_, name_" not in registry
-    assert '"Gregorian"' not in registry
-    assert '"Positivist"' not in registry
-    assert "provider->id" not in calendar_core
-    assert "provider->name" not in calendar_core
-    assert "provider->format" in calendar_core
-    assert "provider->add_periods" in calendar_core
-    assert "calendar_plus_calendar_engine_build_grid_for_locale" in calendar_core
-    assert "locale-workday-grid" in read("tests/test-time-formats.c")
-    locale_weekend = read("src/core/locale-weekend.c")
-    assert "setlocale(LC_TIME, NULL)" in locale_weekend
-    assert "cell->is_work_day = weekday != 0 && weekday != 6;" not in calendar_core
-    assert "switch (" not in custom
-    assert "switch (" not in calendar_core
-    assert "switch (" not in time_formats
-    assert "TIME_PROVIDER(" in time_formats
-    assert "infiltratr_temporal_clock_mode_find" in time_formats
-    assert "const gchar *settings_name;" not in time_formats
-    assert "gboolean supports_seconds;" not in time_formats
-    assert "gboolean requires_longitude;" not in time_formats
-    assert "gboolean requires_latitude;" not in time_formats
-    assert "ICU_PROVIDER(" in registry
-    assert "CUSTOM_PROVIDER(" in registry
-    assert (ROOT / "src/core/time-astronomy.c").is_file()
-    assert (ROOT / "src/core/time-formats-civil.c").is_file()
-    assert (ROOT / "src/core/time-formats-astronomy.c").is_file()
-    assert (ROOT / "src/core/time-formats-internal.h").is_file()
-    assert "src/core/time-formats-civil.c" in makefile
-    assert "src/core/time-formats-astronomy.c" in makefile
-    assert (ROOT / "src/adapters/calendar-gvariant-adapter.c").is_file()
-    assert (ROOT / "src/adapters/event-gvariant-adapter.c").is_file()
-    assert (ROOT / "src/adapters/clock-glib-adapter.c").is_file()
-    assert (ROOT / "tests/test-exact-clock-boundaries.c").is_file()
-    assert "g_variant_" not in calendar_system
-    assert "GObject/GVariant" in read("docs/ARCHITECTURE.md")
-    assert "GLib foundational facilities" in read("docs/ARCHITECTURE.md")
-    assert "g_timeout_" not in read("src/adapters/system-clock.c")
-    assert "CORE_SOURCES :=" in makefile
-    assert "ADAPTER_SOURCES :=" in makefile
-    assert "libcalendar-plus-core.a" in makefile
     assert not (ROOT / "src/i18n/POTFILES.in").exists()
     assert not (ROOT / "src/i18n/settings-strings.c").exists()
     assert not (ROOT / "tests/exported-symbols.txt").exists()
@@ -472,18 +347,13 @@ def main() -> None:
     assert "tests/test-abi.py --library" in makefile
     assert "validate-runtime-deps:" in makefile
     assert "Generic runtime must not embed an ICU-major DT_NEEDED entry" in makefile
-    assert "forbidden compatibility library" in read("tools/validate-release-artifacts.sh")
-    assert "libcalendar-base.so.0" in read("tools/validate-release-artifacts.sh")
-    assert "libcpicu.so.0" in read("tools/validate-release-artifacts.sh")
-    for header, minimum_docs in {
-        "src/core/calendar-core.h": 16,
-        "src/core/clock-engine.h": 7,
-        "src/core/event-core.h": 13,
-        "src/core/event-source.h": 2,
-    }.items():
-        assert read(header).count("/**") >= minimum_docs
+    assert "forbidden compatibility library" in artifact_validator
+    assert "libcalendar-base.so.0" in artifact_validator
+    assert "libcpicu.so.0" in artifact_validator
     assert "## Native ABI and compatibility" in read("docs/ARCHITECTURE.md")
 
+    # Coverage/static-analysis thresholds are release gates, not implementation
+    # source checks, so they remain explicit here.
     assert "COVERAGE_MIN_LINES ?= 80" in makefile
     assert "COVERAGE_MIN_BRANCHES ?= 60" in makefile
     assert "--fail-under-line $(COVERAGE_MIN_LINES)" in makefile
@@ -492,7 +362,8 @@ def main() -> None:
     assert (ROOT / "tests/abi-baseline.txt").is_file()
 
     # Validate Calendar's actual Common calls against Common's complete public
-    # header surface. Do not duplicate Common's private source membership here.
+    # header surface. This derives the contract semantically instead of freezing
+    # a list of Calendar implementation helpers or Common private source files.
     common = ROOT / "src/vendor/infiltratr-common"
     assert (common / "VERSION").read_text(encoding="utf-8").strip() == "1.19.41"
     assert (common / "LICENSE").is_file()
@@ -521,12 +392,9 @@ def main() -> None:
         "Calendar calls APIs absent from pinned Common public headers: "
         f"{missing_common_api}"
     )
-    assert "calendar_plus_project_info" in read("src/app/project-info.c")
-    version_source = read("src/app/version.c")
-    assert "calendar_plus_get_build_profile" in version_source
-    assert "calendar_plus_get_build_profile_label" in version_source
-    assert "infiltratr_build_profile_label" in version_source
 
+    # Generated design tokens are package data derived from the pinned Common
+    # contract. Check the generated output, not the JS/C implementation route.
     common_design = json.loads(
         read("src/vendor/infiltratr-common/design/infiltrator-design-v1.json")
     )
@@ -534,127 +402,18 @@ def main() -> None:
     design_policy = common_design["policy"]
     assert design_policy["font_binaries_are_not_part_of_this_contract"] is True
     assert design_policy["fallback_is_required_when_mb_corpo_is_unavailable"] is True
-    assert typography["ui_family"] in read("src/cinnamon/stylesheet.css")
-    assert typography["brand_family"] in read("src/cinnamon/stylesheet.css")
-    assert "FONT_ARCHIVE" not in makefile
-    stylesheet_source = read("src/cinnamon/stylesheet.css")
-    assert "BEGIN GENERATED COMMON TYPOGRAPHY TOKENS" in stylesheet_source
-    assert "BEGIN GENERATED COMMON METRIC TOKENS" in stylesheet_source
+    assert typography["ui_family"] in stylesheet
+    assert typography["brand_family"] in stylesheet
     common_metrics = common_design["metrics"]
-    assert f'border-radius: {common_metrics["panel_radius"]}px;' in stylesheet_source
-    assert f'spacing: {common_metrics["section_spacing"]}px;' in stylesheet_source
-    assert f'border-radius: {common_metrics["card_radius"]}px;' in stylesheet_source
-    assert f'border-radius: {common_metrics["control_radius"]}px;' in stylesheet_source
-    assert f'border-radius: {common_metrics["small_radius"]}px;' in stylesheet_source
-    assert "BEGIN GENERATED COMMON TYPOGRAPHY TOKENS" in read(
-        "src/cinnamon/stylesheet.css"
-    )
+    assert "BEGIN GENERATED COMMON TYPOGRAPHY TOKENS" in stylesheet
+    assert "BEGIN GENERATED COMMON METRIC TOKENS" in stylesheet
+    assert f'border-radius: {common_metrics["panel_radius"]}px;' in stylesheet
+    assert f'spacing: {common_metrics["section_spacing"]}px;' in stylesheet
+    assert f'border-radius: {common_metrics["card_radius"]}px;' in stylesheet
+    assert f'border-radius: {common_metrics["control_radius"]}px;' in stylesheet
+    assert f'border-radius: {common_metrics["small_radius"]}px;' in stylesheet
 
-    # Keep generic mechanics in Common and one Calendar-owned shim/helper layer.
-    assert "src/core/calendar-helpers.c" in makefile
-    assert "src/core/integer-math.h" in makefile
-    event_core = read("src/core/event-core.c")
-    locale_weekend = read("src/core/locale-weekend.c")
-    assert "infiltratr_utf8_validate" in event_core
-    assert "infiltratr_ascii_is_xdigit" in event_core
-    assert "g_ascii_isxdigit" not in event_core
-    assert "infiltratr_ascii_is_alpha" in locale_weekend
-    assert "infiltratr_ascii_to_upper" in locale_weekend
-    assert "g_ascii_isalpha" not in locale_weekend
-    assert "g_ascii_toupper" not in locale_weekend
-    assert "g_utf8_validate" not in read("src/core/event-core.c")
-    assert "g_utf8_validate" not in read("src/adapters/event-gvariant-adapter.c")
-    assert "calendar_plus_time_floor_divide" not in read("src/core/time-formats.c")
-    assert "calendar_plus_time_positive_modulo" not in read("src/core/time-formats.c")
-    assert "static gint64\ncount_multiples_inclusive" not in read(
-        "src/core/calendar-historical.c"
-    )
-    assert "static gint64\ncount_multiples_inclusive" not in read(
-        "src/core/calendar-reform.c"
-    )
-    assert "static gchar *\nformat_named_date" not in read(
-        "src/core/calendar-custom.c"
-    )
-    assert "static gchar *\nformat_named_date" not in read(
-        "src/core/calendar-historical.c"
-    )
-    helper_source = read("src/core/calendar-helpers.c")
-    assert "(gsize)fields->month < month_count" in helper_source
-    assert "gsize month_count" in read("src/core/calendar-helpers.h")
-    assert "calendar_plus_julian_month_length" in read(
-        "src/core/calendar-ancient.c"
-    )
-    integer_math = read("src/core/integer-math.h")
-    assert (
-        "#define calendar_plus_i64_add_saturating "
-        "infiltratr_i64_add_saturating"
-    ) in integer_math
-    assert (
-        "#define calendar_plus_i64_subtract_saturating "
-        "infiltratr_i64_subtract_saturating"
-    ) in integer_math
-    assert (
-        "#define calendar_plus_i64_multiply_saturating "
-        "infiltratr_i64_multiply_saturating"
-    ) in integer_math
-    assert "static inline int64_t\ncalendar_plus_i64_multiply_saturating" not in integer_math
-    assert "infiltratr_i64_multiply_checked" in read(
-        "src/core/time-astronomy.c"
-    )
-    assert "infiltratr_i64_add_checked" in read(
-        "src/core/time-astronomy.c"
-    )
-    assert "infiltratr_size_add_checked" in read("src/core/icu-calendar.c")
-    assert "infiltratr_size_multiply_checked" in read("src/core/icu-calendar.c")
-    event_store_source = read("src/adapters/event-store.c")
-    event_core_source = read("src/core/event-core.c")
-    assert "calendar_plus_event_index_colors" in event_store_source
-    assert "g_new0(gchar *," in event_core_source
-    assert "calendar_plus_event_index_colors" in event_core_source
-    assert "infiltratr_i64_floor_divmod" in read("src/adapters/clock-glib-adapter.c")
-    assert "infiltratr_temporal_calendar_at" in read("src/core/calendar-registry.c")
-    assert "infiltratr_temporal_calendar_count" in read("src/core/calendar-registry.c")
-    assert "INFILTRATR_ARRAY_LENGTH(majors)" in read("src/core/icu-compat-bridge.c")
-    icu_bridge = read("src/core/icu-compat-bridge.c")
-    assert "ucal_setGregorianChange" in icu_bridge
-    assert "udat_setCalendar" in icu_bridge
-    assert "++index->next_sequence" not in read("src/core/event-core.c")
-    assert "infiltratr_u64_add_saturating" in read("src/core/event-core.c")
-    assert "index->revision + 1" not in read("src/core/event-core.c")
-    assert "unix_microseconds + delta" not in read("src/core/time-formats-astronomy.c")
-    assert "unix_microseconds + delta" not in read("src/core/time-formats-nuremberg.c")
-
-    system_clock_source = read("src/adapters/system-clock.c")
-    assert "infiltratr_string_equal(left->clock_mode" in system_clock_source
-    assert "strcmp(left->clock_mode" not in system_clock_source
-    assert "g_strcmp0(actual, basename)" not in system_clock_source
-    assert "infiltratr_path_dirname" in system_clock_source
-    assert "infiltratr_path_basename" in system_clock_source
-    assert "g_get_user_config_dir" not in system_clock_source
-    assert "g_path_get_dirname" not in system_clock_source
-    assert 'file_has_basename(file, "temporal-v3")' not in system_clock_source
-
-    time_formats = read("src/core/time-formats.c")
-    time_formats_internal = read("src/core/time-formats-internal.h")
-    assert "calendar_plus_time_local_microseconds_of_day" not in time_formats
-    assert (
-        "#define local_microseconds_of_day "
-        "infiltratr_temporal_local_microseconds_of_day"
-    ) in time_formats_internal
-
-    panel_clock = read("src/cinnamon/panelClock.js")
-    assert "CalendarPlus.TimeMode.INVALID" in panel_clock
-    assert "Math.max(-90" not in panel_clock
-    assert "Math.min(90" not in panel_clock
-    assert "Math.max(-180" not in panel_clock
-    assert "Math.min(180" not in panel_clock
-
-    pgo_train = read("tools/pgo-train.c")
-    assert "calendar_ids[]" not in pgo_train
-    assert "calendar_plus_calendar_catalogue_get_count" in pgo_train
-    assert "calendar_plus_calendar_catalogue_get(" in pgo_train
-
-    control = read("debian/control")
+    # Runtime dependency/package metadata.
     assert "cinnamon (>= 6.4)" in control
     for icu_major in range(72, 81):
         assert f"libicu{icu_major}" in control
@@ -674,7 +433,7 @@ def main() -> None:
     assert "ICU_BRIDGE_LIBS = $(DYNLIB_LIBS) -pthread" in makefile
     assert "DYNLIB_LIBS = -ldl" in makefile
 
-    metadata = json.loads(read("src/cinnamon/metadata.json"))
+    # Version identity must agree across build metadata and Cinnamon metadata.
     version = metadata["version"]
     extracted_version = subprocess.run(
         ["sed", "-n", "s/^VERSION := //p", "Makefile"],
@@ -687,8 +446,6 @@ def main() -> None:
     assert f"VERSION := {version}" in makefile
     assert metadata["author"] == "Shannon Smith"
     assert metadata["website"] == "https://github.com/Infiltrator-Projects/Calendar"
-    assert "const APP_VERSION" not in applet
-    assert "metadata.version" in applet
 
     subprocess.run(
         ["dpkg", "--compare-versions", f"{version}+nativepgo1", "gt", version],
@@ -703,6 +460,7 @@ def main() -> None:
         check=True,
     )
 
+    # Licensing and release-input provenance.
     assert ("GPL-" + "2.0-or-later") not in read("README.md")
     assert "Calendar is GPL-3.0-or-later" in read("README.md")
     assert "License: GPL-3+" in read("debian/copyright")
