@@ -36,19 +36,35 @@ jobs:
           from pathlib import Path
           path = Path("tools/harden-top-three.py")
           source = path.read_text(encoding="utf-8")
-          needle = '''    forbidden = (
+
+          guard_needle = '''    forbidden = (
                   "CalendarServerProxy", "bus_watch_name", "_calendar_server",
           '''
-          insertion = '''    text = replace_once(
+          guard_insertion = '''    text = replace_once(
                   text,
                   "        if (this._destroyed || this._calendar_server === null ||\\n            this.event_store === null) {\\n",
                   "        if (this._destroyed || this._transport === null ||\\n            !this._transport.is_ready() || this.event_store === null) {\\n",
                   "visible range through transport readiness",
               )
           '''
-          if source.count(needle) != 1:
+          if source.count(guard_needle) != 1:
               raise SystemExit("could not locate eventManager transport guard insertion point")
-          path.write_text(source.replace(needle, insertion + needle, 1), encoding="utf-8")
+          source = source.replace(guard_needle, guard_insertion + guard_needle, 1)
+
+          cache_old = '''    text = replace_once(text, "        this._temporalPolicyCache = null;\\n", "        this._temporalPolicy = null;\\n", "policy resolver state")
+          '''
+          cache_new = '''    if text.count("        this._temporalPolicyCache = null;\\n") != 3:
+                  raise RuntimeError("unexpected temporal policy cache lifecycle count")
+              text = text.replace(
+                  "        this._temporalPolicyCache = null;\\n",
+                  "        this._temporalPolicy = null;\\n",
+                  1,
+              )
+          '''
+          if source.count(cache_old) != 1:
+              raise SystemExit("could not locate temporal policy state migration")
+          source = source.replace(cache_old, cache_new, 1)
+          path.write_text(source, encoding="utf-8")
           PY
           python3 tools/harden-top-three.py
           python3 tools/update-runtime-hashes.py
