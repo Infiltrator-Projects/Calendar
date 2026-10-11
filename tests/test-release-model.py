@@ -146,7 +146,7 @@ def main() -> None:
     local_installer = read("tools/local-installer.sh.in")
     assert "share/cinnamon/applets/calendar-plus@the-infiltratr/icon.png" in local_installer
     assert "share/icons/hicolor/256x256/apps/infiltratr-calendar.png" in local_installer
-    assert "share/app-install/icons/infiltratr-calendar.png" in local_installer
+    assert "share/app-install/icons/infiltrator-calendar.png" in local_installer
     assert 'test ! -e "$PACKAGE_ROOT/usr/share/fonts/truetype/infiltrator-calendar"' in local_installer
 
     stylesheet = read("src/cinnamon/stylesheet.css")
