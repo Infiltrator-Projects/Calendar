@@ -69,8 +69,9 @@ jobs:
           python3 tools/harden-top-three.py
           python3 - <<'PY'
           from pathlib import Path
-          path = Path("tests/test-settings.py")
-          source = path.read_text(encoding="utf-8")
+
+          settings_path = Path("tests/test-settings.py")
+          settings = settings_path.read_text(encoding="utf-8")
           old = '    assert re.search(r"class EventsManager\\s*\\{\\s*constructor\\s*\\(\\s*\\)", event_manager)\n'
           new = (
               '    assert re.search(\n'
@@ -82,9 +83,23 @@ jobs:
               '        "this._transport = transport || new CalendarServerTransport()",\n'
               '    )\n'
           )
-          if source.count(old) != 1:
+          if settings.count(old) != 1:
               raise SystemExit("could not locate obsolete EventsManager constructor assertion")
-          path.write_text(source.replace(old, new, 1), encoding="utf-8")
+          settings_path.write_text(settings.replace(old, new, 1), encoding="utf-8")
+
+          release_path = Path("tests/test-release-model.py")
+          release = release_path.read_text(encoding="utf-8")
+          old = '    assert "get_system_policy()" in applet\n'
+          new = (
+              '    temporal_policy = read("src/cinnamon/temporalPolicy.js")\n'
+              '    assert "TemporalPolicy.TemporalPolicyResolver" in applet\n'
+              '    assert "get_system_policy()" not in applet\n'
+              '    assert "get_system_policy()" in temporal_policy\n'
+              '    assert "NativeBoundary.decodeTemporalPolicy" in temporal_policy\n'
+          )
+          if release.count(old) != 1:
+              raise SystemExit("could not locate obsolete applet policy assertion")
+          release_path.write_text(release.replace(old, new, 1), encoding="utf-8")
           PY
           python3 tools/update-translations.py
           python3 tools/update-runtime-hashes.py
