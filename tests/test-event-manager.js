@@ -1,10 +1,12 @@
 #!/usr/bin/env node
 // SPDX-License-Identifier: GPL-3.0-or-later
 "use strict";
+
 const assert = require("node:assert/strict");
 const fs = require("node:fs");
 const path = require("node:path");
 const vm = require("node:vm");
+
 const root = path.resolve(__dirname, "..");
 let nextId = 1;
 const timeouts = new Map();
@@ -13,13 +15,17 @@ const observations = {
     clears: 0,
     addCalls: [],
     rangeRequests: [],
+    timezoneRefreshes: 0,
     timezoneCancels: 0,
     timezoneDisconnects: 0,
+    cancellableCancels: 0,
     transportDestroys: 0,
+    storeControllerDestroys: 0,
     logs: [],
     snapshotRows: [],
     invalidLocalInstants: new Set(),
 };
+
 function addSignalMethods(prototype) {
     prototype.connect = function(signal, callback) {
         if (!this.__signals) this.__signals = new Map();
@@ -37,6 +43,7 @@ function addSignalMethods(prototype) {
         }
     };
 }
+
 class SignalBag {
     constructor() { this.entries = []; }
     connect(object, signal, callback) {
@@ -48,6 +55,7 @@ class SignalBag {
         for (const [object, id] of this.entries.splice(0)) object.disconnect(id);
     }
 }
+
 class FakeDateTime {
     constructor(unix) { this.unix = unix; }
     to_unix() { return this.unix; }
@@ -56,6 +64,7 @@ class FakeDateTime {
     get_day_of_month() { return new Date(this.unix * 1000).getUTCDate(); }
     add_days(days) { return new FakeDateTime(this.unix + days * 86400); }
 }
+
 const DateTime = {
     new_local(y, m, d, h, min, sec) {
         return new FakeDateTime(Date.UTC(y, m - 1, d, h, min, sec) / 1000);
@@ -70,11 +79,21 @@ const DateTime = {
     },
     new_now_local() { return new FakeDateTime(0); },
 };
+
 class TimezoneMonitor {
-    connect() { return 77; }
-    disconnect() { observations.timezoneDisconnects += 1; }
+    connect(signal, callback) {
+        assert.equal(signal, "changed");
+        this.callback = callback;
+        return 77;
+    }
+    disconnect(id) {
+        assert.equal(id, 77);
+        observations.timezoneDisconnects += 1;
+    }
     cancel() { observations.timezoneCancels += 1; }
+    trigger() { this.callback(); }
 }
+
 class FakeTransport {
     constructor() {
         this.status = 0;
@@ -95,6 +114,31 @@ class FakeTransport {
     }
     destroy() { observations.transportDestroys += 1; }
 }
+
+class FakeEventStoreController {
+    constructor() {
+        addSignalMethods(Object.getPrototypeOf(this));
+    }
+    clear() { observations.clears += 1; }
+    ingest(payload, timestamp, start, end) {
+        for (const event of payload.unpack()) {
+            observations.addCalls.push([event, timestamp, start, end]);
+        }
+        return true;
+    }
+    snapshot_variant() {
+        return {
+            deep_unpack() {
+                return [1, observations.snapshotRows];
+            },
+        };
+    }
+    color_range_variant() {
+        return { deep_unpack() { return []; } };
+    }
+    destroy() { observations.storeControllerDestroys += 1; }
+}
+
 const nativeBoundaryModule = {
     NativeBoundary: {
         decodeEventSnapshot(variant) {
@@ -110,6 +154,8 @@ const nativeBoundaryModule = {
         },
     },
 };
+
+let lastTimezoneMonitor = null;
 const context = {
     console,
     global: {
@@ -137,6 +183,9 @@ const context = {
                         STATUS_NO_CALENDARS: 1,
                     };
                 }
+                if (moduleName === "eventStoreController") {
+                    return { EventStoreController: context.__EventStoreController };
+                }
                 throw new Error(`unexpected module ${moduleName}`);
             },
         };
@@ -146,6 +195,7 @@ const context = {
         signals: { addSignalMethods },
         mainloop: {
             timeout_add_seconds(delay, callback) {
+                assert.ok(delay >= 1 && delay <= 60);
                 const id = nextId++;
                 timeouts.set(id, callback);
                 return id;
@@ -162,10 +212,18 @@ const context = {
         },
         gi: {
             Gio: {
-                Cancellable: class { cancel() {} },
+                Cancellable: class {
+                    cancel() { observations.cancellableCancels += 1; }
+                },
                 File: {
-                    new_for_path() {
-                        return { monitor_file() { return new TimezoneMonitor(); } };
+                    new_for_path(value) {
+                        assert.equal(value, "/etc/localtime");
+                        return {
+                            monitor_file() {
+                                lastTimezoneMonitor = new TimezoneMonitor();
+                                return lastTimezoneMonitor;
+                            },
+                        };
                     },
                 },
                 FileMonitorFlags: { NONE: 0 },
@@ -181,32 +239,58 @@ const context = {
                     return { deep_unpack() { return [0, 0, 0]; } };
                 },
                 EventStore: {
-                    new() {
-                        return {
-                            clear() { observations.clears += 1; },
-                            refresh_timezone() {},
-                            add_or_update_in_range(event, timestamp, start, end) {
-                                observations.addCalls.push([event, timestamp, start, end]);
-                                return true;
-                            },
-                            get_snapshot() {
-                                return {
-                                    deep_unpack() {
-                                        return [1, observations.snapshotRows];
-                                    },
-                                };
-                            },
-                            get_color_range() {
-                                return { deep_unpack() { return []; } };
-                            },
-                        };
-                    },
+                    new() { throw new Error("tests inject the native store"); },
                 },
             },
         },
     },
 };
 vm.createContext(context);
+
+const eventStoreSource = fs.readFileSync(
+    path.join(root, "src", "cinnamon", "eventStoreController.js"), "utf8"
+);
+vm.runInContext(
+    `${eventStoreSource}\nglobalThis.__EventStoreController = EventStoreController;`,
+    context,
+    { filename: "eventStoreController.js" }
+);
+
+/* EventStoreController owns native store and timezone resource lifetime. */
+const nativeStore = {
+    clear() { observations.clears += 1; },
+    refresh_timezone() { observations.timezoneRefreshes += 1; },
+    add_or_update_in_range(event, timestamp, start, end) {
+        observations.addCalls.push([event, timestamp, start, end]);
+        return true;
+    },
+    get_snapshot() {
+        return { deep_unpack() { return [1, []]; } };
+    },
+    get_color_range() {
+        return { deep_unpack() { return [["#112233"]]; } };
+    },
+};
+const cache = new context.__EventStoreController(nativeStore);
+let timezoneSignals = 0;
+cache.connect("timezone-changed", () => { timezoneSignals += 1; });
+lastTimezoneMonitor.trigger();
+assert.equal(observations.timezoneRefreshes, 1);
+assert.equal(timezoneSignals, 1);
+const cacheAddsBefore = observations.addCalls.length;
+assert.equal(
+    cache.ingest({ unpack() { return [{ one: true }, { two: true }]; } }, 9, 10, 20),
+    true
+);
+assert.equal(observations.addCalls.length - cacheAddsBefore, 2);
+assert.notEqual(cache.snapshot_variant(10, 20), null);
+assert.deepEqual(cache.color_range_variant(10, 1, 20, 8).deep_unpack(), [["#112233"]]);
+cache.destroy();
+cache.destroy();
+assert.equal(observations.timezoneDisconnects, 1);
+assert.equal(observations.timezoneCancels, 1);
+assert.equal(observations.cancellableCancels, 1);
+
 const rangeSource = fs.readFileSync(
     path.join(root, "src", "cinnamon", "eventRangeState.js"), "utf8"
 );
@@ -228,7 +312,8 @@ const EventsManager = context.__EventsManager;
 const transport = new FakeTransport();
 transport.ready = true;
 transport.status = 2;
-const manager = new EventsManager(transport);
+const storeController = new FakeEventStoreController();
+const manager = new EventsManager(transport, storeController);
 const first = new Date(Date.UTC(2026, 7, 2, 12, 0, 0));
 const last = new Date(Date.UTC(2026, 8, 12, 12, 0, 0));
 manager.set_visible_range(first, last, false);
@@ -239,24 +324,16 @@ assert.equal(
 );
 transport.complete(0, true);
 manager.set_visible_range(first, last, false);
-assert.equal(
-    observations.rangeRequests.length,
-    1,
-    "successful identical range must be stable"
-);
+assert.equal(observations.rangeRequests.length, 1,
+    "successful identical range must be stable");
 manager.set_visible_range(first, last, true);
-assert.equal(
-    observations.rangeRequests.length,
-    2,
-    "forced refresh must cross the transport port"
-);
+assert.equal(observations.rangeRequests.length, 2,
+    "forced refresh must cross the transport port");
 transport.complete(1, true);
+const addsBeforeManagerIngest = observations.addCalls.length;
 manager._ingestEvents({ unpack() { return [{ opaque: true }]; } });
-assert.equal(
-    observations.addCalls.length,
-    1,
-    "admitted rows must go directly to the native store boundary"
-);
+assert.equal(observations.addCalls.length - addsBeforeManagerIngest, 1,
+    "admitted rows must cross the event-store controller port once");
 manager.set_visible_range(first, last, true);
 transport.complete(2, false);
 assert.equal(timeouts.size, 1, "range failure must retain bounded retry behaviour");
@@ -271,16 +348,12 @@ assert.equal(manager._rangeState.acceptingEvents, false);
 assert.ok(observations.clears > 0, "transport loss must invalidate native cached rows");
 assert.ok(presented.some(([signal]) => signal === "has-calendars-changed"));
 transport.status = 1;
-assert.equal(
-    manager.should_show_event_pane(),
-    false,
-    "authoritative empty status collapses the agenda"
-);
+assert.equal(manager.should_show_event_pane(), false,
+    "authoritative empty status collapses the agenda");
 manager.destroy();
 manager.destroy();
 assert.equal(observations.transportDestroys, 1);
-assert.equal(observations.timezoneDisconnects, 1);
-assert.equal(observations.timezoneCancels, 1);
+assert.equal(observations.storeControllerDestroys, 1);
 
 /*
  * A snapshot is one coherent native contract generation. If a single decoded
@@ -290,7 +363,8 @@ assert.equal(observations.timezoneCancels, 1);
 const snapshotTransport = new FakeTransport();
 snapshotTransport.ready = true;
 snapshotTransport.status = 2;
-const snapshotManager = new EventsManager(snapshotTransport);
+const snapshotStore = new FakeEventStoreController();
+const snapshotManager = new EventsManager(snapshotTransport, snapshotStore);
 const snapshotSignals = [];
 snapshotManager.emit = (signal, ...args) => snapshotSignals.push([signal, ...args]);
 observations.snapshotRows = [
@@ -303,19 +377,13 @@ const unavailable = snapshotSignals.find(
     ([signal]) => signal === "agenda-events-changed"
 );
 assert.notEqual(unavailable, undefined, "snapshot failure must publish agenda state");
-assert.deepEqual(
-    unavailable.slice(1),
-    [null, false, true],
-    "a malformed snapshot row must make the whole agenda unavailable"
-);
-assert.ok(
-    observations.logs.some((message) =>
-        message.includes("native event snapshot contract violation")
-    ),
-    "snapshot contract failures must be diagnosable"
-);
+assert.deepEqual(unavailable.slice(1), [null, false, true],
+    "a malformed snapshot row must make the whole agenda unavailable");
+assert.ok(observations.logs.some((message) =>
+    message.includes("native event snapshot contract violation")),
+    "snapshot contract failures must be diagnosable");
 snapshotManager.destroy();
 observations.invalidLocalInstants.clear();
 observations.snapshotRows = [];
 
-console.log("EventsManager orchestration behaviour tests passed.");
+console.log("Event store ownership and EventsManager orchestration tests passed.");
