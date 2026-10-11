@@ -1,0 +1,54 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
+name: one-shot-calendar-top-three-hardening
+
+on:
+  push:
+    branches:
+      - hal/calendar-1.0.88-harden-top-three
+    paths:
+      - .github/workflows/one-shot-harden-top-three.yml
+
+permissions:
+  contents: write
+
+jobs:
+  harden:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          submodules: true
+          fetch-depth: 0
+
+      - name: Install validation dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            build-essential desktop-file-utils gettext gobject-introspection gjs \
+            gir1.2-glib-2.0-dev libglib2.0-dev libgtk-3-dev libicu-dev nodejs \
+            pkg-config python3 xdotool xvfb xz-utils
+
+      - name: Apply focused hardening
+        run: |
+          set -euo pipefail
+          python3 tools/harden-top-three.py
+          python3 tools/update-runtime-hashes.py
+          git diff --check
+
+      - name: Run complete Calendar gate
+        run: |
+          set -euo pipefail
+          make clean check
+
+      - name: Commit validated release candidate and remove one-shot machinery
+        run: |
+          set -euo pipefail
+          rm -f tools/harden-top-three.py
+          rm -f .github/workflows/one-shot-harden-top-three.yml
+          git add -A
+          git diff --cached --check
+          git config user.name "Calendar maintenance"
+          git config user.email "noreply@the-infiltratr.com"
+          git commit -m "Release 1.0.88: harden orchestration boundaries"
+          git push origin HEAD:hal/calendar-1.0.88-harden-top-three
