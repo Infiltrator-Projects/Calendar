@@ -51,6 +51,9 @@ jobs:
               sed -i '2i# SPDX-License-Identifier: GPL-3.0-or-later' "$helper"
             fi
           done
+          if ! grep -q '^// SPDX-License-Identifier: GPL-3.0-or-later$' tests/test-native-boundary.js; then
+            sed -i '2i// SPDX-License-Identifier: GPL-3.0-or-later' tests/test-native-boundary.js
+          fi
           python3 tools/update-translations.py
           python3 tools/update-runtime-hashes.py
 
