@@ -464,7 +464,11 @@ temporal_policy_source_free(CalendarPlusTemporalPolicySource *source)
     temporal_policy_source_cancel_monitor(&source->provider_directory_monitor);
     g_clear_pointer(&source->policy_directory, g_free);
     g_clear_pointer(&source->provider_marker_basename, g_free);
-    g_clear_object(&source->cinnamon_interface_settings);
+    if (source->cinnamon_interface_settings != NULL)
+    {
+        g_object_unref(source->cinnamon_interface_settings);
+        source->cinnamon_interface_settings = NULL;
+    }
     source->changed = NULL;
     source->changed_data = NULL;
     g_free(source);
