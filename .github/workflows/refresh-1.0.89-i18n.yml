@@ -1,0 +1,28 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
+name: refresh-1.0.89-i18n
+on:
+  push:
+    branches: [fix/calendar-1.0.89-reproducibility]
+permissions:
+  contents: write
+jobs:
+  refresh:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          ref: fix/calendar-1.0.89-reproducibility
+      - name: Regenerate deterministic translation metadata
+        shell: bash
+        run: |
+          set -euo pipefail
+          sudo apt-get update
+          sudo apt-get install -y gettext
+          python3 tools/update-translations.py
+          rm -f .github/workflows/refresh-1.0.89-i18n.yml
+          git config user.name 'Shannon Smith'
+          git config user.email 'infiltratr@yandex.com'
+          git add -A
+          git diff --cached --check
+          git commit -m 'Release 1.0.89: refresh deterministic translation metadata'
+          git push origin HEAD:fix/calendar-1.0.89-reproducibility
