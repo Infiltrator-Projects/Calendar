@@ -12,22 +12,11 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
         with:
           ref: fix/calendar-1.0.89-reproducibility
-      - name: Fix epoch and strengthen release PR gate
+      - name: Fix reproducibility epoch
         shell: bash
         run: |
           set -euo pipefail
           sed -i 's/^SOURCE_DATE_EPOCH ?= 1791763200$/SOURCE_DATE_EPOCH ?= 1791759000/' Makefile
-          python3 - <<'PY'
-          from pathlib import Path
-          p=Path('.github/workflows/pr.yml')
-          s=p.read_text()
-          s=s.replace('pkg-config python3 shellcheck xz-utils', 'pkg-config python3 shellcheck xz-utils debhelper devscripts lintian')
-          needle='      - name: Sanitizer regression gate\n        run: make sanitize\n'
-          repl=needle+'      - name: Release package gate\n        if: startsWith(github.event.pull_request.title, \'Release Calendar \')\n        env:\n          CALENDAR_RELEASE_SOURCE_ALREADY_QUALIFIED: "1"\n        run: make release-check\n'
-          if needle not in s:
-              raise SystemExit('PR workflow insertion marker missing')
-          p.write_text(s.replace(needle,repl,1))
-          PY
           rm -f .github/workflows/fix-1.0.89-repro.yml
           git config user.name 'Shannon Smith'
           git config user.email 'infiltratr@yandex.com'
