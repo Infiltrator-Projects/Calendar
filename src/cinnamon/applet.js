@@ -94,6 +94,7 @@ class CalendarPlusApplet extends Applet.Applet {
         this._popupView = null;
         this._resume_source = null;
         this._temporalPolicy = null;
+        this._desktopPreferenceWarnings = new Set();
 
         this._signals = new SignalBag();
         this._eventSignals = new SignalBag();
@@ -194,9 +195,9 @@ class CalendarPlusApplet extends Applet.Applet {
         this._eventSignals.connect(
             this.events_manager,
             "agenda-events-changed",
-            (manager, snapshot, reset, loading) => {
+            (manager, snapshot, reset, unavailable) => {
                 if (this.event_list) {
-                    this.event_list.set_events(snapshot, reset, loading);
+                    this.event_list.set_events(snapshot, reset, unavailable);
                 }
             }
         );
@@ -321,11 +322,24 @@ class CalendarPlusApplet extends Applet.Applet {
         );
     }
 
+    _reportDesktopPreferenceFailure(key, error) {
+        if (!this._desktopPreferenceWarnings ||
+            this._desktopPreferenceWarnings.has(key)) {
+            return;
+        }
+        this._desktopPreferenceWarnings.add(key);
+        global.logError(
+            `${UUID}: could not read Cinnamon desktop setting '${key}'; ` +
+            `using the compatibility default: ${error}`
+        );
+    }
+
     _desktopUses24h() {
         try {
             return this.desktop_settings &&
                 this.desktop_settings.get_boolean("clock-use-24h");
         } catch (error) {
+            this._reportDesktopPreferenceFailure("clock-use-24h", error);
             return false;
         }
     }
@@ -335,6 +349,7 @@ class CalendarPlusApplet extends Applet.Applet {
             return this.desktop_settings &&
                 this.desktop_settings.get_boolean("clock-show-date");
         } catch (error) {
+            this._reportDesktopPreferenceFailure("clock-show-date", error);
             return false;
         }
     }
@@ -347,6 +362,7 @@ class CalendarPlusApplet extends Applet.Applet {
             const theme = this.desktop_settings.get_string("gtk-theme");
             return typeof theme === "string" ? theme.toLowerCase() : "";
         } catch (error) {
+            this._reportDesktopPreferenceFailure("gtk-theme", error);
             return "";
         }
     }
@@ -802,6 +818,7 @@ class CalendarPlusApplet extends Applet.Applet {
         this.menuManager = null;
         this._resume_source = null;
         this._temporalPolicy = null;
+        this._desktopPreferenceWarnings = null;
     }
 }
 
