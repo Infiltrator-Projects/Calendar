@@ -1,0 +1,50 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
+name: one-shot-calendar-boundary-decoupling
+
+on:
+  push:
+    branches:
+      - refactor/reduce-brittle-boundaries-2
+    paths:
+      - .github/workflows/one-shot-decouple-boundaries.yml
+
+permissions:
+  contents: write
+
+jobs:
+  refactor:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          submodules: true
+          fetch-depth: 0
+
+      - name: Apply decoupling changes
+        run: |
+          python3 tools/one-shot-decouple-boundaries.py
+          python3 tools/update-runtime-hashes.py
+
+      - name: Install validation dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            build-essential desktop-file-utils gettext gobject-introspection gjs \
+            gir1.2-glib-2.0-dev libglib2.0-dev libgtk-3-dev libicu-dev nodejs \
+            pkg-config python3 xdotool xvfb xz-utils
+
+      - name: Run complete Calendar gate
+        run: make clean check
+
+      - name: Commit validated refactor and remove one-shot machinery
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm -f .github/workflows/one-shot-decouple-boundaries.yml
+          rm -f tools/one-shot-decouple-boundaries.py
+          git config user.name "Calendar maintenance"
+          git config user.email "noreply@the-infiltratr.com"
+          git add -A
+          git diff --cached --check
+          git commit -m "Release 1.0.87: reduce brittle integration boundaries"
+          git push origin HEAD:refactor/reduce-brittle-boundaries-2
