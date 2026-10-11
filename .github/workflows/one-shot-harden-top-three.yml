@@ -86,6 +86,7 @@ jobs:
               raise SystemExit("could not locate obsolete EventsManager constructor assertion")
           path.write_text(source.replace(old, new, 1), encoding="utf-8")
           PY
+          python3 tools/update-translations.py
           python3 tools/update-runtime-hashes.py
           git diff --check
 
