@@ -2,13 +2,15 @@
 // Copyright (C) 1993-2026 Shannon Smith
 
 /*
- * CalendarServer transport and native event-store controller.
+ * Native event-store and visible-range orchestration controller.
  *
- * This module owns no Cinnamon actors. CalendarServer tuples cross D-Bus once
- * and are immediately normalised by CalendarPlus.EventStore. Presentation is
- * notified through narrow agenda signals so transport/state code never reaches
- * into EventList or any other concrete view. User preference state crosses
- * this boundary only as the abstract enabled flag supplied through set_enabled.
+ * CalendarServer discovery, proxy lifetime and range-call transport are owned
+ * by calendarServerTransport.js. This module owns no Cinnamon actors. External
+ * event tuples cross the transport boundary once and are immediately normalised
+ * by CalendarPlus.EventStore. Presentation is notified through narrow agenda
+ * signals so event/cache state never reaches into EventList or another concrete
+ * view. User preference state crosses this boundary only as the abstract
+ * enabled flag supplied through set_enabled.
  */
 
 const CalendarPlus = imports.gi.CalendarPlus;
@@ -129,14 +131,12 @@ class EventSnapshot {
     constructor(variant) {
         const decoded = NativeBoundary.decodeEventSnapshot(variant);
         this.revision = decoded.revision;
-        this.events = [];
-        for (const row of decoded.events) {
-            try {
-                this.events.push(new EventRecord(row));
-            } catch (error) {
-                global.logError(error);
-            }
-        }
+        /*
+         * A native snapshot is one coherent contract generation. Do not render
+         * an apparently valid subset if one row violates that contract: partial
+         * success would make corruption look like missing appointments.
+         */
+        this.events = decoded.events.map((row) => new EventRecord(row));
     }
 
     get_event_list() {
@@ -194,13 +194,13 @@ var EventsManager = class EventsManager {
         }
     }
 
-    _publishAgendaEvents(snapshot, reset, loading = false) {
+    _publishAgendaEvents(snapshot, reset, unavailable = false) {
         if (!this._destroyed) {
             this.emit(
                 "agenda-events-changed",
                 snapshot,
                 Boolean(reset),
-                Boolean(loading)
+                Boolean(unavailable)
             );
         }
     }
@@ -426,8 +426,7 @@ var EventsManager = class EventsManager {
          * Client disappearance changes the membership of the event universe.
          * A clean reload is safer than trying to infer which cached rows came
          * from the removed EDS client.
-         */
-        /*
+         *
          * Keep the grid-owned desired range. A client-set change invalidates
          * the result for that range, not the range itself. The shared
          * invalidation path closes event admission before the deferred reload,
@@ -686,8 +685,18 @@ var EventsManager = class EventsManager {
             return;
         }
 
+        let snapshot;
+        try {
+            snapshot = this._snapshot_for_date(day);
+        } catch (error) {
+            global.logError(
+                `${APPLET_UUID}: native event snapshot contract violation: ${error}`
+            );
+            this._publishAgendaEvents(null, false, true);
+            return;
+        }
         this._publishAgendaEvents(
-            this._snapshot_for_date(day),
+            snapshot,
             previousCivil === null || changedMonth || Boolean(force)
         );
     }
@@ -696,12 +705,14 @@ var EventsManager = class EventsManager {
         if (this._destroyed || this.event_store === null || day === null) {
             return null;
         }
-        const snapshot = new EventSnapshot(
-            this.event_store.get_snapshot(
-                day.to_unix(),
-                GLib.DateTime.new_now_local().to_unix()
-            )
+        const snapshotVariant = this.event_store.get_snapshot(
+            day.to_unix(),
+            GLib.DateTime.new_now_local().to_unix()
         );
+        if (snapshotVariant === null) {
+            throw new Error("native event store returned no snapshot");
+        }
+        const snapshot = new EventSnapshot(snapshotVariant);
         return snapshot.events.length === 0 ? null : snapshot;
     }
 
