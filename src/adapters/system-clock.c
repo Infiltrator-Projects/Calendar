@@ -17,6 +17,9 @@
 #include "clock-glib-adapter.h"
 #include "temporal-policy-source.h"
 
+/* Keep this private component in the adapter translation unit. */
+#include "temporal-policy-source.inc"
+
 struct _CalendarPlusSystemClock
 {
     GObject parent_instance;
