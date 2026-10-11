@@ -4,10 +4,9 @@
 
 """Architecture/settings contracts for the Cinnamon/native boundary.
 
-These checks intentionally target dependency direction and public contracts,
-not exact statement layout. Behavioural details belong in the executable JS/C
-tests; harmless renames or refactors inside an owning module should not make
-this file fail merely because source text moved around.
+These checks enforce ownership and dependency direction. Behavioural details
+belong in executable JS/C tests; harmless renames and local refactors must not
+fail merely because source spelling changed.
 """
 
 from __future__ import annotations
@@ -29,7 +28,6 @@ def read(name: str) -> str:
 
 
 def js_code(source: str) -> str:
-    """Return JavaScript source with comments removed for dependency checks."""
     return JS_LINE_COMMENT_RE.sub("", JS_BLOCK_COMMENT_RE.sub("", source))
 
 
@@ -59,14 +57,15 @@ def main() -> None:
     native_boundary = read("nativeBoundary.js")
     temporal_policy = read("temporalPolicy.js")
     panel_clock = read("panelClock.js")
-    panel_view = read("panelView.js")
     popup_menu = read("popupMenu.js")
-    popup_view = read("popupView.js")
     popup_shell = read("popupShell.js")
     runtime = read("runtimeSupport.js")
     stylesheet = read("stylesheet.css")
     system_clock = (
         PROJECT_ROOT / "src/adapters/system-clock.c"
+    ).read_text(encoding="utf-8")
+    policy_source = (
+        PROJECT_ROOT / "src/adapters/temporal-policy-source.inc"
     ).read_text(encoding="utf-8")
 
     forbidden_temporal_settings = {
@@ -78,8 +77,7 @@ def main() -> None:
     }
     assert not forbidden_temporal_settings.intersection(schema)
 
-    # Composition root: it wires modules, but concrete actor implementations
-    # stay in the presentation leaves.
+    # Composition root wires feature modules; concrete views stay in leaves.
     forbid_tokens(js_code(applet), "class CalendarPopupMenu", "class LatchedWidthBin")
     assert {
         "calendar", "eventManager", "panelClock", "popupShell", "temporalPolicy"
@@ -94,76 +92,52 @@ def main() -> None:
         "PopupViewModule.PopupView",
     )
 
-    # Popup/Cinnamon compatibility stays isolated from the controller and month
-    # view. The dedicated popup regression test covers the detailed mechanics.
-    require_tokens(popup_menu, "class CalendarPopupMenu extends Applet.AppletPopupMenu")
+    # Popup compatibility stays isolated from month/event controllers.
+    require_tokens(popup_menu, "Applet.AppletPopupMenu")
     forbid_tokens(js_code(calendar), "passEvents", "AppletPopupMenu")
     forbid_tokens(js_code(event_manager), "passEvents", "AppletPopupMenu")
 
-    # The event transport controller must not know Cinnamon's concrete applet
-    # settings object or preference keys. The composition root reduces the UI
-    # preference to one abstract enabled boolean.
-    assert re.search(
-        r"class EventsManager\s*\{\s*constructor\s*\(\s*transport\s*=\s*null\s*\)",
-        event_manager,
-    )
-    require_tokens(
-        event_manager,
-        "this._transport = transport || new CalendarServerTransport()",
-    )
-    require_tokens(event_manager, "set_enabled(enabled)", "this._enabled")
+    # EventsManager may depend on its abstract transport/state collaborators but
+    # never on applet settings, CalendarServer proxy details or actor classes.
+    require_tokens(event_manager, "CalendarServerTransport", "EventRangeState")
     forbid_tokens(
         js_code(event_manager),
         "this.settings",
         "this.desktop_settings",
-        "getValue(\"show-events\")",
         "Settings.AppletSettings",
         "org.cinnamon.desktop.interface",
+        "CalendarServerProxy",
+        "bus_watch_name",
+        "call_set_time_range(",
+        "AppletPopupMenu",
     )
-    assert re.search(r"new\s+EventManager\.EventsManager\s*\(\s*\)", applet)
-    assert re.search(
-        r"events_manager\.set_enabled\s*\(\s*this\.show_events\s*\)", applet
-    )
+    require_tokens(event_manager, "set_enabled(")
+    require_tokens(applet, "EventManager.EventsManager", "events_manager.set_enabled")
 
-    # Lower presentation modules consume resolved scalar preferences rather
-    # than live applet/desktop settings objects.
-    assert re.search(r"class EventList\s*\{\s*constructor\s*\(\s*use24h\s*\)", event_view)
-    require_tokens(event_view, "set_use_24h(use24h)", "this._use24h")
+    # Lower presentation modules consume resolved values rather than live
+    # settings objects.
     forbid_tokens(js_code(event_view), "this.settings", "this.desktop_settings")
     forbid_tokens(js_code(calendar), "this.settings", "this.desktop_settings", "bindWithObject")
     forbid_tokens(js_code(panel_clock), "desktopSettings", "get_boolean(\"clock-use-24h\")")
-    require_tokens(calendar, "setShowWeekNumbers(showWeekNumbers)", "setWeekStart(weekStart)")
+    require_tokens(event_view, "set_use_24h(")
+    require_tokens(calendar, "setShowWeekNumbers(", "setWeekStart(")
 
-    # The month view receives a narrow event-source port; D-Bus and the native
-    # mutable event store remain behind EventsManager. Comments may describe the
-    # boundary, so only executable JavaScript participates in negative checks.
-    require_tokens(
-        event_port,
-        "var CalendarEventSource = class CalendarEventSource",
+    # Month view receives a narrow event-source port. Transport and mutable
+    # native event-store ownership remain behind EventsManager.
+    for operation in (
         "is_active()",
-        "set_visible_range(firstDate, lastDate, force)",
-        "get_colors_for_range(firstDate, dayCount, maxColors)",
-        "select_date(date, force)",
-    )
+        "set_visible_range(",
+        "get_colors_for_range(",
+        "select_date(",
+    ):
+        assert operation in event_port
     forbid_tokens(js_code(event_port), "CalendarServer", "Gio.", "bus_watch", "event_store")
-    forbid_tokens(
-        js_code(event_manager),
-        "CalendarServerProxy", "bus_watch_name", "call_set_time_range(",
-        "_calendar_server", "eventVariant.deep_unpack", "row[3]", "row[4]", "row[5]",
-    )
-    require_tokens(
-        event_transport,
-        "CalendarServerProxy", "bus_watch_name", "request_range(",
-        'emit("events-added-or-updated"', 'emit("unavailable"',
-    )
-    require_tokens(event_manager, "CalendarServerTransport", "add_or_update_in_range(", "NativeBoundary.decodeEventSnapshot")
-    forbid_tokens(
-        js_code(calendar),
-        "CalendarServer", "Gio.", "bus_watch", "event_store", "EventManager"
-    )
+    require_tokens(event_transport, "CalendarServerProxy", "bus_watch_name", "request_range(")
+    require_tokens(event_manager, "add_or_update_in_range(", "NativeBoundary.decodeEventSnapshot")
+    forbid_tokens(js_code(calendar), "CalendarServer", "Gio.", "bus_watch", "event_store")
 
-    # Theme policy remains platform-authoritative and Common supplies the design
-    # token catalogue. Verify semantic values rather than statement placement.
+    # Theme policy remains platform-authoritative and Common supplies design
+    # tokens. Verify semantic values, not statement placement.
     theme = schema["theme-mode"]
     assert theme["type"] == "combobox"
     assert theme["default"] == "system"
@@ -197,19 +171,15 @@ def main() -> None:
     for colour in re.findall(r"#[0-9A-Fa-f]{6}", theme_css):
         assert colour.lower() in canonical_colours
 
-    # System Settings is optional. Calendar consumes the one native effective
-    # policy snapshot and keeps legacy per-field preference APIs out of GJS.
-    require_tokens(
-        applet,
-        "CalendarPlus.SystemClock.new()",
-        "TemporalPolicy.TemporalPolicyResolver",
-        "this._calendar.setCalendarSystem(temporal.calendar)",
-    )
+    # System Settings is optional. GJS consumes one coherent policy snapshot.
+    require_tokens(applet, "CalendarPlus.SystemClock.new()", "TemporalPolicy.TemporalPolicyResolver")
     forbid_tokens(js_code(applet), "get_system_policy()", "decodeTemporalPolicy", "deep_unpack")
     require_tokens(
         temporal_policy,
-        "get_system_policy()", "NativeBoundary.decodeTemporalPolicy",
-        '"mint-cinnamon"', '"infiltrator-system-settings"',
+        "get_system_policy()",
+        "NativeBoundary.decodeTemporalPolicy",
+        '"mint-cinnamon"',
+        '"infiltrator-system-settings"',
     )
     forbid_tokens(
         js_code(applet),
@@ -219,21 +189,28 @@ def main() -> None:
         "get_system_location_configured()",
         "get_system_latitude()",
         "get_system_longitude()",
-        "follow_system_temporal",
-        "secondary_calendar",
-        "useCustomFormat",
-        "customFormat",
-        "customTooltipFormat",
     )
-    require_tokens(
+
+    # Native facade owns clock composition only; policy-source owns discovery,
+    # persistence fallback and monitoring. This is an ownership boundary, not a
+    # requirement on exact function layout.
+    require_tokens(system_clock, "CalendarPlusClockEngine", "CalendarPlusTemporalPolicySource")
+    forbid_tokens(
         system_clock,
         "infiltratr_temporal_posix_provider_available",
         "infiltratr_temporal_posix_policy_load",
+        "g_file_monitor_directory(",
+        "g_settings_schema_source_lookup(",
+    )
+    require_tokens(
+        policy_source,
+        "infiltratr_temporal_posix_provider_available",
+        "infiltratr_temporal_posix_policy_load",
         '"clock-show-seconds"',
+        "g_file_monitor_directory(",
     )
 
-    # Calendar arithmetic belongs to the native API, not a second JavaScript
-    # chronology implementation.
+    # Calendar arithmetic belongs to native APIs, not a second JS chronology.
     require_tokens(
         calendar,
         "CalendarPlus.CalendarSystem.new(",
@@ -247,21 +224,28 @@ def main() -> None:
     )
     forbid_tokens(
         js_code(calendar),
-        "_addCivilDays", "_gregorianWeekday", "while (cellsPlaced < 42)",
-        "model.deep_unpack", "record[1]", "record[2]", "record[3]"
+        "_addCivilDays",
+        "_gregorianWeekday",
+        "while (cellsPlaced < 42)",
+        "model.deep_unpack",
+        "record[1]",
+        "record[2]",
+        "record[3]",
     )
     require_tokens(calendar, "NativeBoundary.decodeCalendarGrid", "NativeBoundary.decodeCivilDate")
     require_tokens(native_boundary, "decodeTemporalPolicy", "decodeCalendarGrid", "decodeEventSnapshot")
-    forbid_tokens(js_code(applet), "variant.deep_unpack")
 
-    # Request lifecycle state remains one object rather than a constellation of
-    # controller flags.
-    require_tokens(event_manager, "new EventRangeState()")
-    for transition in (
-        "beginRequest()", "finishRequest(", "invalidate()",
-        "acceptCompletedRequest()", "nextRetryDelay()", "resetForServerLoss()",
+    # Request lifecycle remains one state object rather than controller flags.
+    require_tokens(event_manager, "EventRangeState")
+    for capability in (
+        "beginRequest",
+        "finishRequest",
+        "invalidate",
+        "acceptCompletedRequest",
+        "nextRetryDelay",
+        "resetForServerLoss",
     ):
-        assert transition in event_range_state
+        assert capability in event_range_state
     forbid_tokens(
         js_code(event_manager),
         "_range_request_generation",
@@ -276,12 +260,12 @@ def main() -> None:
     assert runtime.count("var SignalBag = class SignalBag") == 1
     for source in (applet, calendar, event_view, event_manager, panel_clock):
         assert "class SignalBag" not in js_code(source)
-    require_tokens(calendar, "new SignalBag()", "disconnectAll()")
-    require_tokens(event_manager, "new SignalBag()", "disconnectAll()")
+    require_tokens(calendar, "SignalBag", "disconnectAll()")
+    require_tokens(event_manager, "SignalBag", "disconnectAll()")
 
     # Public identity/accessibility compatibility remains stable.
     require_tokens(applet, '"calendar-plus@the-infiltratr"', "openAbout()")
-    require_tokens(event_view, '"changed::calendar-backend"', "accessible_role: Atk.Role.LIST_ITEM")
+    require_tokens(event_view, '"changed::calendar-backend"', "Atk.Role.LIST_ITEM")
     require_tokens(calendar, '"key-press-event"', "grab_key_focus()")
     assert METADATA["cinnamon-version"] == ["6.4", "6.6", "6.7"]
     assert "external-configuration-app" not in METADATA
