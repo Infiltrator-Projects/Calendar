@@ -6,6 +6,13 @@ This changelog records user-visible, compatibility, architecture and validation 
 
 No unreleased changes.
 
+## 1.0.89 - 2026-10-12
+
+- Split temporal-policy discovery and monitoring from the SystemClock facade while preserving the existing public ABI and coherent policy snapshot.
+- Isolate system-timezone observation from EventsManager so event/range orchestration no longer owns filesystem-monitor lifetime; retain transactional snapshot failure handling and explicit state ownership.
+- Replace remaining source-spelling architecture assertions with ownership/dependency contracts and add a pull-request validation gate before changes reach main.
+- Carry forward the post-1.0.88 ownership, failure-observability, runtime-manifest and App-Install release-assertion hardening already validated on main.
+
 ## 1.0.88 - 2026-10-11
 
 - Extract CalendarServer discovery, reconnect and SetTimeRange transport from EventsManager; event/cache semantics now consume a narrow transport port.
