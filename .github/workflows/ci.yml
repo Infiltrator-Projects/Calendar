@@ -6,12 +6,15 @@ name: build-and-test
 on:
   push:
     branches: [main]
+  pull_request:
+    branches: [main]
+  merge_group:
   workflow_dispatch:
 permissions:
   contents: read
 
 concurrency:
-  group: build-and-test-v4-${{ github.ref }}
+  group: build-and-test-v5-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
@@ -19,13 +22,14 @@ jobs:
     runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-      - name: Enforce main-only automatic immutable publishing
+      - name: Enforce tested-main immutable publishing
         shell: bash
         run: |
           set -euo pipefail
           release=.github/workflows/release.yml
           grep -Fq '  workflow_run:' "$release"
           grep -Fq 'workflows: ["build-and-test"]' "$release"
+          grep -Fq "github.event.workflow_run.event == 'push'" "$release"
           grep -Fq "startsWith(github.event.workflow_run.head_commit.message, 'Release ')" "$release"
           grep -Fq "github.event.workflow_run.head_branch == 'main'" "$release"
           grep -Fq 'published releases are immutable' "$release"
@@ -40,10 +44,8 @@ jobs:
             echo 'Calendar publication must be automatic from tested main only.' >&2
             exit 1
           fi
-          if grep -Eq '^  pull_request:|^  merge_group:' .github/workflows/ci.yml; then
-            echo 'Calendar CI must use main only.' >&2
-            exit 1
-          fi
+          grep -Fq '  pull_request:' .github/workflows/ci.yml
+          grep -Fq '  merge_group:' .github/workflows/ci.yml
 
   native:
     name: Native / ${{ matrix.compiler }}
@@ -96,6 +98,7 @@ jobs:
 
   bigbedroom-live-probe:
     name: BigBedroom / live Cinnamon probe
+    if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'
     runs-on: bigbedroom
     timeout-minutes: 10
     steps:
