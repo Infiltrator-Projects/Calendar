@@ -38,6 +38,19 @@ jobs:
           python3 tools/repair-decoupled-calendar-lifecycle.py
           python3 tools/repair-decoupled-event-list-cache-test.py
           python3 tools/repair-native-range-delegation-test.py
+          for helper in \
+            tools/one-shot-decouple-boundaries.py \
+            tools/repair-one-shot-decouple.py \
+            tools/repair-decoupled-js-tests.py \
+            tools/fix-repair-decoupled-js-tests.py \
+            tools/repair-decoupled-loader-count.py \
+            tools/repair-decoupled-calendar-lifecycle.py \
+            tools/repair-decoupled-event-list-cache-test.py \
+            tools/repair-native-range-delegation-test.py; do
+            if ! grep -q '^# SPDX-License-Identifier: GPL-3.0-or-later$' "$helper"; then
+              sed -i '2i# SPDX-License-Identifier: GPL-3.0-or-later' "$helper"
+            fi
+          done
           python3 tools/update-translations.py
           python3 tools/update-runtime-hashes.py
 
