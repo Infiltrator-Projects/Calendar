@@ -99,7 +99,9 @@ jobs:
           test -f "$built_deb"
           test -x "$built_installer"
           test -f "$approved_deb"
-          test -x "$approved_installer"
+          # GitHub Actions artifact transport does not preserve executable mode bits.
+          # Content identity is enforced below against the freshly built executable.
+          test -f "$approved_installer"
           cmp --silent "$built_deb" "$approved_deb" || {
             echo 'Rebuilt Debian package differs from the exact CI-qualified artifact.' >&2
             exit 1
