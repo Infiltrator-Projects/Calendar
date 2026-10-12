@@ -75,19 +75,103 @@ done < "$ROOT/$SOURCE_DIR/runtime-sources.sha256"
 CALENDAR_PLUS_EXPECTED_VERSION="$EXPECTED_VERSION" \
     "$JS_RUNTIME" "$ROOT/tests/smoke-typelib.js" >/dev/null
 
-ENABLED=$(gsettings get org.cinnamon enabled-applets)
-case "$ENABLED" in
-    *"$UUID"*) ;;
-    *)
-        echo "Calendar is installed but is not enabled on a panel." >&2
-        exit 1
-        ;;
-esac
-
 command -v gdbus >/dev/null 2>&1 || {
     echo "gdbus is required for live Cinnamon qualification." >&2
     exit 1
 }
+command -v gsettings >/dev/null 2>&1 || {
+    echo "gsettings is required for live Cinnamon qualification." >&2
+    exit 1
+}
+
+ENABLED=$(gsettings get org.cinnamon enabled-applets)
+case "$ENABLED" in
+    *"$UUID"*) ;;
+    *)
+        PANELS=$(gsettings get org.cinnamon panels-enabled)
+        NEXT_ID=$(gsettings get org.cinnamon next-applet-id)
+        TEMP_ENABLED=$(python3 - "$ENABLED" "$PANELS" "$NEXT_ID" "$UUID" <<'PY'
+import ast
+import sys
+
+
+def parse_list(raw):
+    raw = raw.strip()
+    if raw.startswith('@as '):
+        raw = raw[4:]
+    value = ast.literal_eval(raw)
+    if not isinstance(value, list) or not all(isinstance(item, str) for item in value):
+        raise SystemExit('Cinnamon settings value is not a string list')
+    return value
+
+
+enabled = parse_list(sys.argv[1])
+panels = parse_list(sys.argv[2])
+if not panels:
+    raise SystemExit('Cinnamon has no enabled panel available for qualification')
+
+panel_number = panels[0].split(':', 1)[0]
+panel = f'panel{panel_number}'
+positions = []
+instance_ids = []
+for item in enabled:
+    parts = item.split(':')
+    if len(parts) >= 3 and parts[0] == panel and parts[1] == 'right':
+        try:
+            positions.append(int(parts[2]))
+        except ValueError:
+            pass
+    if len(parts) >= 5:
+        try:
+            instance_ids.append(int(parts[4]))
+        except ValueError:
+            pass
+
+try:
+    next_id = int(sys.argv[3])
+except ValueError as exc:
+    raise SystemExit('Cinnamon next-applet-id is not numeric') from exc
+
+position = max(positions, default=-1) + 1
+instance_id = max([next_id - 1, *instance_ids], default=-1) + 1
+enabled.append(f'{panel}:right:{position}:{sys.argv[4]}:{instance_id}')
+print(repr(enabled))
+PY
+)
+
+        restore_enabled_applets() {
+            status=$?
+            trap - EXIT HUP INT TERM
+            gsettings set org.cinnamon enabled-applets "$ENABLED" >/dev/null 2>&1 || true
+            exit "$status"
+        }
+        trap restore_enabled_applets EXIT HUP INT TERM
+        gsettings set org.cinnamon enabled-applets "$TEMP_ENABLED"
+
+        # Cinnamon applies enabled-applets asynchronously. Give the real desktop
+        # a bounded opportunity to instantiate the temporary test applet.
+        attempt=0
+        while [ "$attempt" -lt 20 ]; do
+            RUNNING=$(gdbus call --session \
+                --dest org.Cinnamon \
+                --object-path /org/Cinnamon \
+                --method org.Cinnamon.Eval \
+                "AppletManager.getRunningInstancesForUuid(\"$UUID\").length > 0" 2>/dev/null || true)
+            case "$RUNNING" in
+                *"true"*) break ;;
+            esac
+            attempt=$((attempt + 1))
+            sleep 0.25
+        done
+        case "$RUNNING" in
+            *"true"*) ;;
+            *)
+                echo "Calendar could not be temporarily enabled for live qualification." >&2
+                exit 1
+                ;;
+        esac
+        ;;
+esac
 
 EVAL_SCRIPT=$(cat <<EOF
 (() => {
