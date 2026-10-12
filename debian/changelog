@@ -1,3 +1,12 @@
+infiltrator-calendar (1.0.91) unstable; urgency=medium
+
+  * Harden Cinnamon and native ownership boundaries.
+  * Extract desktop lifecycle, civil-date and event-projection responsibilities.
+  * Bound temporal event indexes and harden provider/policy fallback behaviour.
+  * Qualify hostile-time, live Cinnamon and post-hardening CI paths.
+
+ -- Shannon Smith <infiltratr@yandex.com>  Mon, 12 Oct 2026 04:20:00 +0000
+
 infiltrator-calendar (1.0.90) unstable; urgency=medium
 
   * Resolve Common calendar metadata through stable calendar IDs.

@@ -6,6 +6,13 @@ This changelog records user-visible, compatibility, architecture and validation 
 
 No unreleased changes.
 
+## 1.0.91 - 2026-10-12
+
+- Harden Cinnamon and native ownership boundaries so desktop lifecycle, civil-date projection and temporal-policy resources each have explicit owners.
+- Bound temporal event indexes and make provider/catalogue degradation fail safely without coupling runtime identity to Common catalogue order.
+- Qualify DST/skipped-midnight event ranges, live Cinnamon integration and runtime-source integrity across the forensic hardening tranche.
+- Repair the post-hardening JavaScript/static-analysis regressions and make architecture checks resilient to harmless implementation renames.
+
 ## 1.0.90 - 2026-10-12
 
 - Decouple Calendar provider metadata from Infiltratr Common catalogue order by resolving Common calendars through stable IDs and validating catalogue set equality.
