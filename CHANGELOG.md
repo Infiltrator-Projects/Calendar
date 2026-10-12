@@ -6,6 +6,13 @@ This changelog records user-visible, compatibility, architecture and validation 
 
 No unreleased changes.
 
+## 1.0.90 - 2026-10-12
+
+- Decouple Calendar provider metadata from Infiltratr Common catalogue order by resolving Common calendars through stable IDs and validating catalogue set equality.
+- Make event enablement authoritative for range traffic, retries and cache ingestion while preserving the desired visible range for re-enable.
+- Apply CalendarServer removals incrementally through the native event store instead of clearing and refetching the complete visible range.
+- Clarify the actual event retry ceiling and add regression coverage for disable/re-enable and incremental removal behaviour.
+
 ## 1.0.89 - 2026-10-12
 
 - Split temporal-policy discovery and monitoring from the SystemClock facade while preserving the existing public ABI and coherent policy snapshot.
