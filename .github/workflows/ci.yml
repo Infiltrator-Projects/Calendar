@@ -7,44 +7,15 @@ on:
   push:
     branches: [main]
   workflow_dispatch:
+
 permissions:
   contents: read
 
 concurrency:
-  group: build-and-test-v4-${{ github.ref }}
+  group: build-and-test-v5-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
-  release-policy:
-    runs-on: ubuntu-24.04
-    steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-      - name: Enforce main-only automatic immutable publishing
-        shell: bash
-        run: |
-          set -euo pipefail
-          release=.github/workflows/release.yml
-          grep -Fq '  workflow_run:' "$release"
-          grep -Fq 'workflows: ["build-and-test"]' "$release"
-          grep -Fq "startsWith(github.event.workflow_run.head_commit.message, 'Release ')" "$release"
-          grep -Fq "github.event.workflow_run.head_branch == 'main'" "$release"
-          grep -Fq 'published releases are immutable' "$release"
-          grep -Fq 'gh release create "$tag"' "$release"
-          grep -Fq 'gh release upload "$tag" "$deb" "$installer" --clobber' "$release"
-          grep -Fq 'gh release edit "$tag" --draft=false --latest' "$release"
-          if grep -Fq 'local-source.zip' "$release"; then
-            echo 'GitHub supplies source archives; do not upload a duplicate ZIP.' >&2
-            exit 1
-          fi
-          if grep -Eq '^  (workflow_dispatch|pull_request|schedule):' "$release"; then
-            echo 'Calendar publication must be automatic from tested main only.' >&2
-            exit 1
-          fi
-          if grep -Eq '^  pull_request:|^  merge_group:' .github/workflows/ci.yml; then
-            echo 'Calendar CI must use main only.' >&2
-            exit 1
-          fi
-
   native:
     name: Native / ${{ matrix.compiler }}
     runs-on: ubuntu-24.04
@@ -91,50 +62,6 @@ jobs:
           steps.live-cinnamon.outputs.ready == 'true'
         env:
           CALENDAR_PLUS_LIVE_MODE: ${{ steps.live-cinnamon.outputs.mode }}
-          DEB_BUILD_OPTIONS: nocheck
-        run: tools/live-cinnamon-ci-smoke.sh
-
-  bigbedroom-live-probe:
-    name: BigBedroom / live Cinnamon qualification
-    needs: [debian-package]
-    runs-on: bigbedroom
-    timeout-minutes: 10
-    steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-        with:
-          submodules: false
-      - name: Download exact qualified release assets
-        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
-        with:
-          name: calendar-release-${{ github.sha }}
-          path: qualified-release
-      - name: Locate exact qualified package
-        id: qualified-package
-        shell: bash
-        run: |
-          set -euo pipefail
-          deb=$(find qualified-release -maxdepth 1 -type f -name 'calendar_*_amd64.deb' -print -quit)
-          test -n "$deb" && test -s "$deb"
-          printf 'deb=%s/%s\n' "$GITHUB_WORKSPACE" "$deb" >> "$GITHUB_OUTPUT"
-      - name: Probe exact-source Cinnamon qualification
-        id: live-cinnamon
-        env:
-          CALENDAR_PLUS_EXACT_DEB: ${{ steps.qualified-package.outputs.deb }}
-        shell: bash
-        run: tools/live-cinnamon-ci-smoke.sh --probe
-      - name: Require live Cinnamon for release commits
-        if: >-
-          startsWith(github.event.head_commit.message, 'Release ') &&
-          steps.live-cinnamon.outputs.ready != 'true'
-        shell: bash
-        run: |
-          echo 'Release commits require an available real Cinnamon session.' >&2
-          exit 1
-      - name: Live Cinnamon runtime qualification
-        if: steps.live-cinnamon.outputs.ready == 'true'
-        env:
-          CALENDAR_PLUS_LIVE_MODE: ${{ steps.live-cinnamon.outputs.mode }}
-          CALENDAR_PLUS_EXACT_DEB: ${{ steps.qualified-package.outputs.deb }}
           DEB_BUILD_OPTIONS: nocheck
         run: tools/live-cinnamon-ci-smoke.sh
 
@@ -247,15 +174,92 @@ jobs:
         env:
           CALENDAR_RELEASE_SOURCE_ALREADY_QUALIFIED: "1"
         run: make release-check
-      - name: Retain exact qualified release assets
+      - name: Create immutable release handoff
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          version=$(sed -n 's/^VERSION := //p' Makefile)
+          deb="dist/calendar_${version}_amd64.deb"
+          installer="dist/calendar-${version}-local-folder.run"
+          notes="dist/release-notes.md"
+          manifest="dist/release-manifest.txt"
+
+          test -s "$deb"
+          test -s "$installer"
+          awk '
+            NR == 1 { next }
+            /^ -- / { exit }
+            {
+              sub(/^  \* /, "- ")
+              print
+            }
+          ' debian/changelog | sed '/^[[:space:]]*$/d' > "$notes"
+          test -s "$notes"
+
+          {
+            printf 'version=%s\n' "$version"
+            printf 'source_sha=%s\n' "$GITHUB_SHA"
+            printf 'deb=%s\n' "${deb##*/}"
+            printf 'deb_sha256=%s\n' "$(sha256sum "$deb" | awk '{print $1}')"
+            printf 'installer=%s\n' "${installer##*/}"
+            printf 'installer_sha256=%s\n' "$(sha256sum "$installer" | awk '{print $1}')"
+          } > "$manifest"
+      - name: Retain exact qualified release handoff
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
           name: calendar-release-${{ github.sha }}
           path: |
             dist/calendar_*_amd64.deb
             dist/calendar-*-local-folder.run
+            dist/release-manifest.txt
+            dist/release-notes.md
           if-no-files-found: error
           retention-days: 3
+
+  bigbedroom-live-probe:
+    name: BigBedroom / live Cinnamon qualification
+    needs: [debian-package]
+    runs-on: bigbedroom
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          submodules: false
+      - name: Download exact qualified release assets
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
+        with:
+          name: calendar-release-${{ github.sha }}
+          path: qualified-release
+      - name: Locate exact qualified package
+        id: qualified-package
+        shell: bash
+        run: |
+          set -euo pipefail
+          deb=$(find qualified-release -maxdepth 1 -type f -name 'calendar_*_amd64.deb' -print -quit)
+          test -n "$deb" && test -s "$deb"
+          printf 'deb=%s/%s\n' "$GITHUB_WORKSPACE" "$deb" >> "$GITHUB_OUTPUT"
+      - name: Probe exact-source Cinnamon qualification
+        id: live-cinnamon
+        env:
+          CALENDAR_PLUS_EXACT_DEB: ${{ steps.qualified-package.outputs.deb }}
+        shell: bash
+        run: tools/live-cinnamon-ci-smoke.sh --probe
+      - name: Require live Cinnamon for release commits
+        if: >-
+          startsWith(github.event.head_commit.message, 'Release ') &&
+          steps.live-cinnamon.outputs.ready != 'true'
+        shell: bash
+        run: |
+          echo 'Release commits require an available real Cinnamon session.' >&2
+          exit 1
+      - name: Live Cinnamon runtime qualification
+        if: steps.live-cinnamon.outputs.ready == 'true'
+        env:
+          CALENDAR_PLUS_LIVE_MODE: ${{ steps.live-cinnamon.outputs.mode }}
+          CALENDAR_PLUS_EXACT_DEB: ${{ steps.qualified-package.outputs.deb }}
+          DEB_BUILD_OPTIONS: nocheck
+        run: tools/live-cinnamon-ci-smoke.sh
 
   package-install:
     runs-on: ubuntu-24.04
@@ -346,3 +350,24 @@ jobs:
             dpkg --purge "$name" >/dev/null 2>&1 || true
           done
           apt-get check
+
+  publish-release:
+    if: >-
+      github.event_name == 'push' &&
+      startsWith(github.event.head_commit.message, 'Release ')
+    needs:
+      - native
+      - icu-compat
+      - sanitizer
+      - coverage
+      - static-analysis
+      - debian-package
+      - bigbedroom-live-probe
+      - package-install
+    permissions:
+      actions: read
+      contents: write
+    uses: ./.github/workflows/release.yml
+    with:
+      artifact_name: calendar-release-${{ github.sha }}
+      release_sha: ${{ github.sha }}
