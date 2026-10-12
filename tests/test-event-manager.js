@@ -9,6 +9,8 @@ const root = path.resolve(__dirname, "..");
 let nextId = 1;
 const timeouts = new Map();
 const idles = new Map();
+const localOffsets = new Map();
+const unavailableLocalTimes = new Set();
 const observations = {
     clears: 0,
     addCalls: [],
@@ -50,20 +52,63 @@ class SignalBag {
         for (const [object, id] of this.entries.splice(0)) object.disconnect(id);
     }
 }
+function civilKey(y, m, d) {
+    return `${y}-${m}-${d}`;
+}
+function localTimeKey(y, m, d, h, min) {
+    return `${y}-${m}-${d}-${h}-${min}`;
+}
 class FakeDateTime {
-    constructor(unix) { this.unix = unix; }
+    constructor(unix, civil = null) {
+        this.unix = unix;
+        this.civil = civil;
+    }
     to_unix() { return this.unix; }
-    get_year() { return new Date(this.unix * 1000).getUTCFullYear(); }
-    get_month() { return new Date(this.unix * 1000).getUTCMonth() + 1; }
-    get_day_of_month() { return new Date(this.unix * 1000).getUTCDate(); }
-    add_days(days) { return new FakeDateTime(this.unix + days * 86400); }
+    get_year() {
+        return this.civil ? this.civil.year :
+            new Date(this.unix * 1000).getUTCFullYear();
+    }
+    get_month() {
+        return this.civil ? this.civil.month :
+            new Date(this.unix * 1000).getUTCMonth() + 1;
+    }
+    get_day_of_month() {
+        return this.civil ? this.civil.day :
+            new Date(this.unix * 1000).getUTCDate();
+    }
+    add_days(days) {
+        const year = this.get_year();
+        const month = this.get_month();
+        const day = this.get_day_of_month();
+        const h = this.civil ? this.civil.hour : 0;
+        const min = this.civil ? this.civil.minute : 0;
+        const sec = this.civil ? this.civil.second : 0;
+        const shifted = new Date(Date.UTC(year, month - 1, day + days, 12, 0, 0));
+        return DateTime.new_local(
+            shifted.getUTCFullYear(),
+            shifted.getUTCMonth() + 1,
+            shifted.getUTCDate(),
+            h,
+            min,
+            sec
+        );
+    }
 }
 const DateTime = {
     new_local(y, m, d, h, min, sec) {
-        return new FakeDateTime(Date.UTC(y, m - 1, d, h, min, sec) / 1000);
+        if (unavailableLocalTimes.has(localTimeKey(y, m, d, h, min))) {
+            return null;
+        }
+        const offset = localOffsets.get(civilKey(y, m, d)) || 0;
+        const unix = Date.UTC(y, m - 1, d, h, min, sec) / 1000 - offset;
+        return new FakeDateTime(unix, {
+            year: y, month: m, day: d, hour: h, minute: min, second: sec,
+        });
     },
     new_utc(y, m, d, h, min, sec) {
-        return new FakeDateTime(Date.UTC(y, m - 1, d, h, min, sec) / 1000);
+        return new FakeDateTime(Date.UTC(y, m - 1, d, h, min, sec) / 1000, {
+            year: y, month: m, day: d, hour: h, minute: min, second: sec,
+        });
     },
     new_from_unix_local(value) {
         return observations.invalidLocalInstants.has(value)
@@ -127,9 +172,26 @@ const context = {
         return {
             SignalBag,
             midnight(value) {
-                return DateTime.new_local(
-                    value.get_year(), value.get_month(), value.get_day_of_month(), 0, 0, 0
-                );
+                const year = value.get_year();
+                const month = value.get_month();
+                const day = value.get_day_of_month();
+                for (let minuteOfDay = 0; minuteOfDay < 24 * 60; minuteOfDay++) {
+                    const candidate = DateTime.new_local(
+                        year,
+                        month,
+                        day,
+                        Math.floor(minuteOfDay / 60),
+                        minuteOfDay % 60,
+                        0
+                    );
+                    if (candidate !== null &&
+                        candidate.get_year() === year &&
+                        candidate.get_month() === month &&
+                        candidate.get_day_of_month() === day) {
+                        return candidate;
+                    }
+                }
+                return null;
             },
             sameInstant(a, b) {
                 return a !== null && b !== null && a.to_unix() === b.to_unix();
@@ -298,6 +360,55 @@ manager.destroy();
 assert.equal(observations.transportDestroys, 1);
 assert.equal(observations.timezoneDisconnects, 1);
 assert.equal(observations.timezoneCancels, 1);
+
+/*
+ * A local civil range is not a count of 86400-second buckets. Model an offset
+ * transition between two adjacent days and assert that EventsManager asks for
+ * the correct civil endpoint rather than manufacturing a 48-hour interval.
+ */
+localOffsets.set(civilKey(2026, 10, 4), 10 * 3600);
+localOffsets.set(civilKey(2026, 10, 5), 11 * 3600);
+localOffsets.set(civilKey(2026, 10, 6), 11 * 3600);
+const dstTransport = new FakeTransport();
+dstTransport.ready = true;
+dstTransport.status = 2;
+const dstManager = new EventsManager(dstTransport);
+const beforeDstRequestCount = observations.rangeRequests.length;
+dstManager.set_visible_range(
+    { year: 2026, month: 10, day: 4 },
+    { year: 2026, month: 10, day: 5 },
+    false
+);
+assert.equal(observations.rangeRequests.length, beforeDstRequestCount + 1);
+const dstRange = observations.rangeRequests.at(-1);
+assert.equal(
+    dstRange[1] - dstRange[0],
+    47 * 3600 - 1,
+    "visible event ranges must follow local civil days across offset changes"
+);
+dstManager.destroy();
+localOffsets.clear();
+
+/* A zone may skip midnight while retaining the rest of the civil date. */
+unavailableLocalTimes.add(localTimeKey(2026, 10, 7, 0, 0));
+const midnightTransport = new FakeTransport();
+midnightTransport.ready = true;
+midnightTransport.status = 2;
+const midnightManager = new EventsManager(midnightTransport);
+const beforeMidnightRequestCount = observations.rangeRequests.length;
+midnightManager.set_visible_range(
+    { year: 2026, month: 10, day: 7 },
+    { year: 2026, month: 10, day: 7 },
+    false
+);
+assert.equal(observations.rangeRequests.length, beforeMidnightRequestCount + 1);
+assert.equal(
+    observations.rangeRequests.at(-1)[0],
+    Date.UTC(2026, 9, 7, 0, 1, 0) / 1000,
+    "range start must use the first representable instant on a skipped-midnight day"
+);
+midnightManager.destroy();
+unavailableLocalTimes.clear();
 
 const disabledTransport = new FakeTransport();
 disabledTransport.ready = true;
