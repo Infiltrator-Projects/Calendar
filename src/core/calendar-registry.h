@@ -15,10 +15,14 @@ G_BEGIN_DECLS
  * Internal calendar-provider ABI.
  *
  * The interface is intentionally independent of CalendarPlusCalendarMode and
- * any ICU/native backend choice.  A provider implementation may embed this
+ * any ICU/native backend choice. A provider implementation may embed this
  * structure as the first member of a larger private structure; callbacks then
  * receive the interface address and recover their private implementation data
  * without exposing a built-in enum or backend-specific field to core callers.
+ *
+ * calendar_id is the stable semantic join key with Infiltratr Common. Never use
+ * Common catalogue position as provider identity: catalogue ordering is not an
+ * ABI and may change independently of Calendar's local implementation table.
  */
 typedef struct _CalendarPlusCalendarProvider CalendarPlusCalendarProvider;
 
@@ -41,7 +45,7 @@ typedef gint64 (*CalendarPlusProviderPeriodStartFunc)(
 struct _CalendarPlusCalendarProvider
 {
     guint abi_version;
-    gsize common_index;
+    const gchar *calendar_id;
     CalendarPlusProviderFieldsFunc fields_from_jdn;
     CalendarPlusProviderFormatFunc format;
     CalendarPlusProviderPeriodStartFunc period_start;
@@ -51,7 +55,7 @@ struct _CalendarPlusCalendarProvider
 
 enum
 {
-    CALENDAR_PLUS_CALENDAR_PROVIDER_ABI = 2
+    CALENDAR_PLUS_CALENDAR_PROVIDER_ABI = 3
 };
 
 const CalendarPlusCalendarProvider *calendar_plus_calendar_provider_from_id(
