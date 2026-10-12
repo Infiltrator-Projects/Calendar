@@ -10,7 +10,7 @@
  * skipped local date.
  */
 
-const CalendarPlus = imports.gi.CalendarPlus;
+const CalendarPlusCivil = imports.gi.CalendarPlus;
 
 class CivilDate {
     constructor(year, month, day) {
@@ -23,7 +23,7 @@ class CivilDate {
     getMonth() { return this._month - 1; }
     getDate() { return this._day; }
     getDay() {
-        return CalendarPlus.date_weekday(this._year, this._month, this._day);
+        return CalendarPlusCivil.date_weekday(this._year, this._month, this._day);
     }
 }
 
@@ -38,7 +38,7 @@ function fields(date) {
 }
 
 function same(a, b) {
-    return CalendarPlus.date_same(...fields(a), ...fields(b));
+    return CalendarPlusCivil.date_same(...fields(a), ...fields(b));
 }
 
 function isValid(year, month, day) {
@@ -46,7 +46,7 @@ function isValid(year, month, day) {
         year >= -2147483648 && year <= 2147483647 &&
         Number.isInteger(month) &&
         Number.isInteger(day) &&
-        CalendarPlus.date_same(year, month, day, year, month, day);
+        CalendarPlusCivil.date_same(year, month, day, year, month, day);
 }
 
 function representableLocalDate(year, month, day) {
