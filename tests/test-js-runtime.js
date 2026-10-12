@@ -80,6 +80,7 @@ function evaluateApplet(nativeVersion = version, loaderMode = "legacy") {
 
     const extensionModules = {
         calendar: {},
+        desktopIntegration: { DesktopIntegration: class {} },
         eventManager: {},
         eventView: {},
         nativeBoundary: {
@@ -205,6 +206,71 @@ function evaluateApplet(nativeVersion = version, loaderMode = "legacy") {
     );
     context.__CalendarPlusApplet.loaderObservations = loaderObservations;
     return context.__CalendarPlusApplet;
+}
+
+function evaluateDesktopIntegration() {
+    let nextSignalId = 1;
+    const observations = { logs: [] };
+
+    class DesktopSettings {
+        connect() { return nextSignalId++; }
+        disconnect() {}
+        get_boolean(key) { throw new Error(`failed ${key}`); }
+        get_string(key) { throw new Error(`failed ${key}`); }
+    }
+    class SignalBag {
+        constructor() { this.entries = []; }
+        connect(object, signal, callback) {
+            if (!object || typeof object.connect !== "function") return 0;
+            const id = object.connect(signal, callback);
+            this.entries.push([object, id]);
+            return id;
+        }
+        disconnectAll() {
+            for (const [object, id] of this.entries.splice(0)) {
+                object.disconnect(id);
+            }
+        }
+    }
+
+    const context = {
+        console,
+        global: {
+            logError(error) { observations.logs.push(String(error)); },
+            settings: { connect() { return 1; }, disconnect() {} },
+            create_app_launch_context() { return {}; },
+        },
+        imports: {
+            gi: {
+                Gio: {
+                    Settings: DesktopSettings,
+                    DesktopAppInfo: { new() { return null; } },
+                },
+                UPowerGlib: { Client: class { connect() { return 1; } disconnect() {} } },
+            },
+            ui: {
+                main: {
+                    themeManager: { connect() { return 1; }, disconnect() {} },
+                    keybindingManager: {},
+                },
+            },
+            misc: { util: { spawnCommandLine() {} } },
+        },
+    };
+    vm.createContext(context);
+    const source = fs.readFileSync(
+        path.join(root, "src", "cinnamon", "desktopIntegration.js"),
+        "utf8"
+    );
+    vm.runInContext(
+        `${source}\nglobalThis.__DesktopIntegration = DesktopIntegration;`,
+        context,
+        { filename: "desktopIntegration.js" }
+    );
+    const integration = new context.__DesktopIntegration(
+        { instance_id: 7 }, SignalBag, {}
+    );
+    return { integration, observations };
 }
 
 function evaluateEventView() {
@@ -380,6 +446,25 @@ function evaluateCalendar() {
         },
     };
 
+    const nativeBoundaryModule = {
+        NativeBoundary: {
+            decodeCivilDate(variant) {
+                const row = variant.deep_unpack();
+                return { year: row[0], month: row[1], day: row[2] };
+            },
+            decodeCalendarGrid(variant) {
+                return variant.deep_unpack().map((row) => ({
+                    dayLabel: row[0], year: row[1], month: row[2],
+                    day: row[3], row: row[4], column: row[5],
+                    weekNumber: row[6], isWorkDay: row[7],
+                    isToday: row[8], isSelected: row[9],
+                    isCurrentPeriod: row[10], isTopRow: row[11],
+                    isLeftEdge: row[12],
+                }));
+            },
+        },
+    };
+
     const context = {
         console,
         global: { logError() {} },
@@ -388,27 +473,19 @@ function evaluateCalendar() {
             if (name === "./runtimeSupport") {
                 return {
                     loadLocalModule(moduleName) {
-                        if (moduleName !== "nativeBoundary") {
-                            throw new Error(`unexpected local module ${moduleName}`);
+                        if (moduleName === "nativeBoundary") {
+                            return nativeBoundaryModule;
                         }
-                        return {
-                            NativeBoundary: {
-                                decodeCivilDate(variant) {
-                                    const row = variant.deep_unpack();
-                                    return { year: row[0], month: row[1], day: row[2] };
-                                },
-                                decodeCalendarGrid(variant) {
-                                    return variant.deep_unpack().map((row) => ({
-                                        dayLabel: row[0], year: row[1], month: row[2],
-                                        day: row[3], row: row[4], column: row[5],
-                                        weekNumber: row[6], isWorkDay: row[7],
-                                        isToday: row[8], isSelected: row[9],
-                                        isCurrentPeriod: row[10], isTopRow: row[11],
-                                        isLeftEdge: row[12],
-                                    }));
-                                },
-                            },
-                        };
+                        if (moduleName === "civilDate") {
+                            return { CivilDateBoundary: context.__CivilDateBoundary };
+                        }
+                        if (moduleName === "calendarEventProjection") {
+                            return {
+                                CalendarEventProjection:
+                                    context.__CalendarEventProjection,
+                            };
+                        }
+                        throw new Error(`unexpected local module ${moduleName}`);
                     },
                     SignalBag: class SignalBag {
                         constructor() { this.entries = []; }
@@ -438,7 +515,7 @@ function evaluateCalendar() {
                     util_get_week_start() { return 0; },
                 },
                 CalendarPlus: {
-                    DatePart: { DAY: 1, MONTH: 2, YEAR: 3, FULL: 4 },
+                    DatePart: { DAY: 1, MONTH: 2, YEAR: 3, SHORT: 4, FULL: 5 },
                     CalendarSystem: {
                         new(id) {
                             return id === "gregorian" ? {
@@ -495,6 +572,26 @@ function evaluateCalendar() {
         },
     };
     vm.createContext(context);
+
+    const civilSource = fs.readFileSync(
+        path.join(root, "src", "cinnamon", "civilDate.js"),
+        "utf8"
+    );
+    vm.runInContext(
+        `${civilSource}\nglobalThis.__CivilDateBoundary = CivilDateBoundary;`,
+        context,
+        { filename: "civilDate.js" }
+    );
+    const projectionSource = fs.readFileSync(
+        path.join(root, "src", "cinnamon", "calendarEventProjection.js"),
+        "utf8"
+    );
+    vm.runInContext(
+        `${projectionSource}\nglobalThis.__CalendarEventProjection = CalendarEventProjection;`,
+        context,
+        { filename: "calendarEventProjection.js" }
+    );
+
     const source = fs.readFileSync(
         path.join(root, "src", "cinnamon", "calendar.js"),
         "utf8"
@@ -896,7 +993,7 @@ function testModuleLoaderCompatibility() {
         "Cinnamon 6.4/6.6 must bootstrap runtimeSupport through require()"
     );
     assert.equal(LegacyAppletClass.loaderObservations.extensionCalls, 0);
-    assert.equal(LegacyAppletClass.loaderObservations.featureCalls, 5);
+    assert.equal(LegacyAppletClass.loaderObservations.featureCalls, 6);
 
     const ExtensionAppletClass = evaluateApplet(version, "extension");
     assert.equal(
@@ -909,40 +1006,31 @@ function testModuleLoaderCompatibility() {
         0,
         "the 6.7 path must not fall through to the legacy loader"
     );
-    assert.equal(ExtensionAppletClass.loaderObservations.featureCalls, 5);
+    assert.equal(ExtensionAppletClass.loaderObservations.featureCalls, 6);
 }
 
 function testDesktopPreferenceFallbackDiagnostics() {
-    const AppletClass = evaluateApplet();
-    const originalBuild = AppletClass.prototype._buildApplet;
-    AppletClass.prototype._buildApplet = function() {};
-    const instance = new AppletClass(0, 24, 7, version);
+    const { integration, observations } = evaluateDesktopIntegration();
 
-    instance.desktop_settings = {
-        get_boolean(key) { throw new Error(`failed ${key}`); },
-        get_string(key) { throw new Error(`failed ${key}`); },
-    };
-
-    assert.equal(instance._desktopUses24h(), false);
-    assert.equal(instance._desktopUses24h(), false);
-    assert.equal(instance._desktopShowsDate(), false);
-    assert.equal(instance._systemThemeName(), "");
+    assert.equal(integration.uses24h(), false);
+    assert.equal(integration.uses24h(), false);
+    assert.equal(integration.showsDate(), false);
+    assert.equal(integration._themeName(), "");
     assert.equal(
-        AppletClass.loaderObservations.logErrors.length,
+        observations.logs.length,
         3,
         "each unavailable desktop preference must be diagnosed once, not per repaint"
     );
     for (const key of ["clock-use-24h", "clock-show-date", "gtk-theme"]) {
         assert.ok(
-            AppletClass.loaderObservations.logErrors.some((message) =>
+            observations.logs.some((message) =>
                 message.includes(key) && message.includes("compatibility default")
             ),
             `${key} fallback must identify the failed setting`
         );
     }
-
-    instance._destroy();
-    AppletClass.prototype._buildApplet = originalBuild;
+    integration.destroy();
+    integration.destroy();
 }
 
 function testCalendarRejectsNormalizedCivilDates() {
