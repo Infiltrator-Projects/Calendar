@@ -1,3 +1,12 @@
+infiltrator-calendar (1.0.92) unstable; urgency=medium
+
+  * Split release publication into explicit, diagnosable qualification stages.
+  * Replace silent release assertions with descriptive artifact validation.
+  * Preserve byte-for-byte CI artifact qualification while tolerating Actions mode loss.
+  * Preserve immutable published-release verification and asynchronous APT discovery.
+
+ -- Shannon Smith <infiltratr@yandex.com>  Mon, 12 Oct 2026 09:48:00 +0000
+
 infiltrator-calendar (1.0.91) unstable; urgency=medium
 
   * Harden Cinnamon and native ownership boundaries.
@@ -586,7 +595,6 @@ infiltrator-calendar (1.0.28) trixie; urgency=medium
   * Bring the Cinnamon settings window into the Common 1.19.10 visual system.
   * Replace default grey list rows with layered card/surface styling and
     explicit Common-owned control, hover, tooltip and menu colours.
-  * Style switch sliders explicitly to prevent host-theme colour leakage.
   * Use Common screen-padding and section-spacing metrics for the settings UI.
 
  -- Shannon Smith <noreply@the-infiltratr.com>  Sun, 20 Sep 2026 13:05:00 +1000
@@ -750,7 +758,7 @@ calendar-plus (1.0.15) trixie; urgency=medium
   * Pin the canonical icon SHA-256 in release-input validation so a different
     structurally valid PNG cannot silently replace the approved artwork.
 
- -- Shannon Smith <noreply@the-infiltratr.com>  Sat, 19 Sep 2026 00:45:00 +1000
+ -- Shannon Smith <noreply@the-infiltratr.com>  Fri, 18 Sep 2026 00:45:00 +1000
 
 calendar-plus (1.0.14) trixie; urgency=medium
 
