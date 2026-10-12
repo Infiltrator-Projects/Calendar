@@ -1,191 +1,117 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 # Copyright (C) 2016-2026 Shannon Smith
 
-name: publish-release
+name: publish-qualified-release
 
-# Publication is gated by the successful main-branch CI run for an explicit
-# Release commit, so no untested tree can become a GitHub release. Generated
-# translation and runtime-integrity metadata are validated by that CI gate.
+# This is a reusable final stage of build-and-test, not a second release run.
+# It publishes the exact bytes qualified by the caller and never rebuilds them.
 on:
-  workflow_run:
-    workflows: ["build-and-test"]
-    types: [completed]
+  workflow_call:
+    inputs:
+      artifact_name:
+        description: Exact Actions artifact containing the qualified release handoff
+        required: true
+        type: string
+      release_sha:
+        description: Exact source revision qualified by the caller
+        required: true
+        type: string
 
 permissions:
   actions: read
-  contents: read
-
-concurrency:
-  group: publish-release-${{ github.repository }}
-  cancel-in-progress: true
+  contents: write
 
 jobs:
   publish:
-    if: >-
-      github.event.workflow_run.conclusion == 'success' &&
-      github.event.workflow_run.event == 'push' &&
-      github.event.workflow_run.head_branch == 'main' &&
-      startsWith(github.event.workflow_run.head_commit.message, 'Release ')
-    permissions:
-      actions: read
-      contents: write
     runs-on: ubuntu-24.04
-    timeout-minutes: 45
+    timeout-minutes: 10
     steps:
-      - name: Check out approved main commit
-        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-        with:
-          ref: ${{ github.event.workflow_run.head_sha }}
-          fetch-depth: 0
-          submodules: recursive
-
-      - name: Download exact CI-qualified release assets
+      - name: Download exact qualified release handoff
         uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
         with:
-          name: calendar-release-${{ github.event.workflow_run.head_sha }}
-          path: approved-assets
-          github-token: ${{ github.token }}
-          run-id: ${{ github.event.workflow_run.id }}
+          name: ${{ inputs.artifact_name }}
+          path: qualified-release
 
-      - name: Install release dependencies
+      - name: Verify qualified release handoff
         env:
-          DEBIAN_FRONTEND: noninteractive
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y --no-install-recommends \
-            build-essential debhelper desktop-file-utils devscripts gettext gh gobject-introspection gjs jq \
-            gir1.2-glib-2.0-dev libglib2.0-dev libgtk-3-dev libicu-dev nodejs \
-            pkg-config python3 xz-utils lintian shellcheck
-
-      - name: Validate approved source identity
-        env:
-          EXPECTED_SHA: ${{ github.event.workflow_run.head_sha }}
+          GH_TOKEN: ${{ github.token }}
+          EXPECTED_SHA: ${{ inputs.release_sha }}
         shell: bash
         run: |
           set -euo pipefail
 
-          git fetch origin main --tags
-          head_commit=$(git rev-parse HEAD)
-          main_commit=$(git rev-parse origin/main)
-          if [[ "$head_commit" != "$EXPECTED_SHA" || "$main_commit" != "$EXPECTED_SHA" ]]; then
-            printf 'Release source %s is not exact current main %s.\n' \
-              "$head_commit" "$main_commit" >&2
-            exit 1
-          fi
+          manifest=qualified-release/release-manifest.txt
+          notes=qualified-release/release-notes.md
+          test -s "$manifest"
+          test -s "$notes"
 
-          release_subject=$(git log -1 --format=%s "$head_commit")
-          if [[ "$release_subject" != Release\ * ]]; then
-            printf 'Current main is not an explicit Release commit.\n' >&2
-            exit 1
-          fi
+          value() {
+            local key=$1
+            sed -n "s/^${key}=//p" "$manifest"
+          }
 
-          version=$(sed -n 's/^VERSION := //p' Makefile)
-          if [[ ! "$version" =~ ^[0-9]+\.[0-9]+(\.[0-9]+)?$ ]]; then
-            printf 'Invalid source version: %s\n' "$version" >&2
-            exit 1
-          fi
-          if [[ "$release_subject" != "Release ${version}" && "$release_subject" != "Release ${version}:"* ]]; then
-            printf 'Release commit subject must begin with Release %s.\n' "$version" >&2
+          version=$(value version)
+          source_sha=$(value source_sha)
+          deb_name=$(value deb)
+          deb_sha256=$(value deb_sha256)
+          installer_name=$(value installer)
+          installer_sha256=$(value installer_sha256)
+
+          [[ "$version" =~ ^[0-9]+\.[0-9]+(\.[0-9]+)?$ ]]
+          [[ "$source_sha" == "$EXPECTED_SHA" ]]
+          [[ "$deb_name" == "calendar_${version}_amd64.deb" ]]
+          [[ "$installer_name" == "calendar-${version}-local-folder.run" ]]
+          [[ "$deb_sha256" =~ ^[0-9a-f]{64}$ ]]
+          [[ "$installer_sha256" =~ ^[0-9a-f]{64}$ ]]
+
+          deb="qualified-release/$deb_name"
+          installer="qualified-release/$installer_name"
+          test -s "$deb"
+          test -s "$installer"
+          [[ "$(sha256sum "$deb" | awk '{print $1}')" == "$deb_sha256" ]]
+          [[ "$(sha256sum "$installer" | awk '{print $1}')" == "$installer_sha256" ]]
+
+          subject=$(gh api "repos/${GITHUB_REPOSITORY}/commits/${source_sha}" \
+            --jq '.commit.message | split("\n")[0]')
+          if [[ "$subject" != "Release ${version}" && "$subject" != "Release ${version}:"* ]]; then
+            printf 'Release commit subject must begin with Release %s; got %s.\n' \
+              "$version" "$subject" >&2
             exit 1
           fi
 
           {
             printf 'RELEASE_VERSION=%s\n' "$version"
             printf 'RELEASE_TAG=v%s\n' "$version"
-            printf 'RELEASE_HEAD=%s\n' "$head_commit"
+            printf 'RELEASE_HEAD=%s\n' "$source_sha"
+            printf 'RELEASE_DEB=%s\n' "$deb"
+            printf 'RELEASE_INSTALLER=%s\n' "$installer"
+            printf 'RELEASE_NOTES=%s\n' "$notes"
           } >> "$GITHUB_ENV"
 
-      - name: Run release qualification gates
-        shell: bash
-        run: |
-          set -euo pipefail
-          CALENDAR_RELEASE_SOURCE_ALREADY_QUALIFIED=1 make release-check
-
-      - name: Verify exact CI-qualified artifacts
-        shell: bash
-        run: |
-          set -euo pipefail
-
-          version="$RELEASE_VERSION"
-          deb="dist/calendar_${version}_amd64.deb"
-          installer="dist/calendar-${version}-local-folder.run"
-          approved_deb="approved-assets/calendar_${version}_amd64.deb"
-          approved_installer="approved-assets/calendar-${version}-local-folder.run"
-
-          require_file() {
-            local path=$1
-            local description=$2
-            if [[ ! -f "$path" ]]; then
-              printf 'Missing %s: %s\n' "$description" "$path" >&2
-              exit 1
-            fi
-          }
-
-          require_executable() {
-            local path=$1
-            local description=$2
-            require_file "$path" "$description"
-            if [[ ! -x "$path" ]]; then
-              printf '%s is not executable: %s\n' "$description" "$path" >&2
-              exit 1
-            fi
-          }
-
-          require_file "$deb" 'rebuilt Debian package'
-          require_executable "$installer" 'rebuilt local installer'
-          require_file "$approved_deb" 'CI-qualified Debian package'
-          # GitHub Actions artifact transport does not preserve executable mode bits.
-          # Content identity is enforced below against the freshly built executable.
-          require_file "$approved_installer" 'CI-qualified local installer'
-
-          cmp --silent "$deb" "$approved_deb" || {
-            echo 'Rebuilt Debian package differs from the exact CI-qualified artifact.' >&2
-            exit 1
-          }
-          cmp --silent "$installer" "$approved_installer" || {
-            echo 'Rebuilt local installer differs from the exact CI-qualified artifact.' >&2
-            exit 1
-          }
-
-      - name: Prepare release notes
-        shell: bash
-        run: |
-          set -euo pipefail
-
-          notes="${RUNNER_TEMP}/release-notes.md"
-          awk '
-            NR == 1 { next }
-            /^ -- / { exit }
-            {
-              sub(/^  \* /, "- ")
-              print
-            }
-          ' debian/changelog | sed '/^[[:space:]]*$/d' > "$notes"
-          if [[ ! -s "$notes" ]]; then
-            echo 'Release notes extracted from debian/changelog are empty.' >&2
-            exit 1
-          fi
-
-      - name: Verify or create release tag
+      - name: Verify or create immutable release tag
+        env:
+          GH_TOKEN: ${{ github.token }}
         shell: bash
         run: |
           set -euo pipefail
 
           tag="$RELEASE_TAG"
           head_commit="$RELEASE_HEAD"
-          remote_tag_commit=$(git ls-remote origin "refs/tags/${tag}" | awk '{print $1}')
+          remote_tag_commit=$(gh api "repos/${GITHUB_REPOSITORY}/git/ref/tags/${tag}" \
+            --jq '.object.sha' 2>/dev/null || true)
           if [[ -n "$remote_tag_commit" && "$remote_tag_commit" != "$head_commit" ]]; then
-            printf 'Release tag %s points to %s, not approved commit %s.\n' \
+            printf 'Release tag %s points to %s, not qualified commit %s.\n' \
               "$tag" "$remote_tag_commit" "$head_commit" >&2
             exit 1
           fi
           if [[ -z "$remote_tag_commit" ]]; then
-            git tag "$tag" "$head_commit"
-            git push origin "$tag"
+            gh api --method POST "repos/${GITHUB_REPOSITORY}/git/refs" \
+              -f ref="refs/tags/${tag}" \
+              -f sha="$head_commit" >/dev/null
           fi
 
-      # published releases are immutable; reruns verify the exact release and
-      # its qualified assets instead of mutating an already-public release.
+      # Published releases are immutable. Reruns verify existing assets instead
+      # of rewriting a release that users may already have consumed.
       - name: Create or inspect GitHub release
         env:
           GH_TOKEN: ${{ github.token }}
@@ -193,45 +119,35 @@ jobs:
         run: |
           set -euo pipefail
 
-          tag="$RELEASE_TAG"
-          version="$RELEASE_VERSION"
-          head_commit="$RELEASE_HEAD"
-          notes="${RUNNER_TEMP}/release-notes.md"
           release_was_published=false
-
-          if release_state=$(gh release view "$tag" --json isDraft --jq .isDraft 2>/dev/null); then
+          if release_state=$(gh release view "$RELEASE_TAG" --json isDraft --jq .isDraft 2>/dev/null); then
             if [[ "$release_state" != true ]]; then
               release_was_published=true
-              printf 'Release %s is already published; verifying immutable assets.\n' "$tag"
+              printf 'Release %s is already published; verifying immutable assets.\n' \
+                "$RELEASE_TAG"
             else
-              printf 'Release %s already exists as a draft; resuming publication.\n' "$tag"
+              printf 'Release %s already exists as a draft; resuming publication.\n' \
+                "$RELEASE_TAG"
             fi
           else
-            gh release create "$tag" \
+            gh release create "$RELEASE_TAG" \
               --draft \
               --verify-tag \
-              --target "$head_commit" \
-              --title "Calendar $version" \
-              --notes-file "$notes"
+              --target "$RELEASE_HEAD" \
+              --title "Calendar $RELEASE_VERSION" \
+              --notes-file "$RELEASE_NOTES"
           fi
-
           printf 'RELEASE_WAS_PUBLISHED=%s\n' "$release_was_published" >> "$GITHUB_ENV"
 
-      - name: Upload draft release assets
+      - name: Upload qualified assets to draft
         env:
           GH_TOKEN: ${{ github.token }}
         shell: bash
         run: |
           set -euo pipefail
-
-          version="$RELEASE_VERSION"
-          tag="$RELEASE_TAG"
-          deb="approved-assets/calendar_${version}_amd64.deb"
-          installer="approved-assets/calendar-${version}-local-folder.run"
-          release_was_published="$RELEASE_WAS_PUBLISHED"
-
-          if [[ "$release_was_published" == false ]]; then
-            gh release upload "$tag" "$deb" "$installer" --clobber
+          if [[ "$RELEASE_WAS_PUBLISHED" == false ]]; then
+            gh release upload "$RELEASE_TAG" \
+              "$RELEASE_DEB" "$RELEASE_INSTALLER" --clobber
           fi
 
       - name: Verify immutable release assets
@@ -241,40 +157,31 @@ jobs:
         run: |
           set -euo pipefail
 
-          version="$RELEASE_VERSION"
-          tag="$RELEASE_TAG"
-          deb="approved-assets/calendar_${version}_amd64.deb"
-          installer="approved-assets/calendar-${version}-local-folder.run"
-
           expected_assets=$(printf '%s\n%s\n' \
-            "${deb##*/}" "${installer##*/}" | sort)
-          published_assets=$(gh release view "$tag" --json assets \
+            "${RELEASE_DEB##*/}" "${RELEASE_INSTALLER##*/}" | sort)
+          published_assets=$(gh release view "$RELEASE_TAG" --json assets \
             --jq '.assets[].name' | sort)
           if [[ "$published_assets" != "$expected_assets" ]]; then
-            printf 'Release %s has an unexpected asset set.\n' "$tag" >&2
+            printf 'Release %s has an unexpected asset set.\n' "$RELEASE_TAG" >&2
             printf 'Expected:\n%s\nPublished:\n%s\n' \
               "$expected_assets" "$published_assets" >&2
             exit 1
           fi
 
-          release_id=$(gh release view "$tag" --json databaseId --jq .databaseId)
-          release_json=$(gh api "repos/${GITHUB_REPOSITORY}/releases/${release_id}")
-          for asset in "$deb" "$installer"; do
+          for asset in "$RELEASE_DEB" "$RELEASE_INSTALLER"; do
             name="${asset##*/}"
             local_size=$(stat -c '%s' "$asset")
-            remote_size=$(jq -r --arg name "$name" \
-              '[.assets[] | select(.name == $name) | .size][0] // 0' \
-              <<<"$release_json")
-            if [[ "$remote_size" != "$local_size" ]]; then
+            remote_size=$(gh api "repos/${GITHUB_REPOSITORY}/releases/tags/${RELEASE_TAG}" \
+              --jq ".assets[] | select(.name == \"${name}\") | .size")
+            [[ "$remote_size" == "$local_size" ]] || {
               printf 'Release asset %s has size %s; expected %s.\n' \
                 "$name" "$remote_size" "$local_size" >&2
               exit 1
-            fi
+            }
 
             local_digest="sha256:$(sha256sum "$asset" | awk '{print $1}')"
-            remote_digest=$(jq -r --arg name "$name" \
-              '[.assets[] | select(.name == $name) | .digest][0] // ""' \
-              <<<"$release_json")
+            remote_digest=$(gh api "repos/${GITHUB_REPOSITORY}/releases/tags/${RELEASE_TAG}" \
+              --jq ".assets[] | select(.name == \"${name}\") | .digest // \"\"")
             if [[ -n "$remote_digest" && "$remote_digest" != "$local_digest" ]]; then
               printf 'Release asset %s digest mismatch.\n' "$name" >&2
               exit 1
@@ -288,20 +195,12 @@ jobs:
         run: |
           set -euo pipefail
 
-          tag="$RELEASE_TAG"
-          release_was_published="$RELEASE_WAS_PUBLISHED"
-          if [[ "$release_was_published" == false ]]; then
-            gh release edit "$tag" --draft=false --latest
+          if [[ "$RELEASE_WAS_PUBLISHED" == false ]]; then
+            gh release edit "$RELEASE_TAG" --draft=false --latest
           fi
+          published_tag=$(gh release view "$RELEASE_TAG" --json tagName --jq .tagName)
+          [[ "$published_tag" == "$RELEASE_TAG" ]]
 
-          published_tag=$(gh release view "$tag" --json tagName --jq .tagName)
-          if [[ "$published_tag" != "$tag" ]]; then
-            printf 'Published release tag %s does not match expected tag %s.\n' \
-              "$published_tag" "$tag" >&2
-            exit 1
-          fi
-
-      # Central APT publication is intentionally asynchronous. The tokenless
-      # Infiltrator-Repository publisher discovers verified GitHub releases on
-      # its own schedule; Calendar must not wait on or fail because of that
-      # external best-effort schedule.
+      # Central APT publication remains asynchronous. Infiltrator-Repository
+      # discovers verified GitHub releases independently; Calendar does not wait
+      # on or fail because of that external publication schedule.
