@@ -108,18 +108,10 @@ jobs:
           fi
 
           if [[ -n "$remote_tag_commit" && "$remote_tag_commit" != "$head_commit" ]]; then
-            # A tag attached to any GitHub release is an immutable public
-            # identity. Only recover a bare/orphan tag left by a failed attempt
-            # before a release record was created.
-            if gh release view "$tag" --json isDraft >/dev/null 2>&1; then
-              printf 'Release tag %s points to %s, not qualified commit %s.\n' \
-                "$tag" "$remote_tag_commit" "$head_commit" >&2
-              exit 1
-            fi
-            printf 'Removing orphaned tag %s from failed pre-publication attempt.\n' "$tag"
-            gh api --method DELETE \
-              "repos/${GITHUB_REPOSITORY}/git/refs/tags/${tag}" >/dev/null
-            remote_tag_commit=""
+            printf 'Release tag %s already reserves version %s at %s; qualified commit is %s.\n' \
+              "$tag" "$RELEASE_VERSION" "$remote_tag_commit" "$head_commit" >&2
+            printf 'Release identities are immutable; bump VERSION and release again.\n' >&2
+            exit 1
           fi
 
           if [[ -z "$remote_tag_commit" ]]; then

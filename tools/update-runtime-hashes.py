@@ -3,11 +3,13 @@
 # Copyright (C) 1993-2026 Shannon Smith
 """Generate or verify the small runtime integrity manifest.
 
-The manifest deliberately covers files loaded directly by Cinnamon or by the
-Calendar applet before or alongside the native library: JavaScript, runtime
-JSON and the applet stylesheet. Source,
-tests and packaging are covered by the immutable Git tag and GitHub source
-archives.
+The manifest covers code and presentation data loaded directly by Cinnamon or
+by the Calendar applet before or alongside the native library: JavaScript, the
+runtime settings schema and the applet stylesheet. Version/package metadata is
+validated by the release identity and package contracts instead of being
+coupled to this runtime manifest. Source, tests and packaging are covered by the
+immutable Git tag and GitHub source archives.
+
 Discovering JavaScript files here prevents a newly split module from being
 silently omitted from the integrity gate.
 """
@@ -27,7 +29,6 @@ def runtime_files() -> list[Path]:
     files.extend(
         APPLET / name
         for name in (
-            "metadata.json",
             "settings-schema.json",
             "stylesheet.css",
         )
