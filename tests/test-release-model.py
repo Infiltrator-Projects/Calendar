@@ -74,6 +74,7 @@ def assert_release_handoff_behaviour(version: str) -> None:
             installer.name,
         }
         assert (dist / "release-notes.md").read_text(encoding="utf-8").strip()
+        assert (dist / "release-handoff.py").is_file()
 
         subprocess.run(
             [
@@ -238,8 +239,8 @@ def main() -> None:
     assert "release-manifest.json" in workflow
     assert "release-manifest.txt" not in workflow
     assert "release-manifest.txt" not in publisher
-    assert "tools/release-handoff.py" in workflow
-    assert "qualified-release/tools/release-handoff.py verify" in publisher
+    assert "dist/release-handoff.py" in workflow
+    assert "qualified-release/release-handoff.py verify" in publisher
     assert "workflow_call:" in publisher
     assert "workflow_run:" not in publisher
     assert "actions/download-artifact@" in publisher
