@@ -182,7 +182,7 @@ var CalendarServerTransport = class CalendarServerTransport {
             startUnix,
             endUnix,
             Boolean(force),
-            null,
+            this._cancellable,
             (proxy, result) => {
                 let succeeded = false;
                 try {
