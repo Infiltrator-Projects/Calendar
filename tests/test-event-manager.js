@@ -12,7 +12,9 @@ const idles = new Map();
 const observations = {
     clears: 0,
     addCalls: [],
+    removeCalls: [],
     rangeRequests: [],
+    transportStarts: 0,
     timezoneCancels: 0,
     timezoneDisconnects: 0,
     transportDestroys: 0,
@@ -88,7 +90,7 @@ class FakeTransport {
         addSignalMethods(Object.getPrototypeOf(this));
     }
     is_ready() { return this.ready; }
-    start() {}
+    start() { observations.transportStarts += 1; }
     request_range(start, end, force, callback) {
         if (!this.ready) return false;
         this.requests.push({ start, end, force, callback });
@@ -188,6 +190,10 @@ const context = {
                                 observations.addCalls.push([event, timestamp, start, end]);
                                 return true;
                             },
+                            remove(serializedIds) {
+                                observations.removeCalls.push(serializedIds);
+                                return true;
+                            },
                             get_snapshot() {
                                 return {
                                     deep_unpack() {
@@ -256,6 +262,18 @@ assert.equal(
     1,
     "admitted rows must go directly to the native store boundary"
 );
+const requestsBeforeRemoval = observations.rangeRequests.length;
+manager._removeEvents("gone-a::gone-b");
+assert.deepEqual(
+    observations.removeCalls,
+    ["gone-a::gone-b"],
+    "removals must use the native incremental delete path"
+);
+assert.equal(
+    observations.rangeRequests.length,
+    requestsBeforeRemoval,
+    "incremental deletion must not force a full range re-fetch"
+);
 manager.set_visible_range(first, last, true);
 transport.complete(2, false);
 assert.equal(timeouts.size, 1, "range failure must retain bounded retry behaviour");
@@ -280,6 +298,48 @@ manager.destroy();
 assert.equal(observations.transportDestroys, 1);
 assert.equal(observations.timezoneDisconnects, 1);
 assert.equal(observations.timezoneCancels, 1);
+
+const disabledTransport = new FakeTransport();
+disabledTransport.ready = true;
+disabledTransport.status = 2;
+const disabledManager = new EventsManager(disabledTransport);
+const rangesBeforeDisable = observations.rangeRequests.length;
+const startsBeforeDisable = observations.transportStarts;
+disabledManager.set_enabled(false);
+disabledManager.start_events();
+disabledManager.set_visible_range(first, last, false);
+disabledManager._ingestEvents({ unpack() { return [{ ignored: true }]; } });
+assert.equal(
+    observations.rangeRequests.length,
+    rangesBeforeDisable,
+    "disabled events must not issue visible-range traffic"
+);
+assert.equal(
+    observations.transportStarts,
+    startsBeforeDisable,
+    "disabled events must not activate the transport"
+);
+assert.equal(
+    observations.addCalls.length,
+    1,
+    "disabled events must not ingest CalendarServer rows"
+);
+disabledManager.set_enabled(true);
+assert.equal(
+    observations.transportStarts,
+    startsBeforeDisable + 1,
+    "re-enabling events must reactivate transport discovery"
+);
+assert.equal(idles.size, 1, "re-enabling must schedule one refresh of the desired range");
+const resumeRefresh = idles.values().next().value;
+idles.clear();
+resumeRefresh();
+assert.equal(
+    observations.rangeRequests.length,
+    rangesBeforeDisable + 1,
+    "re-enabling must fetch the preserved visible range exactly once"
+);
+disabledManager.destroy();
 
 const snapshotTransport = new FakeTransport();
 snapshotTransport.ready = true;
