@@ -52,10 +52,10 @@ const SignalBag = RuntimeSupport.SignalBag;
 const NativeBoundary = RuntimeSupport.loadLocalModule(
     "nativeBoundary"
 ).NativeBoundary;
-const CivilDateBoundary = RuntimeSupport.loadLocalModule(
+const CivilDateApi = RuntimeSupport.loadLocalModule(
     "civilDate"
 ).CivilDateBoundary;
-const CalendarEventProjection = RuntimeSupport.loadLocalModule(
+const EventProjection = RuntimeSupport.loadLocalModule(
     "calendarEventProjection"
 ).CalendarEventProjection;
 
@@ -70,15 +70,15 @@ const DATE_PARTS = Object.freeze({
     full: CalendarPlus.DatePart.FULL,
 });
 
-const _dateFields = CivilDateBoundary.fields;
-const _sameCivilDate = CivilDateBoundary.same;
-const _civilDateIsValid = CivilDateBoundary.isValid;
-const _representableLocalDate = CivilDateBoundary.representableLocalDate;
-const _localDate = CivilDateBoundary.create;
-const _cloneDate = CivilDateBoundary.clone;
+const _dateFields = CivilDateApi.fields;
+const _sameCivilDate = CivilDateApi.same;
+const _civilDateIsValid = CivilDateApi.isValid;
+const _representableLocalDate = CivilDateApi.representableLocalDate;
+const _localDate = CivilDateApi.create;
+const _cloneDate = CivilDateApi.clone;
 
 function _localDateFromVariant(parts) {
-    return CivilDateBoundary.fromVariant(parts, NativeBoundary);
+    return CivilDateApi.fromVariant(parts, NativeBoundary);
 }
 
 function _weekdayAbbreviation(dayIndex) {
@@ -535,7 +535,7 @@ var Calendar = class Calendar {
         this._removeCells();
 
         const records = NativeBoundary.decodeCalendarGrid(model);
-        const eventColorsByCell = CalendarEventProjection.build(
+        const eventColorsByCell = EventProjection.build(
             records,
             this.event_source,
             this.events_enabled,
