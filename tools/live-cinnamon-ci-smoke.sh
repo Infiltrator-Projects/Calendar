@@ -96,7 +96,14 @@ if [ "${1:-}" = "--probe" ]; then
         echo "::notice::No active Cinnamon session is exposed to this runner; live desktop qualification is not applicable."
     else
         current="$(installed_version)"
-        if [ "$current" = "$EXPECTED_VERSION" ] &&
+        if [ -n "${CALENDAR_PLUS_EXACT_DEB:-}" ] &&
+           [ -s "$CALENDAR_PLUS_EXACT_DEB" ] &&
+           command -v dpkg-deb >/dev/null 2>&1 &&
+           { command -v cjs >/dev/null 2>&1 || command -v gjs >/dev/null 2>&1; }; then
+            ready=true
+            mode=artifact-runtime
+            echo "::notice::The exact CI-qualified Debian package will provide the native typelib/library while the exact source applet is staged user-locally."
+        elif [ "$current" = "$EXPECTED_VERSION" ] &&
            installed_runtime_matches; then
             ready=true
             mode=installed
@@ -159,6 +166,93 @@ EOF
             echo 'Cinnamon refused to reload the newly installed Calendar applet.' >&2
             exit 1
         }
+fi
+
+if [ "$mode" = "artifact-runtime" ]; then
+    [ -n "${CALENDAR_PLUS_EXACT_DEB:-}" ] && [ -s "$CALENDAR_PLUS_EXACT_DEB" ] || {
+        echo "Exact CI-qualified Calendar package is unavailable." >&2
+        exit 1
+    }
+    command -v dpkg-deb >/dev/null 2>&1 || {
+        echo "dpkg-deb is required for exact artifact qualification." >&2
+        exit 1
+    }
+    if command -v cjs >/dev/null 2>&1; then
+        js_runtime=$(command -v cjs)
+    elif command -v gjs >/dev/null 2>&1; then
+        js_runtime=$(command -v gjs)
+    else
+        echo "Neither cjs nor gjs is available for exact native qualification." >&2
+        exit 1
+    fi
+
+    backup_root=$(mktemp -d)
+    stage_root=$(mktemp -d)
+    had_user_runtime=false
+    if [ -e "$USER_APPLET_DIR" ]; then
+        mv "$USER_APPLET_DIR" "$backup_root/original"
+        had_user_runtime=true
+    fi
+
+    # shellcheck disable=SC2317
+    cleanup_artifact_runtime() {
+        status=$?
+        trap - EXIT HUP INT TERM
+        rm -rf "$USER_APPLET_DIR"
+        if [ "$had_user_runtime" = true ] && [ -e "$backup_root/original" ]; then
+            mkdir -p "$(dirname "$USER_APPLET_DIR")"
+            mv "$backup_root/original" "$USER_APPLET_DIR"
+        fi
+        reload_calendar_applet >/dev/null 2>&1 || true
+        rm -rf "$backup_root" "$stage_root"
+        exit "$status"
+    }
+    trap cleanup_artifact_runtime EXIT HUP INT TERM
+
+    dpkg-deb -x "$CALENDAR_PLUS_EXACT_DEB" "$stage_root"
+    exact_about="$stage_root/usr/libexec/calendar-plus-about"
+    exact_typelib=$(find "$stage_root/usr/lib" -type f -name 'CalendarPlus-1.0.typelib' -print -quit)
+    exact_library=$(find "$stage_root/usr/lib" -type f -name 'libcalendar-plus.so.0.0.0' -print -quit)
+    [ -x "$exact_about" ] && [ -n "$exact_typelib" ] && [ -n "$exact_library" ] || {
+        echo "Exact Calendar package is missing its native qualification payload." >&2
+        exit 1
+    }
+    typelib_dir=$(dirname "$exact_typelib")
+    library_dir=$(dirname "$exact_library")
+
+    actual=$(LD_LIBRARY_PATH="$library_dir${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}" \
+        "$exact_about" --print-metadata 2>/dev/null | sed -n 's/^version=//p' | head -n 1)
+    [ "$actual" = "$EXPECTED_VERSION" ] || {
+        printf 'Exact artifact native version %s does not match source %s.\n' "$actual" "$EXPECTED_VERSION" >&2
+        exit 1
+    }
+
+    GI_TYPELIB_PATH="$typelib_dir${GI_TYPELIB_PATH:+:$GI_TYPELIB_PATH}" \
+    LD_LIBRARY_PATH="$library_dir${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}" \
+    CALENDAR_PLUS_EXPECTED_VERSION="$EXPECTED_VERSION" \
+        "$js_runtime" "$ROOT/tests/smoke-typelib.js" >/dev/null
+
+    mkdir -p "$USER_APPLET_DIR"
+    cp -a "$ROOT/src/cinnamon/." "$USER_APPLET_DIR/"
+    exact_icon="$stage_root/usr/share/cinnamon/applets/$UUID/icon.png"
+    if [ -f "$exact_icon" ]; then
+        cp "$exact_icon" "$USER_APPLET_DIR/icon.png"
+    elif [ -f "$SYSTEM_APPLET_DIR/icon.png" ]; then
+        cp "$SYSTEM_APPLET_DIR/icon.png" "$USER_APPLET_DIR/icon.png"
+    fi
+
+    reload_calendar_applet || {
+        echo "Cinnamon refused to reload the exact user-local Calendar runtime." >&2
+        exit 1
+    }
+    sleep 1
+    GI_TYPELIB_PATH="$typelib_dir${GI_TYPELIB_PATH:+:$GI_TYPELIB_PATH}" \
+    LD_LIBRARY_PATH="$library_dir${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}" \
+    CALENDAR_PLUS_ABOUT="$exact_about" \
+    CALENDAR_PLUS_JS_RUNTIME="$js_runtime" \
+    CALENDAR_PLUS_APPLET_DIR="$USER_APPLET_DIR" \
+        "$ROOT/tools/cinnamon-smoke.sh"
+    exit 0
 fi
 
 if [ "$mode" = "user-runtime" ]; then

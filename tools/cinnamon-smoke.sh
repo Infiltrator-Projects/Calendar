@@ -10,6 +10,17 @@ SOURCE_DIR=src/cinnamon
 EXPECTED_VERSION=$(sed -n 's/^VERSION := //p' "$ROOT/Makefile")
 APPLET_DIR="${CALENDAR_PLUS_APPLET_DIR:-/usr/share/cinnamon/applets/$UUID}"
 ABOUT="${CALENDAR_PLUS_ABOUT:-/usr/libexec/calendar-plus-about}"
+JS_RUNTIME="${CALENDAR_PLUS_JS_RUNTIME:-}"
+if [ -z "$JS_RUNTIME" ]; then
+    if command -v gjs >/dev/null 2>&1; then
+        JS_RUNTIME=$(command -v gjs)
+    elif command -v cjs >/dev/null 2>&1; then
+        JS_RUNTIME=$(command -v cjs)
+    else
+        echo "Neither gjs nor cjs is available for native typelib qualification." >&2
+        exit 1
+    fi
+fi
 
 case "${XDG_CURRENT_DESKTOP:-}" in
     *Cinnamon*) ;;
@@ -62,7 +73,7 @@ done < "$ROOT/$SOURCE_DIR/runtime-sources.sha256"
 "$ABOUT" --print-metadata | grep -qx "version=$EXPECTED_VERSION"
 
 CALENDAR_PLUS_EXPECTED_VERSION="$EXPECTED_VERSION" \
-    gjs "$ROOT/tests/smoke-typelib.js" >/dev/null
+    "$JS_RUNTIME" "$ROOT/tests/smoke-typelib.js" >/dev/null
 
 ENABLED=$(gsettings get org.cinnamon enabled-applets)
 case "$ENABLED" in

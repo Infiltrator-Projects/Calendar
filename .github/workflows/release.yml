@@ -12,6 +12,7 @@ on:
     types: [completed]
 
 permissions:
+  actions: read
   contents: read
 
 concurrency:
@@ -26,6 +27,7 @@ jobs:
       github.event.workflow_run.head_branch == 'main' &&
       startsWith(github.event.workflow_run.head_commit.message, 'Release ')
     permissions:
+      actions: read
       contents: write
     runs-on: ubuntu-24.04
     timeout-minutes: 45
@@ -36,6 +38,14 @@ jobs:
           ref: ${{ github.event.workflow_run.head_sha }}
           fetch-depth: 0
           submodules: recursive
+
+      - name: Download exact CI-qualified release assets
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
+        with:
+          name: calendar-release-${{ github.event.workflow_run.head_sha }}
+          path: approved-assets
+          github-token: ${{ github.token }}
+          run-id: ${{ github.event.workflow_run.id }}
 
       - name: Install release dependencies
         env:
@@ -82,10 +92,24 @@ jobs:
 
           CALENDAR_RELEASE_SOURCE_ALREADY_QUALIFIED=1 make release-check
 
-          deb="dist/calendar_${version}_amd64.deb"
-          installer="dist/calendar-${version}-local-folder.run"
-          test -f "$deb"
-          test -x "$installer"
+          built_deb="dist/calendar_${version}_amd64.deb"
+          built_installer="dist/calendar-${version}-local-folder.run"
+          approved_deb="approved-assets/calendar_${version}_amd64.deb"
+          approved_installer="approved-assets/calendar-${version}-local-folder.run"
+          test -f "$built_deb"
+          test -x "$built_installer"
+          test -f "$approved_deb"
+          test -x "$approved_installer"
+          cmp --silent "$built_deb" "$approved_deb" || {
+            echo 'Rebuilt Debian package differs from the exact CI-qualified artifact.' >&2
+            exit 1
+          }
+          cmp --silent "$built_installer" "$approved_installer" || {
+            echo 'Rebuilt local installer differs from the exact CI-qualified artifact.' >&2
+            exit 1
+          }
+          deb="$approved_deb"
+          installer="$approved_installer"
 
           notes="${RUNNER_TEMP}/release-notes.md"
           awk '

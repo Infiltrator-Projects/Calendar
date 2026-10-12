@@ -96,14 +96,30 @@ jobs:
 
   bigbedroom-live-probe:
     name: BigBedroom / live Cinnamon qualification
+    needs: [debian-package]
     runs-on: bigbedroom
     timeout-minutes: 10
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           submodules: false
+      - name: Download exact qualified release assets
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
+        with:
+          name: calendar-release-${{ github.sha }}
+          path: qualified-release
+      - name: Locate exact qualified package
+        id: qualified-package
+        shell: bash
+        run: |
+          set -euo pipefail
+          deb=$(find qualified-release -maxdepth 1 -type f -name 'calendar_*_amd64.deb' -print -quit)
+          test -n "$deb" && test -s "$deb"
+          printf 'deb=%s/%s\n' "$GITHUB_WORKSPACE" "$deb" >> "$GITHUB_OUTPUT"
       - name: Probe exact-source Cinnamon qualification
         id: live-cinnamon
+        env:
+          CALENDAR_PLUS_EXACT_DEB: ${{ steps.qualified-package.outputs.deb }}
         shell: bash
         run: tools/live-cinnamon-ci-smoke.sh --probe
       - name: Require live Cinnamon for release commits
@@ -118,6 +134,7 @@ jobs:
         if: steps.live-cinnamon.outputs.ready == 'true'
         env:
           CALENDAR_PLUS_LIVE_MODE: ${{ steps.live-cinnamon.outputs.mode }}
+          CALENDAR_PLUS_EXACT_DEB: ${{ steps.qualified-package.outputs.deb }}
           DEB_BUILD_OPTIONS: nocheck
         run: tools/live-cinnamon-ci-smoke.sh
 
@@ -230,6 +247,15 @@ jobs:
         env:
           CALENDAR_RELEASE_SOURCE_ALREADY_QUALIFIED: "1"
         run: make release-check
+      - name: Retain exact qualified release assets
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: calendar-release-${{ github.sha }}
+          path: |
+            dist/calendar_*_amd64.deb
+            dist/calendar-*-local-folder.run
+          if-no-files-found: error
+          retention-days: 3
 
   package-install:
     runs-on: ubuntu-24.04
