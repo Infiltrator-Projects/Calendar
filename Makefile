@@ -63,6 +63,7 @@ CORE_SOURCES := \
 	src/core/event-source.c
 ADAPTER_SOURCES := \
 	src/adapters/system-clock.c \
+	src/adapters/temporal-policy-source.c \
 	src/adapters/clock-glib-adapter.c \
 	src/adapters/calendar-system.c \
 	src/adapters/calendar-gvariant-adapter.c \
@@ -107,6 +108,7 @@ PRIVATE_HEADERS := \
 	src/app/project-info.h \
 	src/adapters/clock-glib-adapter.h \
 	src/adapters/system-clock-private.h \
+	src/adapters/temporal-policy-source.h \
 	src/adapters/calendar-system-private.h \
 	src/adapters/event-store-private.h
 HEADERS := $(sort $(PUBLIC_HEADERS) $(CORE_HEADERS) $(PRIVATE_HEADERS))
@@ -375,7 +377,6 @@ $(ABOUT_DESKTOP): $(ABOUT_DESKTOP_TEMPLATE)
 	@mkdir -p "$(BUILD_DIR)"
 	@sed 's|@ABOUT_EXEC@|$(PREFIX)/libexec/$(ABOUT_BINARY)|g' "$<" > "$@"
 
-
 translations:
 	@mkdir -p "$(BUILD_DIR)/locale"
 	@while IFS= read -r language; do \
@@ -497,6 +498,7 @@ test: $(BUILD_DIR)/test-time-formats $(BUILD_DIR)/test-properties \
 		grep -qx 'common-library=infiltratr-common-$(INFILTRATR_COMMON_VERSION)'
 
 validate-js: validate-settings-generated
+	python3 tools/update-runtime-loader.py --check
 	@python3 -c 'import json; \
 	from pathlib import Path; \
 	p=Path("$(APPLET_SRC_DIR)"); \
@@ -539,7 +541,7 @@ validate-runtime-deps: $(BUILD_DIR)/$(LIB_REALNAME)
 		echo "Generic runtime must not embed an ICU-major DT_NEEDED entry:" >&2; \
 		printf '%s\n' "$$needed" >&2; \
 		exit 1; \
-	fi; \
+	fi
 
 smoke-gjs: $(BUILD_DIR)/$(GIR).typelib
 	LD_LIBRARY_PATH="$(abspath $(BUILD_DIR))$${LD_LIBRARY_PATH:+:$$LD_LIBRARY_PATH}" \
