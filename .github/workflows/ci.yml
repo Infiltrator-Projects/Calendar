@@ -203,7 +203,7 @@ jobs:
             dist/calendar-*-local-folder.run
             dist/release-manifest.json
             dist/release-notes.md
-            tools/release-handoff.py
+            dist/release-handoff.py
           if-no-files-found: error
           retention-days: 3
 
