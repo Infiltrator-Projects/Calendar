@@ -42,7 +42,13 @@ class SignalBag {
         for (const [object, id] of this.entries.splice(0)) object.disconnect(id);
     }
 }
-class Cancellable { cancel() { observations.cancels += 1; } }
+class Cancellable {
+    constructor() { this.cancelled = false; }
+    cancel() {
+        this.cancelled = true;
+        observations.cancels += 1;
+    }
+}
 function makeServer(status = 2) {
     const server = { status, signals: new Map() };
     server.connect = (signal, callback) => {
@@ -57,7 +63,7 @@ function makeServer(status = 2) {
         }
     };
     server.call_set_time_range = (start, end, force, cancellable, callback) => {
-        observations.rangeCalls.push([start, end, force]);
+        observations.rangeCalls.push([start, end, force, cancellable]);
         observations.rangeCallbacks.push(callback);
     };
     server.call_set_time_range_finish = (result) => {
@@ -142,7 +148,14 @@ assert.equal(transport.request_range(10, 20, true, (succeeded, current) => {
     assert.equal(succeeded, true);
     assert.equal(current, true);
 }), true);
-assert.deepEqual(observations.rangeCalls[0], [10, 20, true]);
+assert.deepEqual(
+    observations.rangeCalls[0].slice(0, 3),
+    [10, 20, true]
+);
+assert.ok(
+    observations.rangeCalls[0][3] instanceof Cancellable,
+    "range requests must share the transport-owned cancellable"
+);
 observations.rangeCallbacks[0](server, {});
 observations.busVanished();
 assert.equal(transport.is_ready(), false);
@@ -161,4 +174,149 @@ transport.destroy();
 transport.destroy();
 assert.equal(observations.unwatches, 1);
 assert.equal(observations.cancels, 1);
-console.log("CalendarServer transport behaviour tests passed.");
+assert.equal(
+    observations.rangeCalls[0][3].cancelled,
+    true,
+    "destroy must cancel an outstanding range request"
+);
+
+function evaluateTimezoneMonitor({ directFails = false, fallbackFails = false } = {}) {
+    const timezoneObservations = {
+        directMonitors: 0,
+        directoryMonitors: 0,
+        monitorCancels: 0,
+        cancellableCancels: 0,
+        disconnects: 0,
+        errors: [],
+    };
+
+    class TimezoneCancellable {
+        cancel() { timezoneObservations.cancellableCancels += 1; }
+    }
+
+    function makeMonitor() {
+        const signals = new Map();
+        return {
+            connect(signal, callback) {
+                const id = nextId++;
+                signals.set(id, [signal, callback]);
+                return id;
+            },
+            disconnect(id) {
+                signals.delete(id);
+                timezoneObservations.disconnects += 1;
+            },
+            cancel() { timezoneObservations.monitorCancels += 1; },
+            emitChanged(file = null, otherFile = null) {
+                for (const [signal, callback] of signals.values()) {
+                    if (signal === "changed") {
+                        callback(this, file, otherFile, 0);
+                    }
+                }
+            },
+        };
+    }
+
+    const directMonitor = makeMonitor();
+    const directoryMonitor = makeMonitor();
+    const fakeFile = (value) => ({
+        get_basename() { return path.basename(value); },
+        monitor_file() {
+            timezoneObservations.directMonitors += 1;
+            if (directFails) throw new Error("direct monitor failed");
+            return directMonitor;
+        },
+        monitor_directory() {
+            timezoneObservations.directoryMonitors += 1;
+            if (fallbackFails) throw new Error("directory monitor failed");
+            return directoryMonitor;
+        },
+    });
+
+    const timezoneContext = {
+        console,
+        global: {
+            logError(error) { timezoneObservations.errors.push(String(error)); },
+        },
+        imports: {
+            signals: { addSignalMethods },
+            gi: {
+                Gio: {
+                    Cancellable: TimezoneCancellable,
+                    FileMonitorFlags: { NONE: 0 },
+                    File: { new_for_path: fakeFile },
+                },
+            },
+        },
+    };
+    vm.createContext(timezoneContext);
+    const timezoneSource = fs.readFileSync(
+        path.join(root, "src", "cinnamon", "timezoneMonitor.js"), "utf8"
+    );
+    vm.runInContext(
+        `${timezoneSource}\nglobalThis.__TimezoneMonitor = TimezoneMonitor;`,
+        timezoneContext,
+        { filename: "timezoneMonitor.js" }
+    );
+
+    return {
+        TimezoneMonitor: timezoneContext.__TimezoneMonitor,
+        observations: timezoneObservations,
+        directMonitor,
+        directoryMonitor,
+        file(name) { return fakeFile(`/etc/${name}`); },
+    };
+}
+
+{
+    const fixture = evaluateTimezoneMonitor();
+    const timezoneMonitor = new fixture.TimezoneMonitor();
+    let changed = 0;
+    timezoneMonitor.connect("changed", () => { changed += 1; });
+    timezoneMonitor.start();
+    timezoneMonitor.start();
+    assert.equal(fixture.observations.directMonitors, 1);
+    assert.equal(fixture.observations.directoryMonitors, 0);
+    fixture.directMonitor.emitChanged();
+    assert.equal(changed, 1);
+    timezoneMonitor.destroy();
+    timezoneMonitor.destroy();
+    assert.equal(fixture.observations.disconnects, 1);
+    assert.equal(fixture.observations.monitorCancels, 1);
+    assert.equal(fixture.observations.cancellableCancels, 1);
+}
+
+{
+    const fixture = evaluateTimezoneMonitor({ directFails: true });
+    const timezoneMonitor = new fixture.TimezoneMonitor();
+    let changed = 0;
+    timezoneMonitor.connect("changed", () => { changed += 1; });
+    timezoneMonitor.start();
+    assert.equal(fixture.observations.directMonitors, 1);
+    assert.equal(fixture.observations.directoryMonitors, 1);
+    fixture.directoryMonitor.emitChanged(fixture.file("passwd"));
+    assert.equal(changed, 0, "fallback must ignore unrelated /etc changes");
+    fixture.directoryMonitor.emitChanged(fixture.file("localtime"));
+    assert.equal(changed, 1, "fallback must observe /etc/localtime replacement");
+    fixture.directoryMonitor.emitChanged(null, fixture.file("localtime"));
+    assert.equal(changed, 2, "fallback must observe localtime move targets");
+    timezoneMonitor.destroy();
+}
+
+{
+    const fixture = evaluateTimezoneMonitor({
+        directFails: true,
+        fallbackFails: true,
+    });
+    const timezoneMonitor = new fixture.TimezoneMonitor();
+    timezoneMonitor.start();
+    assert.equal(fixture.observations.errors.length, 1);
+    assert.match(
+        fixture.observations.errors[0],
+        /fallback failed/,
+        "total monitoring failure must remain observable"
+    );
+    timezoneMonitor.destroy();
+}
+
+console.log("CalendarServer transport and timezone monitor behaviour tests passed.");
