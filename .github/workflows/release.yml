@@ -184,6 +184,8 @@ jobs:
             git push origin "$tag"
           fi
 
+      # published releases are immutable; reruns verify the exact release and
+      # its qualified assets instead of mutating an already-public release.
       - name: Create or inspect GitHub release
         env:
           GH_TOKEN: ${{ github.token }}
