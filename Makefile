@@ -634,11 +634,11 @@ install: all
 	install -Dm755 "$(BUILD_DIR)/$(ABOUT_BINARY)" \
 		"$(DESTDIR)$(PREFIX)/libexec/$(ABOUT_BINARY)"
 	install -Dm644 "$(ABOUT_DESKTOP)" \
-		"$(DESTDIR)$(PREFIX)/share/applications/infiltratr-calendar-about.desktop"
+		"$(DESTDIR)$(PREFIX)/share/applications/infiltrator-calendar-about.desktop"
 	install -Dm644 "$(ICON_SRC)" \
 		"$(DESTDIR)$(PREFIX)/share/icons/hicolor/256x256/apps/$(ICON_NAME).png"
 	install -Dm644 "$(ICON_SRC)" \
-		"$(DESTDIR)$(PREFIX)/share/app-install/icons/infiltratr-calendar.png"
+		"$(DESTDIR)$(PREFIX)/share/app-install/icons/infiltrator-calendar.png"
 	install -d \
 		"$(DESTDIR)$(PREFIX)/share/cinnamon/applets/$(UUID)" \
 		"$(DESTDIR)$(PREFIX)/share/infiltrator/policy-providers"
