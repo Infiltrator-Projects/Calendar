@@ -5,14 +5,12 @@
  * Calendar month/period view.
  *
  * The visible calendar is always a 6 x 7 actor grid, but the meaning of a
- * "month" is delegated to CalendarPlus.CalendarSystem.  ISO week and Mayan
+ * "month" is delegated to CalendarPlus.CalendarSystem. ISO week and Mayan
  * views can therefore browse their natural periods without JavaScript
  * pretending that every calendar has Gregorian month boundaries.
  *
- * Date invariant: JavaScript Date objects are used only as local civil-date
- * carriers at the Cinnamon boundary.  Calendar arithmetic, period movement,
- * ISO week numbering, work-day classification and all 42 cell flags are
- * produced by the native library.
+ * Civil-date representation and event-range projection are separate modules;
+ * this controller owns navigation and actor presentation only.
  */
 
 const CalendarPlus = imports.gi.CalendarPlus;
@@ -54,6 +52,12 @@ const SignalBag = RuntimeSupport.SignalBag;
 const NativeBoundary = RuntimeSupport.loadLocalModule(
     "nativeBoundary"
 ).NativeBoundary;
+const CivilDateBoundary = RuntimeSupport.loadLocalModule(
+    "civilDate"
+).CivilDateBoundary;
+const CalendarEventProjection = RuntimeSupport.loadLocalModule(
+    "calendarEventProjection"
+).CalendarEventProjection;
 
 const FIRST_WEEKDAY_KEY = "first-day-of-week";
 const WEEK_NUMBER_WIDTH_DIGITS = 3;
@@ -66,87 +70,15 @@ const DATE_PARTS = Object.freeze({
     full: CalendarPlus.DatePart.FULL,
 });
 
-class CivilDate {
-    constructor(year, month, day) {
-        this._year = year;
-        this._month = month;
-        this._day = day;
-    }
+const _dateFields = CivilDateBoundary.fields;
+const _sameCivilDate = CivilDateBoundary.same;
+const _civilDateIsValid = CivilDateBoundary.isValid;
+const _representableLocalDate = CivilDateBoundary.representableLocalDate;
+const _localDate = CivilDateBoundary.create;
+const _cloneDate = CivilDateBoundary.clone;
 
-    getFullYear() { return this._year; }
-    getMonth() { return this._month - 1; }
-    getDate() { return this._day; }
-    getDay() { return CalendarPlus.date_weekday(this._year, this._month, this._day); }
-}
-
-function _dateFields(date) {
-    if (date === null ||
-        typeof date.getFullYear !== "function" ||
-        typeof date.getMonth !== "function" ||
-        typeof date.getDate !== "function") {
-        return [NaN, NaN, NaN];
-    }
-    return [date.getFullYear(), date.getMonth() + 1, date.getDate()];
-}
-
-function _sameCivilDate(a, b) {
-    return CalendarPlus.date_same(..._dateFields(a), ..._dateFields(b));
-}
-
-function _civilDateIsValid(year, month, day) {
-    return Number.isInteger(year) &&
-        year >= -2147483648 && year <= 2147483647 &&
-        Number.isInteger(month) &&
-        Number.isInteger(day) &&
-        CalendarPlus.date_same(year, month, day, year, month, day);
-}
-
-function _representableLocalDate(year, month, day) {
-    if (!_civilDateIsValid(year, month, day)) {
-        return null;
-    }
-
-    const value = new Date();
-    value.setHours(12, 0, 0, 0);
-    value.setFullYear(year, month - 1, day);
-    if (!Number.isFinite(value.getTime()) ||
-        value.getFullYear() !== year ||
-        value.getMonth() + 1 !== month ||
-        value.getDate() !== day) {
-        return null;
-    }
-    return value;
-}
-
-/*
- * Date-only UI state must survive civil dates that have no local instant
- * (for example Pacific/Apia 2011-12-30). Use a lightweight civil carrier when
- * the host timezone cannot represent local noon; convert to an actual instant
- * only at event/transport boundaries that genuinely need one.
- */
-function _localDate(year, month, day) {
-    if (!_civilDateIsValid(year, month, day)) {
-        return null;
-    }
-    return _representableLocalDate(year, month, day) ||
-        new CivilDate(year, month, day);
-}
-
-function _cloneDate(date) {
-    const [year, month, day] = _dateFields(date);
-    return _localDate(year, month, day);
-}
-
-/*
- * Navigation comes back from C as Gregorian fields. Preserve the civil
- * coordinate even when the host timezone skipped that date completely.
- */
 function _localDateFromVariant(parts) {
-    if (parts === null) {
-        return null;
-    }
-    const civil = NativeBoundary.decodeCivilDate(parts);
-    return _localDate(civil.year, civil.month, civil.day);
+    return CivilDateBoundary.fromVariant(parts, NativeBoundary);
 }
 
 function _weekdayAbbreviation(dayIndex) {
@@ -603,69 +535,14 @@ var Calendar = class Calendar {
         this._removeCells();
 
         const records = NativeBoundary.decodeCalendarGrid(model);
-        let eventColorsByCell = [];
-        let firstDate = null;
-        let lastDate = null;
-
-        /*
-         * The native grid supplies Gregorian coordinates for every displayed
-         * cell even when the primary calendar uses different period boundaries.
-         * Those exact endpoints define the event-cache query; selection only
-         * controls which day's agenda is shown.
-         */
-        if (records.length > 0) {
-            let firstRepresentableIndex = -1;
-
-            for (let index = 0; index < records.length; index++) {
-                const record = records[index];
-                const candidate = _representableLocalDate(
-                    record.year, record.month, record.day
-                );
-                if (candidate !== null) {
-                    firstDate = candidate;
-                    firstRepresentableIndex = index;
-                    break;
-                }
-            }
-            for (let index = records.length - 1; index >= 0; index--) {
-                const record = records[index];
-                const candidate = _representableLocalDate(
-                    record.year, record.month, record.day
-                );
-                if (candidate !== null) {
-                    lastDate = candidate;
-                    break;
-                }
-            }
-
-            if (firstDate !== null && lastDate !== null) {
-                this.event_source.set_visible_range(
-                    firstDate,
-                    lastDate,
-                    forceReload
-                );
-                if (this.events_enabled && firstRepresentableIndex >= 0) {
-                    const colors = this.event_source.get_colors_for_range(
-                        firstDate,
-                        records.length - firstRepresentableIndex,
-                        MAX_EVENT_DOTS
-                    );
-                    eventColorsByCell =
-                        Array.from({ length: records.length }, () => []);
-                    for (let index = 0;
-                         index < colors.length &&
-                         firstRepresentableIndex + index < records.length;
-                         index++) {
-                        eventColorsByCell[firstRepresentableIndex + index] =
-                            colors[index];
-                    }
-                }
-            } else {
-                global.logError(
-                    "Calendar: visible range has no representable local instant."
-                );
-            }
-        }
+        const eventColorsByCell = CalendarEventProjection.build(
+            records,
+            this.event_source,
+            this.events_enabled,
+            forceReload,
+            _representableLocalDate,
+            MAX_EVENT_DOTS
+        );
 
         for (let index = 0; index < records.length; index++) {
             this._addGridCell(records[index], eventColorsByCell[index] || []);
@@ -826,8 +703,7 @@ var Calendar = class Calendar {
 
         /*
          * Balance the dots into the smallest useful number of rows, then give
-         * each row equal-width cells.  The last row is centred independently.
-         * Row balance is the invariant; the final row is centred separately.
+         * each row equal-width cells. The last row is centred independently.
          */
         const naturalColumns = Math.max(1, Math.floor(width / dotWidth));
         const rowsNeeded = Math.ceil(dots.length / naturalColumns);
