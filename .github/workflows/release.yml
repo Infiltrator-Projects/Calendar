@@ -140,14 +140,15 @@ jobs:
           printf 'RELEASE_WAS_PUBLISHED=%s\n' "$release_was_published" >> "$GITHUB_ENV"
 
       - name: Upload qualified assets to draft
-        if: env.RELEASE_WAS_PUBLISHED == 'false'
         env:
           GH_TOKEN: ${{ github.token }}
         shell: bash
         run: |
           set -euo pipefail
-          gh release upload "$RELEASE_TAG" \
-            "$RELEASE_DEB" "$RELEASE_INSTALLER" --clobber
+          if [[ "$RELEASE_WAS_PUBLISHED" == false ]]; then
+            gh release upload "$RELEASE_TAG" \
+              "$RELEASE_DEB" "$RELEASE_INSTALLER" --clobber
+          fi
 
       - name: Verify immutable release assets
         env:
