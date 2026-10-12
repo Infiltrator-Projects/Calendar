@@ -180,7 +180,7 @@ assert.equal(
     "destroy must cancel an outstanding range request"
 );
 
-function evaluateTimezoneMonitor({ directFails = false, fallbackFails = false } = {}) {
+function evaluateTimezoneMonitor({ directFails = false, fallbackFails = false, directConnectFails = false } = {}) {
     const timezoneObservations = {
         directMonitors: 0,
         directoryMonitors: 0,
@@ -194,10 +194,11 @@ function evaluateTimezoneMonitor({ directFails = false, fallbackFails = false } 
         cancel() { timezoneObservations.cancellableCancels += 1; }
     }
 
-    function makeMonitor() {
+    function makeMonitor(connectFails = false) {
         const signals = new Map();
         return {
             connect(signal, callback) {
+                if (connectFails) throw new Error("monitor connect failed");
                 const id = nextId++;
                 signals.set(id, [signal, callback]);
                 return id;
@@ -217,7 +218,7 @@ function evaluateTimezoneMonitor({ directFails = false, fallbackFails = false } 
         };
     }
 
-    const directMonitor = makeMonitor();
+    const directMonitor = makeMonitor(directConnectFails);
     const directoryMonitor = makeMonitor();
     const fakeFile = (value) => ({
         get_basename() { return path.basename(value); },
@@ -301,6 +302,25 @@ function evaluateTimezoneMonitor({ directFails = false, fallbackFails = false } 
     fixture.directoryMonitor.emitChanged(null, fixture.file("localtime"));
     assert.equal(changed, 2, "fallback must observe localtime move targets");
     timezoneMonitor.destroy();
+}
+
+{
+    const fixture = evaluateTimezoneMonitor({ directConnectFails: true });
+    const timezoneMonitor = new fixture.TimezoneMonitor();
+    let changed = 0;
+    timezoneMonitor.connect("changed", () => { changed += 1; });
+    timezoneMonitor.start();
+    assert.equal(fixture.observations.directMonitors, 1);
+    assert.equal(fixture.observations.directoryMonitors, 1);
+    assert.equal(
+        fixture.observations.monitorCancels,
+        1,
+        "a direct monitor whose signal hookup fails must be cancelled"
+    );
+    fixture.directoryMonitor.emitChanged(fixture.file("localtime"));
+    assert.equal(changed, 1);
+    timezoneMonitor.destroy();
+    assert.equal(fixture.observations.monitorCancels, 2);
 }
 
 {
