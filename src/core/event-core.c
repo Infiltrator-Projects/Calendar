@@ -6,8 +6,8 @@
  *
  * Inputs and results are ordinary C records. Transport-specific tuple parsing
  * and presentation-specific marshalling belong to adapters. Long events remain
- * one record: day membership is an interval query rather than a per-day
- * expansion, so storage is independent of event duration.
+ * one record: two sorted temporal indexes narrow interval queries without
+ * expanding an event into one record per covered day.
  */
 
 #include "event-core.h"
@@ -33,6 +33,8 @@ typedef struct
     gint64 modified;
     gint64 last_update_timestamp;
     guint64 sequence;
+    GSequenceIter *start_iter;
+    GSequenceIter *end_iter;
 } EventRecord;
 
 struct _CalendarPlusEventIndex
@@ -43,6 +45,13 @@ struct _CalendarPlusEventIndex
      * never outlive, or be freed twice with, its owning record.
      */
     GHashTable *events_by_id;
+    /*
+     * These sequences contain non-owning EventRecord pointers sorted only by
+     * local start/end day. A point or visible-range query can inspect the
+     * smaller candidate side instead of walking the complete identity table.
+     */
+    GSequence *events_by_start;
+    GSequence *events_by_end;
     /* Stable insertion order breaks equal-time ties without reordering rows. */
     guint64 next_sequence;
     /* Opaque strictly increasing snapshot token; never wall-clock metadata. */
@@ -262,6 +271,89 @@ event_record_from_input(const CalendarPlusEventInput *input)
     return event;
 }
 
+static gint
+compare_start_day(gconstpointer left,
+                  gconstpointer right,
+                  gpointer user_data)
+{
+    const EventRecord *a = left;
+    const EventRecord *b = right;
+
+    (void)user_data;
+    if (a->start_day_unix < b->start_day_unix)
+        return -1;
+    if (a->start_day_unix > b->start_day_unix)
+        return 1;
+    return 0;
+}
+
+static gint
+compare_end_day(gconstpointer left,
+                gconstpointer right,
+                gpointer user_data)
+{
+    const EventRecord *a = left;
+    const EventRecord *b = right;
+
+    (void)user_data;
+    if (a->end_day_unix < b->end_day_unix)
+        return -1;
+    if (a->end_day_unix > b->end_day_unix)
+        return 1;
+    return 0;
+}
+
+static void
+index_record(CalendarPlusEventIndex *index,
+             EventRecord *event)
+{
+    event->start_iter = g_sequence_insert_sorted(index->events_by_start,
+                                                  event,
+                                                  compare_start_day,
+                                                  NULL);
+    event->end_iter = g_sequence_insert_sorted(index->events_by_end,
+                                                event,
+                                                compare_end_day,
+                                                NULL);
+}
+
+static void
+unindex_record(EventRecord *event)
+{
+    if (event->start_iter != NULL)
+    {
+        g_sequence_remove(event->start_iter);
+        event->start_iter = NULL;
+    }
+    if (event->end_iter != NULL)
+    {
+        g_sequence_remove(event->end_iter);
+        event->end_iter = NULL;
+    }
+}
+
+static void
+rebuild_temporal_indexes(CalendarPlusEventIndex *index)
+{
+    GHashTableIter iter;
+    gpointer value;
+
+    g_sequence_remove_range(g_sequence_get_begin_iter(index->events_by_start),
+                            g_sequence_get_end_iter(index->events_by_start));
+    g_sequence_remove_range(g_sequence_get_begin_iter(index->events_by_end),
+                            g_sequence_get_end_iter(index->events_by_end));
+
+    g_hash_table_iter_init(&iter, index->events_by_id);
+    while (g_hash_table_iter_next(&iter, NULL, &value))
+    {
+        EventRecord *event = value;
+
+        event->start_iter = NULL;
+        event->end_iter = NULL;
+        index_record(index, event);
+    }
+}
+
 CalendarPlusEventIndex *
 calendar_plus_event_index_new(void)
 {
@@ -276,6 +368,8 @@ calendar_plus_event_index_new(void)
                               g_str_equal,
                               NULL,
                               (GDestroyNotify)event_record_free);
+    index->events_by_start = g_sequence_new(NULL);
+    index->events_by_end = g_sequence_new(NULL);
     index->revision = g_get_monotonic_time();
     return index;
 }
@@ -286,6 +380,10 @@ calendar_plus_event_index_free(CalendarPlusEventIndex *index)
     if (index == NULL)
         return;
 
+    g_sequence_free(index->events_by_start);
+    g_sequence_free(index->events_by_end);
+    index->events_by_start = NULL;
+    index->events_by_end = NULL;
     g_hash_table_destroy(index->events_by_id);
     index->events_by_id = NULL;
     g_free(index);
@@ -304,6 +402,7 @@ calendar_plus_event_index_remove(CalendarPlusEventIndex *index,
     if (event == NULL)
         return FALSE;
 
+    unindex_record(event);
     g_hash_table_steal(index->events_by_id, id);
     event_record_free(event);
     touch_index(index);
@@ -371,6 +470,7 @@ calendar_plus_event_index_upsert(CalendarPlusEventIndex *index,
     }
     if (existing != NULL)
     {
+        unindex_record(existing);
         g_hash_table_steal(index->events_by_id, existing->id);
         event_record_free(existing);
     }
@@ -378,6 +478,7 @@ calendar_plus_event_index_upsert(CalendarPlusEventIndex *index,
     g_hash_table_insert(index->events_by_id,
                         replacement->id,
                         replacement);
+    index_record(index, replacement);
     touch_index(index);
     return TRUE;
 }
@@ -427,9 +528,15 @@ calendar_plus_event_index_clear(CalendarPlusEventIndex *index)
         return;
 
     changed = g_hash_table_size(index->events_by_id) > 0;
-    g_hash_table_remove_all(index->events_by_id);
     if (changed)
+    {
+        g_sequence_remove_range(g_sequence_get_begin_iter(index->events_by_start),
+                                g_sequence_get_end_iter(index->events_by_start));
+        g_sequence_remove_range(g_sequence_get_begin_iter(index->events_by_end),
+                                g_sequence_get_end_iter(index->events_by_end));
+        g_hash_table_remove_all(index->events_by_id);
         touch_index(index);
+    }
 }
 
 gboolean
@@ -445,7 +552,7 @@ calendar_plus_event_index_refresh_timezone(CalendarPlusEventIndex *index)
     /*
      * UTC event instants do not change when the timezone does, but their local
      * civil-day membership can. Recompute only the derived day boundaries and
-     * expose one revision change if any visible membership changed.
+     * rebuild the two non-owning temporal orderings once if anything changed.
      */
     g_hash_table_iter_init(&iter, index->events_by_id);
     while (g_hash_table_iter_next(&iter, NULL, &value))
@@ -467,7 +574,10 @@ calendar_plus_event_index_refresh_timezone(CalendarPlusEventIndex *index)
     }
 
     if (changed)
+    {
+        rebuild_temporal_indexes(index);
         touch_index(index);
+    }
     return changed;
 }
 
@@ -493,6 +603,95 @@ compare_records(gconstpointer left,
     return g_strcmp0(a->id, b->id);
 }
 
+static GSequenceIter *
+start_day_upper_bound(CalendarPlusEventIndex *index,
+                      gint64 day)
+{
+    EventRecord probe = { .start_day_unix = day };
+    GSequenceIter *iter = g_sequence_search(index->events_by_start,
+                                            &probe,
+                                            compare_start_day,
+                                            NULL);
+
+    while (!g_sequence_iter_is_end(iter))
+    {
+        const EventRecord *event = g_sequence_get(iter);
+
+        if (event->start_day_unix != day)
+            break;
+        iter = g_sequence_iter_next(iter);
+    }
+    return iter;
+}
+
+static GSequenceIter *
+end_day_lower_bound(CalendarPlusEventIndex *index,
+                    gint64 day)
+{
+    EventRecord probe = { .end_day_unix = day };
+    GSequenceIter *iter = g_sequence_search(index->events_by_end,
+                                            &probe,
+                                            compare_end_day,
+                                            NULL);
+
+    while (!g_sequence_iter_is_begin(iter))
+    {
+        GSequenceIter *previous = g_sequence_iter_prev(iter);
+        const EventRecord *event = g_sequence_get(previous);
+
+        if (event->end_day_unix != day)
+            break;
+        iter = previous;
+    }
+    return iter;
+}
+
+static void
+append_overlapping_candidates(CalendarPlusEventIndex *index,
+                              gint64 first_day,
+                              gint64 last_day,
+                              GPtrArray *result)
+{
+    GSequenceIter *start_stop;
+    GSequenceIter *end_start;
+    GSequenceIter *iter;
+    gsize start_count;
+    gsize end_count;
+    const gsize total = (gsize)g_sequence_get_length(index->events_by_start);
+
+    if (first_day > last_day || total == 0)
+        return;
+
+    start_stop = start_day_upper_bound(index, last_day);
+    end_start = end_day_lower_bound(index, first_day);
+    start_count = (gsize)g_sequence_iter_get_position(start_stop);
+    end_count = total - (gsize)g_sequence_iter_get_position(end_start);
+
+    if (start_count <= end_count)
+    {
+        for (iter = g_sequence_get_begin_iter(index->events_by_start);
+             iter != start_stop;
+             iter = g_sequence_iter_next(iter))
+        {
+            EventRecord *event = g_sequence_get(iter);
+
+            if (event->end_day_unix >= first_day)
+                g_ptr_array_add(result, event);
+        }
+        return;
+    }
+
+    for (iter = end_start;
+         !g_sequence_iter_is_end(iter);
+         iter = g_sequence_iter_next(iter))
+    {
+        EventRecord *event = g_sequence_get(iter);
+
+        if (event->start_day_unix <= last_day)
+            g_ptr_array_add(result, event);
+    }
+}
+
 static GPtrArray *
 ordered_records(CalendarPlusEventIndex *index,
                 gint64 local_day_unix,
@@ -501,21 +700,12 @@ ordered_records(CalendarPlusEventIndex *index,
     const gint64 requested_day = local_day_start(local_day_unix);
     GPtrArray *sorted = g_ptr_array_new();
     GPtrArray *ordered;
-    GHashTableIter iter;
-    gpointer value;
     guint item;
 
-    g_hash_table_iter_init(&iter, index->events_by_id);
-    while (g_hash_table_iter_next(&iter, NULL, &value))
-    {
-        const EventRecord *event = value;
-
-        if (event->start_day_unix <= requested_day &&
-            event->end_day_unix >= requested_day)
-        {
-            g_ptr_array_add(sorted, value);
-        }
-    }
+    append_overlapping_candidates(index,
+                                  requested_day,
+                                  requested_day,
+                                  sorted);
     /*
      * Base ordering is deterministic for every day. Today's agenda then keeps
      * Cinnamon's useful visual grouping without mutating the stored index:
@@ -579,7 +769,6 @@ calendar_plus_event_index_colors(CalendarPlusEventIndex *index,
     }
     return colors;
 }
-
 
 static gsize
 lower_bound_day(const gint64 *days,
@@ -750,9 +939,8 @@ calendar_plus_event_index_color_range(CalendarPlusEventIndex *index,
     g_autofree gboolean *day_valid = NULL;
     g_autofree gint64 *valid_days = NULL;
     g_autofree gsize *valid_indexes = NULL;
+    g_autoptr(GPtrArray) candidates = g_ptr_array_new();
     GPtrArray **buckets;
-    GHashTableIter iter;
-    gpointer value;
     gsize valid_count = 0;
     gsize item;
 
@@ -781,19 +969,24 @@ calendar_plus_event_index_color_range(CalendarPlusEventIndex *index,
         }
     }
 
-    /*
-     * Traverse the hash once.  Binary-search the first relevant day, then walk
-     * only the event's intersecting span instead of rescanning every event for
-     * every visible calendar cell.
-     */
-    g_hash_table_iter_init(&iter, index->events_by_id);
-    while (g_hash_table_iter_next(&iter, NULL, &value))
+    if (valid_count > 0)
     {
-        EventRecord *event = value;
-        gsize first;
+        append_overlapping_candidates(index,
+                                      valid_days[0],
+                                      valid_days[valid_count - 1U],
+                                      candidates);
+    }
 
-        if (valid_count == 0)
-            continue;
+    /*
+     * The temporal indexes bound the candidate set first. For each surviving
+     * event, binary-search the first relevant day and walk only its intersecting
+     * span instead of scanning every indexed event for every visible cell.
+     */
+    for (item = 0; item < candidates->len; item++)
+    {
+        EventRecord *event = g_ptr_array_index(candidates, item);
+        gsize first;
+        gsize day_index;
 
         first = lower_bound_day(
             valid_days, valid_count, event->start_day_unix);
@@ -803,20 +996,19 @@ calendar_plus_event_index_color_range(CalendarPlusEventIndex *index,
             continue;
         }
 
-        for (item = first;
-             item < valid_count &&
-             valid_days[item] <= event->end_day_unix;
-             item++)
+        for (day_index = first;
+             day_index < valid_count &&
+             valid_days[day_index] <= event->end_day_unix;
+             day_index++)
         {
-            g_ptr_array_add(buckets[valid_indexes[item]], event);
+            g_ptr_array_add(buckets[valid_indexes[day_index]], event);
         }
     }
 
     /*
-     * These temporary lookup arrays are no longer needed once the single
-     * event-index scan has populated the per-day buckets. Release them before
-     * allocating the returned range so ownership is explicit to both readers
-     * and static analyzers.
+     * These temporary lookup arrays are no longer needed once the candidate
+     * events have populated the per-day buckets. Release them before allocating
+     * the returned range so ownership stays explicit.
      */
     g_clear_pointer(&valid_days, g_free);
     g_clear_pointer(&valid_indexes, g_free);
