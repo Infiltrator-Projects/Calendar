@@ -95,7 +95,7 @@ jobs:
         run: tools/live-cinnamon-ci-smoke.sh
 
   bigbedroom-live-probe:
-    name: BigBedroom / live Cinnamon probe
+    name: BigBedroom / live Cinnamon qualification
     runs-on: bigbedroom
     timeout-minutes: 10
     steps:
@@ -106,6 +106,14 @@ jobs:
         id: live-cinnamon
         shell: bash
         run: tools/live-cinnamon-ci-smoke.sh --probe
+      - name: Require live Cinnamon for release commits
+        if: >-
+          startsWith(github.event.head_commit.message, 'Release ') &&
+          steps.live-cinnamon.outputs.ready != 'true'
+        shell: bash
+        run: |
+          echo 'Release commits require an available real Cinnamon session.' >&2
+          exit 1
       - name: Live Cinnamon runtime qualification
         if: steps.live-cinnamon.outputs.ready == 'true'
         env:
