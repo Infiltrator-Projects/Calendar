@@ -276,8 +276,10 @@ swedish_add_years(const CalendarPlusCalendarProvider *provider,
 
 /*
  * Local implementation slots are keyed explicitly by stable calendar ID.
- * Common owns the catalogue metadata, but its array ordering is deliberately
- * not part of Calendar's provider identity or dispatch contract.
+ * Common owns descriptive catalogue metadata, but catalogue completeness and
+ * array ordering are deliberately not runtime prerequisites for chronology.
+ * An independently valid Calendar provider must continue to work even if a
+ * mismatched Common build lacks metadata for some other provider.
  */
 static const BuiltinCalendarProvider providers[] = {
     ARITHMETIC_PROVIDER(GREGORIAN, "gregorian", "gregorian"),
@@ -333,47 +335,16 @@ provider_from_id_unchecked(const gchar *calendar_id)
     return NULL;
 }
 
-static gboolean
-provider_set_matches_common(void)
-{
-    gsize index;
-    const gsize common_count = infiltratr_temporal_calendar_count();
-
-    if (common_count != G_N_ELEMENTS(providers))
-        return FALSE;
-
-    for (index = 0; index < G_N_ELEMENTS(providers); index++)
-    {
-        const gchar *id = providers[index].interface.calendar_id;
-
-        if (id == NULL || infiltratr_temporal_calendar_find(id) == NULL)
-            return FALSE;
-    }
-
-    for (index = 0; index < common_count; index++)
-    {
-        const InfiltratrTemporalCalendarInfo *info =
-            infiltratr_temporal_calendar_at(index);
-
-        if (info == NULL || info->id == NULL ||
-            provider_from_id_unchecked(info->id) == NULL)
-        {
-            return FALSE;
-        }
-    }
-    return TRUE;
-}
-
 gsize
 calendar_plus_calendar_provider_get_count(void)
 {
-    return provider_set_matches_common() ? G_N_ELEMENTS(providers) : 0;
+    return G_N_ELEMENTS(providers);
 }
 
 const CalendarPlusCalendarProvider *
 calendar_plus_calendar_provider_at(gsize index)
 {
-    if (index >= calendar_plus_calendar_provider_get_count())
+    if (index >= G_N_ELEMENTS(providers))
         return NULL;
 
     return &providers[index].interface;
@@ -385,8 +356,7 @@ calendar_plus_calendar_provider_info(
 {
     if (provider == NULL ||
         provider->abi_version != CALENDAR_PLUS_CALENDAR_PROVIDER_ABI ||
-        provider->calendar_id == NULL ||
-        !provider_set_matches_common())
+        provider->calendar_id == NULL)
     {
         return NULL;
     }
@@ -397,8 +367,5 @@ calendar_plus_calendar_provider_info(
 const CalendarPlusCalendarProvider *
 calendar_plus_calendar_provider_from_id(const gchar *calendar_id)
 {
-    if (calendar_id == NULL || !provider_set_matches_common())
-        return NULL;
-
     return provider_from_id_unchecked(calendar_id);
 }
