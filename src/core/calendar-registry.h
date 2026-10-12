@@ -23,6 +23,8 @@ G_BEGIN_DECLS
  * calendar_id is the stable semantic join key with Infiltratr Common. Never use
  * Common catalogue position as provider identity: catalogue ordering is not an
  * ABI and may change independently of Calendar's local implementation table.
+ * common_index is retained only as the historical name of Calendar's local
+ * provider slot for existing internal tests; runtime Common lookup ignores it.
  */
 typedef struct _CalendarPlusCalendarProvider CalendarPlusCalendarProvider;
 
@@ -46,6 +48,7 @@ struct _CalendarPlusCalendarProvider
 {
     guint abi_version;
     const gchar *calendar_id;
+    gsize common_index;
     CalendarPlusProviderFieldsFunc fields_from_jdn;
     CalendarPlusProviderFormatFunc format;
     CalendarPlusProviderPeriodStartFunc period_start;
