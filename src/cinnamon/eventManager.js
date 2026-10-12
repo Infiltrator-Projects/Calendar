@@ -172,7 +172,31 @@ var EventsManager = class EventsManager {
         if (next === this._enabled) {
             return;
         }
+
         this._enabled = next;
+        this._cancelRangeRetry();
+        if (this._reload_id > 0) {
+            Mainloop.source_remove(this._reload_id);
+            this._reload_id = 0;
+        }
+        this._force_reload_pending = false;
+        this._rangeState.resetForServerLoss();
+        this.last_update_timestamp = 0;
+
+        if (!next) {
+            if (this.event_store !== null) {
+                this.event_store.clear();
+            }
+            this._publishAgendaEvents(null, false);
+        } else if (this._transport !== null) {
+            this._transport.start();
+            if (this._transport.is_ready() &&
+                this.current_range_start_civil !== null &&
+                this.current_range_end_civil !== null) {
+                this.queue_reload(true);
+            }
+        }
+
         this.emit("has-calendars-changed");
         this.emit("events-updated");
     }
@@ -237,15 +261,21 @@ var EventsManager = class EventsManager {
     }
 
     start_events() {
-        if (!this._destroyed && this._transport !== null) {
+        if (!this._destroyed && this._enabled && this._transport !== null) {
             this._transport.start();
         }
     }
 
     _transportReady() {
-        if (!this._destroyed) {
-            this.emit("events-manager-ready");
+        if (this._destroyed) {
+            return;
         }
+        if (this._enabled &&
+            this.current_range_start_civil !== null &&
+            this.current_range_end_civil !== null) {
+            this.queue_reload(true);
+        }
+        this.emit("events-manager-ready");
     }
 
     _transportUnavailable(expectedEmpty) {
@@ -275,7 +305,8 @@ var EventsManager = class EventsManager {
     }
 
     _scheduleRangeRetry() {
-        if (this._destroyed || this._range_retry_timer_id > 0 ||
+        if (this._destroyed || !this._enabled ||
+            this._range_retry_timer_id > 0 ||
             this._rangeState.pending ||
             this.current_range_start === null ||
             this.current_range_end === null) {
@@ -287,7 +318,8 @@ var EventsManager = class EventsManager {
             delay,
             () => {
                 this._range_retry_timer_id = 0;
-                if (!this._destroyed && !this._rangeState.pending &&
+                if (!this._destroyed && this._enabled &&
+                    !this._rangeState.pending &&
                     this._transport !== null && this._transport.is_ready() &&
                     this.current_range_start !== null &&
                     this.current_range_end !== null) {
@@ -304,7 +336,7 @@ var EventsManager = class EventsManager {
     }
 
     _timezoneChanged() {
-        if (this._destroyed || this.event_store === null) {
+        if (this._destroyed || !this._enabled || this.event_store === null) {
             return;
         }
 
@@ -324,6 +356,9 @@ var EventsManager = class EventsManager {
             this.event_store.clear();
         }
 
+        if (!this._enabled) {
+            return;
+        }
         if (requestPending) {
             this._rangeState.queueForce(true);
         } else if (this.current_range_start !== null &&
@@ -333,7 +368,7 @@ var EventsManager = class EventsManager {
     }
 
     _ingestEvents(payload) {
-        if (this._destroyed || this.event_store === null ||
+        if (this._destroyed || !this._enabled || this.event_store === null ||
             !this._rangeState.acceptingEvents ||
             this.current_range_start === null ||
             this.current_range_end === null) {
@@ -363,12 +398,14 @@ var EventsManager = class EventsManager {
     }
 
     _removeEvents(serializedIds) {
-        if (this._destroyed || this.event_store === null ||
+        if (this._destroyed || !this._enabled || this.event_store === null ||
+            !this._rangeState.acceptingEvents ||
             typeof serializedIds !== "string" || serializedIds.length === 0) {
             return;
         }
-        this._invalidateCurrentRange(true);
-        this.emit("events-updated");
+        if (this.event_store.remove(serializedIds)) {
+            this.emit("events-updated");
+        }
     }
 
     _calendarSetChanged() {
@@ -383,12 +420,14 @@ var EventsManager = class EventsManager {
         if (this._destroyed || next === STATUS_UNKNOWN) {
             return;
         }
-        this.queue_reload(true);
+        if (this._enabled) {
+            this.queue_reload(true);
+        }
         this.emit("has-calendars-changed");
     }
 
     _requestVisibleRange(first, last, force, clearStore) {
-        if (this._destroyed || this._transport === null ||
+        if (this._destroyed || !this._enabled || this._transport === null ||
             !this._transport.is_ready() || this.event_store === null ||
             this._rangeState.pending) {
             return;
@@ -421,7 +460,7 @@ var EventsManager = class EventsManager {
             exclusiveEnd.to_unix() - 1,
             Boolean(force),
             (succeeded, currentTransport) => {
-                if (this._destroyed || !currentTransport ||
+                if (this._destroyed || !this._enabled || !currentTransport ||
                     !this._rangeState.isCurrent(requestGeneration)) {
                     return;
                 }
@@ -467,7 +506,7 @@ var EventsManager = class EventsManager {
 
     set_visible_range(firstDate, lastDate, force) {
         if (this._destroyed || this._transport === null ||
-            !this._transport.is_ready() || this.event_store === null) {
+            this.event_store === null) {
             return;
         }
 
@@ -516,6 +555,10 @@ var EventsManager = class EventsManager {
             this._rangeState.resetRetry();
         }
 
+        if (!this._enabled || !this._transport.is_ready()) {
+            this._rangeState.invalidate();
+            return;
+        }
         if (this._rangeState.pending) {
             this._rangeState.queueForce(Boolean(force) || changed);
             return;
@@ -530,7 +573,7 @@ var EventsManager = class EventsManager {
             Mainloop.source_remove(this._reload_id);
             this._reload_id = 0;
         }
-        if (this._destroyed) {
+        if (this._destroyed || !this._enabled) {
             return;
         }
         this._force_reload_pending = this._force_reload_pending || Boolean(force);
@@ -539,7 +582,7 @@ var EventsManager = class EventsManager {
             const forceReload = this._force_reload_pending;
             this._force_reload_pending = false;
 
-            if (!this._destroyed) {
+            if (!this._destroyed && this._enabled) {
                 if (forceReload &&
                     this.current_range_start_civil !== null &&
                     this.current_range_end_civil !== null) {
@@ -633,7 +676,7 @@ var EventsManager = class EventsManager {
     }
 
     get_colors_for_range(js_date, dayCount, maximumColorsPerDay) {
-        if (this._destroyed || this.event_store === null ||
+        if (this._destroyed || !this._enabled || this.event_store === null ||
             !Number.isInteger(dayCount) || dayCount <= 0 ||
             !Number.isInteger(maximumColorsPerDay) ||
             maximumColorsPerDay < 0) {
