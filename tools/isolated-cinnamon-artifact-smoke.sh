@@ -56,7 +56,26 @@ cleanup() {
         kill "$XVFB_PID" >/dev/null 2>&1 || true
         wait "$XVFB_PID" 2>/dev/null || true
     fi
-    rm -rf "$STAGE_ROOT" "$TEST_ROOT" "$TEST_RUNTIME" "$DISPLAY_FILE"
+
+    # Cinnamon may activate short-lived desktop services on the isolated bus.
+    # They can take a fraction of a second to observe bus shutdown and may
+    # recreate cache/runtime entries while exiting. Cleanup is housekeeping,
+    # not qualification evidence: retry it without converting an already
+    # successful exact-artifact test into a false failure.
+    for path in "$STAGE_ROOT" "$TEST_ROOT" "$TEST_RUNTIME" "$DISPLAY_FILE"; do
+        removed=false
+        for _ in $(seq 1 20); do
+            rm -rf -- "$path" >/dev/null 2>&1 || true
+            if [[ ! -e "$path" ]]; then
+                removed=true
+                break
+            fi
+            sleep 0.1
+        done
+        if [[ "$removed" != true ]]; then
+            printf 'warning: isolated Calendar cleanup left temporary path %s\n' "$path" >&2
+        fi
+    done
     exit "$status"
 }
 trap cleanup EXIT HUP INT TERM
