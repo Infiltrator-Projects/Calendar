@@ -5,9 +5,9 @@
  * Built-in calendar-provider registry.
  *
  * Calendar identifiers are persisted in Cinnamon settings, so IDs are stable
- * data rather than implementation details.  Each provider exposes the same
- * backend-neutral operation table.  CalendarSystem resolves that interface
- * once and never branches on ICU versus native implementation afterwards.
+ * data rather than implementation details. Each provider exposes the same
+ * backend-neutral operation table. CalendarSystem resolves that interface once
+ * and never branches on ICU versus native implementation afterwards.
  *
  * BuiltinCalendarProvider embeds the generic interface first. The built-in
  * adapters can therefore recover their private enum or ICU keyword while the
@@ -233,102 +233,147 @@ swedish_add_years(const CalendarPlusCalendarProvider *provider,
     return calendar_plus_swedish_add_years(jdn, amount);
 }
 
-#define PROVIDER_INTERFACE(mode_, fields_, format_, start_, add_, years_) \
+#define PROVIDER_INTERFACE(id_, fields_, format_, start_, add_, years_) \
     { \
         CALENDAR_PLUS_CALENDAR_PROVIDER_ABI, \
-        CALENDAR_PLUS_CALENDAR_MODE_##mode_, \
+        id_, \
         fields_, format_, start_, add_, years_ \
     }
 
-#define ICU_PROVIDER(mode_, keyword_) \
+#define ICU_PROVIDER(mode_, id_, keyword_) \
     [CALENDAR_PLUS_CALENDAR_MODE_##mode_] = { \
-        PROVIDER_INTERFACE(mode_, \
+        PROVIDER_INTERFACE(id_, \
                            icu_fields, icu_format, icu_period_start, \
                            icu_add_periods, icu_add_years), \
         CALENDAR_PLUS_CALENDAR_MODE_##mode_, keyword_ \
     }
 
-#define ARITHMETIC_PROVIDER(mode_, keyword_) \
+#define ARITHMETIC_PROVIDER(mode_, id_, keyword_) \
     [CALENDAR_PLUS_CALENDAR_MODE_##mode_] = { \
-        PROVIDER_INTERFACE(mode_, \
+        PROVIDER_INTERFACE(id_, \
                            arithmetic_fields, icu_format, \
                            arithmetic_period_start, arithmetic_add_periods, \
                            arithmetic_add_years), \
         CALENDAR_PLUS_CALENDAR_MODE_##mode_, keyword_ \
     }
 
-#define CUSTOM_PROVIDER(mode_) \
+#define CUSTOM_PROVIDER(mode_, id_) \
     [CALENDAR_PLUS_CALENDAR_MODE_##mode_] = { \
-        PROVIDER_INTERFACE(mode_, \
+        PROVIDER_INTERFACE(id_, \
                            custom_fields, custom_format, custom_period_start, \
                            custom_add_periods, custom_add_years), \
         CALENDAR_PLUS_CALENDAR_MODE_##mode_, NULL \
     }
 
-#define SWEDISH_PROVIDER(mode_) \
+#define SWEDISH_PROVIDER(mode_, id_) \
     [CALENDAR_PLUS_CALENDAR_MODE_##mode_] = { \
-        PROVIDER_INTERFACE(mode_, \
+        PROVIDER_INTERFACE(id_, \
                            swedish_fields, swedish_format, swedish_period_start, \
                            swedish_add_periods, swedish_add_years), \
         CALENDAR_PLUS_CALENDAR_MODE_##mode_, NULL \
     }
 
 /*
- * This table intentionally follows Common's catalogue order exactly.
- * Calendar owns only the backend implementation choice and ICU keyword.
- * Persisted identifiers and English presentation names are read from Common.
+ * Local implementation slots are keyed explicitly by stable calendar ID.
+ * Common owns the catalogue metadata, but its array ordering is deliberately
+ * not part of Calendar's provider identity or dispatch contract.
  */
 static const BuiltinCalendarProvider providers[] = {
-    ARITHMETIC_PROVIDER(GREGORIAN, "gregorian"),
-    CUSTOM_PROVIDER(ISO_WEEK),
-    CUSTOM_PROVIDER(JULIAN),
-    CUSTOM_PROVIDER(REVISED_JULIAN),
-    ARITHMETIC_PROVIDER(HEBREW, "hebrew"),
-    ARITHMETIC_PROVIDER(ISLAMIC_UMM_AL_QURA, "islamic-umalqura"),
-    ARITHMETIC_PROVIDER(ISLAMIC_CIVIL, "islamic-civil"),
-    ARITHMETIC_PROVIDER(ISLAMIC_TBLA, "islamic-tbla"),
-    ICU_PROVIDER(ISLAMIC, "islamic"),
-    ARITHMETIC_PROVIDER(PERSIAN, "persian"),
-    CUSTOM_PROVIDER(BAHAI),
-    ARITHMETIC_PROVIDER(BUDDHIST, "buddhist"),
-    ARITHMETIC_PROVIDER(COPTIC, "coptic"),
-    ARITHMETIC_PROVIDER(ETHIOPIAN, "ethiopic"),
-    ARITHMETIC_PROVIDER(ETHIOPIC_AMETE_ALEM, "ethiopic-amete-alem"),
-    ICU_PROVIDER(CHINESE, "chinese"),
-    ICU_PROVIDER(DANGI, "dangi"),
-    ARITHMETIC_PROVIDER(INDIAN, "indian"),
-    ARITHMETIC_PROVIDER(JAPANESE, "japanese"),
-    ARITHMETIC_PROVIDER(MINGUO, "roc"),
-    CUSTOM_PROVIDER(ROMAN),
-    CUSTOM_PROVIDER(BYZANTINE),
-    CUSTOM_PROVIDER(EGYPTIAN_NABONASSAR),
-    CUSTOM_PROVIDER(ARMENIAN_TRADITIONAL),
-    CUSTOM_PROVIDER(MAYAN),
-    CUSTOM_PROVIDER(FRENCH_REPUBLICAN),
-    SWEDISH_PROVIDER(SWEDISH_HISTORICAL),
-    CUSTOM_PROVIDER(INTERNATIONAL_FIXED),
-    CUSTOM_PROVIDER(WORLD),
-    CUSTOM_PROVIDER(POSITIVIST)
+    ARITHMETIC_PROVIDER(GREGORIAN, "gregorian", "gregorian"),
+    CUSTOM_PROVIDER(ISO_WEEK, "iso-week"),
+    CUSTOM_PROVIDER(JULIAN, "julian"),
+    CUSTOM_PROVIDER(REVISED_JULIAN, "revised-julian"),
+    ARITHMETIC_PROVIDER(HEBREW, "hebrew", "hebrew"),
+    ARITHMETIC_PROVIDER(ISLAMIC_UMM_AL_QURA, "islamic-umalqura", "islamic-umalqura"),
+    ARITHMETIC_PROVIDER(ISLAMIC_CIVIL, "islamic-civil", "islamic-civil"),
+    ARITHMETIC_PROVIDER(ISLAMIC_TBLA, "islamic-tbla", "islamic-tbla"),
+    ICU_PROVIDER(ISLAMIC, "islamic", "islamic"),
+    ARITHMETIC_PROVIDER(PERSIAN, "persian", "persian"),
+    CUSTOM_PROVIDER(BAHAI, "bahai"),
+    ARITHMETIC_PROVIDER(BUDDHIST, "buddhist", "buddhist"),
+    ARITHMETIC_PROVIDER(COPTIC, "coptic", "coptic"),
+    ARITHMETIC_PROVIDER(ETHIOPIAN, "ethiopian", "ethiopic"),
+    ARITHMETIC_PROVIDER(ETHIOPIC_AMETE_ALEM, "ethiopic-amete-alem", "ethiopic-amete-alem"),
+    ICU_PROVIDER(CHINESE, "chinese", "chinese"),
+    ICU_PROVIDER(DANGI, "dangi", "dangi"),
+    ARITHMETIC_PROVIDER(INDIAN, "indian", "indian"),
+    ARITHMETIC_PROVIDER(JAPANESE, "japanese", "japanese"),
+    ARITHMETIC_PROVIDER(MINGUO, "minguo", "roc"),
+    CUSTOM_PROVIDER(ROMAN, "roman"),
+    CUSTOM_PROVIDER(BYZANTINE, "byzantine"),
+    CUSTOM_PROVIDER(EGYPTIAN_NABONASSAR, "egyptian-nabonassar"),
+    CUSTOM_PROVIDER(ARMENIAN_TRADITIONAL, "armenian-traditional"),
+    CUSTOM_PROVIDER(MAYAN, "mayan"),
+    CUSTOM_PROVIDER(FRENCH_REPUBLICAN, "french-republican"),
+    SWEDISH_PROVIDER(SWEDISH_HISTORICAL, "swedish-historical"),
+    CUSTOM_PROVIDER(INTERNATIONAL_FIXED, "international-fixed"),
+    CUSTOM_PROVIDER(WORLD, "world"),
+    CUSTOM_PROVIDER(POSITIVIST, "positivist")
 };
 
 G_STATIC_ASSERT(G_N_ELEMENTS(providers) == CALENDAR_PLUS_CALENDAR_MODE_COUNT);
 
+static const CalendarPlusCalendarProvider *
+provider_from_id_unchecked(const gchar *calendar_id)
+{
+    gsize index;
+
+    if (calendar_id == NULL)
+        return NULL;
+
+    for (index = 0; index < G_N_ELEMENTS(providers); index++)
+    {
+        if (infiltratr_string_equal(
+                calendar_id, providers[index].interface.calendar_id))
+        {
+            return &providers[index].interface;
+        }
+    }
+    return NULL;
+}
+
+static gboolean
+provider_set_matches_common(void)
+{
+    gsize index;
+    const gsize common_count = infiltratr_temporal_calendar_count();
+
+    if (common_count != G_N_ELEMENTS(providers))
+        return FALSE;
+
+    for (index = 0; index < G_N_ELEMENTS(providers); index++)
+    {
+        const gchar *id = providers[index].interface.calendar_id;
+
+        if (id == NULL || infiltratr_temporal_calendar_find(id) == NULL)
+            return FALSE;
+    }
+
+    for (index = 0; index < common_count; index++)
+    {
+        const InfiltratrTemporalCalendarInfo *info =
+            infiltratr_temporal_calendar_at(index);
+
+        if (info == NULL || info->id == NULL ||
+            provider_from_id_unchecked(info->id) == NULL)
+        {
+            return FALSE;
+        }
+    }
+    return TRUE;
+}
+
 gsize
 calendar_plus_calendar_provider_get_count(void)
 {
-    const gsize common_count = infiltratr_temporal_calendar_count();
-
-    return common_count == G_N_ELEMENTS(providers) ? common_count : 0;
+    return provider_set_matches_common() ? G_N_ELEMENTS(providers) : 0;
 }
 
 const CalendarPlusCalendarProvider *
 calendar_plus_calendar_provider_at(gsize index)
 {
-    if (index >= calendar_plus_calendar_provider_get_count() ||
-        providers[index].interface.common_index != index)
-    {
+    if (index >= calendar_plus_calendar_provider_get_count())
         return NULL;
-    }
 
     return &providers[index].interface;
 }
@@ -339,32 +384,20 @@ calendar_plus_calendar_provider_info(
 {
     if (provider == NULL ||
         provider->abi_version != CALENDAR_PLUS_CALENDAR_PROVIDER_ABI ||
-        provider->common_index >= calendar_plus_calendar_provider_get_count())
+        provider->calendar_id == NULL ||
+        !provider_set_matches_common())
     {
         return NULL;
     }
 
-    return infiltratr_temporal_calendar_at(provider->common_index);
+    return infiltratr_temporal_calendar_find(provider->calendar_id);
 }
 
 const CalendarPlusCalendarProvider *
 calendar_plus_calendar_provider_from_id(const gchar *calendar_id)
 {
-    gsize index;
-
-    if (calendar_id == NULL)
+    if (calendar_id == NULL || !provider_set_matches_common())
         return NULL;
 
-    for (index = 0; index < calendar_plus_calendar_provider_get_count(); index++)
-    {
-        const CalendarPlusCalendarProvider *provider =
-            calendar_plus_calendar_provider_at(index);
-        const InfiltratrTemporalCalendarInfo *info =
-            calendar_plus_calendar_provider_info(provider);
-
-        if (info != NULL && infiltratr_string_equal(calendar_id, info->id))
-            return provider;
-    }
-
-    return NULL;
+    return provider_from_id_unchecked(calendar_id);
 }
