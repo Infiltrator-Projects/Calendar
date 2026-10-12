@@ -4,7 +4,7 @@
  *
  * Private calendar-engine types.
  *
- * This header is deliberately excluded from GObject Introspection.  The
+ * This header is deliberately excluded from GObject Introspection. The
  * presentation layer sees the stable CalendarSystem API; native modules use
  * these types to exchange values without stringly typed or layout-dependent
  * contracts.
@@ -22,9 +22,9 @@ G_BEGIN_DECLS
 typedef enum
 {
     /*
-     * The numeric order deliberately mirrors Common's canonical temporal
-     * calendar catalogue.  Calendar keeps implementation policy local while
-     * Common remains the sole owner of persisted IDs and presentation names.
+     * Local implementation slots only. Persisted identity and Common metadata
+     * are joined by stable calendar ID in calendar-registry.c; these numeric
+     * values must never be treated as Common catalogue positions.
      */
     CALENDAR_PLUS_CALENDAR_MODE_GREGORIAN,
     CALENDAR_PLUS_CALENDAR_MODE_ISO_WEEK,
@@ -60,9 +60,9 @@ typedef enum
 } CalendarPlusCalendarMode;
 
 /*
- * A neutral calendar tuple.  "auxiliary" distinguishes eras and leap-month
- * cycles when year/month/day alone are ambiguous.  "special" identifies an
- * intercalary day or leap month.  The invariant used by period comparison is:
+ * A neutral calendar tuple. "auxiliary" distinguishes eras and leap-month
+ * cycles when year/month/day alone are ambiguous. "special" identifies an
+ * intercalary day or leap month. The invariant used by period comparison is:
  *
  *   same period iff auxiliary, year, month and special all compare equal.
  */
