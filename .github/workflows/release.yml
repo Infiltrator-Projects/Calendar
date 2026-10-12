@@ -38,7 +38,7 @@ jobs:
         env:
           EXPECTED_SHA: ${{ inputs.release_sha }}
         run: >-
-          python3 qualified-release/tools/release-handoff.py verify
+          python3 qualified-release/release-handoff.py verify
           --dist qualified-release
           --expected-sha "$EXPECTED_SHA"
           --github-env "$GITHUB_ENV"
