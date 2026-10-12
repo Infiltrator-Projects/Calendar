@@ -9,6 +9,8 @@
  * so EventsManager cannot accidentally update one flag without the others.
  */
 
+const MAX_RETRY_EXPONENT = 5;
+
 var EventRangeState = class EventRangeState {
     constructor() {
         this._generation = 0;
@@ -84,7 +86,7 @@ var EventRangeState = class EventRangeState {
     }
 
     nextRetryDelay() {
-        const delay = Math.min(60, Math.pow(2, Math.min(this._retryAttempt, 5)));
+        const delay = Math.pow(2, Math.min(this._retryAttempt, MAX_RETRY_EXPONENT));
         this._retryAttempt += 1;
         return delay;
     }
