@@ -9,7 +9,7 @@ G_IR_COMPILER ?= g-ir-compiler
 PREFIX ?= /usr
 DESTDIR ?=
 
-VERSION := 1.0.89
+VERSION := 1.0.90
 UUID := calendar-plus@the-infiltratr
 APPLET_SRC_DIR := src/cinnamon
 ICON_NAME := infiltratr-calendar
@@ -634,11 +634,11 @@ install: all
 	install -Dm755 "$(BUILD_DIR)/$(ABOUT_BINARY)" \
 		"$(DESTDIR)$(PREFIX)/libexec/$(ABOUT_BINARY)"
 	install -Dm644 "$(ABOUT_DESKTOP)" \
-		"$(DESTDIR)$(PREFIX)/share/applications/infiltrator-calendar-about.desktop"
+		"$(DESTDIR)$(PREFIX)/share/applications/infiltratr-calendar-about.desktop"
 	install -Dm644 "$(ICON_SRC)" \
 		"$(DESTDIR)$(PREFIX)/share/icons/hicolor/256x256/apps/$(ICON_NAME).png"
 	install -Dm644 "$(ICON_SRC)" \
-		"$(DESTDIR)$(PREFIX)/share/app-install/icons/infiltrator-calendar.png"
+		"$(DESTDIR)$(PREFIX)/share/app-install/icons/infiltratr-calendar.png"
 	install -d \
 		"$(DESTDIR)$(PREFIX)/share/cinnamon/applets/$(UUID)" \
 		"$(DESTDIR)$(PREFIX)/share/infiltrator/policy-providers"
