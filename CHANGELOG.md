@@ -6,6 +6,13 @@ This changelog records user-visible, compatibility, architecture and validation 
 
 No unreleased changes.
 
+## 1.0.92 - 2026-10-12
+
+- Split release publication into explicit, independently diagnosable identity, qualification, artifact, tag and publication stages.
+- Replace silent release assertions with descriptive artifact checks while preserving exact CI-qualified byte identity.
+- Tolerate GitHub Actions artifact executable-mode loss without weakening the requirement that the freshly built local installer is executable.
+- Preserve immutable published-release verification and asynchronous central APT discovery.
+
 ## 1.0.91 - 2026-10-12
 
 - Harden Cinnamon and native ownership boundaries so desktop lifecycle, civil-date projection and temporal-policy resources each have explicit owners.
