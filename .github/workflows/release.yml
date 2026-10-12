@@ -97,8 +97,11 @@ jobs:
 
           tag="$RELEASE_TAG"
           head_commit="$RELEASE_HEAD"
-          remote_tag_commit=$(gh api "repos/${GITHUB_REPOSITORY}/git/ref/tags/${tag}" \
-            --jq '.object.sha' 2>/dev/null || true)
+          remote_tag_commit=""
+          if existing_tag=$(gh api "repos/${GITHUB_REPOSITORY}/git/ref/tags/${tag}" \
+            --jq '.object.sha' 2>/dev/null); then
+            remote_tag_commit="$existing_tag"
+          fi
           if [[ -n "$remote_tag_commit" && "$remote_tag_commit" != "$head_commit" ]]; then
             printf 'Release tag %s points to %s, not qualified commit %s.\n' \
               "$tag" "$remote_tag_commit" "$head_commit" >&2
