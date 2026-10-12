@@ -15,8 +15,10 @@ import argparse
 import hashlib
 import json
 import re
+import shutil
 import subprocess
 from pathlib import Path
+from typing import NoReturn
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -24,7 +26,7 @@ VERSION_PATTERN = re.compile(r"^[0-9]+\.[0-9]+\.[0-9]+$")
 SHA_PATTERN = re.compile(r"^[0-9a-f]{40}$")
 
 
-def fail(message: str) -> "NoReturn":
+def fail(message: str) -> NoReturn:
     raise SystemExit(message)
 
 
@@ -150,6 +152,7 @@ def create_handoff(dist: Path, source_sha: str) -> None:
         )
 
     (dist / "release-notes.md").write_text(release_notes(), encoding="utf-8")
+    shutil.copy2(Path(__file__).resolve(), dist / "release-handoff.py")
     manifest = {
         "schema": 1,
         "version": version,
