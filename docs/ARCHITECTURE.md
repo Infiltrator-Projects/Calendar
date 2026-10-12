@@ -145,13 +145,13 @@ The applet installs no project-owned daemon, polling service or autostart entry.
 
 Correctness is enforced at several levels rather than by one end-to-end test. Portable chronology/property tests exercise deterministic models and boundaries; clock tests cover exact transition behaviour; ABI tests protect the native compatibility surface; JavaScript/settings tests protect the Cinnamon boundary; package and reproducibility tests protect release construction.
 
-Live Cinnamon behaviour is a separate integration boundary. The repository uses a Cinnamon smoke tool for installed-session verification and an upstream-drift workflow to detect changes in the stock Cinnamon integration surface that require deliberate review. Ordinary development runs may report a live probe as unavailable, but a `Release ...` commit is not publishable unless the dedicated real Cinnamon qualification is available and succeeds.
+Live Cinnamon behaviour is a separate integration boundary. The repository uses a Cinnamon smoke tool for installed-session verification and an upstream-drift workflow to detect changes in the stock Cinnamon integration surface that require deliberate review. Ordinary development runs may report a live probe as unavailable, but a main-branch version transition is not publishable unless the dedicated real Cinnamon qualification is available and succeeds.
 
 The exact release revision must satisfy the required build, sanitizer, static-analysis, coverage, ABI, packaging, reproducibility and release gates. A skipped environment-dependent check is reported as skipped rather than treated as proof, and release-critical live Cinnamon qualification cannot be satisfied by a skip.
 
 ## Build and release contract
 
-Calendar pins the exact Common version and commit used by the build. Release assets are derived from the exact tested `main` revision.
+Calendar pins the exact Common version and commit used by the build. Release assets are derived from the exact tested `main` revision. Release intent is a monotonic version transition on `main`, not commit-message prose. One JSON handoff owns the release version, source revision and qualified artifact identities; the publisher consumes those exact bytes without rebuilding them, while GitHub release creation owns tag creation.
 
 Published tags and assets are immutable identities. Debian packaging, install/purge qualification and central-repository lifecycle testing are part of the release contract rather than optional post-release checks.
 

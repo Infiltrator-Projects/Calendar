@@ -3,8 +3,8 @@
 
 name: publish-qualified-release
 
-# This is a reusable final stage of build-and-test, not a second release run.
-# It publishes the exact bytes qualified by the caller and never rebuilds them.
+# This is a reusable final stage of build-and-test. It publishes the exact
+# bytes qualified by the caller and never rebuilds them.
 on:
   workflow_call:
     inputs:
@@ -26,8 +26,6 @@ jobs:
     runs-on: ubuntu-24.04
     timeout-minutes: 10
     env:
-      # The publisher deliberately has no source checkout. Tell GitHub CLI which
-      # repository owns the release instead of making it infer one from .git.
       GH_REPO: ${{ github.repository }}
     steps:
       - name: Download exact qualified release handoff
@@ -38,91 +36,16 @@ jobs:
 
       - name: Verify qualified release handoff
         env:
-          GH_TOKEN: ${{ github.token }}
           EXPECTED_SHA: ${{ inputs.release_sha }}
-        shell: bash
-        run: |
-          set -euo pipefail
+        run: >-
+          python3 qualified-release/release-handoff.py verify
+          --dist qualified-release
+          --expected-sha "$EXPECTED_SHA"
+          --github-env "$GITHUB_ENV"
 
-          manifest=qualified-release/release-manifest.txt
-          notes=qualified-release/release-notes.md
-          test -s "$manifest"
-          test -s "$notes"
-
-          value() {
-            local key=$1
-            sed -n "s/^${key}=//p" "$manifest"
-          }
-
-          version=$(value version)
-          source_sha=$(value source_sha)
-          deb_name=$(value deb)
-          deb_sha256=$(value deb_sha256)
-          installer_name=$(value installer)
-          installer_sha256=$(value installer_sha256)
-
-          [[ "$version" =~ ^[0-9]+\.[0-9]+(\.[0-9]+)?$ ]]
-          [[ "$source_sha" == "$EXPECTED_SHA" ]]
-          [[ "$deb_name" == "calendar_${version}_amd64.deb" ]]
-          [[ "$installer_name" == "calendar-${version}-local-folder.run" ]]
-          [[ "$deb_sha256" =~ ^[0-9a-f]{64}$ ]]
-          [[ "$installer_sha256" =~ ^[0-9a-f]{64}$ ]]
-
-          deb="qualified-release/$deb_name"
-          installer="qualified-release/$installer_name"
-          test -s "$deb"
-          test -s "$installer"
-          [[ "$(sha256sum "$deb" | awk '{print $1}')" == "$deb_sha256" ]]
-          [[ "$(sha256sum "$installer" | awk '{print $1}')" == "$installer_sha256" ]]
-
-          subject=$(gh api "repos/${GITHUB_REPOSITORY}/commits/${source_sha}" \
-            --jq '.commit.message | split("\n")[0]')
-          if [[ "$subject" != "Release ${version}" && "$subject" != "Release ${version}:"* ]]; then
-            printf 'Release commit subject must begin with Release %s; got %s.\n' \
-              "$version" "$subject" >&2
-            exit 1
-          fi
-
-          {
-            printf 'RELEASE_VERSION=%s\n' "$version"
-            printf 'RELEASE_TAG=v%s\n' "$version"
-            printf 'RELEASE_HEAD=%s\n' "$source_sha"
-            printf 'RELEASE_DEB=%s\n' "$deb"
-            printf 'RELEASE_INSTALLER=%s\n' "$installer"
-            printf 'RELEASE_NOTES=%s\n' "$notes"
-          } >> "$GITHUB_ENV"
-
-      - name: Verify or create immutable release tag
-        env:
-          GH_TOKEN: ${{ github.token }}
-        shell: bash
-        run: |
-          set -euo pipefail
-
-          tag="$RELEASE_TAG"
-          head_commit="$RELEASE_HEAD"
-          remote_tag_commit=""
-          if existing_tag=$(gh api "repos/${GITHUB_REPOSITORY}/git/ref/tags/${tag}" \
-            --jq '.object.sha' 2>/dev/null); then
-            remote_tag_commit="$existing_tag"
-          fi
-
-          if [[ -n "$remote_tag_commit" && "$remote_tag_commit" != "$head_commit" ]]; then
-            printf 'Release tag %s already reserves version %s at %s; qualified commit is %s.\n' \
-              "$tag" "$RELEASE_VERSION" "$remote_tag_commit" "$head_commit" >&2
-            printf 'Release identities are immutable; bump VERSION and release again.\n' >&2
-            exit 1
-          fi
-
-          if [[ -z "$remote_tag_commit" ]]; then
-            gh api --method POST "repos/${GITHUB_REPOSITORY}/git/refs" \
-              -f ref="refs/tags/${tag}" \
-              -f sha="$head_commit" >/dev/null
-          fi
-
-      # Published releases are immutable. Reruns verify existing assets instead
-      # of rewriting a release that users may already have consumed.
-      - name: Create or inspect GitHub release
+      # Tag creation is owned by GitHub release creation. Calendar never creates,
+      # rewrites or deletes a tag as a separate recovery step.
+      - name: Create or inspect draft release
         env:
           GH_TOKEN: ${{ github.token }}
         shell: bash
@@ -130,8 +53,10 @@ jobs:
           set -euo pipefail
 
           release_was_published=false
-          if release_state=$(gh release view "$RELEASE_TAG" --json isDraft --jq .isDraft 2>/dev/null); then
-            if [[ "$release_state" != true ]]; then
+          if release_json=$(gh api \
+            "repos/${GITHUB_REPOSITORY}/releases/tags/${RELEASE_TAG}" 2>/dev/null); then
+            release_is_draft=$(jq -r '.draft' <<<"$release_json")
+            if [[ "$release_is_draft" == "false" ]]; then
               release_was_published=true
               printf 'Release %s is already published; verifying immutable assets.\n' \
                 "$RELEASE_TAG"
@@ -140,25 +65,41 @@ jobs:
                 "$RELEASE_TAG"
             fi
           else
+            if gh api "repos/${GITHUB_REPOSITORY}/git/ref/tags/${RELEASE_TAG}" \
+              >/dev/null 2>&1; then
+              printf 'Release tag %s exists without a GitHub release.\n' \
+                "$RELEASE_TAG" >&2
+              printf 'Release identities are immutable; bump VERSION instead of recovering the tag.\n' \
+                >&2
+              exit 1
+            fi
+
             gh release create "$RELEASE_TAG" \
               --draft \
-              --verify-tag \
               --target "$RELEASE_HEAD" \
               --title "Calendar $RELEASE_VERSION" \
               --notes-file "$RELEASE_NOTES"
           fi
+
+          tag_commit=$(gh api \
+            "repos/${GITHUB_REPOSITORY}/git/ref/tags/${RELEASE_TAG}" \
+            --jq '.object.sha')
+          if [[ "$tag_commit" != "$RELEASE_HEAD" ]]; then
+            printf 'Release tag %s points to %s; expected qualified revision %s.\n' \
+              "$RELEASE_TAG" "$tag_commit" "$RELEASE_HEAD" >&2
+            exit 1
+          fi
+
           printf 'RELEASE_WAS_PUBLISHED=%s\n' "$release_was_published" >> "$GITHUB_ENV"
 
       - name: Upload qualified assets to draft
+        if: env.RELEASE_WAS_PUBLISHED == 'false'
         env:
           GH_TOKEN: ${{ github.token }}
-        shell: bash
-        run: |
-          set -euo pipefail
-          if [[ "$RELEASE_WAS_PUBLISHED" == false ]]; then
-            gh release upload "$RELEASE_TAG" \
-              "$RELEASE_DEB" "$RELEASE_INSTALLER" --clobber
-          fi
+        run: >-
+          gh release upload "$RELEASE_TAG"
+          "$RELEASE_DEB" "$RELEASE_INSTALLER"
+          --clobber
 
       - name: Verify immutable release assets
         env:
@@ -168,8 +109,9 @@ jobs:
           set -euo pipefail
 
           expected_assets=$(printf '%s\n%s\n' \
-            "${RELEASE_DEB##*/}" "${RELEASE_INSTALLER##*/}" | sort)
-          published_assets=$(gh release view "$RELEASE_TAG" --json assets \
+            "$RELEASE_DEB_NAME" "$RELEASE_INSTALLER_NAME" | sort)
+          published_assets=$(gh api \
+            "repos/${GITHUB_REPOSITORY}/releases/tags/${RELEASE_TAG}" \
             --jq '.assets[].name' | sort)
           if [[ "$published_assets" != "$expected_assets" ]]; then
             printf 'Release %s has an unexpected asset set.\n' "$RELEASE_TAG" >&2
@@ -178,25 +120,35 @@ jobs:
             exit 1
           fi
 
-          for asset in "$RELEASE_DEB" "$RELEASE_INSTALLER"; do
-            name="${asset##*/}"
-            local_size=$(stat -c '%s' "$asset")
-            remote_size=$(gh api "repos/${GITHUB_REPOSITORY}/releases/tags/${RELEASE_TAG}" \
+          verify_asset() {
+            local name=$1
+            local size=$2
+            local digest=$3
+            local remote_size remote_digest
+
+            remote_size=$(gh api \
+              "repos/${GITHUB_REPOSITORY}/releases/tags/${RELEASE_TAG}" \
               --jq ".assets[] | select(.name == \"${name}\") | .size")
-            [[ "$remote_size" == "$local_size" ]] || {
+            [[ "$remote_size" == "$size" ]] || {
               printf 'Release asset %s has size %s; expected %s.\n' \
-                "$name" "$remote_size" "$local_size" >&2
+                "$name" "$remote_size" "$size" >&2
               exit 1
             }
 
-            local_digest="sha256:$(sha256sum "$asset" | awk '{print $1}')"
-            remote_digest=$(gh api "repos/${GITHUB_REPOSITORY}/releases/tags/${RELEASE_TAG}" \
+            remote_digest=$(gh api \
+              "repos/${GITHUB_REPOSITORY}/releases/tags/${RELEASE_TAG}" \
               --jq ".assets[] | select(.name == \"${name}\") | .digest // \"\"")
-            if [[ -n "$remote_digest" && "$remote_digest" != "$local_digest" ]]; then
+            if [[ -n "$remote_digest" && "$remote_digest" != "sha256:${digest}" ]]; then
               printf 'Release asset %s digest mismatch.\n' "$name" >&2
               exit 1
             fi
-          done
+          }
+
+          verify_asset \
+            "$RELEASE_DEB_NAME" "$RELEASE_DEB_SIZE" "$RELEASE_DEB_SHA256"
+          verify_asset \
+            "$RELEASE_INSTALLER_NAME" "$RELEASE_INSTALLER_SIZE" \
+            "$RELEASE_INSTALLER_SHA256"
 
       - name: Publish and verify GitHub release
         env:
@@ -205,11 +157,14 @@ jobs:
         run: |
           set -euo pipefail
 
-          if [[ "$RELEASE_WAS_PUBLISHED" == false ]]; then
+          if [[ "$RELEASE_WAS_PUBLISHED" == "false" ]]; then
             gh release edit "$RELEASE_TAG" --draft=false --latest
           fi
-          published_tag=$(gh release view "$RELEASE_TAG" --json tagName --jq .tagName)
-          [[ "$published_tag" == "$RELEASE_TAG" ]]
+
+          release_json=$(gh api \
+            "repos/${GITHUB_REPOSITORY}/releases/tags/${RELEASE_TAG}")
+          [[ "$(jq -r '.tag_name' <<<"$release_json")" == "$RELEASE_TAG" ]]
+          [[ "$(jq -r '.draft' <<<"$release_json")" == "false" ]]
 
       # Central APT publication remains asynchronous. Infiltrator-Repository
       # discovers verified GitHub releases independently; Calendar does not wait

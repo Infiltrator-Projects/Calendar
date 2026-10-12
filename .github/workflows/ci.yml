@@ -11,13 +11,11 @@ on:
 permissions:
   contents: read
 
+# Every revision is independently qualified. A newer push must never cancel an
+# in-flight version transition that may become a release.
 concurrency:
-  group: >-
-    build-and-test-v5-${{
-      github.event_name == 'push' && startsWith(github.event.head_commit.message, 'Release ')
-      && github.sha || github.ref
-    }}
-  cancel-in-progress: ${{ !(github.event_name == 'push' && startsWith(github.event.head_commit.message, 'Release ')) }}
+  group: build-and-test-${{ github.sha }}
+  cancel-in-progress: false
 
 jobs:
   native:
@@ -162,10 +160,23 @@ jobs:
   debian-package:
     needs: [native]
     runs-on: ubuntu-24.04
+    outputs:
+      release_requested: ${{ steps.release-intent.outputs.requested }}
+      release_version: ${{ steps.release-intent.outputs.version }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           submodules: true
+          fetch-depth: 0
+      - name: Resolve release intent from version transition
+        id: release-intent
+        env:
+          BEFORE_SHA: ${{ github.event.before }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 tools/release-handoff.py release-requested \
+            --before "${BEFORE_SHA:-}" >> "$GITHUB_OUTPUT"
       - name: Install packaging dependencies
         run: |
           sudo apt-get update
@@ -179,36 +190,10 @@ jobs:
           CALENDAR_RELEASE_SOURCE_ALREADY_QUALIFIED: "1"
         run: make release-check
       - name: Create immutable release handoff
-        shell: bash
-        run: |
-          set -euo pipefail
-
-          version=$(sed -n 's/^VERSION := //p' Makefile)
-          deb="dist/calendar_${version}_amd64.deb"
-          installer="dist/calendar-${version}-local-folder.run"
-          notes="dist/release-notes.md"
-          manifest="dist/release-manifest.txt"
-
-          test -s "$deb"
-          test -s "$installer"
-          awk '
-            NR == 1 { next }
-            /^ -- / { exit }
-            {
-              sub(/^  \* /, "- ")
-              print
-            }
-          ' debian/changelog | sed '/^[[:space:]]*$/d' > "$notes"
-          test -s "$notes"
-
-          {
-            printf 'version=%s\n' "$version"
-            printf 'source_sha=%s\n' "$GITHUB_SHA"
-            printf 'deb=%s\n' "${deb##*/}"
-            printf 'deb_sha256=%s\n' "$(sha256sum "$deb" | awk '{print $1}')"
-            printf 'installer=%s\n' "${installer##*/}"
-            printf 'installer_sha256=%s\n' "$(sha256sum "$installer" | awk '{print $1}')"
-          } > "$manifest"
+        run: >-
+          python3 tools/release-handoff.py create
+          --dist dist
+          --source-sha "$GITHUB_SHA"
       - name: Retain exact qualified release handoff
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
@@ -216,8 +201,9 @@ jobs:
           path: |
             dist/calendar_*_amd64.deb
             dist/calendar-*-local-folder.run
-            dist/release-manifest.txt
+            dist/release-manifest.json
             dist/release-notes.md
+            dist/release-handoff.py
           if-no-files-found: error
           retention-days: 3
 
@@ -249,13 +235,13 @@ jobs:
           CALENDAR_PLUS_EXACT_DEB: ${{ steps.qualified-package.outputs.deb }}
         shell: bash
         run: tools/live-cinnamon-ci-smoke.sh --probe
-      - name: Require live Cinnamon for release commits
+      - name: Require live Cinnamon for release version transitions
         if: >-
-          startsWith(github.event.head_commit.message, 'Release ') &&
+          needs.debian-package.outputs.release_requested == 'true' &&
           steps.live-cinnamon.outputs.ready != 'true'
         shell: bash
         run: |
-          echo 'Release commits require an available real Cinnamon session.' >&2
+          echo 'A release version transition requires an available real Cinnamon session.' >&2
           exit 1
       - name: Live Cinnamon runtime qualification
         if: steps.live-cinnamon.outputs.ready == 'true'
@@ -358,7 +344,7 @@ jobs:
   publish-release:
     if: >-
       github.event_name == 'push' &&
-      startsWith(github.event.head_commit.message, 'Release ')
+      needs.debian-package.outputs.release_requested == 'true'
     needs:
       - native
       - icu-compat
