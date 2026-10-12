@@ -143,7 +143,7 @@ if [ "$mode" = "artifact-runtime" ]; then
         echo "The exact Calendar artifact or isolated Cinnamon runtime prerequisites are unavailable." >&2
         exit 1
     }
-    exec "$ROOT/tools/isolated-cinnamon-artifact-smoke.sh" "$CALENDAR_PLUS_EXACT_DEB"
+    exec bash "$ROOT/tools/isolated-cinnamon-artifact-smoke.sh" "$CALENDAR_PLUS_EXACT_DEB"
 fi
 
 if [ "$mode" = "install" ]; then
