@@ -230,11 +230,9 @@ const gchar *
 calendar_plus_calendar_engine_get_id(
     const CalendarPlusCalendarEngine *engine)
 {
-    const InfiltratrTemporalCalendarInfo *info =
-        engine != NULL ?
-        calendar_plus_calendar_provider_info(engine->provider) : NULL;
-
-    return info != NULL ? info->id : "";
+    return engine != NULL && engine->provider != NULL &&
+           engine->provider->calendar_id != NULL ?
+        engine->provider->calendar_id : "";
 }
 
 const gchar *
@@ -245,7 +243,9 @@ calendar_plus_calendar_engine_get_name(
         engine != NULL ?
         calendar_plus_calendar_provider_info(engine->provider) : NULL;
 
-    return info != NULL ? info->name : "";
+    if (info != NULL && info->name != NULL && info->name[0] != '\0')
+        return info->name;
+    return calendar_plus_calendar_engine_get_id(engine);
 }
 
 gchar *
@@ -496,22 +496,19 @@ calendar_plus_calendar_catalogue_get(
     CalendarPlusCalendarDescriptor *descriptor)
 {
     const CalendarPlusCalendarProvider *provider;
+    const InfiltratrTemporalCalendarInfo *info;
 
     if (descriptor == NULL)
         return FALSE;
 
     provider = calendar_plus_calendar_provider_at(index);
-    if (provider == NULL)
+    if (provider == NULL || provider->calendar_id == NULL)
         return FALSE;
 
-    {
-        const InfiltratrTemporalCalendarInfo *info =
-            calendar_plus_calendar_provider_info(provider);
-
-        if (info == NULL)
-            return FALSE;
-        descriptor->id = info->id;
-        descriptor->name = info->name;
-    }
+    info = calendar_plus_calendar_provider_info(provider);
+    descriptor->id = provider->calendar_id;
+    descriptor->name = info != NULL && info->name != NULL && info->name[0] != '\0'
+        ? info->name
+        : provider->calendar_id;
     return TRUE;
 }
