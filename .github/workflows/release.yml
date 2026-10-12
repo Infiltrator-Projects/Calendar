@@ -25,6 +25,10 @@ jobs:
   publish:
     runs-on: ubuntu-24.04
     timeout-minutes: 10
+    env:
+      # The publisher deliberately has no source checkout. Tell GitHub CLI which
+      # repository owns the release instead of making it infer one from .git.
+      GH_REPO: ${{ github.repository }}
     steps:
       - name: Download exact qualified release handoff
         uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
@@ -102,11 +106,22 @@ jobs:
             --jq '.object.sha' 2>/dev/null); then
             remote_tag_commit="$existing_tag"
           fi
+
           if [[ -n "$remote_tag_commit" && "$remote_tag_commit" != "$head_commit" ]]; then
-            printf 'Release tag %s points to %s, not qualified commit %s.\n' \
-              "$tag" "$remote_tag_commit" "$head_commit" >&2
-            exit 1
+            # A tag attached to any GitHub release is an immutable public
+            # identity. Only recover a bare/orphan tag left by a failed attempt
+            # before a release record was created.
+            if gh release view "$tag" --json isDraft >/dev/null 2>&1; then
+              printf 'Release tag %s points to %s, not qualified commit %s.\n' \
+                "$tag" "$remote_tag_commit" "$head_commit" >&2
+              exit 1
+            fi
+            printf 'Removing orphaned tag %s from failed pre-publication attempt.\n' "$tag"
+            gh api --method DELETE \
+              "repos/${GITHUB_REPOSITORY}/git/refs/tags/${tag}" >/dev/null
+            remote_tag_commit=""
           fi
+
           if [[ -z "$remote_tag_commit" ]]; then
             gh api --method POST "repos/${GITHUB_REPOSITORY}/git/refs" \
               -f ref="refs/tags/${tag}" \
