@@ -233,16 +233,17 @@ swedish_add_years(const CalendarPlusCalendarProvider *provider,
     return calendar_plus_swedish_add_years(jdn, amount);
 }
 
-#define PROVIDER_INTERFACE(id_, fields_, format_, start_, add_, years_) \
+#define PROVIDER_INTERFACE(mode_, id_, fields_, format_, start_, add_, years_) \
     { \
         CALENDAR_PLUS_CALENDAR_PROVIDER_ABI, \
         id_, \
+        CALENDAR_PLUS_CALENDAR_MODE_##mode_, \
         fields_, format_, start_, add_, years_ \
     }
 
 #define ICU_PROVIDER(mode_, id_, keyword_) \
     [CALENDAR_PLUS_CALENDAR_MODE_##mode_] = { \
-        PROVIDER_INTERFACE(id_, \
+        PROVIDER_INTERFACE(mode_, id_, \
                            icu_fields, icu_format, icu_period_start, \
                            icu_add_periods, icu_add_years), \
         CALENDAR_PLUS_CALENDAR_MODE_##mode_, keyword_ \
@@ -250,7 +251,7 @@ swedish_add_years(const CalendarPlusCalendarProvider *provider,
 
 #define ARITHMETIC_PROVIDER(mode_, id_, keyword_) \
     [CALENDAR_PLUS_CALENDAR_MODE_##mode_] = { \
-        PROVIDER_INTERFACE(id_, \
+        PROVIDER_INTERFACE(mode_, id_, \
                            arithmetic_fields, icu_format, \
                            arithmetic_period_start, arithmetic_add_periods, \
                            arithmetic_add_years), \
@@ -259,7 +260,7 @@ swedish_add_years(const CalendarPlusCalendarProvider *provider,
 
 #define CUSTOM_PROVIDER(mode_, id_) \
     [CALENDAR_PLUS_CALENDAR_MODE_##mode_] = { \
-        PROVIDER_INTERFACE(id_, \
+        PROVIDER_INTERFACE(mode_, id_, \
                            custom_fields, custom_format, custom_period_start, \
                            custom_add_periods, custom_add_years), \
         CALENDAR_PLUS_CALENDAR_MODE_##mode_, NULL \
@@ -267,7 +268,7 @@ swedish_add_years(const CalendarPlusCalendarProvider *provider,
 
 #define SWEDISH_PROVIDER(mode_, id_) \
     [CALENDAR_PLUS_CALENDAR_MODE_##mode_] = { \
-        PROVIDER_INTERFACE(id_, \
+        PROVIDER_INTERFACE(mode_, id_, \
                            swedish_fields, swedish_format, swedish_period_start, \
                            swedish_add_periods, swedish_add_years), \
         CALENDAR_PLUS_CALENDAR_MODE_##mode_, NULL \
