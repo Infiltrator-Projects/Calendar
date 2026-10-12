@@ -63,7 +63,6 @@ installed_runtime_matches() {
     return 0
 }
 
-
 native_version_matches() {
     [ -x "$ABOUT" ] || return 1
     actual=$("$ABOUT" --print-metadata 2>/dev/null |
@@ -169,10 +168,10 @@ EOF
 fi
 
 if [ "$mode" = "artifact-runtime" ]; then
-    [ -n "${CALENDAR_PLUS_EXACT_DEB:-}" ] && [ -s "$CALENDAR_PLUS_EXACT_DEB" ] || {
+    if [ -z "${CALENDAR_PLUS_EXACT_DEB:-}" ] || [ ! -s "$CALENDAR_PLUS_EXACT_DEB" ]; then
         echo "Exact CI-qualified Calendar package is unavailable." >&2
         exit 1
-    }
+    fi
     command -v dpkg-deb >/dev/null 2>&1 || {
         echo "dpkg-deb is required for exact artifact qualification." >&2
         exit 1
@@ -213,10 +212,10 @@ if [ "$mode" = "artifact-runtime" ]; then
     exact_about="$stage_root/usr/libexec/calendar-plus-about"
     exact_typelib=$(find "$stage_root/usr/lib" -type f -name 'CalendarPlus-1.0.typelib' -print -quit)
     exact_library=$(find "$stage_root/usr/lib" -type f -name 'libcalendar-plus.so.0.0.0' -print -quit)
-    [ -x "$exact_about" ] && [ -n "$exact_typelib" ] && [ -n "$exact_library" ] || {
+    if [ ! -x "$exact_about" ] || [ -z "$exact_typelib" ] || [ -z "$exact_library" ]; then
         echo "Exact Calendar package is missing its native qualification payload." >&2
         exit 1
-    }
+    fi
     typelib_dir=$(dirname "$exact_typelib")
     library_dir=$(dirname "$exact_library")
 
