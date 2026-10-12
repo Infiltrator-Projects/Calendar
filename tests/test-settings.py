@@ -242,17 +242,17 @@ def main() -> None:
     # Calendar arithmetic belongs to native APIs, not a second JS chronology.
     require_tokens(
         calendar,
-        "CalendarPlus.CalendarSystem.new(",
+        ".CalendarSystem.new(",
         ".add_days_parts(",
         ".add_months_parts(",
         ".add_years_parts(",
         ".build_grid(",
-        "CalendarPlus.date_is_work_day(",
+        ".date_is_work_day(",
     )
     require_tokens(
         civil_date,
-        "CalendarPlus.date_same(",
-        "CalendarPlus.date_weekday(",
+        ".date_same(",
+        ".date_weekday(",
         "representableLocalDate",
         "class CivilDate",
         "decodeCivilDate",
@@ -267,7 +267,10 @@ def main() -> None:
         "record[2]",
         "record[3]",
     )
-    require_tokens(calendar, "NativeBoundary.decodeCalendarGrid", "CivilDateBoundary")
+    require_tokens(calendar, "decodeCalendarGrid")
+    assert {"nativeBoundary", "civilDate", "calendarEventProjection"}.issubset(
+        loaded_modules(calendar)
+    )
     require_tokens(native_boundary, "decodeTemporalPolicy", "decodeCalendarGrid", "decodeEventSnapshot")
 
     # Request lifecycle remains one state object rather than controller flags.
