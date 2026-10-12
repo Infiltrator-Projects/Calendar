@@ -2,11 +2,12 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 # Copyright (C) 1993-2026 Shannon Smith
 
-"""Enforce the platform-core/presentation-adapter boundary transitively.
+"""Enforce Calendar's source ownership and platform boundary contracts.
 
-The core contract applies to the complete local include closure, not merely to
-hand-picked implementation files.  A neutral source that includes a neutral
-header which then includes an adapter header is therefore a build failure.
+The checks deliberately reason about declared ownership, include closure and
+source-tree membership rather than implementation spelling. A refactor may
+change APIs used inside an adapter without weakening the architectural rule
+that portable core code cannot reach desktop/platform implementation details.
 """
 
 from __future__ import annotations
@@ -86,7 +87,7 @@ def include_closure(roots: tuple[str, ...]) -> tuple[set[str], dict[str, str]]:
         relative = queue.popleft()
         if relative in seen:
             continue
-        assert (ROOT / relative).is_file(), f"missing core path {relative}"
+        assert (ROOT / relative).is_file(), f"missing declared path {relative}"
         seen.add(relative)
 
         for include in LOCAL_INCLUDE_RE.findall(code(relative)):
@@ -107,30 +108,63 @@ def include_chain(path: str, parent: dict[str, str]) -> str:
     return " -> ".join(chain)
 
 
+def local_files(directory: str, suffix: str) -> set[str]:
+    return {
+        path.relative_to(ROOT).as_posix()
+        for path in (ROOT / directory).glob(f"*{suffix}")
+        if path.is_file()
+    }
+
+
 def main() -> None:
     core_sources = make_list("CORE_SOURCES")
     core_headers = make_list("CORE_HEADERS")
-    adapter_sources = set(make_list("ADAPTER_SOURCES"))
-    private_headers = set(make_list("PRIVATE_HEADERS"))
+    adapter_sources = make_list("ADAPTER_SOURCES")
+    public_headers = make_list("PUBLIC_HEADERS")
+    private_headers = make_list("PRIVATE_HEADERS")
+
     declared_core = set(core_sources) | set(core_headers)
+    declared_adapter_headers = {
+        path for path in (*public_headers, *private_headers)
+        if path.startswith("src/adapters/")
+    }
+
+    # Source-tree membership is itself an ownership contract. New native files
+    # cannot silently exist outside the Makefile's declared layer.
+    actual_core = local_files("src/core", ".c") | local_files("src/core", ".h")
+    assert actual_core == declared_core, (
+        "src/core ownership differs from CORE_SOURCES/CORE_HEADERS: "
+        f"undeclared={sorted(actual_core - declared_core)}, "
+        f"missing={sorted(declared_core - actual_core)}"
+    )
+
+    actual_adapter_sources = local_files("src/adapters", ".c")
+    assert actual_adapter_sources == set(adapter_sources), (
+        "src/adapters C ownership differs from ADAPTER_SOURCES: "
+        f"undeclared={sorted(actual_adapter_sources - set(adapter_sources))}, "
+        f"missing={sorted(set(adapter_sources) - actual_adapter_sources)}"
+    )
+    actual_adapter_headers = local_files("src/adapters", ".h")
+    assert actual_adapter_headers == declared_adapter_headers, (
+        "adapter header ownership differs from public/private declarations: "
+        f"undeclared={sorted(actual_adapter_headers - declared_adapter_headers)}, "
+        f"missing={sorted(declared_adapter_headers - actual_adapter_headers)}"
+    )
+
+    assert all(path.startswith("src/core/") for path in declared_core)
+    assert all(path.startswith("src/adapters/") for path in adapter_sources)
+    assert not (set(core_sources) & set(adapter_sources))
 
     closure, parent = include_closure(core_sources + core_headers)
 
     # Every repository-local dependency reached from the portable core must be
-    # explicitly declared as part of that core.  This catches adapter leakage
-    # even when a forbidden API token happens not to appear in the first file.
+    # explicitly declared as part of that core. This catches indirect platform
+    # leakage without depending on which concrete GLib API an adapter uses.
     undeclared = closure - declared_core
     assert not undeclared, (
         "core include closure reaches non-core files: "
         + "; ".join(
             include_chain(path, parent) for path in sorted(undeclared)
-        )
-    )
-    leaked_adapters = closure & (adapter_sources | private_headers)
-    assert not leaked_adapters, (
-        "core include closure reaches adapter files: "
-        + "; ".join(
-            include_chain(path, parent) for path in sorted(leaked_adapters)
         )
     )
 
@@ -148,26 +182,31 @@ def main() -> None:
         implementation = code(relative)
         for token in forbidden_tokens:
             assert token not in implementation, (
-                f"{include_chain(relative, parent)} leaks adapter token {token}"
+                f"{include_chain(relative, parent)} leaks platform token {token}"
             )
 
-    # Adapter ownership remains explicit: these facilities must exist, but only
-    # outside the neutral closure checked above.
-    assert "GVariant" not in code("src/adapters/calendar-system.c")
-    assert "GVariant" not in code("src/adapters/event-store.c")
-    assert "g_timeout" not in code("src/adapters/system-clock.c")
-    assert "GVariant" in read("src/adapters/calendar-gvariant-adapter.c")
-    assert "GVariant" in read("src/adapters/event-gvariant-adapter.c")
-    assert "g_timeout_add_full" in read("src/adapters/clock-glib-adapter.c")
+    # Private components must be real translation units, not textual .c/.inc
+    # inclusions that merely make a facade look smaller while preserving one
+    # compilation/lifetime boundary.
+    assert not list((ROOT / "src/adapters").glob("*.inc")), (
+        "adapter implementation fragments must be compiled modules, not .inc files"
+    )
+    assert "src/adapters/temporal-policy-source.c" in adapter_sources
+    assert "src/adapters/temporal-policy-source.h" in private_headers
+    system_clock = code("src/adapters/system-clock.c")
+    assert '#include "temporal-policy-source.h"' in system_clock
+    assert "temporal-policy-source.inc" not in system_clock
 
+    # The build must preserve a separately testable portable archive and the
+    # architecture check itself as a required validation gate.
     makefile = read("Makefile")
-    assert "CORE_SOURCES :=" in makefile
-    assert "ADAPTER_SOURCES :=" in makefile
     assert "libcalendar-plus-core.a" in makefile
     assert "test-portable-core.c $(CORE_SOURCES)" in makefile
     assert "$(CORE_CFLAGS)" in makefile
     assert "validate-architecture" in makefile
 
+    # CalendarServer transport vocabulary belongs at the adapter boundary;
+    # neutral event input records remain private to the core/source interface.
     public_event_adapter = read("src/adapters/event-store.h")
     assert "Cinnamon CalendarServer event tuple" in public_event_adapter
     assert "CalendarPlusEventInput" not in public_event_adapter
