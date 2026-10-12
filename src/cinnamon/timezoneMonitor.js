@@ -39,7 +39,7 @@ var TimezoneMonitor = class TimezoneMonitor {
             this._connectMonitor();
             return;
         } catch (directError) {
-            this._monitor = null;
+            this._cancelMonitor();
             try {
                 const etcDirectory = Gio.File.new_for_path(ETC_PATH);
                 this._monitor = etcDirectory.monitor_directory(
@@ -50,7 +50,7 @@ var TimezoneMonitor = class TimezoneMonitor {
                 this._connectMonitor();
                 return;
             } catch (fallbackError) {
-                this._monitor = null;
+                this._cancelMonitor();
                 this._directoryFallback = false;
                 global.logError(
                     `${APPLET_UUID}: could not monitor system timezone: ` +
@@ -83,11 +83,7 @@ var TimezoneMonitor = class TimezoneMonitor {
             file.get_basename() === "localtime";
     }
 
-    destroy() {
-        if (this._destroyed) {
-            return;
-        }
-        this._destroyed = true;
+    _cancelMonitor() {
         if (this._monitor !== null && this._signalId > 0) {
             try {
                 this._monitor.disconnect(this._signalId);
@@ -104,6 +100,14 @@ var TimezoneMonitor = class TimezoneMonitor {
             }
         }
         this._monitor = null;
+    }
+
+    destroy() {
+        if (this._destroyed) {
+            return;
+        }
+        this._destroyed = true;
+        this._cancelMonitor();
         this._directoryFallback = false;
         if (this._cancellable !== null) {
             try {
