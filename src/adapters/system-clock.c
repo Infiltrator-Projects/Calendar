@@ -6,35 +6,18 @@
  *
  * Clock scheduling and formatting stay in CalendarPlusClockEngine. Effective
  * temporal-policy discovery, persistence fallback and filesystem/settings
- * monitoring live in a private CalendarPlusTemporalPolicySource component.
- * This facade composes the two responsibilities and publishes their signals to
- * GJS without owning either subsystem's implementation details.
+ * monitoring live in CalendarPlusTemporalPolicySource, compiled as its own
+ * adapter translation unit. This facade composes the two responsibilities and
+ * publishes their signals to GJS without owning either implementation.
  */
 
 #include "system-clock.h"
 
 #include "clock-engine.h"
 #include "clock-glib-adapter.h"
+#include "temporal-policy-source.h"
 
 #include <infiltratr/temporal.h>
-
-typedef struct _CalendarPlusTemporalPolicySource CalendarPlusTemporalPolicySource;
-typedef void (*CalendarPlusTemporalPolicyChangedFunc)(gpointer user_data);
-
-static CalendarPlusTemporalPolicySource *calendar_plus_temporal_policy_source_new(
-    CalendarPlusTemporalPolicyChangedFunc changed,
-    gpointer user_data);
-static void calendar_plus_temporal_policy_source_free(
-    CalendarPlusTemporalPolicySource *source);
-static const InfiltratrTemporalPolicyV3 *calendar_plus_temporal_policy_source_get_policy(
-    const CalendarPlusTemporalPolicySource *source);
-static gboolean calendar_plus_temporal_policy_source_get_provider_available(
-    const CalendarPlusTemporalPolicySource *source);
-static gboolean calendar_plus_temporal_policy_source_get_infiltrator_authority(
-    const CalendarPlusTemporalPolicySource *source);
-
-/* Private component kept outside the public facade implementation body. */
-#include "temporal-policy-source.inc"
 
 struct _CalendarPlusSystemClock
 {
