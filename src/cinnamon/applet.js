@@ -2,35 +2,23 @@
 // Copyright (C) 1993-2026 Shannon Smith
 
 /*
- * Calendar panel controller.
+ * Calendar panel composition root.
  *
- * This file is the composition root: it owns service lifetimes and wires
- * narrow presentation/transport ports together. Cinnamon-version-specific
- * popup behaviour, panel-label mechanics and popup actor composition live in
- * dedicated modules rather than growing inside the controller.
+ * This controller owns Calendar feature lifetimes and wires narrow semantic
+ * ports together. Cinnamon desktop preferences, suspend/resume compatibility,
+ * global keybindings and application launching are delegated to the dedicated
+ * desktopIntegration module rather than accumulating platform mechanics here.
  */
 
 const Applet = imports.ui.applet;
 const CalendarPlus = imports.gi.CalendarPlus;
 const Cinnamon = imports.gi.Cinnamon;
 const CinnamonDesktop = imports.gi.CinnamonDesktop;
-const Gio = imports.gi.Gio;
 const St = imports.gi.St;
-const Gettext = imports.gettext;
-const Main = imports.ui.main;
 const PopupMenu = imports.ui.popupMenu;
 const Settings = imports.ui.settings;
-const Util = imports.misc.util;
 
 const UUID = "calendar-plus@the-infiltratr";
-const CALENDAR_PLUS_GETTEXT_DOMAIN = UUID;
-
-Gettext.bindtextdomain(CALENDAR_PLUS_GETTEXT_DOMAIN, "/usr/share/locale");
-const CalendarPlusGettext = Gettext.domain(CALENDAR_PLUS_GETTEXT_DOMAIN);
-
-function CP_(text) {
-    return CalendarPlusGettext.gettext(text);
-}
 
 function _loadRuntimeSupport() {
     try {
@@ -49,8 +37,9 @@ function _loadRuntimeSupport() {
 
 const RuntimeSupport = _loadRuntimeSupport();
 const SignalBag = RuntimeSupport.SignalBag;
+const DesktopIntegration = RuntimeSupport.loadLocalModule("desktopIntegration");
 const TemporalPolicy = RuntimeSupport.loadLocalModule("temporalPolicy");
-/* PopupShell owns RuntimeSupport.loadLocalModule("eventView") and the smaller presentation leaf modules. */
+/* PopupShell owns eventView and the smaller presentation leaf modules. */
 const Calendar = RuntimeSupport.loadLocalModule("calendar");
 const EventManager = RuntimeSupport.loadLocalModule("eventManager");
 const PanelClock = RuntimeSupport.loadLocalModule("panelClock");
@@ -74,7 +63,6 @@ class CalendarPlusApplet extends Applet.Applet {
         this.orientation = orientation;
         this._destroyed = false;
         this._added_to_panel = false;
-        this._keybinding_set = false;
         this.show_events = true;
         this.show_week_numbers = false;
         this.theme_mode = "system";
@@ -83,7 +71,6 @@ class CalendarPlusApplet extends Applet.Applet {
         this.menuManager = null;
         this.menu = null;
         this.settings = null;
-        this.desktop_settings = null;
         this.clock = null;
         this.system_clock = null;
         this.events_manager = null;
@@ -92,13 +79,11 @@ class CalendarPlusApplet extends Applet.Applet {
         this._calendar = null;
         this._panelView = null;
         this._popupView = null;
-        this._resume_source = null;
         this._temporalPolicy = null;
-        this._desktopPreferenceWarnings = new Set();
+        this._desktopIntegration = null;
 
         this._signals = new SignalBag();
         this._eventSignals = new SignalBag();
-        this._resumeSignals = new SignalBag();
 
         const nativeVersion = CalendarPlus.get_version();
         if (typeof expectedVersion !== "string" || expectedVersion.length === 0) {
@@ -125,9 +110,19 @@ class CalendarPlusApplet extends Applet.Applet {
         this.menuManager.addMenu(this.menu);
 
         this.settings = new Settings.AppletSettings(this, UUID, this.instance_id);
-        this.desktop_settings = new Gio.Settings({
-            schema_id: "org.cinnamon.desktop.interface",
-        });
+        this._desktopIntegration = new DesktopIntegration.DesktopIntegration(
+            this,
+            SignalBag,
+            {
+                onWeekStartChanged: () => this._onWeekStartChanged(),
+                onClockPreferenceChanged: (refreshAgenda) =>
+                    this._onDesktopClockPreferenceChanged(refreshAgenda),
+                onThemeChanged: () => this._onThemeModeChanged(),
+                onResume: () => this._onResume(),
+                onPanelEditModeChanged: () => this._resetLabelWidth(),
+            }
+        );
+        this._desktopIntegration.start();
 
         this.clock = new CinnamonDesktop.WallClock();
         this.system_clock = CalendarPlus.SystemClock.new();
@@ -177,9 +172,7 @@ class CalendarPlusApplet extends Applet.Applet {
 
         this._bindSettings();
         this.events_manager.set_enabled(this.show_events);
-        this._watchDesktopPreferences();
         this._watchPointerAndMenu();
-        this._startResumeMonitor();
     }
 
     _wireAgenda() {
@@ -299,81 +292,28 @@ class CalendarPlusApplet extends Applet.Applet {
         }
     }
 
-    _watchDesktopPreferences() {
-        this._signals.connect(
-            this.desktop_settings,
-            "changed::first-day-of-week",
-            () => this._onWeekStartChanged()
-        );
-        this._signals.connect(
-            this.desktop_settings,
-            "changed::clock-use-24h",
-            () => this._onDesktopClockPreferenceChanged(true)
-        );
-        this._signals.connect(
-            this.desktop_settings,
-            "changed::clock-show-date",
-            () => this._onDesktopClockPreferenceChanged(false)
-        );
-        this._signals.connect(
-            this.desktop_settings,
-            "changed::gtk-theme",
-            () => this._onThemeModeChanged()
-        );
-    }
-
-    _reportDesktopPreferenceFailure(key, error) {
-        if (!this._desktopPreferenceWarnings ||
-            this._desktopPreferenceWarnings.has(key)) {
-            return;
-        }
-        this._desktopPreferenceWarnings.add(key);
-        global.logError(
-            `${UUID}: could not read Cinnamon desktop setting '${key}'; ` +
-            `using the compatibility default: ${error}`
-        );
-    }
-
     _desktopUses24h() {
-        try {
-            return this.desktop_settings &&
-                this.desktop_settings.get_boolean("clock-use-24h");
-        } catch (error) {
-            this._reportDesktopPreferenceFailure("clock-use-24h", error);
-            return false;
-        }
+        return this._desktopIntegration
+            ? this._desktopIntegration.uses24h()
+            : false;
     }
 
     _desktopShowsDate() {
-        try {
-            return this.desktop_settings &&
-                this.desktop_settings.get_boolean("clock-show-date");
-        } catch (error) {
-            this._reportDesktopPreferenceFailure("clock-show-date", error);
-            return false;
-        }
-    }
-
-    _systemThemeName() {
-        if (!this.desktop_settings) {
-            return "";
-        }
-        try {
-            const theme = this.desktop_settings.get_string("gtk-theme");
-            return typeof theme === "string" ? theme.toLowerCase() : "";
-        } catch (error) {
-            this._reportDesktopPreferenceFailure("gtk-theme", error);
-            return "";
-        }
+        return this._desktopIntegration
+            ? this._desktopIntegration.showsDate()
+            : false;
     }
 
     _systemPrefersDark() {
-        return this._systemThemeName().includes("dark");
+        return this._desktopIntegration
+            ? this._desktopIntegration.prefersDark()
+            : false;
     }
 
     _systemUsesHighContrast() {
-        const theme = this._systemThemeName().replace(/[-_ ]/g, "");
-        return theme.includes("highcontrast");
+        return this._desktopIntegration
+            ? this._desktopIntegration.usesHighContrast()
+            : false;
     }
 
     _watchPointerAndMenu() {
@@ -385,43 +325,6 @@ class CalendarPlusApplet extends Applet.Applet {
             this._resetCalendar();
             this._rebalancePopupWidth();
         });
-    }
-
-    _startResumeMonitor() {
-        try {
-            const LoginManager = imports.misc.loginManager;
-            if (LoginManager && typeof LoginManager.getLoginManager === "function") {
-                this._resume_source = LoginManager.getLoginManager();
-                this._resumeSignals.connect(
-                    this._resume_source,
-                    "prepare-for-sleep",
-                    (suspending) => {
-                        if (!suspending) {
-                            this._onResume();
-                        }
-                    }
-                );
-                return;
-            }
-        } catch (error) {
-            /* Older Cinnamon releases use the UPower compatibility signal below. */
-        }
-
-        const UPowerGlib = imports.gi.UPowerGlib;
-        this._resume_source = new UPowerGlib.Client();
-        try {
-            this._resumeSignals.connect(
-                this._resume_source,
-                "notify-resume",
-                () => this._onResume()
-            );
-        } catch (error) {
-            this._resumeSignals.connect(
-                this._resume_source,
-                "notify::resume",
-                () => this._onResume()
-            );
-        }
     }
 
     _onResume() {
@@ -571,47 +474,12 @@ class CalendarPlusApplet extends Applet.Applet {
     }
 
     _setKeybinding() {
-        if (this._destroyed) {
-            return;
-        }
-        this._removeKeybinding();
-        if (!this.keyOpen) {
-            return;
-        }
-
-        if (Main.keybindingManager.addXletHotKey) {
-            Main.keybindingManager.addXletHotKey(
-                this,
-                "calendar-open",
-                this.keyOpen,
-                () => this._openMenu()
-            );
-        } else {
-            Main.keybindingManager.addHotKey(
-                `${UUID}-open-${this.instance_id}`,
+        if (!this._destroyed && this._desktopIntegration) {
+            this._desktopIntegration.setKeybinding(
                 this.keyOpen,
                 () => this._openMenu()
             );
         }
-        this._keybinding_set = true;
-    }
-
-    _removeKeybinding() {
-        if (!this._keybinding_set) {
-            return;
-        }
-        try {
-            if (Main.keybindingManager.removeXletHotKey) {
-                Main.keybindingManager.removeXletHotKey(this, "calendar-open");
-            } else {
-                Main.keybindingManager.removeHotKey(
-                    `${UUID}-open-${this.instance_id}`
-                );
-            }
-        } catch (error) {
-            global.logError(error);
-        }
-        this._keybinding_set = false;
     }
 
     _openMenu() {
@@ -641,22 +509,11 @@ class CalendarPlusApplet extends Applet.Applet {
         if (this.menu) {
             this.menu.close();
         }
-
-        const temporal = this._temporalPolicy.get();
-        if (temporal.providerAvailable) {
-            try {
-                const appInfo = Gio.DesktopAppInfo.new(
-                    "org.infiltrator.SystemSettings.desktop"
-                );
-                if (appInfo) {
-                    appInfo.launch([], global.create_app_launch_context());
-                    return;
-                }
-            } catch (error) {
-                global.logError(error);
-            }
+        if (this._desktopIntegration && this._temporalPolicy) {
+            this._desktopIntegration.launchSettings(
+                this._temporalPolicy.get().providerAvailable
+            );
         }
-        Util.spawnCommandLine("cinnamon-settings calendar");
     }
 
     openAbout() {
@@ -671,17 +528,8 @@ class CalendarPlusApplet extends Applet.Applet {
         if (this.menu) {
             this.menu.close(false);
         }
-
-        try {
-            const appInfo = Gio.DesktopAppInfo.new(
-                "infiltrator-calendar-about.desktop"
-            );
-            if (!appInfo) {
-                throw new Error("Calendar About desktop identity is unavailable");
-            }
-            appInfo.launch([], global.create_app_launch_context());
-        } catch (error) {
-            global.logError(error);
+        if (this._desktopIntegration) {
+            this._desktopIntegration.launchAbout();
         }
     }
 
@@ -698,14 +546,9 @@ class CalendarPlusApplet extends Applet.Applet {
         this._signals.connect(this.clock, "notify::clock", () => {
             this._updateClockAndDate();
         });
-        this._signals.connect(Main.themeManager, "theme-set", () => {
-            this._applyThemeMode();
-            this._resetLabelWidth();
-            this._rebalancePopupWidth();
-        });
-        this._signals.connect(global.settings, "changed::panel-edit-mode", () => {
-            this._resetLabelWidth();
-        });
+        if (this._desktopIntegration) {
+            this._desktopIntegration.startPanelWatchers();
+        }
 
         this._onSettingsChanged();
         this.events_manager.start_events();
@@ -738,10 +581,13 @@ class CalendarPlusApplet extends Applet.Applet {
         this._destroyed = true;
         this._added_to_panel = false;
 
-        this._removeKeybinding();
-        this._resumeSignals.disconnectAll();
         this._eventSignals.disconnectAll();
         this._signals.disconnectAll();
+
+        if (this._desktopIntegration) {
+            this._desktopIntegration.destroy();
+            this._desktopIntegration = null;
+        }
 
         if (this.system_clock) {
             try {
@@ -812,13 +658,10 @@ class CalendarPlusApplet extends Applet.Applet {
         }
 
         this._calendar_system = null;
-        this.desktop_settings = null;
         this.clock = null;
         this.menu = null;
         this.menuManager = null;
-        this._resume_source = null;
         this._temporalPolicy = null;
-        this._desktopPreferenceWarnings = null;
     }
 }
 

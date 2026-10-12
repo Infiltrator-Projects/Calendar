@@ -1,7 +1,15 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 // Copyright (C) 1993-2026 Shannon Smith
 
-/* Private implementation included only by system-clock.c. */
+/*
+ * Effective temporal-policy discovery and monitoring.
+ *
+ * This adapter owns persistence fallback, provider discovery and filesystem /
+ * GSettings observation. The SystemClock facade consumes only the resulting
+ * coherent policy snapshot and semantic change callback.
+ */
+
+#include "temporal-policy-source.h"
 
 #include "system-clock-private.h"
 

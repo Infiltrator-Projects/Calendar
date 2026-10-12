@@ -49,6 +49,9 @@ def main() -> None:
     schema = json.loads(read("settings-schema.json"))
     applet = read("applet.js")
     calendar = read("calendar.js")
+    civil_date = read("civilDate.js")
+    calendar_event_projection = read("calendarEventProjection.js")
+    desktop_integration = read("desktopIntegration.js")
     event_view = read("eventView.js")
     event_manager = read("eventManager.js")
     event_transport = read("calendarServerTransport.js")
@@ -65,7 +68,7 @@ def main() -> None:
         PROJECT_ROOT / "src/adapters/system-clock.c"
     ).read_text(encoding="utf-8")
     policy_source = (
-        PROJECT_ROOT / "src/adapters/temporal-policy-source.inc"
+        PROJECT_ROOT / "src/adapters/temporal-policy-source.c"
     ).read_text(encoding="utf-8")
 
     forbidden_temporal_settings = {
@@ -77,12 +80,30 @@ def main() -> None:
     }
     assert not forbidden_temporal_settings.intersection(schema)
 
-    # Composition root wires feature modules; concrete views stay in leaves.
-    forbid_tokens(js_code(applet), "class CalendarPopupMenu", "class LatchedWidthBin")
+    # Composition root wires feature modules; platform services and concrete
+    # views remain outside the controller.
+    forbid_tokens(
+        js_code(applet),
+        "class CalendarPopupMenu",
+        "class LatchedWidthBin",
+        "Gio.Settings",
+        "keybindingManager",
+        "LoginManager",
+        "UPowerGlib",
+    )
     assert {
-        "calendar", "eventManager", "panelClock", "popupShell", "temporalPolicy"
+        "calendar", "desktopIntegration", "eventManager", "panelClock",
+        "popupShell", "temporalPolicy"
     }.issubset(loaded_modules(applet))
     assert "nativeBoundary" not in loaded_modules(applet)
+    require_tokens(
+        desktop_integration,
+        "Gio.Settings",
+        "keybindingManager",
+        "prepare-for-sleep",
+        "launchSettings(",
+        "launchAbout(",
+    )
     require_tokens(
         popup_shell,
         "CalendarEventSourceModule.CalendarEventSource",
@@ -122,8 +143,8 @@ def main() -> None:
     require_tokens(event_view, "set_use_24h(")
     require_tokens(calendar, "setShowWeekNumbers(", "setWeekStart(")
 
-    # Month view receives a narrow event-source port. Transport and mutable
-    # native event-store ownership remain behind EventsManager.
+    # Month view receives a narrow event-source port. Transport/cache range
+    # projection is a separate pure collaborator rather than view logic.
     for operation in (
         "is_active()",
         "set_visible_range(",
@@ -135,6 +156,13 @@ def main() -> None:
     require_tokens(event_transport, "CalendarServerProxy", "bus_watch_name", "request_range(")
     require_tokens(event_manager, "add_or_update_in_range(", "NativeBoundary.decodeEventSnapshot")
     forbid_tokens(js_code(calendar), "CalendarServer", "Gio.", "bus_watch", "event_store")
+    require_tokens(
+        calendar_event_projection,
+        "set_visible_range(",
+        "get_colors_for_range(",
+        "representableLocalDate",
+    )
+    forbid_tokens(js_code(calendar_event_projection), "CalendarServer", "Gio.", "event_store")
 
     # Theme policy remains platform-authoritative and Common supplies design
     # tokens. Verify semantic values, not statement placement.
@@ -142,7 +170,8 @@ def main() -> None:
     assert theme["type"] == "combobox"
     assert theme["default"] == "system"
     assert set(theme["options"].values()) == {"system", "day", "night"}
-    require_tokens(applet, '"changed::gtk-theme"', "calendar-plus-theme-${effectiveTheme}")
+    require_tokens(desktop_integration, '"changed::gtk-theme"')
+    require_tokens(applet, "calendar-plus-theme-${effectiveTheme}")
 
     common_design = json.loads(
         (
@@ -192,8 +221,7 @@ def main() -> None:
     )
 
     # Native facade owns clock composition only; policy-source owns discovery,
-    # persistence fallback and monitoring. This is an ownership boundary, not a
-    # requirement on exact function layout.
+    # persistence fallback and monitoring in an independently compiled module.
     require_tokens(system_clock, "CalendarPlusClockEngine", "CalendarPlusTemporalPolicySource")
     forbid_tokens(
         system_clock,
@@ -201,6 +229,7 @@ def main() -> None:
         "infiltratr_temporal_posix_policy_load",
         "g_file_monitor_directory(",
         "g_settings_schema_source_lookup(",
+        "temporal-policy-source.inc",
     )
     require_tokens(
         policy_source,
@@ -218,9 +247,15 @@ def main() -> None:
         ".add_months_parts(",
         ".add_years_parts(",
         ".build_grid(",
+        "CalendarPlus.date_is_work_day(",
+    )
+    require_tokens(
+        civil_date,
         "CalendarPlus.date_same(",
         "CalendarPlus.date_weekday(",
-        "CalendarPlus.date_is_work_day(",
+        "representableLocalDate",
+        "class CivilDate",
+        "decodeCivilDate",
     )
     forbid_tokens(
         js_code(calendar),
@@ -232,7 +267,7 @@ def main() -> None:
         "record[2]",
         "record[3]",
     )
-    require_tokens(calendar, "NativeBoundary.decodeCalendarGrid", "NativeBoundary.decodeCivilDate")
+    require_tokens(calendar, "NativeBoundary.decodeCalendarGrid", "CivilDateBoundary")
     require_tokens(native_boundary, "decodeTemporalPolicy", "decodeCalendarGrid", "decodeEventSnapshot")
 
     # Request lifecycle remains one state object rather than controller flags.
@@ -256,12 +291,17 @@ def main() -> None:
         "_range_retry_attempt",
     )
 
-    # Runtime mechanics are centralized and long-lived owners use SignalBag.
+    # Runtime mechanics are centralized. The unavoidable bootstrap needed to
+    # locate runtimeSupport itself is generated/checked from one canonical tool.
     assert runtime.count("var SignalBag = class SignalBag") == 1
     for source in (applet, calendar, event_view, event_manager, panel_clock):
         assert "class SignalBag" not in js_code(source)
     require_tokens(calendar, "SignalBag", "disconnectAll()")
     require_tokens(event_manager, "SignalBag", "disconnectAll()")
+    loader_tool = (PROJECT_ROOT / "tools/update-runtime-loader.py").read_text(
+        encoding="utf-8"
+    )
+    require_tokens(loader_tool, "CANONICAL", "function _loadRuntimeSupport()", "--check")
 
     # Public identity/accessibility compatibility remains stable.
     require_tokens(applet, '"calendar-plus@the-infiltratr"', "openAbout()")
