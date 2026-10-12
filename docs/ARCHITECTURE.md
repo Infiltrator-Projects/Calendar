@@ -41,7 +41,7 @@ src/
 ├── core/       Portable chronology, clock, astronomy and event logic
 ├── adapters/   GObject, GVariant, main-loop and native integration
 ├── app/        Project identity, version API and About helper
-├── cinnamon/   Cinnamon JavaScript runtime and settings
+├── cinnamon/   Cinnamon composition, presentation and narrow desktop adapters
 ├── i18n/       Gettext sources and translations
 ├── abi/        Exported-library version map
 └── vendor/     Pinned Infiltratr Common submodule
@@ -51,7 +51,11 @@ src/
 
 The native core owns Calendar-specific chronology models, continuation rules, alternative clocks, astronomical calculations and event semantics. It deliberately uses GLib foundational facilities such as fixed-width types, strings, containers and civil-time helpers, but remains independent of GObject presentation facades, GVariant transport schemas, Cinnamon actors and desktop lifecycle APIs.
 
-Cinnamon owns panel integration, settings presentation, lifecycle and CalendarServer transport mechanics. Live applet and desktop settings terminate at the composition root; a dedicated temporal-policy resolver decodes and validates the native effective snapshot, and lower presentation modules receive only resolved scalar policy rather than settings objects. A dedicated JavaScript native-boundary decoder is the sole presentation-side owner of positional GVariant output layouts, while raw CalendarServer input tuples are interpreted only by the native event adapter. Calendar now owns deterministic arithmetic/navigation for the fixed-rule calendar families it can validate directly. ICU/CLDR remains authoritative only for the remaining astronomical/lunisolar providers and locale-sensitive formatting that Calendar still explicitly delegates. Common owns genuinely generic primitives whose contract is reusable across the software family. Common is also the single authority for system clock-mode identifiers, presentation names, capability metadata and specialised clock rendering. Calendar binds those Common catalogue entries only to Calendar-owned next-boundary scheduling so the Cinnamon panel wakes exactly when the shared rendered value can change. Calendar's Cinnamon surface projects the pinned Common design JSON into toolkit-specific CSS under generated, regression-checked markers rather than carrying independent typography values. Configuration uses Cinnamon's own xlet-settings renderer and About uses Cinnamon/St, eliminating Calendar-owned Python/GTK presentation shims.
+Cinnamon owns panel integration, settings presentation, lifecycle and CalendarServer transport mechanics, but those platform mechanics are split into narrow owners. `desktopIntegration.js` owns Gio desktop settings, global keybindings, suspend/resume compatibility, theme/panel observation and application launching. `applet.js` remains the composition root and receives only semantic callbacks from that adapter. `civilDate.js` owns the date-only JavaScript boundary, including valid civil dates that have no representable local instant. `calendarEventProjection.js` owns visible-range/event-colour projection, leaving `calendar.js` focused on native grid navigation and actor presentation.
+
+Live applet and desktop settings terminate at the composition root; a dedicated temporal-policy resolver decodes and validates the native effective snapshot, and lower presentation modules receive only resolved scalar policy rather than settings objects. A dedicated JavaScript native-boundary decoder is the sole presentation-side owner of positional GVariant output layouts, while raw CalendarServer input tuples are interpreted only by the native event adapter. Calendar now owns deterministic arithmetic/navigation for the fixed-rule calendar families it can validate directly. ICU/CLDR remains authoritative only for the remaining astronomical/lunisolar providers and locale-sensitive formatting that Calendar still explicitly delegates. Common owns genuinely generic primitives whose contract is reusable across the software family. Common is also the single authority for system clock-mode identifiers, presentation names, capability metadata and specialised clock rendering. Calendar binds those Common catalogue entries only to Calendar-owned next-boundary scheduling so the Cinnamon panel wakes exactly when the shared rendered value can change. Calendar's Cinnamon surface projects the pinned Common design JSON into toolkit-specific CSS under generated, regression-checked markers rather than carrying independent typography values. Configuration uses Cinnamon's own xlet-settings renderer and About uses Cinnamon/St, eliminating Calendar-owned Python/GTK presentation shims.
+
+The small Cinnamon bootstrap that locates `runtimeSupport.js` must execute before shared JavaScript code can itself be loaded. Its unavoidable textual copies therefore have one canonical generator/checker in `tools/update-runtime-loader.py`; independent hand-maintained loader variants are not permitted.
 
 Within the arithmetic engine, the coordinator retains cross-family dispatch, simple Gregorian-derived era mapping and generic navigation. Japanese imperial-era, Coptic/Ethiopic, Indian National, Islamic/Umm al-Qura, Hebrew and Persian rule sets live in private sibling translation units. Each family keeps its year/era mapping, month-length, conversion and family-specific navigation-sensitive logic together where applicable; the split follows chronology ownership rather than an arbitrary file-size target.
 
@@ -77,9 +81,11 @@ Representation conversion belongs at explicit boundaries. A helper that silently
 
 CalendarServer all-day end points enter as exclusive following-midnight values and are normalised exactly once into Calendar's inclusive final-instant contract. Timed event end points are inclusive under the native event model.
 
-The native event index is single-owner-thread state. Consumers obtain detached deep-copy snapshots rather than sharing mutable index internals. Snapshot revisions are opaque equality tokens; callers compare them for change detection rather than treating them as timestamps or ordering metadata.
+The native event index is single-owner-thread state. Identity lookup is hash-indexed, while two non-owning sorted temporal indexes bound interval candidates by local start/end day. Long events still remain one record; Calendar does not expand them per day. Consumers obtain detached deep-copy snapshots rather than sharing mutable index internals. Snapshot revisions are opaque equality tokens; callers compare them for change detection rather than treating them as timestamps or ordering metadata.
 
 This design keeps CalendarServer lifecycle and transport behaviour out of portable event semantics while allowing the Cinnamon presentation layer to refresh safely from coherent Calendar-owned state. Cinnamon event transport isolates CalendarServer discovery, reconnect and range-call mechanics behind a dedicated transport object. EventsManager consumes that narrow port and owns event/cache semantics, while visible-range request generation, admission, retry and queued-force transitions remain in a dedicated state object. CalendarServer callbacks therefore cannot mutate an accidental constellation of controller flags.
+
+Civil visible ranges are constructed from actual local date boundaries rather than assuming every day is 86,400 seconds. DST transitions, skipped midnights and wholly skipped dates remain explicit boundary cases in both implementation and behavioural tests.
 
 ## Location and astronomical state
 
@@ -100,6 +106,8 @@ Externally derived allocation sizes are validated before allocation. Signed-over
 Unsupported, malformed, unavailable or physically undefined states remain explicit across layers. A numeric or textual result that merely looks plausible is not an acceptable substitute.
 
 A failure in one optional model should not corrupt independent Calendar behaviour. Locale fallback, event transport loss, astronomical unavailability and unsupported calendar ranges are represented at the narrowest owning boundary so presentation can report them honestly.
+
+Calendar providers resolve by Calendar's stable IDs. Common catalogue metadata is looked up per provider; missing descriptive metadata may degrade that provider's display name to its stable ID but does not disable unrelated Calendar chronology. Release builds still pin an exact Common revision and validate catalogue agreement as release evidence rather than making runtime chronology depend on array-order or global catalogue completeness.
 
 Malformed external data is rejected or normalised once at the adapter/domain boundary. The portable core should not need to understand transport-specific error recovery.
 
@@ -137,9 +145,9 @@ The applet installs no project-owned daemon, polling service or autostart entry.
 
 Correctness is enforced at several levels rather than by one end-to-end test. Portable chronology/property tests exercise deterministic models and boundaries; clock tests cover exact transition behaviour; ABI tests protect the native compatibility surface; JavaScript/settings tests protect the Cinnamon boundary; package and reproducibility tests protect release construction.
 
-Live Cinnamon behaviour is a separate integration boundary. The repository uses a Cinnamon smoke tool for installed-session verification and an upstream-drift workflow to detect changes in the stock Cinnamon integration surface that require deliberate review.
+Live Cinnamon behaviour is a separate integration boundary. The repository uses a Cinnamon smoke tool for installed-session verification and an upstream-drift workflow to detect changes in the stock Cinnamon integration surface that require deliberate review. Ordinary development runs may report a live probe as unavailable, but a `Release ...` commit is not publishable unless the dedicated real Cinnamon qualification is available and succeeds.
 
-The exact release revision must satisfy the required build, sanitizer, static-analysis, coverage, ABI, packaging, reproducibility and release gates. A skipped live-environment check is reported as skipped rather than treated as proof.
+The exact release revision must satisfy the required build, sanitizer, static-analysis, coverage, ABI, packaging, reproducibility and release gates. A skipped environment-dependent check is reported as skipped rather than treated as proof, and release-critical live Cinnamon qualification cannot be satisfied by a skip.
 
 ## Build and release contract
 
