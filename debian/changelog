@@ -1,3 +1,11 @@
+infiltrator-calendar (1.0.99) unstable; urgency=medium
+
+  * Preserve the desired visible event range across CalendarServer loss so reconnect recovery deterministically refetches the same civil range.
+  * Bound external CalendarServer removal-ID parsing to the established per-identifier UTF-8 contract without limiting legitimate bulk removals.
+  * Reject malformed removal notifications atomically and protect recovery and failure contracts with public/native behavioural regression coverage.
+
+ -- Shannon Smith <infiltratr@yandex.com>  Tue, 13 Oct 2026 22:25:00 +0000
+
 infiltrator-calendar (1.0.98) unstable; urgency=medium
 
   * Recover cleanly when CalendarServer proxy or range-request initiation fails synchronously, preserving bounded reconnect and retry semantics.
