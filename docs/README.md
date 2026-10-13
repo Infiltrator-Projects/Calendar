@@ -10,13 +10,13 @@ This directory is the canonical documentation entry point for Calendar. The Infi
 - [Roadmap](ROADMAP.md) — current foundation, near-term priorities and longer-term direction.
 - [Validation](VALIDATION.md) — automated, manual and environment-specific evidence boundaries.
 - [Project README](../README.md) — product overview, capabilities, build/use entry point and engineering ethos.
-- [Changelog](../CHANGELOG.md) — user-visible and contract-relevant change history.
+- [Changelog](../CHANGELOG.md) — pointer to the single versioned release-history authority in `debian/changelog`.
 - [Contributing](../CONTRIBUTING.md) — development, ownership and verification rules.
 - [Security](../SECURITY.md) — vulnerability scope, reporting and response policy.
 
 ## Documentation authority
 
-The baseline files have distinct responsibilities and should not compete as alternate sources of truth. Architecture describes where behaviour belongs; Design explains why; Roadmap describes direction; Validation records what evidence is required. Code and tests remain authoritative for executable behaviour, while immutable tags/releases identify historical source.
+The baseline files have distinct responsibilities and should not compete as alternate sources of truth. Architecture describes where behaviour belongs; Design explains why; Roadmap describes direction; Validation records what evidence is required. `debian/changelog` is the sole maintained versioned release-history source and feeds GitHub Release notes. Code and tests remain authoritative for executable behaviour, while immutable tags/releases identify historical source and published assets.
 
 Specialist documents may go deeper into one subsystem, protocol, platform, research area or historical investigation. They should link back to the canonical baseline when a reader needs the wider project context. Calendar keeps model evidence in `MODELS.md`, cross-platform/representation contracts in `PORTABILITY.md`, and exact-source environment-dependent observations in `QUALIFICATION.md` so the project README can remain a product and build/use entry point.
 
