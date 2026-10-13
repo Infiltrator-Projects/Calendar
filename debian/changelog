@@ -1,3 +1,11 @@
+infiltrator-calendar (1.0.95) unstable; urgency=medium
+
+  * Align maintained architecture and build documentation with the suite-standard native GTK About boundary.
+  * Extend clang-tidy qualification to the shipped native About helper with GTK-specific boundary flags.
+  * Replace fixed-size About formatting buffers with GLib-owned dynamic strings while preserving narrow documented GTK macro suppressions.
+
+ -- Shannon Smith <infiltratr@yandex.com>  Tue, 13 Oct 2026 07:35:00 +0000
+
 infiltrator-calendar (1.0.94) unstable; urgency=medium
 
   * Fail closed when the upstream compare file list reaches GitHub's API cap.

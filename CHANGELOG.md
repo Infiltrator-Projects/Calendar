@@ -4,8 +4,13 @@ This changelog records user-visible, compatibility, architecture and validation 
 
 ## Unreleased
 
+No unreleased changes.
+
+## 1.0.95 - 2026-10-13
+
 - Align maintained architecture, qualification and build documentation with the deliberately restored suite-standard native GTK About helper and its GTK 3 build dependency.
 - Extend `make static-analysis` to cover the shipped native About helper with its own GTK boundary flags instead of leaving that production translation unit outside clang-tidy.
+- Replace fixed-size About formatting buffers with GLib-owned dynamic strings while retaining only narrow, documented suppressions for GTK 3's official cast macros.
 
 ## 1.0.94 - 2026-10-13
 
@@ -377,7 +382,7 @@ This changelog records user-visible, compatibility, architecture and validation 
 ## 1.0.39 - 2026-09-21
 
 - Upgrade the released local `.run` installer from static native tuning alone to a two-pass hardware-native PGO pipeline.
-- Instrument Calendar and the pinned Infiltratr Common library with GCC profile generation, train representative calendar-grid/navigation, clock/tick, event-timing and automated-test paths on the actual machine, then rebuild with `-fprofile-use -fprofile-correction -fprofile-partial-training`.
+- Instrument Calendar and the pinned Infiltratr Common library with GCC profile generation, train representative calendar-grid/navigation, clock/tick, event-timing and automated-test paths on the actual machine, then rebuild with the measured profile using `-fprofile-use -fprofile-correction -fprofile-partial-training`.
 - Retain `-O3 -march=native -mtune=native -flto=auto` while deliberately excluding `-Ofast` and `-ffast-math` so chronology and astronomical calculations keep their existing correctness semantics.
 - Identify locally trained packages as `+nativepgo1` and record the PGO-trained profile in installed BUILD-INFO.
 
