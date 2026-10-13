@@ -33,6 +33,45 @@ detect_session() {
     return 1
 }
 
+report_qualification_environment() {
+    os_name=unknown
+    if [ -r /etc/os-release ]; then
+        os_name=$(sed -n 's/^PRETTY_NAME=//p' /etc/os-release | head -n 1 |
+            sed 's/^"//;s/"$//' || true)
+        [ -n "$os_name" ] || os_name=unknown
+    fi
+
+    cinnamon_version=unknown
+    if command -v cinnamon >/dev/null 2>&1; then
+        cinnamon_version=$(cinnamon --version 2>/dev/null | head -n 1 || true)
+        [ -n "$cinnamon_version" ] || cinnamon_version=unknown
+    fi
+
+    locale_name=${LC_ALL:-${LC_TIME:-${LANG:-unknown}}}
+    timezone_name=unknown
+    if command -v timedatectl >/dev/null 2>&1; then
+        timezone_name=$(timedatectl show -p Timezone --value 2>/dev/null |
+            head -n 1 || true)
+        [ -n "$timezone_name" ] || timezone_name=unknown
+    fi
+    if [ "$timezone_name" = unknown ] && [ -r /etc/timezone ]; then
+        timezone_name=$(head -n 1 /etc/timezone 2>/dev/null || true)
+        [ -n "$timezone_name" ] || timezone_name=unknown
+    fi
+    if [ "$timezone_name" = unknown ] && [ -L /etc/localtime ]; then
+        localtime_target=$(readlink /etc/localtime 2>/dev/null || true)
+        case "$localtime_target" in
+            */zoneinfo/*) timezone_name=${localtime_target#*/zoneinfo/} ;;
+        esac
+    fi
+
+    printf 'Qualification source: version=%s source_sha=%s\n' \
+        "$EXPECTED_VERSION" "${GITHUB_SHA:-unknown}"
+    printf 'Qualification environment: os=%s cinnamon=%s session=%s desktop=%s locale=%s timezone=%s\n' \
+        "$os_name" "$cinnamon_version" "${XDG_SESSION_TYPE:-unknown}" \
+        "${XDG_CURRENT_DESKTOP:-unknown}" "$locale_name" "$timezone_name"
+}
+
 installed_version() {
     if [ ! -f "$SYSTEM_APPLET_DIR/metadata.json" ]; then
         printf '\n'
@@ -136,6 +175,7 @@ detect_session || {
     echo "No active Cinnamon session is available for blocking qualification." >&2
     exit 1
 }
+report_qualification_environment
 
 mode="${CALENDAR_PLUS_LIVE_MODE:-installed}"
 if [ "$mode" = "artifact-runtime" ]; then
