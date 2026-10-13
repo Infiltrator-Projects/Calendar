@@ -114,7 +114,12 @@ gboolean calendar_plus_event_store_add_or_update_in_range(
 /**
  * calendar_plus_event_store_remove:
  * @self: an event store
- * @serialized_ids: event identifiers separated by `::`
+ * @serialized_ids: UTF-8 event identifiers separated by `::`
+ *
+ * Every non-empty identifier must satisfy the same 4096-byte boundary as an
+ * added CalendarServer event. The complete serialized list is validated before
+ * any index mutation, so malformed external input cannot partially apply an
+ * otherwise valid removal prefix.
  *
  * Returns: %TRUE when at least one indexed event was removed
  */
