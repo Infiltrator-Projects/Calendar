@@ -345,10 +345,39 @@ retry();
 assert.equal(observations.rangeRequests.length, 4);
 const presented = [];
 manager.emit = (signal, ...args) => presented.push([signal, ...args]);
+transport.ready = false;
 transport.emit("unavailable", false);
 assert.equal(manager._rangeState.acceptingEvents, false);
 assert.ok(observations.clears > 0, "transport loss must invalidate native cached rows");
 assert.ok(presented.some(([signal]) => signal === "has-calendars-changed"));
+assert.equal(manager.current_range_start_civil.year, first.getFullYear());
+assert.equal(manager.current_range_start_civil.month, first.getMonth() + 1);
+assert.equal(manager.current_range_start_civil.day, first.getDate());
+assert.equal(manager.current_range_end_civil.year, last.getFullYear());
+assert.equal(manager.current_range_end_civil.month, last.getMonth() + 1);
+assert.equal(manager.current_range_end_civil.day, last.getDate());
+const rangesBeforeReconnect = observations.rangeRequests.length;
+transport.ready = true;
+transport.emit("ready");
+assert.equal(idles.size, 1, "transport recovery must schedule one desired-range reload");
+const reconnectRefresh = idles.values().next().value;
+idles.clear();
+reconnectRefresh();
+assert.equal(
+    observations.rangeRequests.length,
+    rangesBeforeReconnect + 1,
+    "transport recovery must re-request the preserved visible range"
+);
+assert.deepEqual(
+    observations.rangeRequests.at(-1).slice(0, 2),
+    observations.rangeRequests[0].slice(0, 2),
+    "recovery must restore the exact desired visible range"
+);
+assert.equal(
+    observations.rangeRequests.at(-1)[2],
+    true,
+    "recovery must force a fresh CalendarServer range"
+);
 transport.status = 1;
 assert.equal(
     manager.should_show_event_pane(),
