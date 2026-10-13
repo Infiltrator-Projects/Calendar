@@ -12,6 +12,7 @@
 #include "event-store-private.h"
 
 #include <infiltratr/arithmetic.h>
+#include <string.h>
 
 struct _CalendarPlusEventStore
 {
@@ -63,26 +64,70 @@ calendar_plus_event_store_get_index(CalendarPlusEventStore *self)
     return self->index;
 }
 
+static gboolean
+serialized_event_ids_are_valid(const gchar *serialized_ids)
+{
+    const gchar *cursor = serialized_ids;
+
+    while (cursor[0] != '\0')
+    {
+        const gchar *separator = strstr(cursor, "::");
+        const gsize length = separator != NULL
+            ? (gsize)(separator - cursor)
+            : strlen(cursor);
+
+        if (length > CALENDAR_PLUS_EVENT_MAX_ID_BYTES ||
+            (length > 0 &&
+             !g_utf8_validate(cursor, (gssize)length, NULL)))
+        {
+            return FALSE;
+        }
+
+        if (separator == NULL)
+            break;
+        cursor = separator + 2;
+    }
+    return TRUE;
+}
+
 gboolean
 calendar_plus_event_store_remove(CalendarPlusEventStore *self,
                                  const gchar *serialized_ids)
 {
-    g_auto(GStrv) ids = NULL;
+    const gchar *cursor;
     gboolean changed = FALSE;
-    gsize item;
 
     g_return_val_if_fail(CALENDAR_PLUS_IS_EVENT_STORE(self), FALSE);
-    if (serialized_ids == NULL || serialized_ids[0] == '\0')
-        return FALSE;
-
-    ids = g_strsplit(serialized_ids, "::", -1);
-    for (item = 0; ids[item] != NULL; item++)
+    if (serialized_ids == NULL || serialized_ids[0] == '\0' ||
+        !serialized_event_ids_are_valid(serialized_ids))
     {
-        if (ids[item][0] != '\0')
+        return FALSE;
+    }
+
+    /*
+     * Validate the entire external payload before mutating the index, then
+     * materialize at most one bounded identifier at a time.  CalendarServer
+     * may legally remove many events in one notification; memory use therefore
+     * scales with the identifier contract rather than with message size.
+     */
+    cursor = serialized_ids;
+    while (cursor[0] != '\0')
+    {
+        const gchar *separator = strstr(cursor, "::");
+        const gsize length = separator != NULL
+            ? (gsize)(separator - cursor)
+            : strlen(cursor);
+
+        if (length > 0)
         {
-            changed |= calendar_plus_event_index_remove(self->index,
-                                                        ids[item]);
+            g_autofree gchar *id = g_strndup(cursor, length);
+
+            changed |= calendar_plus_event_index_remove(self->index, id);
         }
+
+        if (separator == NULL)
+            break;
+        cursor = separator + 2;
     }
     return changed;
 }
