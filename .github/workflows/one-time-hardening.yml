@@ -1,0 +1,334 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
+# Copyright (C) 2016-2026 Shannon Smith
+
+name: one-time-calendar-hardening
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: write
+
+jobs:
+  harden:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          submodules: true
+      - name: Apply reviewed hardening changes atomically
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 <<'PY'
+          from pathlib import Path
+          import re
+
+          def read(path: str) -> str:
+              return Path(path).read_text(encoding="utf-8")
+
+          def write(path: str, text: str) -> None:
+              Path(path).write_text(text, encoding="utf-8")
+
+          def replace_one(path: str, old: str, new: str) -> None:
+              text = read(path)
+              count = text.count(old)
+              if count != 1:
+                  raise SystemExit(f"{path}: expected one occurrence, found {count}: {old[:80]!r}")
+              write(path, text.replace(old, new, 1))
+
+          def regex_one(path: str, pattern: str, replacement: str) -> None:
+              text = read(path)
+              updated, count = re.subn(pattern, replacement, text, count=1, flags=re.DOTALL)
+              if count != 1:
+                  raise SystemExit(f"{path}: regex replacement count was {count}")
+              write(path, updated)
+
+          # The protected v1.0.92 tag belongs to an earlier failed publication
+          # attempt and cannot safely identify this corrected source revision.
+          replace_one("Makefile", "VERSION := 1.0.92", "VERSION := 1.0.93")
+          replace_one(
+              "src/cinnamon/metadata.json",
+              '"version": "1.0.92"',
+              '"version": "1.0.93"',
+          )
+          replace_one(
+              "README.md",
+              "**Stable release:** 1.0.92\\\\",
+              "**Stable release:** 1.0.93\\\\",
+          )
+          for path in (
+              "src/i18n/calendar-plus.pot",
+              "src/i18n/en_AU.po",
+              "src/i18n/en_GB.po",
+              "src/i18n/en_US.po",
+          ):
+              replace_one(
+                  path,
+                  "Project-Id-Version: Calendar 1.0.92",
+                  "Project-Id-Version: Calendar 1.0.93",
+              )
+
+          replace_one(
+              "CHANGELOG.md",
+              "## Unreleased\n\nNo unreleased changes.\n",
+              "## Unreleased\n\nNo unreleased changes.\n\n"
+              "## 1.0.93 - 2026-10-13\n\n"
+              "- Make release intent depend on the newest published GitHub release so a failed publication remains eligible on later green main revisions.\n"
+              "- Run release-only packaging, handoff creation and live Cinnamon qualification only when the source version still needs publication.\n"
+              "- Harden the local native installer by keeping its bootstrap dependencies aligned with Debian Build-Depends and rechecking them before compilation.\n"
+              "- Retire stale development branches so main is the sole active repository branch.\n",
+          )
+          changelog = read("debian/changelog")
+          stanza = (
+              "infiltrator-calendar (1.0.93) unstable; urgency=medium\n\n"
+              "  * Retry publication until the current source version is actually released.\n"
+              "  * Run release-only qualification only for unpublished source versions.\n"
+              "  * Align local-installer bootstrap dependencies with Debian Build-Depends.\n"
+              "  * Keep main as the sole active development branch.\n\n"
+              " -- Shannon Smith <infiltratr@yandex.com>  Tue, 13 Oct 2026 02:30:00 +0000\n\n"
+          )
+          if not changelog.startswith("infiltrator-calendar (1.0.92) "):
+              raise SystemExit("debian/changelog no longer starts at 1.0.92")
+          write("debian/changelog", stanza + changelog)
+
+          # Release intent is durable published state, not the edge between two
+          # adjacent pushes. This allows an initially failed release to recover
+          # on a later green commit without mutating or reconstructing artifacts.
+          replace_one("tools/release-handoff.py", "import shutil\nimport subprocess\n", "import shutil\n")
+          replace_one(
+              "tools/release-handoff.py",
+              "This tool is the single owner of release-version transition detection and the\nqualified artifact manifest. Workflows transport the handoff; they do not\nreconstruct its metadata independently.",
+              "This tool is the single owner of release intent and the qualified artifact\nmanifest. Workflows transport the handoff; they do not reconstruct its metadata\nindependently.",
+          )
+          regex_one(
+              "tools/release-handoff.py",
+              r"def git_file\(commit: str, path: str\) -> str:\n.*?\ndef sha256\(path: Path\) -> str:",
+              '''def release_requested(published_version: str) -> tuple[bool, str, str]:
+              version = current_version()
+              published = published_version.strip()
+              if published.startswith("v"):
+                  published = published[1:]
+              if not published:
+                  return True, version, ""
+              if not VERSION_PATTERN.fullmatch(published):
+                  fail(f"invalid published release version: {published_version!r}")
+
+              current_key = version_key(version)
+              published_key = version_key(published)
+              if current_key < published_key:
+                  fail(
+                      "source version is older than the latest published release: "
+                      f"published={published}, current={version}"
+                  )
+              return current_key > published_key, version, published
+
+
+          def sha256(path: Path) -> str:''',
+          )
+          replace_one(
+              "tools/release-handoff.py",
+              'help="report whether main changed to a newer release version",',
+              'help="report whether the current source version still needs publication",',
+          )
+          replace_one(
+              "tools/release-handoff.py",
+              'requested.add_argument("--before", default="")',
+              'requested.add_argument("--published-version", default="")',
+          )
+          replace_one(
+              "tools/release-handoff.py",
+              "requested_flag, version, previous = release_requested(args.before)\n        print(f\"requested={'true' if requested_flag else 'false'}\")\n        print(f\"version={version}\")\n        print(f\"previous_version={previous}\")",
+              "requested_flag, version, published = release_requested(args.published_version)\n        print(f\"requested={'true' if requested_flag else 'false'}\")\n        print(f\"version={version}\")\n        print(f\"published_version={published}\")",
+          )
+
+          # Keep local bootstrap convenience in lock-step with the actual Debian
+          # Build-Depends contract and verify the result before doing expensive PGO.
+          replace_one(
+              "tools/local-installer.sh.in",
+              "build-essential debhelper dpkg-dev gettext gir1.2-glib-2.0-dev \\\\\n        gobject-introspection gjs libglib2.0-dev libgtk-3-dev libicu-dev nodejs \\\\\n        pkg-config python3 xz-utils",
+              "build-essential debhelper desktop-file-utils dpkg-dev gettext \\\\\n        gir1.2-glib-2.0-dev gobject-introspection gjs libglib2.0-dev \\\\\n        libgtk-3-dev libicu-dev nodejs pkg-config python3 xz-utils",
+          )
+          replace_one(
+              "tools/local-installer.sh.in",
+              "    install_build_dependencies\nfi\n\nfor command_name in dpkg-buildpackage",
+              "    install_build_dependencies\nfi\n\n# Build-Depends is authoritative. Recheck after bootstrap so future dependency\n# drift fails here rather than deep inside the native package build.\n(cd \"$SOURCE_DIR\" && dpkg-checkbuilddeps)\n\nfor command_name in dpkg-buildpackage",
+          )
+
+          # CI asks GitHub what is published. Ordinary pushes no longer need full
+          # history, release packaging, or a self-hosted desktop runner.
+          ci = read(".github/workflows/ci.yml")
+          old_checkout = '''      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+                  with:
+                    submodules: true
+                    fetch-depth: 0
+                - name: Resolve release intent from version transition
+                  id: release-intent
+                  env:
+                    BEFORE_SHA: ${{ github.event.before }}
+                  shell: bash
+                  run: |
+                    set -euo pipefail
+                    python3 tools/release-handoff.py release-requested \\
+                      --before "${BEFORE_SHA:-}" >> "$GITHUB_OUTPUT"
+          '''
+          new_checkout = '''      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+                  with:
+                    submodules: true
+                - name: Resolve release intent from published state
+                  id: release-intent
+                  env:
+                    GH_TOKEN: ${{ github.token }}
+                  shell: bash
+                  run: |
+                    set -euo pipefail
+                    published_tag="$(gh api "repos/${GITHUB_REPOSITORY}/releases/latest" --jq '.tag_name')"
+                    python3 tools/release-handoff.py release-requested \\
+                      --published-version "$published_tag" >> "$GITHUB_OUTPUT"
+          '''
+          if ci.count(old_checkout) != 1:
+              raise SystemExit("ci.yml release-intent block no longer matches reviewed source")
+          ci = ci.replace(old_checkout, new_checkout, 1)
+          for name in (
+              "Install packaging dependencies",
+              "Run packaging and release gates",
+              "Create immutable release handoff",
+              "Retain exact qualified release handoff",
+          ):
+              marker = f"      - name: {name}\n"
+              if ci.count(marker) != 1:
+                  raise SystemExit(f"ci.yml expected one step named {name}")
+              ci = ci.replace(
+                  marker,
+                  marker + "        if: steps.release-intent.outputs.requested == 'true'\n",
+                  1,
+              )
+          marker = "  bigbedroom-live-probe:\n    name: BigBedroom / live Cinnamon qualification\n    needs: [debian-package]\n"
+          if ci.count(marker) != 1:
+              raise SystemExit("ci.yml BigBedroom job header changed")
+          ci = ci.replace(
+              marker,
+              marker + "    if: needs.debian-package.outputs.release_requested == 'true'\n",
+              1,
+          )
+          ci = ci.replace(
+              "      - name: Require live Cinnamon for release version transitions\n        if: >-\n          needs.debian-package.outputs.release_requested == 'true' &&\n          steps.live-cinnamon.outputs.ready != 'true'\n",
+              "      - name: Require live Cinnamon for release publication\n        if: steps.live-cinnamon.outputs.ready != 'true'\n",
+              1,
+          )
+          ci = ci.replace(
+              "A release version transition requires an available real Cinnamon session.",
+              "A release publication requires an available real Cinnamon session.",
+              1,
+          )
+          write(".github/workflows/ci.yml", ci)
+
+          # Behavioural regression coverage for the exact failure mode and for
+          # installer dependency drift.
+          tests = read("tests/test-release-model.py")
+          insertion = '''
+
+          def assert_release_intent_behaviour(version: str) -> None:
+              tool = ROOT / "tools/release-handoff.py"
+
+              def invoke(published: str) -> subprocess.CompletedProcess[str]:
+                  return subprocess.run(
+                      [
+                          "python3",
+                          str(tool),
+                          "release-requested",
+                          "--published-version",
+                          published,
+                      ],
+                      cwd=ROOT,
+                      check=False,
+                      stdout=subprocess.PIPE,
+                      stderr=subprocess.PIPE,
+                      text=True,
+                  )
+
+              current = invoke(f"v{version}")
+              assert current.returncode == 0, current.stderr
+              assert "requested=false" in current.stdout
+              assert f"version={version}" in current.stdout
+              assert f"published_version={version}" in current.stdout
+
+              major, minor, patch = (int(part) for part in version.split("."))
+              if patch > 0:
+                  previous = f"{major}.{minor}.{patch - 1}"
+              elif minor > 0:
+                  previous = f"{major}.{minor - 1}.0"
+              elif major > 0:
+                  previous = f"{major - 1}.0.0"
+              else:
+                  previous = ""
+
+              unpublished = invoke(previous)
+              assert unpublished.returncode == 0, unpublished.stderr
+              assert "requested=true" in unpublished.stdout
+
+              future = invoke(f"{major}.{minor}.{patch + 1}")
+              assert future.returncode != 0
+              assert "older than the latest published release" in future.stderr
+          '''.replace("          ", "")
+          anchor = "\ndef main() -> None:\n"
+          if tests.count(anchor) != 1:
+              raise SystemExit("test-release-model.py main anchor changed")
+          tests = tests.replace(anchor, insertion + anchor, 1)
+          tests = tests.replace(
+              "    # Release intent is data: a monotonic VERSION transition on main. Commit\n    # prose is never part of the protocol.\n",
+              "    # Release intent is durable data: source newer than the latest published\n    # release. It must survive a failed publication and later same-version fixes.\n",
+              1,
+          )
+          tests = tests.replace(
+              '    assert "release-handoff.py release-requested" in workflow\n    assert "release_requested:" in workflow\n',
+              '    assert "release-handoff.py release-requested" in workflow\n    assert "--published-version" in workflow\n    assert "releases/latest" in workflow\n    assert "github.event.before" not in workflow\n    assert "fetch-depth: 0" not in workflow\n    assert "if: steps.release-intent.outputs.requested == \'true\'" in workflow\n    assert "release_requested:" in workflow\n',
+              1,
+          )
+          tests = tests.replace(
+              "    assert \"@PAYLOAD_SHA256@\" in installer\n",
+              "    assert \"@PAYLOAD_SHA256@\" in installer\n"
+              "    assert \"desktop-file-utils\" in installer\n"
+              "    assert '(cd \"$SOURCE_DIR\" && dpkg-checkbuilddeps)' in installer\n",
+              1,
+          )
+          tests = tests.replace(
+              "    assert_release_handoff_behaviour(version)\n",
+              "    assert_release_intent_behaviour(version)\n    assert_release_handoff_behaviour(version)\n",
+              1,
+          )
+          write("tests/test-release-model.py", tests)
+
+          replace_one(
+              "docs/ARCHITECTURE.md",
+              "Release intent is a monotonic version transition on `main`, not commit-message prose.",
+              "Release intent is the current source version being newer than the latest published GitHub release, not a one-push edge or commit-message prose. A failed publication therefore remains eligible on later green `main` revisions until that version is actually published.",
+          )
+          PY
+
+          git diff --check
+          python3 -m py_compile tools/release-handoff.py tests/test-release-model.py
+          python3 tests/test-release-model.py
+          python3 tests/test-settings.py
+          python3 tools/release-handoff.py release-requested \
+            --published-version v1.0.92 | grep -qx 'requested=true'
+
+      - name: Commit reviewed hardening changes
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "Shannon Smith"
+          git config user.email "infiltratr@yandex.com"
+          git add \
+            Makefile README.md CHANGELOG.md debian/changelog docs/ARCHITECTURE.md \
+            .github/workflows/ci.yml tools/release-handoff.py \
+            tools/local-installer.sh.in tests/test-release-model.py \
+            src/cinnamon/metadata.json src/i18n/calendar-plus.pot \
+            src/i18n/en_AU.po src/i18n/en_GB.po src/i18n/en_US.po
+          git diff --cached --exit-code && {
+            echo "Expected hardening changes were not produced" >&2
+            exit 1
+          } || true
+          git commit -m "Harden Calendar release and installer machinery"
+          git push origin HEAD:main
