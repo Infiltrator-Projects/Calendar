@@ -72,6 +72,19 @@ var NativeBoundary = Object.freeze({
         });
     },
 
+    decodeEventTiming(variant) {
+        const row = _array(
+            _unpack(variant, "event timing"),
+            3,
+            "event timing"
+        );
+        return Object.freeze({
+            state: row[0],
+            secondsUntilStart: row[1],
+            secondsUntilEnd: row[2],
+        });
+    },
+
     decodeEventSnapshot(variant) {
         const snapshot = _array(
             _unpack(variant, "event snapshot"),
