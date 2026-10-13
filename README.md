@@ -6,7 +6,7 @@
 
 [![Build and test](https://github.com/Infiltrator-Projects/Calendar/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/Infiltrator-Projects/Calendar/actions/workflows/ci.yml?query=branch%3Amain)
 
-Calendar is a native Cinnamon panel clock and calendar with alternative clock modes, 30 selectable calendar systems and CalendarServer integration. Its installed Linux desktop identity, Cinnamon Applets manager entry, Linux Mint Software Manager package-name alias and Cinnamon-native About dialog all use the project-owned Calendar icon. The Calendar package owns and installs that artwork itself; no shared icon-helper package is required.
+Calendar is a native Cinnamon panel clock and calendar with alternative clock modes, 30 selectable calendar systems and CalendarServer integration. Its installed Linux desktop identity, Cinnamon Applets manager entry, Linux Mint Software Manager package-name alias and suite-standard native GTK About dialog all use the project-owned Calendar icon. The Calendar package owns and installs that artwork itself; no shared icon-helper package is required.
 
 **Runtime:** Cinnamon 6.4, 6.6 and 6.7\
 **Build-tested bases:** Debian 13, Linux Mint 22 and Ubuntu 24.04\
@@ -38,7 +38,7 @@ Calendar systems available through System Settings include Gregorian, Julian, IS
 
 The applet can coexist with Cinnamon's stock Calendar applet and installs no project-owned daemon, polling service or autostart entry. System Settings is optional at runtime. Common's installed `temporal-v3` provider marker identifies whether the richer authority exists, while one cached effective snapshot keeps all temporal fields coherent. Without both the provider and a valid saved policy Calendar follows Mint/Cinnamon; with both, Calendar gains the extended clock, calendar, seconds and location presentation selected there. Calendar monitors both authority boundaries live and needs no background daemon.
 
-Calendar prefers the MB Corpo family names defined by the pinned Common 1.19.41 typography contract when those typefaces are already available on the system, but it does not redistribute proprietary MB Corpo font binaries. Cinnamon's normal font fallback is therefore a required runtime path, not an error condition. Generated Cinnamon CSS remains regression-checked against Common's typography roles while configuration and About presentation stay inside Cinnamon itself, so Calendar carries neither a project-owned Python settings host nor a direct GTK runtime dependency.
+Calendar prefers the MB Corpo family names defined by the pinned Common 1.19.41 typography contract when those typefaces are already available on the system, but it does not redistribute proprietary MB Corpo font binaries. Cinnamon's normal font fallback is therefore a required runtime path, not an error condition. Generated Cinnamon CSS remains regression-checked against Common's typography roles. Configuration stays in Cinnamon's xlet-settings renderer; About is a package-owned native GTK 3 helper launched out-of-process from Cinnamon. GTK is therefore confined to that presentation edge, while Calendar carries no project-owned Python settings host.
 
 Location-dependent clocks do not silently assume Greenwich. They show `N/A LOC` until geographic location is configured in **System Settings → Date & Time**. On a Mint-only installation those extended clock modes are not selected, so Calendar remains on Cinnamon's conventional clock path.
 
@@ -115,7 +115,7 @@ Install the development dependencies on Debian 13, Linux Mint 22 or Ubuntu 24.04
 
 ```bash
 sudo apt install build-essential clang debhelper gettext gobject-introspection gjs \
-    gir1.2-glib-2.0-dev libglib2.0-dev libicu-dev nodejs pkg-config \
+    gir1.2-glib-2.0-dev libglib2.0-dev libgtk-3-dev libicu-dev nodejs pkg-config \
     python3 shellcheck git
 ```
 

@@ -4,7 +4,8 @@ This changelog records user-visible, compatibility, architecture and validation 
 
 ## Unreleased
 
-No unreleased changes.
+- Align maintained architecture, qualification and build documentation with the deliberately restored suite-standard native GTK About helper and its GTK 3 build dependency.
+- Extend `make static-analysis` to cover the shipped native About helper with its own GTK boundary flags instead of leaving that production translation unit outside clang-tidy.
 
 ## 1.0.94 - 2026-10-13
 
@@ -223,7 +224,7 @@ No unreleased changes.
 ## 1.0.63 - 2026-09-25
 
 - Give Calendar popup menu actions the suite-wide 30 px desktop control height while keeping their existing 6 px compact radius.
-- Preserve Cinnamon-native layout, temporal behaviour, calendar engines, dependencies and Common APIs unchanged.
+- Preserve Cinnamon-native layout mechanics, temporal behaviour, calendar engines, dependencies and Common APIs unchanged.
 
 ## 1.0.62 - 2026-09-25
 

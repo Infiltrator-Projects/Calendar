@@ -628,6 +628,13 @@ static-analysis:
 		-warnings-as-errors='clang-analyzer-*,bugprone-*,performance-*,portability-*' \
 		$(SOURCES) -- $(CPPFLAGS) $(GLIB_CFLAGS) \
 		-std=c11 -Wall -Wextra -Wpedantic
+	# The About helper is a separately linked production executable. Analyse it
+	# with its GTK boundary flags instead of contaminating the library source set.
+	clang-tidy \
+		-checks='-*,clang-analyzer-*,bugprone-*,-bugprone-easily-swappable-parameters,-bugprone-reserved-identifier,performance-*,portability-*' \
+		-warnings-as-errors='clang-analyzer-*,bugprone-*,performance-*,portability-*' \
+		src/app/about-dialog.c -- $(CPPFLAGS) $(GTK_CFLAGS) \
+		-std=c11 -Wall -Wextra -Wpedantic
 
 install: all
 	install -Dm755 "$(BUILD_DIR)/$(LIB_REALNAME)" \
