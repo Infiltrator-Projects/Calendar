@@ -213,4 +213,23 @@ requireCondition(state === CalendarPlus.EventState.PRESENT,
 requireCondition(secondsToStart === -50 && secondsToFinish === 50,
                  "event timing offsets failed");
 
+const removalStore = CalendarPlus.EventStore.new();
+const retainedEvent = new GLib.Variant(
+    "(sssbxxx)",
+    ["keep", "#112233", "Keep", false, 100, 200, 1]
+);
+requireCondition(
+    removalStore.add_or_update(retainedEvent, 1),
+    "event-store removal regression fixture was not indexed"
+);
+const oversizedRemovalId = "x".repeat(4097);
+requireCondition(
+    !removalStore.remove(`keep::${oversizedRemovalId}`),
+    "oversized removal payload was not rejected atomically"
+);
+requireCondition(
+    removalStore.remove("keep"),
+    "malformed removal payload mutated an earlier valid identifier"
+);
+
 print("Calendar native typelib contract passed.");
