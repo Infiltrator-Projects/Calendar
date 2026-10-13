@@ -21,9 +21,9 @@ main(int argc,
      char **argv)
 {
     const InfiltratrProjectInfo *info = calendar_plus_project_info();
-    char author[256];
-    const char *authors[] = { author, NULL };
-    char comments[512];
+    g_autofree char *author = NULL;
+    g_autofree char *comments = NULL;
+    const char *authors[2];
     GtkWidget *widget;
     GtkAboutDialog *dialog;
 
@@ -31,21 +31,25 @@ main(int argc,
         return infiltratr_project_info_print(stdout, info);
 
     if (argc != 1) {
-        fprintf(stderr, "Usage: %s [--print-metadata]\n", argv[0]);
+        g_printerr("Usage: %s [--print-metadata]\n", argv[0]);
         return 2;
     }
 
     gtk_init(&argc, &argv);
 
-    (void)snprintf(author, sizeof(author), "%s — Author and project maintainer",
-                   info->author);
-    (void)snprintf(comments, sizeof(comments), "%s\n\nBuild: %s",
-                   info->comments,
-                   infiltratr_build_profile_label(info->build_profile));
+    author = g_strdup_printf("%s — Author and project maintainer", info->author);
+    comments = g_strdup_printf("%s\n\nBuild: %s",
+                               info->comments,
+                               infiltratr_build_profile_label(info->build_profile));
+    authors[0] = author;
+    authors[1] = NULL;
 
     widget = gtk_about_dialog_new();
-    dialog = GTK_ABOUT_DIALOG(widget);
-    gtk_window_set_title(GTK_WINDOW(widget), "About Calendar");
+    /* GTK 3's official cast macros intentionally pass through void * inside
+     * G_TYPE_CHECK_INSTANCE_CAST; the local call remains runtime type-checked. */
+    dialog = GTK_ABOUT_DIALOG(widget); /* NOLINT(bugprone-casting-through-void) */
+    gtk_window_set_title(GTK_WINDOW(widget), /* NOLINT(bugprone-casting-through-void) */
+                         "About Calendar");
     gtk_about_dialog_set_program_name(dialog, info->program_name);
     gtk_about_dialog_set_version(dialog, info->version);
     gtk_about_dialog_set_comments(dialog, comments);
@@ -63,7 +67,7 @@ main(int argc,
     gtk_about_dialog_set_wrap_license(dialog, TRUE);
     gtk_about_dialog_set_logo_icon_name(dialog, info->icon_name);
 
-    (void)gtk_dialog_run(GTK_DIALOG(widget));
+    (void)gtk_dialog_run(GTK_DIALOG(widget)); /* NOLINT(bugprone-casting-through-void) */
     gtk_widget_destroy(widget);
     return 0;
 }
