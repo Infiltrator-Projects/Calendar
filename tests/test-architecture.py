@@ -170,8 +170,13 @@ def main() -> None:
 
     forbidden_tokens = (
         "glib-object.h",
+        "gio/gio.h",
         "GObject",
         "GVariant",
+        "GDBus",
+        "GSettings",
+        "GFile",
+        "GCancellable",
         "g_timeout",
         "Gtk",
         "Gdk",
@@ -215,6 +220,20 @@ def main() -> None:
     event_source = code("src/core/event-source.h")
     assert "CalendarPlusEventInput" in event_source
     assert "CalendarPlusEventSource" in event_source
+
+    # Positional native tuples have one JavaScript decoder. EventRecord may
+    # preserve its small historical array API for the view, but it must obtain
+    # the fields by name from NativeBoundary rather than knowing GVariant
+    # positions itself.
+    native_boundary = code("src/cinnamon/nativeBoundary.js")
+    event_manager = code("src/cinnamon/eventManager.js")
+    assert "decodeEventTiming(variant)" in native_boundary
+    assert "NativeBoundary.decodeEventTiming(" in event_manager
+    event_timing_call = re.search(
+        r"CalendarPlus\.event_timing\(.*?\)", event_manager, re.DOTALL
+    )
+    assert event_timing_call is not None
+    assert "deep_unpack" not in event_timing_call.group(0)
 
 
 if __name__ == "__main__":
