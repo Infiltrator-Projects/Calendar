@@ -1,3 +1,11 @@
+infiltrator-calendar (1.0.97) unstable; urgency=medium
+
+  * Preserve the complete 1.0.96 forensic hardening on the final protected-main revision.
+  * Restore the Makefile terminal newline after release qualification exposed the whitespace-only follow-up state.
+  * Make no runtime, ABI, dependency, chronology, event or Cinnamon behaviour changes.
+
+ -- Shannon Smith <infiltratr@yandex.com>  Tue, 13 Oct 2026 08:25:00 +0000
+
 infiltrator-calendar (1.0.96) unstable; urgency=medium
 
   * Include the governing PHILOSOPHY.md in the embedded local-installer source payload and qualify that artifact contract directly.
