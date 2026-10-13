@@ -1,9 +1,10 @@
 #!/usr/bin/env node
 // SPDX-License-Identifier: GPL-3.0-or-later
-const assert = require("assert");
-const fs = require("fs");
-const path = require("path");
-const vm = require("vm");
+"use strict";
+const assert = require("node:assert/strict");
+const fs = require("node:fs");
+const path = require("node:path");
+const vm = require("node:vm");
 
 const source = fs.readFileSync(
     path.join(__dirname, "..", "src", "cinnamon", "nativeBoundary.js"),
@@ -38,6 +39,11 @@ assert.equal(grid[0].day, 11);
 assert.equal(grid[0].column, 4);
 assert.equal(grid[0].isToday, true);
 
+const timing = boundary.decodeEventTiming(variant([2, 45, -15]));
+assert.equal(timing.state, 2);
+assert.equal(timing.secondsUntilStart, 45);
+assert.equal(timing.secondsUntilEnd, -15);
+
 const snapshot = boundary.decodeEventSnapshot(variant([
     7,
     [["id", "#112233", "summary", false, false, 1, 2, 0, 0, 3]],
@@ -48,4 +54,5 @@ assert.equal(snapshot.events[0].endUnix, 2);
 
 assert.throws(() => boundary.decodeTemporalPolicy(variant(["short"])));
 assert.throws(() => boundary.decodeCalendarGrid(variant([["short"]])));
+assert.throws(() => boundary.decodeEventTiming(variant([1, 2])));
 assert.throws(() => boundary.decodeEventSnapshot(null));
