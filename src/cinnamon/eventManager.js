@@ -119,11 +119,14 @@ class EventRecord {
     }
 
     timing(now) {
-        return CalendarPlus.event_timing(
-            this.start_unix,
-            this.end_unix,
-            now.to_unix()
-        ).deep_unpack();
+        const timing = NativeBoundary.decodeEventTiming(
+            CalendarPlus.event_timing(
+                this.start_unix,
+                this.end_unix,
+                now.to_unix()
+            )
+        );
+        return [timing.state, timing.secondsUntilStart, timing.secondsUntilEnd];
     }
 }
 
