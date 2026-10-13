@@ -3,10 +3,10 @@
 """Project Common design tokens into Calendar's Cinnamon surface.
 
 Calendar owns Cinnamon selectors and widget mechanics. Infiltratr Common owns
-semantic theme values, typography identity and structural metrics. Common
-1.19.36 carries the complete Linux MBLINK Night reference roles. This
-generator keeps the toolkit-specific source native while preventing a second
-private design truth from drifting away from the pinned Common release.
+semantic theme values, typography identity and structural metrics. The pinned
+Common design contract carries the complete Linux MBLINK Night reference roles.
+This generator keeps the toolkit-specific source native while preventing a
+second private design truth from drifting away from the pinned Common contract.
 """
 from __future__ import annotations
 
@@ -195,7 +195,7 @@ def render_theme(data: dict) -> str:
 /*
  * Generated from Infiltratr Common. Do not hand-edit colour values here.
  * Calendar deliberately owns only Cinnamon selectors/widget mechanics.
- * Common 1.19.36 carries the complete Linux MBLINK Night reference roles.
+ * The pinned Common design contract carries the complete Linux MBLINK Night reference roles.
  */
 {mode_css("night", night)}
 {mode_css("day", day)}

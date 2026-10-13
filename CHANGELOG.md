@@ -6,6 +6,13 @@ This changelog records user-visible, compatibility, architecture and validation 
 
 No unreleased changes.
 
+## 1.0.94 - 2026-10-13
+
+- Make upstream Cinnamon drift monitoring fail closed when GitHub's compare changed-file list reaches its API limit, preventing a truncated comparison from certifying false compatibility.
+- Add deterministic regression coverage for branch/compare response validation and wire it into the normal validation gate.
+- Align ignored Debian staging directories with the current `infiltrator-calendar` package identity instead of the retired `calendar-plus` name.
+- Remove stale Common release numbers from maintained qualification and generated-theme documentation so the exact pin remains the single dependency-version authority.
+
 ## 1.0.93 - 2026-10-13
 
 - Make release intent depend on the newest published GitHub release so a failed publication remains eligible on later green main revisions.
@@ -221,7 +228,7 @@ No unreleased changes.
 ## 1.0.62 - 2026-09-25
 
 - Give Calendar popup menu items Common's 6 px compact radius so Cinnamon actions share the suite's compact control geometry.
-- Keep Cinnamon-native layout, temporal behaviour, calendar engines, dependencies and Common APIs unchanged.
+- Keep Cinnamon-native layout mechanics, temporal behaviour, calendar engines, dependencies and Common APIs unchanged.
 
 ## 1.0.61 - 2026-09-25
 
@@ -231,7 +238,7 @@ No unreleased changes.
 ## 1.0.60 - 2026-09-25
 
 - Align the Cinnamon Today/home control with the suite-wide 30 px desktop control height while preserving its existing Common 10 px control radius.
-- Preserve Cinnamon-native layout, temporal behaviour, calendar engines, dependencies and Common APIs unchanged.
+- Preserve Cinnamon-native layout mechanics, temporal behaviour, calendar engines, dependencies and Common APIs unchanged.
 
 ## 1.0.59 - 2026-09-25
 
@@ -461,7 +468,7 @@ No unreleased changes.
 ## 1.0.27 - 2026-09-20
 
 - Install the user-approved Calendar artwork as the canonical application icon.
-- Keep that one canonical PNG as the source for Cinnamon, the native About dialog, hicolor desktop identity and Linux Mint Software Manager alias.
+- Keep that one canonical PNG as the source for the Cinnamon applet, hicolor desktop identity, Linux Mint Software Manager alias and native About dialog.
 - Pin the verified 256×256 PNG asset by SHA-256 so substituted artwork cannot silently return.
 
 ## 1.0.26 - 2026-09-20

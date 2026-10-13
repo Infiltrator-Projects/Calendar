@@ -9,7 +9,7 @@ G_IR_COMPILER ?= g-ir-compiler
 PREFIX ?= /usr
 DESTDIR ?=
 
-VERSION := 1.0.93
+VERSION := 1.0.94
 UUID := calendar-plus@the-infiltratr
 APPLET_SRC_DIR := src/cinnamon
 ICON_NAME := infiltratr-calendar
@@ -235,7 +235,7 @@ DIST_FILES := \
 .PHONY: all check check-deps clean common-bootstrap common-build common-check common-test core-check coverage install package-source \
 	package-local-installer pgo-train \
 	sanitize static-analysis test validate-architecture validate-js validate-package-inputs \
-	validate-about-desktop validate-sources validate-exports validate-abi validate-runtime-deps validate-release-model smoke-gjs \
+	validate-about-desktop validate-sources validate-exports validate-abi validate-runtime-deps validate-release-model validate-upstream-drift smoke-gjs \
 	path-space-smoke release-check \
 	reproducible-build translations update-pot validate-translations \
 	update-settings validate-settings-generated update-theme validate-theme update-runtime-hashes
@@ -573,13 +573,16 @@ validate-release-model:
 validate-architecture:
 	python3 tests/test-architecture.py
 
+validate-upstream-drift:
+	python3 tests/test-upstream-drift.py
+
 core-check: check-deps $(CORE_ARCHIVE) $(BUILD_DIR)/test-portable-core \
 	$(BUILD_DIR)/test-exact-clock-boundaries validate-architecture
 	./$(BUILD_DIR)/test-portable-core
 	./$(BUILD_DIR)/test-exact-clock-boundaries
 
 check: all test validate-js validate-translations validate-sources validate-package-inputs \
-	validate-about-desktop validate-release-model validate-architecture validate-exports validate-abi validate-runtime-deps smoke-gjs path-space-smoke
+	validate-about-desktop validate-release-model validate-architecture validate-upstream-drift validate-exports validate-abi validate-runtime-deps smoke-gjs path-space-smoke
 
 sanitize:
 	$(MAKE) clean
