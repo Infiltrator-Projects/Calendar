@@ -1,3 +1,13 @@
+infiltrator-calendar (1.0.98) unstable; urgency=medium
+
+  * Recover cleanly when CalendarServer proxy or range-request initiation fails synchronously, preserving bounded reconnect and retry semantics.
+  * Restore the single JavaScript positional GVariant boundary for native event timing and protect it with architectural and behavioural regressions.
+  * Extend portable-core enforcement to reject Gio, D-Bus, settings, file and cancellable platform objects below the adapter boundary.
+  * Record exact live-Cinnamon qualification environment metadata before exercising release artifacts.
+  * Consolidate versioned release history on debian/changelog instead of maintaining a drifting second release ledger.
+
+ -- Shannon Smith <infiltratr@yandex.com>  Tue, 13 Oct 2026 09:40:00 +0000
+
 infiltrator-calendar (1.0.97) unstable; urgency=medium
 
   * Preserve the complete 1.0.96 forensic hardening on the final protected-main revision.
