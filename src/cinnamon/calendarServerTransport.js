@@ -85,14 +85,33 @@ var CalendarServerTransport = class CalendarServerTransport {
         this._cancelReconnect();
         this._connecting = true;
         const generation = this._generation;
-        Cinnamon.CalendarServerProxy.new_for_bus(
-            Gio.BusType.SESSION,
-            Gio.DBusProxyFlags.NONE,
-            CALENDAR_SERVER_BUS_NAME,
-            "/org/cinnamon/CalendarServer",
-            this._cancellable,
-            (object, result) => this._serverReady(result, generation)
+        try {
+            Cinnamon.CalendarServerProxy.new_for_bus(
+                Gio.BusType.SESSION,
+                Gio.DBusProxyFlags.NONE,
+                CALENDAR_SERVER_BUS_NAME,
+                "/org/cinnamon/CalendarServer",
+                this._cancellable,
+                (object, result) => this._serverReady(result, generation)
+            );
+        } catch (error) {
+            this._connectionFailed(error, generation);
+        }
+    }
+
+    _connectionFailed(error, generation) {
+        if (this._destroyed || generation !== this._generation) {
+            return;
+        }
+        this._connecting = false;
+        this._serverSignals.disconnectAll();
+        this._server = null;
+        this._status = STATUS_UNKNOWN;
+        this.emit("unavailable", false);
+        global.logError(
+            `${APPLET_UUID}: could not connect to calendar server: ${error}`
         );
+        this._scheduleReconnect();
     }
 
     _serverReady(result, generation) {
@@ -126,18 +145,7 @@ var CalendarServerTransport = class CalendarServerTransport {
             this._status = server.status;
             this.emit("ready");
         } catch (error) {
-            if (this._destroyed || generation !== this._generation) {
-                return;
-            }
-            this._connecting = false;
-            this._serverSignals.disconnectAll();
-            this._server = null;
-            this._status = STATUS_UNKNOWN;
-            this.emit("unavailable", false);
-            global.logError(
-                `${APPLET_UUID}: could not connect to calendar server: ${error}`
-            );
-            this._scheduleReconnect();
+            this._connectionFailed(error, generation);
         }
     }
 
@@ -178,33 +186,43 @@ var CalendarServerTransport = class CalendarServerTransport {
         }
         const server = this._server;
         const generation = this._generation;
-        server.call_set_time_range(
-            startUnix,
-            endUnix,
-            Boolean(force),
-            this._cancellable,
-            (proxy, result) => {
-                let succeeded = false;
-                try {
-                    server.call_set_time_range_finish(result);
-                    succeeded = true;
-                } catch (error) {
-                    if (!this._destroyed && generation === this._generation &&
-                        server === this._server) {
-                        global.logError(
-                            `${APPLET_UUID}: event range request failed: ${error}`
+        try {
+            server.call_set_time_range(
+                startUnix,
+                endUnix,
+                Boolean(force),
+                this._cancellable,
+                (proxy, result) => {
+                    let succeeded = false;
+                    try {
+                        server.call_set_time_range_finish(result);
+                        succeeded = true;
+                    } catch (error) {
+                        if (!this._destroyed && generation === this._generation &&
+                            server === this._server) {
+                            global.logError(
+                                `${APPLET_UUID}: event range request failed: ${error}`
+                            );
+                        }
+                    }
+                    if (typeof callback === "function") {
+                        callback(
+                            succeeded,
+                            !this._destroyed && generation === this._generation &&
+                                server === this._server
                         );
                     }
                 }
-                if (typeof callback === "function") {
-                    callback(
-                        succeeded,
-                        !this._destroyed && generation === this._generation &&
-                            server === this._server
-                    );
-                }
+            );
+        } catch (error) {
+            if (!this._destroyed && generation === this._generation &&
+                server === this._server) {
+                global.logError(
+                    `${APPLET_UUID}: could not start event range request: ${error}`
+                );
             }
-        );
+            return false;
+        }
         return true;
     }
 
