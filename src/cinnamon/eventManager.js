@@ -290,10 +290,6 @@ var EventsManager = class EventsManager {
             this.event_store.clear();
         }
         this._publishAgendaEvents(null, false, !Boolean(expectedEmpty));
-        this.current_range_start = null;
-        this.current_range_end = null;
-        this.current_range_start_civil = null;
-        this.current_range_end_civil = null;
         this._rangeState.resetForServerLoss();
         this.last_update_timestamp = 0;
         this.emit("has-calendars-changed");
