@@ -111,7 +111,7 @@ install_build_dependencies() {
     }
     run_privileged apt-get update
     run_privileged apt-get install -y \
-        build-essential debhelper dpkg-dev gettext gir1.2-glib-2.0-dev \
+        build-essential debhelper desktop-file-utils dpkg-dev gettext gir1.2-glib-2.0-dev \
         gobject-introspection gjs libglib2.0-dev libgtk-3-dev libicu-dev nodejs \
         pkg-config python3 xz-utils
 }
@@ -131,6 +131,10 @@ if ! command -v dpkg-checkbuilddeps >/dev/null 2>&1 ||
    ! (cd "$SOURCE_DIR" && dpkg-checkbuilddeps >/dev/null 2>&1); then
     install_build_dependencies
 fi
+
+# Build-Depends is authoritative. Recheck after bootstrap so future dependency
+# drift fails here rather than deep inside the native package build.
+(cd "$SOURCE_DIR" && dpkg-checkbuilddeps)
 
 for command_name in dpkg-buildpackage dpkg-deb dpkg-architecture sed install make find getconf gcc; do
     command -v "$command_name" >/dev/null 2>&1 || {

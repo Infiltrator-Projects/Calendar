@@ -110,6 +110,50 @@ def assert_release_handoff_behaviour(version: str) -> None:
         assert result.returncode != 0, "tampered release asset was accepted"
 
 
+
+def assert_release_intent_behaviour(version: str) -> None:
+    tool = ROOT / "tools/release-handoff.py"
+
+    def invoke(published: str) -> subprocess.CompletedProcess[str]:
+        return subprocess.run(
+  [
+      "python3",
+      str(tool),
+      "release-requested",
+      "--published-version",
+      published,
+  ],
+  cwd=ROOT,
+  check=False,
+  stdout=subprocess.PIPE,
+  stderr=subprocess.PIPE,
+  text=True,
+        )
+
+    current = invoke(f"v{version}")
+    assert current.returncode == 0, current.stderr
+    assert "requested=false" in current.stdout
+    assert f"version={version}" in current.stdout
+    assert f"published_version={version}" in current.stdout
+
+    major, minor, patch = (int(part) for part in version.split("."))
+    if patch > 0:
+        previous = f"{major}.{minor}.{patch - 1}"
+    elif minor > 0:
+        previous = f"{major}.{minor - 1}.0"
+    elif major > 0:
+        previous = f"{major - 1}.0.0"
+    else:
+        previous = ""
+
+    unpublished = invoke(previous)
+    assert unpublished.returncode == 0, unpublished.stderr
+    assert "requested=true" in unpublished.stdout
+
+    future = invoke(f"{major}.{minor}.{patch + 1}")
+    assert future.returncode != 0
+    assert "older than the latest published release" in future.stderr
+
 def main() -> None:
     makefile = read("Makefile")
     rules = read("debian/rules")
@@ -215,6 +259,8 @@ def main() -> None:
     assert "--build-only" in installer
     assert "--verify-only" in installer
     assert "@PAYLOAD_SHA256@" in installer
+    assert "desktop-file-utils" in installer
+    assert '(cd "$SOURCE_DIR" && dpkg-checkbuilddeps)' in installer
 
     # Release construction qualifies reproducibility, artifact shape and native
     # installer behaviour exactly once.
@@ -224,9 +270,14 @@ def main() -> None:
     assert "tools/validate-release-artifacts.sh" in release_check
     assert "lintian --fail-on error" in release_check
 
-    # Release intent is data: a monotonic VERSION transition on main. Commit
-    # prose is never part of the protocol.
+    # Release intent is durable data: source newer than the latest published
+    # release. It must survive a failed publication and later same-version fixes.
     assert "release-handoff.py release-requested" in workflow
+    assert "--published-version" in workflow
+    assert "releases/latest" in workflow
+    assert "github.event.before" not in workflow
+    assert "fetch-depth: 0" not in workflow
+    assert "if: steps.release-intent.outputs.requested == 'true'" in workflow
     assert "release_requested:" in workflow
     assert "needs.debian-package.outputs.release_requested == 'true'" in workflow
     assert "head_commit.message" not in workflow
@@ -275,6 +326,7 @@ def main() -> None:
     assert "tools/live-cinnamon-ci-smoke.sh" in workflow
     assert (ROOT / ".github/workflows/upstream-drift.yml").is_file()
 
+    assert_release_intent_behaviour(version)
     assert_release_handoff_behaviour(version)
 
     # Licensing/provenance are release-input contracts, not workflow spelling.

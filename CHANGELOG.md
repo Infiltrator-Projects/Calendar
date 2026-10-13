@@ -6,6 +6,13 @@ This changelog records user-visible, compatibility, architecture and validation 
 
 No unreleased changes.
 
+## 1.0.93 - 2026-10-13
+
+- Make release intent depend on the newest published GitHub release so a failed publication remains eligible on later green main revisions.
+- Run release-only packaging, handoff creation and live Cinnamon qualification only when the source version still needs publication.
+- Harden the local native installer by keeping its bootstrap dependencies aligned with Debian Build-Depends and rechecking them before compilation.
+- Retire stale development branches so main is the sole active repository branch.
+
 ## 1.0.92 - 2026-10-12
 
 - Split release publication into explicit, independently diagnosable identity, qualification, artifact, tag and publication stages.

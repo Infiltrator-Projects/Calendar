@@ -151,7 +151,7 @@ The exact release revision must satisfy the required build, sanitizer, static-an
 
 ## Build and release contract
 
-Calendar pins the exact Common version and commit used by the build. Release assets are derived from the exact tested `main` revision. Release intent is a monotonic version transition on `main`, not commit-message prose. One JSON handoff owns the release version, source revision and qualified artifact identities; the publisher consumes those exact bytes without rebuilding them, while GitHub release creation owns tag creation.
+Calendar pins the exact Common version and commit used by the build. Release assets are derived from the exact tested `main` revision. Release intent is the current source version being newer than the latest published GitHub release, not a one-push edge or commit-message prose. A failed publication therefore remains eligible on later green `main` revisions until that version is actually published. One JSON handoff owns the release version, source revision and qualified artifact identities; the publisher consumes those exact bytes without rebuilding them, while GitHub release creation owns tag creation.
 
 Published tags and assets are immutable identities. Debian packaging, install/purge qualification and central-repository lifecycle testing are part of the release contract rather than optional post-release checks.
 

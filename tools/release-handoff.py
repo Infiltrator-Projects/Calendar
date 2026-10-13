@@ -4,9 +4,9 @@
 
 """Create and verify Calendar's release handoff.
 
-This tool is the single owner of release-version transition detection and the
-qualified artifact manifest. Workflows transport the handoff; they do not
-reconstruct its metadata independently.
+This tool is the single owner of release intent and the qualified artifact
+manifest. Workflows transport the handoff; they do not reconstruct its metadata
+independently.
 """
 
 from __future__ import annotations
@@ -16,7 +16,6 @@ import hashlib
 import json
 import re
 import shutil
-import subprocess
 from pathlib import Path
 from typing import NoReturn
 
@@ -67,38 +66,24 @@ def version_key(version: str) -> tuple[int, int, int]:
     return tuple(int(part) for part in version.split("."))
 
 
-def git_file(commit: str, path: str) -> str:
-    if not SHA_PATTERN.fullmatch(commit):
-        fail(f"invalid previous commit SHA: {commit!r}")
-    result = subprocess.run(
-        ["git", "show", f"{commit}:{path}"],
-        cwd=ROOT,
-        check=False,
-        text=True,
-        stdout=subprocess.PIPE,
-        stderr=subprocess.PIPE,
-    )
-    if result.returncode != 0:
-        fail(
-            f"cannot read {path} from previous main revision {commit}: "
-            f"{result.stderr.strip()}"
-        )
-    return result.stdout
-
-
-def release_requested(before: str) -> tuple[bool, str, str]:
+def release_requested(published_version: str) -> tuple[bool, str, str]:
     version = current_version()
-    if not before or set(before) == {"0"}:
-        return False, version, ""
-    previous = makefile_version(git_file(before, "Makefile"))
-    if previous == version:
-        return False, version, previous
-    if version_key(version) <= version_key(previous):
+    published = published_version.strip()
+    if published.startswith("v"):
+        published = published[1:]
+    if not published:
+        return True, version, ""
+    if not VERSION_PATTERN.fullmatch(published):
+        fail(f"invalid published release version: {published_version!r}")
+
+    current_key = version_key(version)
+    published_key = version_key(published)
+    if current_key < published_key:
         fail(
-            "release version changed without increasing: "
-            f"previous={previous}, current={version}"
+            "source version is older than the latest published release: "
+            f"published={published}, current={version}"
         )
-    return True, version, previous
+    return current_key > published_key, version, published
 
 
 def sha256(path: Path) -> str:
@@ -264,9 +249,9 @@ def main() -> None:
 
     requested = commands.add_parser(
         "release-requested",
-        help="report whether main changed to a newer release version",
+        help="report whether the current source version still needs publication",
     )
-    requested.add_argument("--before", default="")
+    requested.add_argument("--published-version", default="")
 
     create = commands.add_parser(
         "create",
@@ -285,10 +270,10 @@ def main() -> None:
 
     args = parser.parse_args()
     if args.command == "release-requested":
-        requested_flag, version, previous = release_requested(args.before)
+        requested_flag, version, published = release_requested(args.published_version)
         print(f"requested={'true' if requested_flag else 'false'}")
         print(f"version={version}")
-        print(f"previous_version={previous}")
+        print(f"published_version={published}")
     elif args.command == "create":
         create_handoff(args.dist, args.source_sha)
     elif args.command == "verify":
