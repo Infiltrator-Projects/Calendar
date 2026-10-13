@@ -43,8 +43,9 @@ jobs:
           --expected-sha "$EXPECTED_SHA"
           --github-env "$GITHUB_ENV"
 
-      # Tag creation is owned by GitHub release creation. Calendar never creates,
-      # rewrites or deletes a tag as a separate recovery step.
+      # Draft releases deliberately do not create their Git tag yet. Track the
+      # draft by release ID, verify its exact target, stage the qualified assets,
+      # then verify the tag only after publication creates it.
       - name: Create or inspect draft release
         env:
           GH_TOKEN: ${{ github.token }}
@@ -52,18 +53,22 @@ jobs:
         run: |
           set -euo pipefail
 
+          mapfile -t release_ids < <(
+            gh api --paginate \
+              "repos/${GITHUB_REPOSITORY}/releases?per_page=100" \
+              --jq ".[] | select(.tag_name == \"${RELEASE_TAG}\") | .id"
+          )
+          if (( ${#release_ids[@]} > 1 )); then
+            printf 'More than one GitHub release uses tag identity %s.\n' \
+              "$RELEASE_TAG" >&2
+            exit 1
+          fi
+
           release_was_published=false
-          if release_json=$(gh api \
-            "repos/${GITHUB_REPOSITORY}/releases/tags/${RELEASE_TAG}" 2>/dev/null); then
-            release_is_draft=$(jq -r '.draft' <<<"$release_json")
-            if [[ "$release_is_draft" == "false" ]]; then
-              release_was_published=true
-              printf 'Release %s is already published; verifying immutable assets.\n' \
-                "$RELEASE_TAG"
-            else
-              printf 'Release %s already exists as a draft; resuming publication.\n' \
-                "$RELEASE_TAG"
-            fi
+          if (( ${#release_ids[@]} == 1 )); then
+            release_id=${release_ids[0]}
+            release_json=$(gh api \
+              "repos/${GITHUB_REPOSITORY}/releases/${release_id}")
           else
             if gh api "repos/${GITHUB_REPOSITORY}/git/ref/tags/${RELEASE_TAG}" \
               >/dev/null 2>&1; then
@@ -74,32 +79,87 @@ jobs:
               exit 1
             fi
 
-            gh release create "$RELEASE_TAG" \
-              --draft \
-              --target "$RELEASE_HEAD" \
-              --title "Calendar $RELEASE_VERSION" \
-              --notes-file "$RELEASE_NOTES"
+            notes=$(cat "$RELEASE_NOTES")
+            release_json=$(gh api --method POST \
+              "repos/${GITHUB_REPOSITORY}/releases" \
+              -f tag_name="$RELEASE_TAG" \
+              -f target_commitish="$RELEASE_HEAD" \
+              -f name="Calendar $RELEASE_VERSION" \
+              -f body="$notes" \
+              -F draft=true \
+              -F prerelease=false)
+            release_id=$(jq -r '.id' <<<"$release_json")
           fi
 
-          tag_commit=$(gh api \
-            "repos/${GITHUB_REPOSITORY}/git/ref/tags/${RELEASE_TAG}" \
-            --jq '.object.sha')
-          if [[ "$tag_commit" != "$RELEASE_HEAD" ]]; then
-            printf 'Release tag %s points to %s; expected qualified revision %s.\n' \
-              "$RELEASE_TAG" "$tag_commit" "$RELEASE_HEAD" >&2
+          release_tag=$(jq -r '.tag_name' <<<"$release_json")
+          release_target=$(jq -r '.target_commitish' <<<"$release_json")
+          release_is_draft=$(jq -r '.draft' <<<"$release_json")
+          if [[ "$release_tag" != "$RELEASE_TAG" ]]; then
+            printf 'Release %s reports unexpected tag %s.\n' \
+              "$release_id" "$release_tag" >&2
+            exit 1
+          fi
+          if [[ "$release_target" != "$RELEASE_HEAD" ]]; then
+            printf 'Release %s targets %s; expected qualified revision %s.\n' \
+              "$release_id" "$release_target" "$RELEASE_HEAD" >&2
             exit 1
           fi
 
+          case "$release_is_draft" in
+            true)
+              printf 'Release %s exists as draft %s; staging exact assets.\n' \
+                "$RELEASE_TAG" "$release_id"
+              ;;
+            false)
+              release_was_published=true
+              printf 'Release %s is already published; verifying immutable assets.\n' \
+                "$RELEASE_TAG"
+              ;;
+            *)
+              printf 'Release %s has invalid draft state %s.\n' \
+                "$release_id" "$release_is_draft" >&2
+              exit 1
+              ;;
+          esac
+
+          printf 'RELEASE_ID=%s\n' "$release_id" >> "$GITHUB_ENV"
           printf 'RELEASE_WAS_PUBLISHED=%s\n' "$release_was_published" >> "$GITHUB_ENV"
 
       - name: Upload qualified assets to draft
         if: env.RELEASE_WAS_PUBLISHED == 'false'
         env:
           GH_TOKEN: ${{ github.token }}
-        run: >-
-          gh release upload "$RELEASE_TAG"
-          "$RELEASE_DEB" "$RELEASE_INSTALLER"
-          --clobber
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          # A retry may encounter a partially populated draft. Draft contents are
+          # not public identity, so reset them and upload only the qualified bytes.
+          mapfile -t asset_ids < <(
+            gh api --paginate \
+              "repos/${GITHUB_REPOSITORY}/releases/${RELEASE_ID}/assets?per_page=100" \
+              --jq '.[].id'
+          )
+          for asset_id in "${asset_ids[@]}"; do
+            gh api --method DELETE \
+              "repos/${GITHUB_REPOSITORY}/releases/assets/${asset_id}"
+          done
+
+          upload_asset() {
+            local path=$1
+            local name=$2
+            curl --fail-with-body --silent --show-error \
+              --request POST \
+              --header "Authorization: Bearer ${GH_TOKEN}" \
+              --header "X-GitHub-Api-Version: 2022-11-28" \
+              --header "Content-Type: application/octet-stream" \
+              --data-binary "@${path}" \
+              "https://uploads.github.com/repos/${GITHUB_REPOSITORY}/releases/${RELEASE_ID}/assets?name=${name}" \
+              >/dev/null
+          }
+
+          upload_asset "$RELEASE_DEB" "$RELEASE_DEB_NAME"
+          upload_asset "$RELEASE_INSTALLER" "$RELEASE_INSTALLER_NAME"
 
       - name: Verify immutable release assets
         env:
@@ -110,9 +170,9 @@ jobs:
 
           expected_assets=$(printf '%s\n%s\n' \
             "$RELEASE_DEB_NAME" "$RELEASE_INSTALLER_NAME" | sort)
-          published_assets=$(gh api \
-            "repos/${GITHUB_REPOSITORY}/releases/tags/${RELEASE_TAG}" \
-            --jq '.assets[].name' | sort)
+          published_assets=$(gh api --paginate \
+            "repos/${GITHUB_REPOSITORY}/releases/${RELEASE_ID}/assets?per_page=100" \
+            --jq '.[].name' | sort)
           if [[ "$published_assets" != "$expected_assets" ]]; then
             printf 'Release %s has an unexpected asset set.\n' "$RELEASE_TAG" >&2
             printf 'Expected:\n%s\nPublished:\n%s\n' \
@@ -126,18 +186,18 @@ jobs:
             local digest=$3
             local remote_size remote_digest
 
-            remote_size=$(gh api \
-              "repos/${GITHUB_REPOSITORY}/releases/tags/${RELEASE_TAG}" \
-              --jq ".assets[] | select(.name == \"${name}\") | .size")
+            remote_size=$(gh api --paginate \
+              "repos/${GITHUB_REPOSITORY}/releases/${RELEASE_ID}/assets?per_page=100" \
+              --jq ".[] | select(.name == \"${name}\") | .size")
             [[ "$remote_size" == "$size" ]] || {
               printf 'Release asset %s has size %s; expected %s.\n' \
                 "$name" "$remote_size" "$size" >&2
               exit 1
             }
 
-            remote_digest=$(gh api \
-              "repos/${GITHUB_REPOSITORY}/releases/tags/${RELEASE_TAG}" \
-              --jq ".assets[] | select(.name == \"${name}\") | .digest // \"\"")
+            remote_digest=$(gh api --paginate \
+              "repos/${GITHUB_REPOSITORY}/releases/${RELEASE_ID}/assets?per_page=100" \
+              --jq ".[] | select(.name == \"${name}\") | .digest // \"\"")
             if [[ -n "$remote_digest" && "$remote_digest" != "sha256:${digest}" ]]; then
               printf 'Release asset %s digest mismatch.\n' "$name" >&2
               exit 1
@@ -158,13 +218,27 @@ jobs:
           set -euo pipefail
 
           if [[ "$RELEASE_WAS_PUBLISHED" == "false" ]]; then
-            gh release edit "$RELEASE_TAG" --draft=false --latest
+            release_json=$(gh api --method PATCH \
+              "repos/${GITHUB_REPOSITORY}/releases/${RELEASE_ID}" \
+              -F draft=false \
+              -f make_latest=true)
+          else
+            release_json=$(gh api \
+              "repos/${GITHUB_REPOSITORY}/releases/${RELEASE_ID}")
           fi
 
-          release_json=$(gh api \
-            "repos/${GITHUB_REPOSITORY}/releases/tags/${RELEASE_TAG}")
           [[ "$(jq -r '.tag_name' <<<"$release_json")" == "$RELEASE_TAG" ]]
           [[ "$(jq -r '.draft' <<<"$release_json")" == "false" ]]
+          [[ "$(jq -r '.target_commitish' <<<"$release_json")" == "$RELEASE_HEAD" ]]
+
+          tag_commit=$(gh api \
+            "repos/${GITHUB_REPOSITORY}/git/ref/tags/${RELEASE_TAG}" \
+            --jq '.object.sha')
+          if [[ "$tag_commit" != "$RELEASE_HEAD" ]]; then
+            printf 'Published tag %s points to %s; expected qualified revision %s.\n' \
+              "$RELEASE_TAG" "$tag_commit" "$RELEASE_HEAD" >&2
+            exit 1
+          fi
 
       # Central APT publication remains asynchronous. Infiltrator-Repository
       # discovers verified GitHub releases independently; Calendar does not wait

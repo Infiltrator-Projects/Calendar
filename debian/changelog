@@ -1,6 +1,7 @@
 infiltrator-calendar (1.0.93) unstable; urgency=medium
 
   * Retry publication until the current source version is actually released.
+  * Track draft releases by ID and verify tags only after publication.
   * Run release-only qualification only for unpublished source versions.
   * Align local-installer bootstrap dependencies with Debian Build-Depends.
   * Keep main as the sole active development branch.

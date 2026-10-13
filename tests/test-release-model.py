@@ -116,18 +116,18 @@ def assert_release_intent_behaviour(version: str) -> None:
 
     def invoke(published: str) -> subprocess.CompletedProcess[str]:
         return subprocess.run(
-  [
-      "python3",
-      str(tool),
-      "release-requested",
-      "--published-version",
-      published,
-  ],
-  cwd=ROOT,
-  check=False,
-  stdout=subprocess.PIPE,
-  stderr=subprocess.PIPE,
-  text=True,
+            [
+                "python3",
+                str(tool),
+                "release-requested",
+                "--published-version",
+                published,
+            ],
+            cwd=ROOT,
+            check=False,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            text=True,
         )
 
     current = invoke(f"v{version}")
@@ -284,9 +284,9 @@ def main() -> None:
     assert "startsWith(" not in workflow
     assert "cancel-in-progress: false" in workflow
 
-    # Publication consumes one JSON handoff and never rebuilds. GitHub release
-    # creation owns tag creation; Calendar does not mutate tags as a recovery
-    # mechanism.
+    # Publication consumes one JSON handoff and never rebuilds. Draft identity is
+    # tracked by release ID because GitHub creates the tag only when the draft is
+    # published; Calendar never rewrites or deletes an existing release tag.
     assert "release-manifest.json" in workflow
     assert "release-manifest.txt" not in workflow
     assert "release-manifest.txt" not in publisher
@@ -298,13 +298,21 @@ def main() -> None:
     assert "make release-check" not in publisher
     assert "apt-get" not in publisher
     assert "actions/checkout@" not in publisher
-    assert "--method POST" not in publisher
+    assert "releases?per_page=100" in publisher
+    assert "RELEASE_ID" in publisher
+    assert "--method POST" in publisher
+    assert "uploads.github.com" in publisher
+    assert "-F draft=false" in publisher
     assert "git/refs" not in publisher
-    assert "gh release create" in publisher
-    assert '--target "$RELEASE_HEAD"' in publisher
-    assert "gh release upload" in publisher
-    assert "gh release edit" in publisher
+    assert "gh release create" not in publisher
+    assert "gh release upload" not in publisher
+    assert "gh release edit" not in publisher
     assert "bump VERSION instead of recovering the tag" in publisher
+    publish_index = publisher.index("-F draft=false")
+    tag_verify_index = publisher.index(
+        "git/ref/tags/${RELEASE_TAG}", publish_index
+    )
+    assert publish_index < tag_verify_index
 
     # Qualification breadth remains explicit without making exact workflow text,
     # action counts or file counts part of the contract.
