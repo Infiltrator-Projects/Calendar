@@ -6,6 +6,13 @@ This changelog records user-visible, compatibility, architecture and validation 
 
 No unreleased changes.
 
+## 1.0.96 - 2026-10-13
+
+- Include the governing `PHILOSOPHY.md` in the embedded local-installer source payload and qualify that requirement against the actual generated archive.
+- Replace a prose-coupled architecture assertion with checks over the real CalendarServer adapter versus portable event-domain type boundary.
+- Correct maintained representation documentation to distinguish microsecond clock/astronomy instants from the stable seconds-based event ABI, and align Japanese-era documentation with the Calendar-owned modern-era boundary model.
+- Extend Debian source copyright coverage to the governing philosophy document now carried by the local source payload.
+
 ## 1.0.95 - 2026-10-13
 
 - Align maintained architecture, qualification and build documentation with the deliberately restored suite-standard native GTK About helper and its GTK 3 build dependency.

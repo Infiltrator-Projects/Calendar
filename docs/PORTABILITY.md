@@ -24,8 +24,8 @@ Representation is part of correctness:
 
 - date-only native algorithms use an integral midnight-based Julian Day Number;
 - astronomical Julian Date is a distinct fractional quantity whose conventional boundary is noon;
-- native absolute instants use signed Unix microseconds from 1970-01-01T00:00:00Z;
-- CalendarServer fields documented as Unix seconds remain seconds until their single normalisation boundary;
+- clock and astronomy absolute instants use signed Unix microseconds from 1970-01-01T00:00:00Z;
+- the established event source/index ABI uses signed Unix seconds end-to-end, including CalendarServer fields documented in seconds; all-day exclusive end points are normalised once within that seconds-based event domain;
 - internal proleptic arithmetic may use astronomical year numbering, including year 0, even when presentation uses historical era labels.
 
 Conversions between these representations must occur at explicit boundaries. Unit changes hidden inside helper functions are treated as defects because they make chronology failures difficult to audit.

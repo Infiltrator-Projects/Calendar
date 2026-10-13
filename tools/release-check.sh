@@ -25,11 +25,16 @@ case " ${DEB_BUILD_OPTIONS:-} " in
 esac
 export DEB_BUILD_OPTIONS
 
+VERSION=$(sed -n 's/^VERSION := //p' Makefile)
 make package-source
+SOURCE_ARCHIVE="build/Calendar-${VERSION}-local-source.tar.gz"
+tar -tzf "$SOURCE_ARCHIVE" | grep -qx "Calendar-${VERSION}/PHILOSOPHY.md" || {
+    echo "Local source archive is missing PHILOSOPHY.md" >&2
+    exit 1
+}
 make package-local-installer
 make reproducible-build
 
-VERSION=$(sed -n 's/^VERSION := //p' Makefile)
 ARCH=$(dpkg-architecture -qDEB_HOST_ARCH)
 [ "$ARCH" = "amd64" ] || {
     echo "Generic rollout package must be built on amd64, not $ARCH" >&2

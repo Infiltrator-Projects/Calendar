@@ -207,10 +207,14 @@ def main() -> None:
 
     # CalendarServer transport vocabulary belongs at the adapter boundary;
     # neutral event input records remain private to the core/source interface.
-    public_event_adapter = read("src/adapters/event-store.h")
-    assert "Cinnamon CalendarServer event tuple" in public_event_adapter
+    # Protect the type/API boundary itself, not a particular documentation
+    # sentence: prose may improve without weakening this contract.
+    public_event_adapter = code("src/adapters/event-store.h")
+    assert "GVariant *event_data" in public_event_adapter
     assert "CalendarPlusEventInput" not in public_event_adapter
-    assert "CalendarPlusEventSource" in read("src/core/event-source.h")
+    event_source = code("src/core/event-source.h")
+    assert "CalendarPlusEventInput" in event_source
+    assert "CalendarPlusEventSource" in event_source
 
 
 if __name__ == "__main__":

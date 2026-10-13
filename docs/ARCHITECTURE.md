@@ -70,12 +70,12 @@ Calendar uses more than one time representation because the domains are differen
 - `CalendarPlusDate` is a proleptic-Gregorian civil coordinate used as the stable date boundary;
 - date-only native algorithms use an integral midnight-based Julian Day Number;
 - astronomical Julian Date is a separate fractional quantity whose conventional boundary is noon;
-- native absolute instants use signed Unix microseconds from 1970-01-01T00:00:00Z;
-- CalendarServer fields documented as Unix seconds remain seconds until their single normalisation boundary.
+- clock and astronomy absolute instants use signed Unix microseconds from 1970-01-01T00:00:00Z;
+- the established event source/index ABI uses signed Unix seconds, matching CalendarServer's seconds-based contract and normalising all-day exclusive end points once inside that event domain.
 
 Internal proleptic arithmetic may use astronomical year numbering, including year 0, when a provider requires it. Presentation is responsible for historical era labels.
 
-Representation conversion belongs at explicit boundaries. A helper that silently changes epoch, unit or day-boundary convention violates the architecture because it makes a plausible-looking chronology error difficult to detect.
+Representation conversion belongs at explicit boundaries. A helper that silently changes epoch, unit or day-boundary convention violates the architecture because it makes a plausible-looking chronology error difficult to detect. The complete cross-platform representation policy is maintained in [PORTABILITY.md](PORTABILITY.md).
 
 ## Event model and snapshot consistency
 

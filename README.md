@@ -103,7 +103,7 @@ Detailed representation, event ownership, failure, security and release contract
 
 ## Correctness and model scope
 
-Historical calendars and clocks are deterministic computational models rather than claims about every historical locality or observational practice. Islamic results are not local crescent observations; solar and seasonal clocks use defined astronomical approximations and may be unavailable at polar latitudes; Japanese era output follows installed ICU data.
+Historical calendars and clocks are deterministic computational models rather than claims about every historical locality or observational practice. Islamic results are not local crescent observations; solar and seasonal clocks use defined astronomical approximations and may be unavailable at polar latitudes. Japanese modern-era boundaries are Calendar-owned for stable cross-ICU behaviour, while locale-sensitive era wording and other explicitly delegated presentation data continue to use ICU/CLDR.
 
 The evidence hierarchy, exact model authorities, continuation rules, astronomical references and admission requirements for new calendars/clocks are maintained in [MODELS.md](docs/MODELS.md).
 
