@@ -11,7 +11,8 @@ const timeouts = new Map();
 const observations = {
     watches: 0, unwatches: 0, proxyRequests: 0, cancels: 0,
     busAppeared: null, busVanished: null, proxyCallback: null,
-    rangeCalls: [], rangeCallbacks: [], disconnects: 0,
+    proxyStartError: null, rangeCalls: [], rangeCallbacks: [], disconnects: 0,
+    errors: [],
 };
 
 function addSignalMethods(prototype) {
@@ -49,8 +50,9 @@ class Cancellable {
         observations.cancels += 1;
     }
 }
-function makeServer(status = 2) {
+function makeServer(status = 2, rangeStartError = null) {
     const server = { status, signals: new Map() };
+    let startError = rangeStartError;
     server.connect = (signal, callback) => {
         const id = nextId++;
         server.signals.set(id, [signal, callback]);
@@ -63,6 +65,11 @@ function makeServer(status = 2) {
         }
     };
     server.call_set_time_range = (start, end, force, cancellable, callback) => {
+        if (startError !== null) {
+            const error = startError;
+            startError = null;
+            throw error;
+        }
         observations.rangeCalls.push([start, end, force, cancellable]);
         observations.rangeCallbacks.push(callback);
     };
@@ -77,7 +84,7 @@ const context = {
         assert.equal(name, "./runtimeSupport");
         return { SignalBag };
     },
-    global: { logError() {} },
+    global: { logError(error) { observations.errors.push(String(error)); } },
     imports: {
         ui: {},
         signals: { addSignalMethods },
@@ -108,6 +115,11 @@ const context = {
                 CalendarServerProxy: {
                     new_for_bus(type, flags, name, objectPath, cancellable, callback) {
                         observations.proxyRequests += 1;
+                        if (observations.proxyStartError !== null) {
+                            const error = observations.proxyStartError;
+                            observations.proxyStartError = null;
+                            throw error;
+                        }
                         observations.proxyCallback = callback;
                     },
                     new_for_bus_finish(result) {
@@ -179,6 +191,60 @@ assert.equal(
     true,
     "destroy must cancel an outstanding range request"
 );
+
+{
+    const requestsBefore = observations.proxyRequests;
+    const errorsBefore = observations.errors.length;
+    observations.proxyStartError = new Error("proxy start failed");
+    const failingTransport = new Transport();
+    let synchronousFailures = 0;
+    failingTransport.connect("unavailable", (owner, expectedEmpty) => {
+        assert.equal(expectedEmpty, false);
+        synchronousFailures += 1;
+    });
+    failingTransport.start();
+    assert.equal(synchronousFailures, 1, "synchronous proxy start failure must be observable");
+    assert.equal(observations.proxyRequests, requestsBefore + 1);
+    assert.equal(timeouts.size, 1, "synchronous proxy start failure must schedule reconnect");
+    assert.equal(observations.errors.length, errorsBefore + 1);
+    assert.match(observations.errors.at(-1), /proxy start failed/);
+
+    const retry = timeouts.values().next().value;
+    timeouts.clear();
+    retry();
+    assert.equal(
+        observations.proxyRequests,
+        requestsBefore + 2,
+        "failed proxy initiation must clear connecting state for retry"
+    );
+    failingTransport.destroy();
+}
+
+{
+    const errorsBefore = observations.errors.length;
+    const rangeTransport = new Transport();
+    rangeTransport.start();
+    const rangeServer = makeServer(2, new Error("range start failed"));
+    observations.proxyCallback(null, { server: rangeServer });
+    let callbackCalls = 0;
+    assert.equal(
+        rangeTransport.request_range(30, 40, false, () => { callbackCalls += 1; }),
+        false,
+        "synchronous range-call initiation failure must return false"
+    );
+    assert.equal(callbackCalls, 0, "a request that never started must not synthesize completion");
+    assert.equal(observations.errors.length, errorsBefore + 1);
+    assert.match(observations.errors.at(-1), /range start failed/);
+
+    assert.equal(
+        rangeTransport.request_range(30, 40, false, () => { callbackCalls += 1; }),
+        true,
+        "transport must remain usable after a synchronous range start failure"
+    );
+    observations.rangeCallbacks.at(-1)(rangeServer, {});
+    assert.equal(callbackCalls, 1);
+    rangeTransport.destroy();
+}
 
 function evaluateTimezoneMonitor({ directFails = false, fallbackFails = false, directConnectFails = false } = {}) {
     const timezoneObservations = {
