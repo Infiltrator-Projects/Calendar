@@ -154,6 +154,7 @@ def assert_release_intent_behaviour(version: str) -> None:
     assert future.returncode != 0
     assert "older than the latest published release" in future.stderr
 
+
 def main() -> None:
     makefile = read("Makefile")
     rules = read("debian/rules")
@@ -284,6 +285,20 @@ def main() -> None:
     assert "startsWith(" not in workflow
     assert "cancel-in-progress: false" in workflow
 
+    # Package lifecycle qualification must exercise the exact .deb already
+    # produced by the release gate. Rebuilding here would attach install/purge
+    # and migration evidence to different bytes from the publication candidate.
+    package_install = workflow.split("  package-install:\n", 1)[1].split(
+        "\n  publish-release:\n", 1
+    )[0]
+    assert "needs: [debian-package]" in package_install
+    assert "needs.debian-package.outputs.release_requested == 'true'" in package_install
+    assert "actions/download-artifact@" in package_install
+    assert "qualified-release/release-handoff.py verify" in package_install
+    assert 'apt-get install -y --no-install-recommends "$RELEASE_DEB"' in package_install
+    assert "dpkg-buildpackage" not in package_install
+    assert "Install package build dependencies" not in package_install
+
     # Publication consumes one JSON handoff and never rebuilds. Draft identity is
     # tracked by release ID because GitHub creates the tag only when the draft is
     # published; Calendar never rewrites or deletes an existing release tag.
@@ -308,6 +323,8 @@ def main() -> None:
     assert "gh release upload" not in publisher
     assert "gh release edit" not in publisher
     assert "bump VERSION instead of recovering the tag" in publisher
+    assert '[[ "$remote_digest" != "sha256:${digest}" ]]' in publisher
+    assert '[[ -n "$remote_digest"' not in publisher
     publish_index = publisher.index("-F draft=false")
     tag_verify_index = publisher.index(
         "git/ref/tags/${RELEASE_TAG}", publish_index
