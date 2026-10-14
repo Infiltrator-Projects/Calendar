@@ -288,6 +288,8 @@ def main() -> None:
     # Package lifecycle qualification must exercise the exact .deb already
     # produced by the release gate. Rebuilding here would attach install/purge
     # and migration evidence to different bytes from the publication candidate.
+    # A relative .deb must also carry an explicit path component for apt; without
+    # './', apt interprets the leading directory name as a repository package.
     package_install = workflow.split("  package-install:\n", 1)[1].split(
         "\n  publish-release:\n", 1
     )[0]
@@ -295,7 +297,8 @@ def main() -> None:
     assert "needs.debian-package.outputs.release_requested == 'true'" in package_install
     assert "actions/download-artifact@" in package_install
     assert "qualified-release/release-handoff.py verify" in package_install
-    assert 'apt-get install -y --no-install-recommends "$RELEASE_DEB"' in package_install
+    assert 'apt-get install -y --no-install-recommends "./$RELEASE_DEB"' in package_install
+    assert 'apt-get install -y --no-install-recommends "$RELEASE_DEB"' not in package_install
     assert "dpkg-buildpackage" not in package_install
     assert "Install package build dependencies" not in package_install
 
