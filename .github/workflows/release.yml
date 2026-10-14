@@ -198,8 +198,9 @@ jobs:
             remote_digest=$(gh api --paginate \
               "repos/${GITHUB_REPOSITORY}/releases/${RELEASE_ID}/assets?per_page=100" \
               --jq ".[] | select(.name == \"${name}\") | .digest // \"\"")
-            if [[ -n "$remote_digest" && "$remote_digest" != "sha256:${digest}" ]]; then
-              printf 'Release asset %s digest mismatch.\n' "$name" >&2
+            if [[ "$remote_digest" != "sha256:${digest}" ]]; then
+              printf 'Release asset %s digest is %s; expected sha256:%s.\n' \
+                "$name" "${remote_digest:-<missing>}" "$digest" >&2
               exit 1
             fi
           }
