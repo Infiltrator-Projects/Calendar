@@ -1,3 +1,11 @@
+infiltrator-calendar (1.0.100) unstable; urgency=medium
+
+  * Qualify install, execution, purge and legacy-package migration against the exact release .deb instead of rebuilding a parallel package in the lifecycle job.
+  * Verify the downloaded release handoff before lifecycle testing so package evidence remains tied to the qualified source SHA and artifact digests.
+  * Fail release publication closed when GitHub does not report the expected SHA-256 digest for either qualified asset.
+
+ -- Shannon Smith <infiltratr@yandex.com>  Tue, 13 Oct 2026 23:48:00 +0000
+
 infiltrator-calendar (1.0.99) unstable; urgency=medium
 
   * Preserve the desired visible event range across CalendarServer loss so reconnect recovery deterministically refetches the same civil range.
