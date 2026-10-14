@@ -255,6 +255,8 @@ jobs:
         run: tools/live-cinnamon-ci-smoke.sh
 
   package-install:
+    needs: [debian-package]
+    if: needs.debian-package.outputs.release_requested == 'true'
     runs-on: ubuntu-24.04
     container:
       image: debian:13
@@ -262,44 +264,40 @@ jobs:
       - name: Prepare clean Debian container
         run: |
           apt-get update
-          apt-get install -y --no-install-recommends ca-certificates git
+          apt-get install -y --no-install-recommends ca-certificates git python3
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
-          submodules: true
-      - name: Install package build dependencies
-        env:
-          DEBIAN_FRONTEND: noninteractive
-        run: |
-          apt-get update
-          apt-get install -y --no-install-recommends \
-            build-essential debhelper desktop-file-utils devscripts gettext gobject-introspection gjs \
-            gir1.2-glib-2.0-dev libglib2.0-dev libgtk-3-dev libicu-dev nodejs \
-            pkg-config python3 xz-utils
-      - name: Build, install, execute and purge generic package
+          submodules: false
+      - name: Download exact qualified release assets
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
+        with:
+          name: calendar-release-${{ github.sha }}
+          path: qualified-release
+      - name: Verify exact qualified release handoff
         shell: bash
-        env:
-          DEB_BUILD_OPTIONS: nocheck
+        run: >-
+          python3 qualified-release/release-handoff.py verify
+          --dist qualified-release
+          --expected-sha "$GITHUB_SHA"
+          --github-env "$GITHUB_ENV"
+      - name: Install, execute and purge exact qualified package
+        shell: bash
         run: |
           set -euo pipefail
-          version="$(sed -n 's/^VERSION := //p' Makefile)"
-          dpkg-buildpackage -us -uc -b
-          deb="../infiltrator-calendar_${version}_amd64.deb"
-          test -s "$deb"
-          apt-get install -y --no-install-recommends "$deb"
+          test -s "$RELEASE_DEB"
+          apt-get install -y --no-install-recommends "$RELEASE_DEB"
           test "$(dpkg-query -W -f='${Status}' infiltrator-calendar)" = "install ok installed"
-          /usr/libexec/calendar-plus-about --print-metadata | grep -qx "version=$version"
+          /usr/libexec/calendar-plus-about --print-metadata | grep -qx "version=$RELEASE_VERSION"
           /usr/libexec/calendar-plus-about --print-metadata | grep -qx "build-profile=generic"
-          CALENDAR_PLUS_EXPECTED_VERSION="$version" gjs tests/smoke-typelib.js >/dev/null
+          CALENDAR_PLUS_EXPECTED_VERSION="$RELEASE_VERSION" gjs tests/smoke-typelib.js >/dev/null
           apt-get purge -y infiltrator-calendar
           ! dpkg-query -W infiltrator-calendar >/dev/null 2>&1
           apt-get check
-      - name: Migrate retired package identities
+      - name: Migrate retired package identities to exact qualified package
         shell: bash
         run: |
           set -euo pipefail
-          version="$(sed -n 's/^VERSION := //p' Makefile)"
-          deb="../infiltrator-calendar_${version}_amd64.deb"
-          test -s "$deb"
+          test -s "$RELEASE_DEB"
 
           temp="$(mktemp -d)"
           trap 'rm -rf "$temp"' EXIT
@@ -333,7 +331,7 @@ jobs:
             dpkg -i "$legacy_deb"
             test "$(dpkg-query -W -f='${Status}' "$name")" = "install ok installed"
 
-            apt-get install -y --no-install-recommends "$deb"
+            apt-get install -y --no-install-recommends "$RELEASE_DEB"
             test "$(dpkg-query -W -f='${Status}' infiltrator-calendar)" = \
               "install ok installed"
             ! dpkg-query -W -f='${Status}' "$name" 2>/dev/null | \
