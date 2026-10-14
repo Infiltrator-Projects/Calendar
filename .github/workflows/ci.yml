@@ -285,7 +285,7 @@ jobs:
         run: |
           set -euo pipefail
           test -s "$RELEASE_DEB"
-          apt-get install -y --no-install-recommends "$RELEASE_DEB"
+          apt-get install -y --no-install-recommends "./$RELEASE_DEB"
           test "$(dpkg-query -W -f='${Status}' infiltrator-calendar)" = "install ok installed"
           /usr/libexec/calendar-plus-about --print-metadata | grep -qx "version=$RELEASE_VERSION"
           /usr/libexec/calendar-plus-about --print-metadata | grep -qx "build-profile=generic"
@@ -331,7 +331,7 @@ jobs:
             dpkg -i "$legacy_deb"
             test "$(dpkg-query -W -f='${Status}' "$name")" = "install ok installed"
 
-            apt-get install -y --no-install-recommends "$RELEASE_DEB"
+            apt-get install -y --no-install-recommends "./$RELEASE_DEB"
             test "$(dpkg-query -W -f='${Status}' infiltrator-calendar)" = \
               "install ok installed"
             ! dpkg-query -W -f='${Status}' "$name" 2>/dev/null | \
