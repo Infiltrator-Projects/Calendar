@@ -243,6 +243,25 @@ calendar_plus_event_input_is_valid(const CalendarPlusEventInput *input)
            (!input->all_day || input->end_unix > input->start_unix);
 }
 
+static gint64
+event_end_day_unix(const EventRecord *event)
+{
+    gint64 last_occupied_unix = event->end_unix;
+
+    /*
+     * Timed CalendarServer intervals are half-open: [start, end). A positive-
+     * duration event ending exactly at 00:00 therefore occupies the preceding
+     * civil day, not the day containing its endpoint. All-day records have
+     * already had their exclusive following-midnight endpoint normalized by
+     * one second during ingestion, while zero-duration timed events remain on
+     * the civil day containing their single instant.
+     */
+    if (!event->all_day && event->end_unix > event->start_unix)
+        last_occupied_unix--;
+
+    return local_day_start(last_occupied_unix);
+}
+
 static EventRecord *
 event_record_from_input(const CalendarPlusEventInput *input)
 {
@@ -266,7 +285,7 @@ event_record_from_input(const CalendarPlusEventInput *input)
         event->end_unix--;
 
     event->start_day_unix = local_day_start(event->start_unix);
-    event->end_day_unix = local_day_start(event->end_unix);
+    event->end_day_unix = event_end_day_unix(event);
     event->multi_day = event->start_day_unix != event->end_day_unix;
     return event;
 }
@@ -559,7 +578,7 @@ calendar_plus_event_index_refresh_timezone(CalendarPlusEventIndex *index)
     {
         EventRecord *event = value;
         const gint64 start_day = local_day_start(event->start_unix);
-        const gint64 end_day = local_day_start(event->end_unix);
+        const gint64 end_day = event_end_day_unix(event);
         const gboolean multi_day = start_day != end_day;
 
         if (start_day != event->start_day_unix ||
