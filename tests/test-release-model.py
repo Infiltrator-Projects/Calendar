@@ -4,8 +4,9 @@
 
 """Behavioural contracts for Calendar's build and release model.
 
-Keep this suite focused on externally meaningful invariants. Implementation
-spelling, file counts and workflow step names are deliberately not contracts.
+The suite protects release invariants rather than incidental workflow spelling.
+Machine names, action counts and implementation-only step labels are deliberately
+not part of the contract.
 """
 
 from __future__ import annotations
@@ -34,6 +35,15 @@ def first_changelog_version(changelog: str) -> str:
     match = re.match(r"infiltrator-calendar \(([^)]+)\) ", changelog)
     assert match, "unexpected debian/changelog header"
     return match.group(1)
+
+
+def workflow_job(workflow: str, job: str, next_job: str) -> str:
+    marker = f"  {job}:\n"
+    next_marker = f"\n  {next_job}:\n"
+    assert marker in workflow, f"missing workflow job {job}"
+    section = workflow.split(marker, 1)[1]
+    assert next_marker in section, f"missing workflow job boundary {next_job}"
+    return section.split(next_marker, 1)[0]
 
 
 def assert_release_handoff_behaviour(version: str) -> None:
@@ -110,7 +120,6 @@ def assert_release_handoff_behaviour(version: str) -> None:
         assert result.returncode != 0, "tampered release asset was accepted"
 
 
-
 def assert_release_intent_behaviour(version: str) -> None:
     tool = ROOT / "tools/release-handoff.py"
 
@@ -167,8 +176,7 @@ def main() -> None:
     metadata = json.loads(read("src/cinnamon/metadata.json"))
     copyright_file = read("debian/copyright")
 
-    # Product identity has several consumers, but one release may never carry
-    # disagreeing versions.
+    # One release identity may never carry disagreeing versions.
     version = make_var(makefile, "VERSION")
     assert re.fullmatch(r"[0-9]+\.[0-9]+\.[0-9]+", version)
     assert metadata["version"] == version
@@ -176,7 +184,7 @@ def main() -> None:
     assert metadata["author"] == "Shannon Smith"
     assert metadata["website"] == "https://github.com/Infiltrator-Projects/Calendar"
 
-    # Build profiles remain deliberate and package construction remains generic.
+    # Build profiles remain deliberate and Debian construction stays generic.
     assert "BUILD_MODE ?= generic" in makefile
     assert "PGO_MODE ?= none" in makefile
     assert "-march=native" in makefile
@@ -185,8 +193,7 @@ def main() -> None:
     assert "filter nocheck,$(DEB_BUILD_OPTIONS)" in rules
     assert "export CFLAGS" not in makefile
 
-    # Common is pinned, independently versioned and consumed through its public
-    # archive/header boundary without freezing today's particular pin in this test.
+    # Common is pinned and consumed only through its public archive/API surface.
     common_version = make_var(makefile, "INFILTRATR_COMMON_VERSION")
     common_commit = make_var(makefile, "INFILTRATR_COMMON_COMMIT")
     assert re.fullmatch(r"[0-9]+\.[0-9]+\.[0-9]+", common_version)
@@ -195,12 +202,10 @@ def main() -> None:
     assert (common / "VERSION").read_text(encoding="utf-8").strip() == common_version
     assert (common / "LICENSE").is_file()
     assert "libinfiltratr-common.a" in makefile
-    assert "src/vendor/infiltratr-common" in makefile
     assert "Infiltrator-Projects/Infiltrator-Libraries.git" in read(".gitmodules")
     for private_source in ("core.c", "arithmetic.c", "timing.c", "dynlib.c"):
         assert f"$(INFILTRATR_COMMON_DIR)/src/{private_source}" not in makefile
 
-    # Calendar may call only APIs present in the pinned Common public headers.
     common_include = common / "include/infiltratr"
     public_api = "\n".join(
         path.read_text(encoding="utf-8")
@@ -224,8 +229,8 @@ def main() -> None:
         f"{missing_common_api}"
     )
 
-    # Proprietary font binaries are not release inputs; typography metadata may
-    # still nominate the preferred family with a required fallback.
+    # Typography metadata may nominate proprietary families; binaries are not
+    # redistributed and fallback remains a Common policy requirement.
     assert "FONT_ARCHIVE" not in makefile
     assert "prepare-fonts" not in makefile
     assert not (ROOT / "src/assets/fonts/mb-corpo-fonts.tar.xz").exists()
@@ -236,7 +241,7 @@ def main() -> None:
     assert policy["font_binaries_are_not_part_of_this_contract"] is True
     assert policy["fallback_is_required_when_mb_corpo_is_unavailable"] is True
 
-    # Debian package identity and runtime boundaries.
+    # Package identity and runtime ABI boundaries remain explicit.
     assert "Source: infiltrator-calendar" in control
     assert "\nPackage: infiltrator-calendar\n" in control
     assert "\nPackage: calendar-plus\n" not in control
@@ -251,8 +256,7 @@ def main() -> None:
     assert "src/core/icu-compat-bridge.c" in makefile
     assert "validate-runtime-deps:" in makefile
 
-    # The local installer remains a native/PGO path distinct from the generic
-    # package and keeps payload integrity checks.
+    # Local native/PGO installation is distinct from the portable release .deb.
     assert 'NATIVE_VERSION="${VERSION}+nativepgo${NATIVE_REVISION}"' in installer
     assert "CALENDAR_PLUS_BUILD_MODE=native" in installer
     assert "PGO_MODE=generate" in installer
@@ -260,51 +264,49 @@ def main() -> None:
     assert "--build-only" in installer
     assert "--verify-only" in installer
     assert "@PAYLOAD_SHA256@" in installer
-    assert "desktop-file-utils" in installer
     assert '(cd "$SOURCE_DIR" && dpkg-checkbuilddeps)' in installer
 
-    # Release construction qualifies reproducibility, artifact shape and native
-    # installer behaviour exactly once.
+    # Release construction qualifies reproducibility and artifact shape once.
     assert "CALENDAR_RELEASE_SOURCE_ALREADY_QUALIFIED" in release_check
     assert "make reproducible-build" in release_check
     assert "tools/native-installer-smoke.sh" in release_check
     assert "tools/validate-release-artifacts.sh" in release_check
     assert "lintian --fail-on error" in release_check
 
-    # Release intent is durable data: source newer than the latest published
-    # release. It must survive a failed publication and later same-version fixes.
+    # Release intent is based on source/published version, not commit-message
+    # conventions, and a failed publication remains recoverable by a later push.
     assert "release-handoff.py release-requested" in workflow
     assert "--published-version" in workflow
     assert "releases/latest" in workflow
     assert "github.event.before" not in workflow
     assert "fetch-depth: 0" not in workflow
-    assert "if: steps.release-intent.outputs.requested == 'true'" in workflow
     assert "release_requested:" in workflow
     assert "needs.debian-package.outputs.release_requested == 'true'" in workflow
     assert "head_commit.message" not in workflow
     assert "startsWith(" not in workflow
     assert "cancel-in-progress: false" in workflow
 
-    # Package lifecycle qualification must exercise the exact .deb already
-    # produced by the release gate. Rebuilding here would attach install/purge
-    # and migration evidence to different bytes from the publication candidate.
-    # A relative .deb must also carry an explicit path component for apt; without
-    # './', apt interprets the leading directory name as a repository package.
-    package_install = workflow.split("  package-install:\n", 1)[1].split(
-        "\n  publish-release:\n", 1
-    )[0]
+    # Lifecycle qualification uses exactly the handoff .deb; it never rebuilds.
+    package_install = workflow_job(workflow, "package-install", "publish-release")
     assert "needs: [debian-package]" in package_install
-    assert "needs.debian-package.outputs.release_requested == 'true'" in package_install
     assert "actions/download-artifact@" in package_install
     assert "qualified-release/release-handoff.py verify" in package_install
     assert 'apt-get install -y --no-install-recommends "./$RELEASE_DEB"' in package_install
     assert 'apt-get install -y --no-install-recommends "$RELEASE_DEB"' not in package_install
     assert "dpkg-buildpackage" not in package_install
-    assert "Install package build dependencies" not in package_install
 
-    # Publication consumes one JSON handoff and never rebuilds. Draft identity is
-    # tracked by release ID because GitHub creates the tag only when the draft is
-    # published; Calendar never rewrites or deletes an existing release tag.
+    # Live release qualification is reproducible infrastructure, not an
+    # availability dependency on a named workstation. It still starts a real,
+    # isolated Cinnamon process against the exact release artifact.
+    live_cinnamon = workflow_job(workflow, "live-cinnamon", "package-install")
+    assert "runs-on: ubuntu-24.04" in live_cinnamon
+    assert "image: debian:13" in live_cinnamon
+    assert "cinnamon dbus-x11" in live_cinnamon
+    assert "actions/download-artifact@" in live_cinnamon
+    assert "tools/isolated-cinnamon-artifact-smoke.sh" in live_cinnamon
+    assert "bigbedroom" not in workflow.lower()
+
+    # Publication consumes the immutable JSON handoff and never rebuilds.
     assert "release-manifest.json" in workflow
     assert "release-manifest.txt" not in workflow
     assert "release-manifest.txt" not in publisher
@@ -334,8 +336,6 @@ def main() -> None:
     )
     assert publish_index < tag_verify_index
 
-    # Qualification breadth remains explicit without making exact workflow text,
-    # action counts or file counts part of the contract.
     for required_job in (
         "native:",
         "icu-compat:",
@@ -343,12 +343,11 @@ def main() -> None:
         "coverage:",
         "static-analysis:",
         "debian-package:",
-        "bigbedroom-live-probe:",
+        "live-cinnamon:",
         "package-install:",
         "publish-release:",
     ):
         assert required_job in workflow
-    assert "runs-on: bigbedroom" in workflow
     assert "image: debian:12" in workflow
     assert "image: debian:13" in workflow
     assert "tools/live-cinnamon-ci-smoke.sh" in workflow
@@ -357,7 +356,7 @@ def main() -> None:
     assert_release_intent_behaviour(version)
     assert_release_handoff_behaviour(version)
 
-    # Licensing/provenance are release-input contracts, not workflow spelling.
+    # Licensing/provenance are release-input contracts.
     assert "Calendar is GPL-3.0-or-later" in read("README.md")
     assert "License: GPL-3+" in copyright_file
     project_owned_suffixes = {

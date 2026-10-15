@@ -3,10 +3,8 @@
 # Copyright (C) 1993-2026 Shannon Smith
 
 # Qualify one exact Calendar Debian artifact inside a fresh Cinnamon process.
-# The caller still proves that BigBedroom has a real live Cinnamon session;
-# this helper avoids contaminating that long-lived process with a different GI
-# namespace by launching an isolated Cinnamon process with the candidate native
-# library and typelib visible from process start.
+# This helper owns the complete isolated desktop/session lifecycle, so release
+# qualification does not depend on a pre-existing desktop or named workstation.
 
 set -euo pipefail
 
@@ -117,8 +115,8 @@ if [[ -f "$EXACT_ICON" ]]; then
     cp "$EXACT_ICON" "$TEST_ROOT/data/cinnamon/applets/$UUID/icon.png"
 fi
 
-# Let Xvfb atomically choose an unused display rather than competing with
-# another self-hosted runner for a hard-coded display number.
+# Let Xvfb atomically choose an unused display so concurrently scheduled hosted
+# jobs never contend for a hard-coded X display number.
 : > "$DISPLAY_FILE"
 Xvfb -displayfd 3 -screen 0 1280x720x24 -nolisten tcp \
     3>"$DISPLAY_FILE" >"$TEST_ROOT/xvfb.log" 2>&1 &
@@ -159,7 +157,7 @@ export CALENDAR_TEST_UUID="$UUID"
 export CALENDAR_TEST_VERSION="$EXPECTED_VERSION"
 
 # A new session bus ensures the qualification process cannot accidentally talk
-# to or mutate the user's real Cinnamon desktop.
+# to or mutate another Cinnamon desktop.
 dbus-run-session -- bash -euo pipefail <<'INNER'
 CINNAMON_PID=
 

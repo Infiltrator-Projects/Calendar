@@ -211,13 +211,22 @@ jobs:
           if-no-files-found: error
           retention-days: 3
 
-  bigbedroom-live-probe:
-    name: BigBedroom / live Cinnamon qualification
+  live-cinnamon:
+    name: Live Cinnamon / isolated exact-artifact qualification
     needs: [debian-package]
     if: needs.debian-package.outputs.release_requested == 'true'
-    runs-on: bigbedroom
-    timeout-minutes: 10
+    runs-on: ubuntu-24.04
+    container:
+      image: debian:13
+    timeout-minutes: 15
     steps:
+      - name: Prepare reproducible Cinnamon runtime
+        env:
+          DEBIAN_FRONTEND: noninteractive
+        run: |
+          apt-get update
+          apt-get install -y --no-install-recommends \
+            ca-certificates cinnamon dbus-x11 git libglib2.0-bin python3 xvfb
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           submodules: false
@@ -234,25 +243,15 @@ jobs:
           deb=$(find qualified-release -maxdepth 1 -type f -name 'calendar_*_amd64.deb' -print -quit)
           test -n "$deb" && test -s "$deb"
           printf 'deb=%s/%s\n' "$GITHUB_WORKSPACE" "$deb" >> "$GITHUB_OUTPUT"
-      - name: Probe exact-source Cinnamon qualification
-        id: live-cinnamon
-        env:
-          CALENDAR_PLUS_EXACT_DEB: ${{ steps.qualified-package.outputs.deb }}
-        shell: bash
-        run: tools/live-cinnamon-ci-smoke.sh --probe
-      - name: Require live Cinnamon for release publication
-        if: steps.live-cinnamon.outputs.ready != 'true'
+      - name: Record Cinnamon qualification environment
         shell: bash
         run: |
-          echo 'A release publication requires an available real Cinnamon session.' >&2
-          exit 1
+          set -euo pipefail
+          cinnamon --version
+          dpkg-query -W -f='${Package} ${Version}\n' cinnamon cjs
       - name: Live Cinnamon runtime qualification
-        if: steps.live-cinnamon.outputs.ready == 'true'
-        env:
-          CALENDAR_PLUS_LIVE_MODE: ${{ steps.live-cinnamon.outputs.mode }}
-          CALENDAR_PLUS_EXACT_DEB: ${{ steps.qualified-package.outputs.deb }}
-          DEB_BUILD_OPTIONS: nocheck
-        run: tools/live-cinnamon-ci-smoke.sh
+        shell: bash
+        run: tools/isolated-cinnamon-artifact-smoke.sh '${{ steps.qualified-package.outputs.deb }}'
 
   package-install:
     needs: [debian-package]
@@ -353,7 +352,7 @@ jobs:
       - coverage
       - static-analysis
       - debian-package
-      - bigbedroom-live-probe
+      - live-cinnamon
       - package-install
     permissions:
       actions: read
