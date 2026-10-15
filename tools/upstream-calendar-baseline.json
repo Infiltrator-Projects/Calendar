@@ -1,7 +1,7 @@
 {
     "repository": "linuxmint/cinnamon",
     "ref": "master",
-    "commit": "40d419f2c0951ace9f69155700993f611f22eca1",
+    "commit": "9c75a64ed50f6716f893b88abff168ae1fbc4e9d",
     "paths": [
         "files/usr/share/cinnamon/applets/calendar@cinnamon.org/",
         "calendar-server/",
