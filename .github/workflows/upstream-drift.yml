@@ -7,6 +7,13 @@ on:
   workflow_dispatch:
   schedule:
     - cron: '17 4 * * *'
+  push:
+    branches:
+      - main
+    paths:
+      - '.github/workflows/upstream-drift.yml'
+      - 'tools/check-upstream-calendar-drift.py'
+      - 'tools/upstream-calendar-baseline.json'
 
 permissions:
   contents: read
