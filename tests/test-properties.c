@@ -629,23 +629,57 @@ test_event_timezone_refresh(void)
     g_autofree gchar *saved_timezone = g_strdup(original_timezone);
     g_autoptr(CalendarPlusEventStore) store =
         calendar_plus_event_store_new();
-    g_autoptr(GDateTime) start = NULL;
-    g_autoptr(GVariant) event = NULL;
-    gint64 start_unix;
+    g_autoptr(GVariant) initial_midnight = NULL;
+    g_autoptr(GVariant) refresh_midnight = NULL;
+    g_auto(GStrv) colors = NULL;
+
+    /*
+     * Exercise both sides of the derived end-day authority. The first event
+     * ends at local midnight when ingested in New York; the second ends at
+     * local midnight only after the same UTC instants are reprojected in UTC.
+     * Neither may acquire the civil day that begins at its exclusive endpoint.
+     */
+    g_assert_true(g_setenv("TZ", "America/New_York", TRUE));
+    tzset();
+    initial_midnight = event_variant(
+        "initial-midnight",
+        local_unix(2026, 7, 28, 23),
+        local_unix(2026, 7, 29, 0));
+    refresh_midnight = event_variant(
+        "refresh-midnight",
+        local_unix(2026, 7, 28, 19),
+        local_unix(2026, 7, 28, 20));
+    g_assert_true(calendar_plus_event_store_add_or_update(
+        store, initial_midnight, 1));
+    g_assert_true(calendar_plus_event_store_add_or_update(
+        store, refresh_midnight, 1));
+    g_assert_false(calendar_plus_event_store_refresh_timezone(store));
+
+    colors = calendar_plus_event_store_get_colors(
+        store, local_unix(2026, 7, 28, 12), local_unix(2026, 7, 28, 12));
+    g_assert_nonnull(colors);
+    g_assert_cmpuint(g_strv_length(colors), ==, 2);
+    g_clear_pointer(&colors, g_strfreev);
+    colors = calendar_plus_event_store_get_colors(
+        store, local_unix(2026, 7, 29, 12), local_unix(2026, 7, 29, 12));
+    g_assert_nonnull(colors);
+    g_assert_cmpuint(g_strv_length(colors), ==, 0);
+    g_clear_pointer(&colors, g_strfreev);
 
     g_assert_true(g_setenv("TZ", "UTC", TRUE));
     tzset();
-    start = g_date_time_new_utc(2026, 7, 29, 0, 30, 0.0);
-    g_assert_nonnull(start);
-    start_unix = g_date_time_to_unix(start);
-    event = event_variant("timezone", start_unix, start_unix + 3600);
-    g_assert_true(calendar_plus_event_store_add_or_update(store, event, 1));
-    g_assert_false(calendar_plus_event_store_refresh_timezone(store));
-
-    g_assert_true(g_setenv("TZ", "America/New_York", TRUE));
-    tzset();
     g_assert_true(calendar_plus_event_store_refresh_timezone(store));
     g_assert_false(calendar_plus_event_store_refresh_timezone(store));
+
+    colors = calendar_plus_event_store_get_colors(
+        store, local_unix(2026, 7, 28, 12), local_unix(2026, 7, 28, 12));
+    g_assert_nonnull(colors);
+    g_assert_cmpuint(g_strv_length(colors), ==, 1);
+    g_clear_pointer(&colors, g_strfreev);
+    colors = calendar_plus_event_store_get_colors(
+        store, local_unix(2026, 7, 29, 12), local_unix(2026, 7, 29, 12));
+    g_assert_nonnull(colors);
+    g_assert_cmpuint(g_strv_length(colors), ==, 1);
 
     if (saved_timezone != NULL)
         g_assert_true(g_setenv("TZ", saved_timezone, TRUE));
