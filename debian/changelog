@@ -1,3 +1,11 @@
+infiltrator-calendar (1.0.101) unstable; urgency=medium
+
+  * Treat positive-duration timed CalendarServer intervals as half-open for civil-day occupancy so events ending exactly at local midnight do not appear on the following day.
+  * Reuse the same end-day derivation during timezone refresh and cover both ingestion-time and refresh-time midnight boundaries with deterministic native regression tests.
+  * Advance the reviewed Cinnamon calendar baseline after incorporating the corresponding upstream event-view behaviour.
+
+ -- Shannon Smith <infiltratr@yandex.com>  Thu, 15 Oct 2026 03:41:00 +0000
+
 infiltrator-calendar (1.0.100) unstable; urgency=medium
 
   * Qualify install, execution, purge and legacy-package migration against the exact release .deb instead of rebuilding a parallel package in the lifecycle job.
