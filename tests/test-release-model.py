@@ -164,6 +164,58 @@ def assert_release_intent_behaviour(version: str) -> None:
     assert "older than the latest published release" in future.stderr
 
 
+def assert_project_license_markers(root: Path) -> None:
+    """Apply Calendar's source-header policy only to Calendar-owned inputs."""
+    project_owned_suffixes = {
+        ".c", ".h", ".js", ".py", ".sh", ".in", ".yml", ".yaml"
+    }
+    for path in root.rglob("*"):
+        if not path.is_file():
+            continue
+        relative = path.relative_to(root)
+        # Pinned dependencies retain their own provenance. Generated build and
+        # distribution output is not a maintained Calendar source input either.
+        if (
+            ".git" in relative.parts
+            or relative.parts[:2] == ("src", "vendor")
+            or relative.parts[0] in {"build", "dist"}
+        ):
+            continue
+        if path.suffix not in project_owned_suffixes:
+            continue
+        content = path.read_text(encoding="utf-8")
+        assert "SPDX-License-Identifier: GPL-3.0-or-later" in content, (
+            f"missing GPL-3 SPDX marker: {relative}"
+        )
+
+
+def assert_license_scope_behaviour() -> None:
+    with tempfile.TemporaryDirectory(prefix="calendar-license-scope-") as tmp:
+        root = Path(tmp)
+        source = root / "src/calendar.c"
+        source.parent.mkdir(parents=True)
+        source.write_text("/* SPDX-License-Identifier: GPL-3.0-or-later */\n")
+        for relative in (
+            "src/vendor/shared/tools/dependency.py",
+            "build/generated-probe.c",
+            "dist/staged-helper.sh",
+        ):
+            path = root / relative
+            path.parent.mkdir(parents=True, exist_ok=True)
+            path.write_text("# Dependency-owned or generated input\n")
+        assert_project_license_markers(root)
+
+        maintained = root / "tools/unmarked.py"
+        maintained.parent.mkdir()
+        maintained.write_text("# Maintained Calendar helper\n")
+        try:
+            assert_project_license_markers(root)
+        except AssertionError as error:
+            assert "tools/unmarked.py" in str(error)
+        else:
+            raise AssertionError("unmarked Calendar-owned source was accepted")
+
+
 def main() -> None:
     makefile = read("Makefile")
     rules = read("debian/rules")
@@ -379,18 +431,8 @@ def main() -> None:
     # Licensing/provenance are release-input contracts.
     assert "Calendar is GPL-3.0-or-later" in read("README.md")
     assert "License: GPL-3+" in copyright_file
-    project_owned_suffixes = {
-        ".c", ".h", ".js", ".py", ".sh", ".in", ".yml", ".yaml"
-    }
-    for path in ROOT.rglob("*"):
-        if not path.is_file() or ".git" in path.parts:
-            continue
-        if path.suffix not in project_owned_suffixes:
-            continue
-        content = path.read_text(encoding="utf-8")
-        assert "SPDX-License-Identifier: GPL-3.0-or-later" in content, (
-            f"missing GPL-3 SPDX marker: {path.relative_to(ROOT)}"
-        )
+    assert_license_scope_behaviour()
+    assert_project_license_markers(ROOT)
 
 
 if __name__ == "__main__":

@@ -1,5 +1,7 @@
 infiltrator-calendar (1.0.103) unstable; urgency=medium
 
+  * Scope Calendar's GPL source-header validation to maintained project inputs,
+    preserving dependency provenance and excluding generated build output.
   * Consolidate civil-day boundary resolution and event ordering so snapshots and grid colours cannot diverge on skipped-midnight, all-day or today-grouping semantics.
   * Make root VERSION the platform-neutral release identity instead of teaching release, installer and validation tools to parse Makefile syntax.
   * Advance the pinned Infiltratr Common foundation to 1.19.42 and keep release/build documentation aligned with the single-authority model.
