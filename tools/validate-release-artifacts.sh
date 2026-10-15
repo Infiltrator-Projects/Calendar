@@ -5,7 +5,7 @@
 set -eu
 
 ROOT=$(CDPATH='' cd -- "$(dirname -- "$0")/.." && pwd)
-VERSION=$(sed -n 's/^VERSION := //p' "$ROOT/Makefile")
+VERSION=$(cat "$ROOT/VERSION")
 COMMON_VERSION=$(sed -n 's/^INFILTRATR_COMMON_VERSION := //p' "$ROOT/Makefile")
 DIST=${1:-"$ROOT/dist"}
 ARCH=amd64

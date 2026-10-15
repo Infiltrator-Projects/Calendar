@@ -7,7 +7,7 @@ set -eu
 ROOT=$(CDPATH='' cd -- "$(dirname -- "$0")/.." && pwd)
 UUID=calendar-plus@the-infiltratr
 SOURCE_DIR=src/cinnamon
-EXPECTED_VERSION=$(sed -n 's/^VERSION := //p' "$ROOT/Makefile")
+EXPECTED_VERSION=$(cat "$ROOT/VERSION")
 APPLET_DIR="${CALENDAR_PLUS_APPLET_DIR:-/usr/share/cinnamon/applets/$UUID}"
 ABOUT="${CALENDAR_PLUS_ABOUT:-/usr/libexec/calendar-plus-about}"
 JS_RUNTIME="${CALENDAR_PLUS_JS_RUNTIME:-}"

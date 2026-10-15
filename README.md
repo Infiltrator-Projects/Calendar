@@ -10,7 +10,7 @@ Calendar is a native Cinnamon panel clock and calendar with alternative clock mo
 
 **Runtime:** Cinnamon 6.4, 6.6 and 6.7\
 **Build-tested bases:** Debian 13, Linux Mint 22 and Ubuntu 24.04\
-**Shared foundation:** pinned Infiltratr Common 1.19.41, including canonical theme, typography and structural-metric contracts
+**Shared foundation:** an exact pinned Infiltratr Common release, including canonical theme, typography and structural-metric contracts
 
 Date and clock wording follows the desktop UI language while the selected calendar and clock retain their own rules. Traditional Chinese time renders as `Shēn hour` or `Shēn, first half` in English, and native Chinese forms in Chinese. Roman seasonal daylight clocks retain Roman numerals and native twelfths with translated wording. The panel schedules updates at those native boundaries. Calendar also exposes `calendar_plus_format_date_v1`, a bounded C date-rendering entry point used by Common's optional POSIX bridge; date conversion remains in this native engine.
 
@@ -28,7 +28,7 @@ The same principle applies across the wider software family: study what is known
 
 ## System temporal authority
 
-Calendar does not own temporal presentation preferences. When Infiltrator System Settings is installed, its valid shared policy is the richer authority for clock system, calendar system, seconds and geographic location, and Calendar watches that Common 1.19.41 policy for live changes. When System Settings is not installed, Calendar deliberately ignores any stale policy file left in the user's profile and behaves as a native Mint replacement: Cinnamon/locale settings remain authoritative for conventional 12/24-hour time, date visibility and presentation, seconds, first day of week and timezone; the stock Gregorian month view is used and no geographic extension is assumed. Calendar's own settings contain only Calendar-specific behaviour such as appearance, events, week numbers and keyboard shortcuts.
+Calendar does not own temporal presentation preferences. When Infiltrator System Settings is installed, its valid shared policy is the richer authority for clock system, calendar system, seconds and geographic location, and Calendar watches that pinned Common policy for live changes. When System Settings is not installed, Calendar deliberately ignores any stale policy file left in the user's profile and behaves as a native Mint replacement: Cinnamon/locale settings remain authoritative for conventional 12/24-hour time, date visibility and presentation, seconds, first day of week and timezone; the stock Gregorian month view is used and no geographic extension is assumed. Calendar's own settings contain only Calendar-specific behaviour such as appearance, events, week numbers and keyboard shortcuts.
 
 ## Capabilities
 
@@ -38,7 +38,7 @@ Calendar systems available through System Settings include Gregorian, Julian, IS
 
 The applet can coexist with Cinnamon's stock Calendar applet and installs no project-owned daemon, polling service or autostart entry. System Settings is optional at runtime. Common's installed `temporal-v3` provider marker identifies whether the richer authority exists, while one cached effective snapshot keeps all temporal fields coherent. Without both the provider and a valid saved policy Calendar follows Mint/Cinnamon; with both, Calendar gains the extended clock, calendar, seconds and location presentation selected there. Calendar monitors both authority boundaries live and needs no background daemon.
 
-Calendar prefers the MB Corpo family names defined by the pinned Common 1.19.41 typography contract when those typefaces are already available on the system, but it does not redistribute proprietary MB Corpo font binaries. Cinnamon's normal font fallback is therefore a required runtime path, not an error condition. Generated Cinnamon CSS remains regression-checked against Common's typography roles. Configuration stays in Cinnamon's xlet-settings renderer; About is a package-owned native GTK 3 helper launched out-of-process from Cinnamon. GTK is therefore confined to that presentation edge, while Calendar carries no project-owned Python settings host.
+Calendar prefers the MB Corpo family names defined by the pinned Common typography contract when those typefaces are already available on the system, but it does not redistribute proprietary MB Corpo font binaries. Cinnamon's normal font fallback is therefore a required runtime path, not an error condition. Generated Cinnamon CSS remains regression-checked against Common's typography roles. Configuration stays in Cinnamon's xlet-settings renderer; About is a package-owned native GTK 3 helper launched out-of-process from Cinnamon. GTK is therefore confined to that presentation edge, while Calendar carries no project-owned Python settings host.
 
 Location-dependent clocks do not silently assume Greenwich. They show `N/A LOC` until geographic location is configured in **System Settings → Date & Time**. On a Mint-only installation those extended clock modes are not selected, so Calendar remains on Cinnamon's conventional clock path.
 
@@ -73,7 +73,7 @@ portable Calendar domain contracts
                     ↓
 chronology / clocks / astronomy / event semantics
 
-Calendar native arithmetic    Infiltratr Common 1.19.41
+Calendar native arithmetic    Infiltratr Common (exact pinned release)
      ↓                                  ↓
 fixed-rule chronology         generic checked arithmetic /
                                formatting / timing / loading /

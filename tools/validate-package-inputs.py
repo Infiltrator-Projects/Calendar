@@ -223,11 +223,11 @@ def validate_debian_source_hygiene() -> None:
 def validate_version() -> None:
     makefile = (ROOT / "Makefile").read_text(encoding="utf-8")
     changelog = (ROOT / "debian/changelog").read_text(encoding="utf-8")
-    match = re.search(r"^VERSION := ([0-9]+\.[0-9]+\.[0-9]+)$",
-                      makefile,
-                      re.MULTILINE)
-    assert match is not None
-    version = match.group(1)
+    version = (ROOT / "VERSION").read_text(encoding="utf-8").strip()
+    assert re.fullmatch(r"[0-9]+\.[0-9]+\.[0-9]+", version), "invalid VERSION"
+    assert "VERSION := $(strip $(file <VERSION))" in makefile, (
+        "Makefile must consume the repository VERSION authority"
+    )
     build_mode = os.environ.get("CALENDAR_PLUS_BUILD_MODE", "generic")
     changelog_version_match = re.match(
         r"^infiltrator-calendar \(([^)]+)\) ", changelog

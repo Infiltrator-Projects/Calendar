@@ -27,7 +27,7 @@ platform-neutral Calendar domain contracts
                     ↓
 chronology / clocks / astronomy / event semantics
 
-ICU / CLDR                    Infiltratr Common 1.19.41
+ICU / CLDR                    Infiltratr Common (exact pinned release)
      ↓                                  ↓
 locale/calendar authority     reusable checked arithmetic /
 where explicitly delegated    formatting / timing / loading /
@@ -123,7 +123,7 @@ UTF-8, locale and translation handling must not become hidden chronology policy.
 
 If Calendar contains a stronger implementation of a capability that is fundamentally generic, the correct direction is to improve Common so its generic contract preserves that correctness, performance and resilience. Once Common is at least as strong, Calendar should consume it and remove the duplicate implementation.
 
-Do not weaken specialised chronology merely to increase reuse. Equally, do not preserve a private generic helper indefinitely when its advantages can be incorporated into Common. Common 1.19.41 is therefore consumed wherever its public contract is genuinely stronger or more general: checked/saturating arithmetic, timing, strings, dynamic loading, project metadata and the shared design/typography contract. Calendar does not manufacture artificial callers for unrelated Common APIs such as POSIX hardware readers, byte order helpers or graphics surfaces.
+Do not weaken specialised chronology merely to increase reuse. Equally, do not preserve a private generic helper indefinitely when its advantages can be incorporated into Common. The exact Common release pinned in the Makefile is therefore consumed wherever its public contract is genuinely stronger or more general: checked/saturating arithmetic, timing, strings, dynamic loading, project metadata and the shared design/typography contract. Calendar does not manufacture artificial callers for unrelated Common APIs such as POSIX hardware readers, byte order helpers or graphics surfaces.
 
 ## Native ABI and compatibility
 
@@ -150,6 +150,9 @@ Live Cinnamon behaviour is a separate integration boundary. The repository uses 
 The exact release revision must satisfy the required build, sanitizer, static-analysis, coverage, ABI, packaging, reproducibility and release gates. A skipped environment-dependent check is reported as skipped rather than treated as proof, and release-critical live Cinnamon qualification cannot be satisfied by a skip.
 
 ## Build and release contract
+
+
+The repository-root `VERSION` file is the platform-neutral authority for Calendar's source/release identity. The Makefile consumes it directly; Cinnamon metadata and Debian changelog versions are required projections for those platforms and are checked against it before release. Build or release tools must not rediscover the version by parsing unrelated Makefile syntax.
 
 Calendar pins the exact Common version and commit used by the build. Release assets are derived from the exact tested `main` revision. Release intent is the current source version being newer than the latest published GitHub release, not a one-push edge or commit-message prose. A failed publication therefore remains eligible on later green `main` revisions until that version is actually published. One JSON handoff owns the release version, source revision and qualified artifact identities; the publisher consumes those exact bytes without rebuilding them. Draft release identity is tracked by release ID because GitHub creates the protected tag only when publication completes, and that tag is then verified against the qualified revision.
 

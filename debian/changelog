@@ -1,3 +1,11 @@
+infiltrator-calendar (1.0.103) unstable; urgency=medium
+
+  * Consolidate civil-day boundary resolution and event ordering so snapshots and grid colours cannot diverge on skipped-midnight, all-day or today-grouping semantics.
+  * Make root VERSION the platform-neutral release identity instead of teaching release, installer and validation tools to parse Makefile syntax.
+  * Advance the pinned Infiltratr Common foundation to 1.19.42 and keep release/build documentation aligned with the single-authority model.
+
+ -- Shannon Smith <infiltratr@yandex.com>  Thu, 15 Oct 2026 05:05:00 +0000
+
 infiltrator-calendar (1.0.102) unstable; urgency=medium
 
   * Replace the hard release dependency on the named BigBedroom workstation with reproducible Debian 13 hosted Cinnamon qualification.

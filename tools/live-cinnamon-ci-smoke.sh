@@ -10,7 +10,7 @@ set -eu
 
 ROOT=$(CDPATH='' cd -- "$(dirname -- "$0")/.." && pwd)
 UUID=calendar-plus@the-infiltratr
-EXPECTED_VERSION=$(sed -n 's/^VERSION := //p' "$ROOT/Makefile")
+EXPECTED_VERSION=$(cat "$ROOT/VERSION")
 UID_NOW=$(id -u)
 RUNTIME_DIR="/run/user/$UID_NOW"
 SYSTEM_APPLET_DIR="/usr/share/cinnamon/applets/$UUID"

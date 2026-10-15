@@ -16,7 +16,7 @@ fi
 ROOT=$(CDPATH='' cd -- "$(dirname -- "$0")/.." && pwd)
 DEB=$1
 UUID=calendar-plus@the-infiltratr
-EXPECTED_VERSION=$(sed -n 's/^VERSION := //p' "$ROOT/Makefile")
+EXPECTED_VERSION=$(cat "$ROOT/VERSION")
 
 [[ -s "$DEB" ]] || {
     echo "Exact CI-qualified Calendar package is unavailable: $DEB" >&2

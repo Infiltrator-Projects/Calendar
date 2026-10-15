@@ -84,46 +84,68 @@ touch_index(CalendarPlusEventIndex *index)
         now : infiltratr_i64_add_saturating(index->revision, 1);
 }
 
-static gint64
-local_day_start(gint64 unix_time)
+static gboolean
+local_day_start_for_civil(gint year,
+                          gint month,
+                          gint day,
+                          gint64 *result)
 {
-    g_autoptr(GDateTime) instant =
-        g_date_time_new_from_unix_local(unix_time);
-    g_autoptr(GDateTime) boundary = NULL;
-    gint year;
-    gint month;
-    gint day;
     gint minute_of_day;
 
-    if (instant == NULL)
-        return unix_time;
+    if (result == NULL ||
+        !calendar_plus_gregorian_date_is_valid(year, month, day))
+    {
+        return FALSE;
+    }
 
-    year = g_date_time_get_year(instant);
-    month = g_date_time_get_month(instant);
-    day = g_date_time_get_day_of_month(instant);
-
+    /*
+     * Some zones skip midnight and a few historical transitions skip an
+     * entire civil date. Search the date itself rather than letting GLib
+     * normalize into an adjacent day. Whole-day gaps deliberately return
+     * FALSE so callers can preserve the unavailable civil date explicitly.
+     */
     for (minute_of_day = 0; minute_of_day < 24 * 60; minute_of_day++)
     {
-        boundary = g_date_time_new_local(year,
-                                         month,
-                                         day,
-                                         minute_of_day / 60,
-                                         minute_of_day % 60,
-                                         0.0);
+        g_autoptr(GDateTime) boundary =
+            g_date_time_new_local(year,
+                                  month,
+                                  day,
+                                  minute_of_day / 60,
+                                  minute_of_day % 60,
+                                  0.0);
+
         if (boundary != NULL &&
             g_date_time_get_year(boundary) == year &&
             g_date_time_get_month(boundary) == month &&
             g_date_time_get_day_of_month(boundary) == day)
         {
-            return g_date_time_to_unix(boundary);
-        }
-        if (boundary != NULL)
-        {
-            g_date_time_unref(boundary);
-            boundary = NULL;
+            *result = g_date_time_to_unix(boundary);
+            return TRUE;
         }
     }
 
+    return FALSE;
+}
+
+static gint64
+local_day_start(gint64 unix_time)
+{
+    g_autoptr(GDateTime) instant =
+        g_date_time_new_from_unix_local(unix_time);
+    gint64 boundary;
+
+    if (instant == NULL)
+        return unix_time;
+
+    if (local_day_start_for_civil(g_date_time_get_year(instant),
+                                  g_date_time_get_month(instant),
+                                  g_date_time_get_day_of_month(instant),
+                                  &boundary))
+    {
+        return boundary;
+    }
+
+    /* A wholly skipped civil date has no local boundary to return. */
     return unix_time;
 }
 
@@ -711,55 +733,75 @@ append_overlapping_candidates(CalendarPlusEventIndex *index,
     }
 }
 
+typedef struct
+{
+    gboolean today;
+    gint64 now_unix;
+} EventOrderingContext;
+
+static guint
+event_order_group(const EventRecord *event,
+                  const EventOrderingContext *context)
+{
+    if (!context->today)
+        return 0;
+    if (!event->all_day && event->end_unix < context->now_unix)
+        return 0;
+    if (event->all_day)
+        return 1;
+    return 2;
+}
+
+static gint
+compare_records_for_day(gconstpointer left,
+                        gconstpointer right,
+                        gpointer user_data)
+{
+    const EventRecord *a = *(EventRecord *const *)left;
+    const EventRecord *b = *(EventRecord *const *)right;
+    const EventOrderingContext *context = user_data;
+    const guint a_group = event_order_group(a, context);
+    const guint b_group = event_order_group(b, context);
+
+    if (a_group < b_group)
+        return -1;
+    if (a_group > b_group)
+        return 1;
+    return compare_records(left, right);
+}
+
+static void
+sort_records_for_day(GPtrArray *records,
+                     gint64 requested_day,
+                     gint64 now_unix)
+{
+    EventOrderingContext context = {
+        requested_day == local_day_start(now_unix),
+        now_unix
+    };
+
+    g_ptr_array_sort_with_data(records, compare_records_for_day, &context);
+}
+
 static GPtrArray *
 ordered_records(CalendarPlusEventIndex *index,
                 gint64 local_day_unix,
                 gint64 now_unix)
 {
     const gint64 requested_day = local_day_start(local_day_unix);
-    GPtrArray *sorted = g_ptr_array_new();
-    GPtrArray *ordered;
-    guint item;
+    GPtrArray *ordered = g_ptr_array_new();
 
     append_overlapping_candidates(index,
                                   requested_day,
                                   requested_day,
-                                  sorted);
+                                  ordered);
     /*
-     * Base ordering is deterministic for every day. Today's agenda then keeps
-     * Cinnamon's useful visual grouping without mutating the stored index:
-     * ended timed events, all-day events, then current/future timed events.
+     * One ordering authority serves both agenda snapshots and grid colours.
+     * Non-today dates use chronological order. Today groups ended timed events,
+     * all-day events, then current/future timed events, with deterministic
+     * chronological ordering inside each group.
      */
-    g_ptr_array_sort(sorted, compare_records);
-
-    if (requested_day != local_day_start(now_unix))
-        return sorted;
-
-    /* Today's agenda groups ended timed, all-day, then active/future events. */
-    ordered = g_ptr_array_new();
-    for (item = 0; item < sorted->len; item++)
-    {
-        EventRecord *event = g_ptr_array_index(sorted, item);
-
-        if (!event->all_day && event->end_unix < now_unix)
-            g_ptr_array_add(ordered, event);
-    }
-    for (item = 0; item < sorted->len; item++)
-    {
-        EventRecord *event = g_ptr_array_index(sorted, item);
-
-        if (event->all_day)
-            g_ptr_array_add(ordered, event);
-    }
-    for (item = 0; item < sorted->len; item++)
-    {
-        EventRecord *event = g_ptr_array_index(sorted, item);
-
-        if (!event->all_day && event->end_unix >= now_unix)
-            g_ptr_array_add(ordered, event);
-    }
-
-    g_ptr_array_unref(sorted);
+    sort_records_for_day(ordered, requested_day, now_unix);
     return ordered;
 }
 
@@ -807,49 +849,6 @@ lower_bound_day(const gint64 *days,
             high = middle;
     }
     return low;
-}
-
-static gboolean
-local_day_start_for_civil(gint year,
-                          gint month,
-                          gint day,
-                          gint64 *result)
-{
-    gint minute_of_day;
-
-    if (result == NULL ||
-        !calendar_plus_gregorian_date_is_valid(year, month, day))
-    {
-        return FALSE;
-    }
-
-    /*
-     * Some zones skip midnight and a few historical transitions skip an
-     * entire civil date. Search the date itself rather than letting GLib
-     * normalize into an adjacent day. Whole-day gaps deliberately return
-     * FALSE so the corresponding calendar-grid bucket remains empty.
-     */
-    for (minute_of_day = 0; minute_of_day < 24 * 60; minute_of_day++)
-    {
-        g_autoptr(GDateTime) boundary =
-            g_date_time_new_local(year,
-                                  month,
-                                  day,
-                                  minute_of_day / 60,
-                                  minute_of_day % 60,
-                                  0.0);
-
-        if (boundary != NULL &&
-            g_date_time_get_year(boundary) == year &&
-            g_date_time_get_month(boundary) == month &&
-            g_date_time_get_day_of_month(boundary) == day)
-        {
-            *result = g_date_time_to_unix(boundary);
-            return TRUE;
-        }
-    }
-
-    return FALSE;
 }
 
 static gboolean
@@ -903,44 +902,18 @@ copy_ordered_bucket_colors(GPtrArray *bucket,
 {
     gchar **colors;
     gsize copied = 0;
-    guint pass;
     guint item;
-    const gboolean today =
-        requested_day == local_day_start(now_unix);
     const gsize limit = MIN((gsize)bucket->len, maximum_colors);
 
     colors = g_new0(gchar *, limit + 1U);
     if (limit == 0)
         return colors;
 
-    g_ptr_array_sort(bucket, compare_records);
-    if (!today)
+    sort_records_for_day(bucket, requested_day, now_unix);
+    for (item = 0; item < bucket->len && copied < limit; item++)
     {
-        for (item = 0; item < bucket->len && copied < limit; item++)
-        {
-            const EventRecord *event = g_ptr_array_index(bucket, item);
-            colors[copied++] = g_strdup(event->color);
-        }
-        return colors;
-    }
-
-    /*
-     * Match ordered_records() exactly for today's grid dots: ended timed,
-     * all-day, then active/future timed events.
-     */
-    for (pass = 0; pass < 3 && copied < limit; pass++)
-    {
-        for (item = 0; item < bucket->len && copied < limit; item++)
-        {
-            const EventRecord *event = g_ptr_array_index(bucket, item);
-            const gboolean include =
-                pass == 0 ? (!event->all_day && event->end_unix < now_unix) :
-                pass == 1 ? event->all_day :
-                            (!event->all_day && event->end_unix >= now_unix);
-
-            if (include)
-                colors[copied++] = g_strdup(event->color);
-        }
+        const EventRecord *event = g_ptr_array_index(bucket, item);
+        colors[copied++] = g_strdup(event->color);
     }
     return colors;
 }

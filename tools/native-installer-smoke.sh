@@ -5,7 +5,7 @@
 set -eu
 
 ROOT=$(CDPATH='' cd -- "$(dirname -- "$0")/.." && pwd)
-VERSION=$(sed -n 's/^VERSION := //p' "$ROOT/Makefile")
+VERSION=$(cat "$ROOT/VERSION")
 RUN=${1:-"$ROOT/dist/calendar-${VERSION}-local-folder.run"}
 ARCH=$(dpkg-architecture -qDEB_HOST_ARCH)
 MULTIARCH=$(dpkg-architecture -qDEB_HOST_MULTIARCH)

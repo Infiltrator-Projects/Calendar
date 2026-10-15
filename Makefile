@@ -9,7 +9,7 @@ G_IR_COMPILER ?= g-ir-compiler
 PREFIX ?= /usr
 DESTDIR ?=
 
-VERSION := 1.0.102
+VERSION := $(strip $(file <VERSION))
 UUID := calendar-plus@the-infiltratr
 APPLET_SRC_DIR := src/cinnamon
 ICON_NAME := infiltratr-calendar
@@ -22,8 +22,8 @@ DIST_DIR := dist
 # authoritative when the preferred MB Corpo families are unavailable.
 INFILTRATR_COMMON_DIR := src/vendor/infiltratr-common
 INFILTRATR_COMMON_URL := https://github.com/Infiltrator-Projects/Infiltrator-Libraries.git
-INFILTRATR_COMMON_COMMIT := b0387b7ab5d71cda60748e2506b85cdc0e6b5e8b
-INFILTRATR_COMMON_VERSION := 1.19.41
+INFILTRATR_COMMON_COMMIT := 086b79504e3480167a23fe620820f074002413a7
+INFILTRATR_COMMON_VERSION := 1.19.42
 LIB_BASENAME := calendar-plus
 LIB_SONAME := lib$(LIB_BASENAME).so.0
 LIB_REALNAME := lib$(LIB_BASENAME).so.0.0.0
@@ -224,6 +224,7 @@ DIST_FILES := \
 	CONTRIBUTING.md \
 	LICENSE \
 	Makefile \
+	VERSION \
 	PHILOSOPHY.md \
 	README.md \
 	SECURITY.md \

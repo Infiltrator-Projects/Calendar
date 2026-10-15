@@ -32,7 +32,7 @@ def make_value(name: str) -> str:
 
 
 def release_identity() -> tuple[str, str, str]:
-    version = make_value("VERSION")
+    version = (ROOT / "VERSION").read_text(encoding="utf-8").strip()
     epoch = make_value("SOURCE_DATE_EPOCH")
     stamp = datetime.fromtimestamp(int(epoch), timezone.utc).strftime(
         "%Y-%m-%d %H:%M+0000"

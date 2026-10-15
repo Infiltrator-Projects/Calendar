@@ -176,9 +176,26 @@ def main() -> None:
     metadata = json.loads(read("src/cinnamon/metadata.json"))
     copyright_file = read("debian/copyright")
 
-    # One release identity may never carry disagreeing versions.
-    version = make_var(makefile, "VERSION")
+    # VERSION is the platform-neutral source identity. Packaging and Cinnamon
+    # project it into their required metadata, which must never disagree.
+    version = read("VERSION").strip()
     assert re.fullmatch(r"[0-9]+\.[0-9]+\.[0-9]+", version)
+    assert "VERSION := $(strip $(file <VERSION))" in makefile
+    assert "\tVERSION \\" in makefile
+    assert re.search(r"^VERSION := [0-9]", makefile, re.MULTILINE) is None
+    for version_consumer in (
+        "tools/build-local-installer.sh",
+        "tools/cinnamon-smoke.sh",
+        "tools/isolated-cinnamon-artifact-smoke.sh",
+        "tools/live-cinnamon-ci-smoke.sh",
+        "tools/native-installer-smoke.sh",
+        "tools/release-check.sh",
+        "tools/reproducible-build.sh",
+        "tools/validate-release-artifacts.sh",
+    ):
+        consumer = read(version_consumer)
+        assert 'cat "$ROOT/VERSION"' in consumer or 'cat VERSION' in consumer
+        assert "s/^VERSION :=" not in consumer
     assert metadata["version"] == version
     assert first_changelog_version(changelog) == version
     assert metadata["author"] == "Shannon Smith"
@@ -277,7 +294,10 @@ def main() -> None:
     # conventions, and a failed publication remains recoverable by a later push.
     assert "release-handoff.py release-requested" in workflow
     assert "--published-version" in workflow
-    assert "releases/latest" in workflow
+    assert "releases?per_page=100" in workflow
+    assert "select(.draft == false and .prerelease == false)" in workflow
+    assert "sort -V | tail -n 1" in workflow
+    assert "releases/latest" not in workflow
     assert "github.event.before" not in workflow
     assert "fetch-depth: 0" not in workflow
     assert "release_requested:" in workflow

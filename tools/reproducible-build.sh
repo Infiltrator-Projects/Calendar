@@ -5,7 +5,7 @@
 set -eu
 
 ROOT=$(CDPATH='' cd -- "$(dirname -- "$0")/.." && pwd)
-VERSION=$(sed -n 's/^VERSION := //p' "$ROOT/Makefile")
+VERSION=$(cat "$ROOT/VERSION")
 SOURCE_DATE_EPOCH=$(sed -n 's/^SOURCE_DATE_EPOCH ?= //p' "$ROOT/Makefile")
 ARCH=$(dpkg-architecture -qDEB_HOST_ARCH)
 TMP=$(mktemp -d)

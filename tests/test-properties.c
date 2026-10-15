@@ -559,6 +559,68 @@ test_event_store_range_admission(void)
 }
 
 static void
+test_event_today_ordering_consistency(void)
+{
+    const gint64 day = local_unix(2026, 7, 29, 0);
+    const gint64 now = local_unix(2026, 7, 29, 12);
+    g_autoptr(CalendarPlusEventStore) store =
+        calendar_plus_event_store_new();
+    g_autoptr(GVariant) future = g_variant_ref_sink(
+        g_variant_new("(sssbxxx)",
+                      "future", "#333333", "Future", FALSE,
+                      local_unix(2026, 7, 29, 15),
+                      local_unix(2026, 7, 29, 16),
+                      (gint64)1));
+    g_autoptr(GVariant) all_day = g_variant_ref_sink(
+        g_variant_new("(sssbxxx)",
+                      "all-day", "#222222", "All day", TRUE,
+                      day,
+                      local_unix(2026, 7, 30, 0),
+                      (gint64)1));
+    g_autoptr(GVariant) ended = g_variant_ref_sink(
+        g_variant_new("(sssbxxx)",
+                      "ended", "#111111", "Ended", FALSE,
+                      local_unix(2026, 7, 29, 9),
+                      local_unix(2026, 7, 29, 10),
+                      (gint64)1));
+    g_autoptr(GVariant) snapshot = NULL;
+    g_autoptr(GVariant) rows = NULL;
+    g_autoptr(GVariant) range = NULL;
+    g_autoptr(GVariant) range_colors = NULL;
+    gint64 revision = 0;
+    const gchar *expected[] = { "#111111", "#222222", "#333333" };
+    guint item;
+
+    /* Deliberately ingest out of display order. */
+    g_assert_true(calendar_plus_event_store_add_or_update(store, future, 1));
+    g_assert_true(calendar_plus_event_store_add_or_update(store, all_day, 1));
+    g_assert_true(calendar_plus_event_store_add_or_update(store, ended, 1));
+
+    snapshot = calendar_plus_event_store_get_snapshot(store, day, now);
+    g_variant_get(snapshot, "(x@a(sssbbxxxxx))", &revision, &rows);
+    g_assert_cmpuint(g_variant_n_children(rows), ==, G_N_ELEMENTS(expected));
+
+    range = calendar_plus_event_store_get_color_range(store, day, 1, now, 8);
+    g_assert_nonnull(range);
+    range_colors = g_variant_get_child_value(range, 0);
+    g_assert_cmpuint(g_variant_n_children(range_colors), ==,
+                     G_N_ELEMENTS(expected));
+
+    for (item = 0; item < G_N_ELEMENTS(expected); item++)
+    {
+        g_autoptr(GVariant) row = g_variant_get_child_value(rows, item);
+        g_autoptr(GVariant) row_color = g_variant_get_child_value(row, 1);
+        g_autoptr(GVariant) range_color =
+            g_variant_get_child_value(range_colors, item);
+
+        g_assert_cmpstr(g_variant_get_string(row_color, NULL), ==,
+                        expected[item]);
+        g_assert_cmpstr(g_variant_get_string(range_color, NULL), ==,
+                        expected[item]);
+    }
+}
+
+static void
 test_event_color_range(void)
 {
     const gint64 first_day = local_unix(2026, 7, 29, 0);
@@ -1028,6 +1090,8 @@ main(int argc,
                     test_event_store_clear_contract);
     g_test_add_func("/properties/event-color-range",
                     test_event_color_range);
+    g_test_add_func("/properties/event-today-ordering",
+                    test_event_today_ordering_consistency);
     g_test_add_func("/properties/event-range-admission",
                     test_event_store_range_admission);
     g_test_add_func("/properties/event-stale-revision",

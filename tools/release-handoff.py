@@ -33,13 +33,6 @@ def read(relative: str) -> str:
     return (ROOT / relative).read_text(encoding="utf-8")
 
 
-def makefile_version(text: str) -> str:
-    match = re.search(r"^VERSION := ([0-9]+\.[0-9]+\.[0-9]+)$", text, re.MULTILINE)
-    if not match:
-        fail("Makefile must contain one literal VERSION := X.Y.Z assignment")
-    return match.group(1)
-
-
 def changelog_version(text: str) -> str:
     match = re.match(r"infiltrator-calendar \(([0-9]+\.[0-9]+\.[0-9]+)\) ", text)
     if not match:
@@ -48,7 +41,9 @@ def changelog_version(text: str) -> str:
 
 
 def current_version() -> str:
-    version = makefile_version(read("Makefile"))
+    version = read("VERSION").strip()
+    if not VERSION_PATTERN.fullmatch(version):
+        fail(f"VERSION contains an invalid release version: {version!r}")
     metadata = json.loads(read("src/cinnamon/metadata.json"))
     metadata_version = metadata.get("version")
     changelog = changelog_version(read("debian/changelog"))
