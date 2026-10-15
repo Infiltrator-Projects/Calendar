@@ -1,3 +1,11 @@
+infiltrator-calendar (1.0.102) unstable; urgency=medium
+
+  * Replace the hard release dependency on the named BigBedroom workstation with reproducible Debian 13 hosted Cinnamon qualification.
+  * Continue launching a real isolated Cinnamon session against the exact qualified release .deb so removing the workstation dependency does not reduce runtime coverage.
+  * Make release-model validation enforce behavioural qualification invariants instead of runner naming and align the isolated smoke helper's ownership and executable metadata.
+
+ -- Shannon Smith <infiltratr@yandex.com>  Thu, 15 Oct 2026 04:05:00 +0000
+
 infiltrator-calendar (1.0.101) unstable; urgency=medium
 
   * Treat positive-duration timed CalendarServer intervals as half-open for civil-day occupancy so events ending exactly at local midnight do not appear on the following day.
