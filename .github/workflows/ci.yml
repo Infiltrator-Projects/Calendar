@@ -174,7 +174,12 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          published_tag="$(gh api "repos/${GITHUB_REPOSITORY}/releases/latest" --jq '.tag_name')"
+          published_tag="$(
+            gh api --paginate \
+              "repos/${GITHUB_REPOSITORY}/releases?per_page=100" \
+              --jq '.[] | select(.draft == false and .prerelease == false) | .tag_name' | \
+              sort -V | tail -n 1
+          )"
           python3 tools/release-handoff.py release-requested \
             --published-version "$published_tag" >> "$GITHUB_OUTPUT"
       - name: Install packaging dependencies
