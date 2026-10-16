@@ -10,7 +10,7 @@
  */
 
 const Atk = imports.gi.Atk;
-const Calendar = imports.gi.Calendar;
+const NativeCalendar = imports.gi.Calendar;
 const CinnamonDesktop = imports.gi.CinnamonDesktop;
 const Clutter = imports.gi.Clutter;
 const GLib = imports.gi.GLib;
@@ -550,12 +550,12 @@ class EventRow {
         this._resetStateStyles();
         const startsToday = _relationHas(
             todayRelation,
-            Calendar.EventDayRelation.STARTS_ON_DAY
+            NativeCalendar.EventDayRelation.STARTS_ON_DAY
         );
 
-        if (state === Calendar.EventState.PAST) {
+        if (state === NativeCalendar.EventState.PAST) {
             this.event_time.set_style_class_name("calendar-event-time-past");
-        } else if (state === Calendar.EventState.FUTURE) {
+        } else if (state === NativeCalendar.EventState.FUTURE) {
             this.event_time.set_style_class_name("calendar-event-time-future");
             if (startsToday) {
                 const [pseudoClass, text] = _countdown(secondsUntilStart);
@@ -607,7 +607,7 @@ class EventRow {
 
         if (!this.event.multi_day && _relationHas(
             selectedRelation,
-            Calendar.EventDayRelation.STARTS_ON_DAY
+            NativeCalendar.EventDayRelation.STARTS_ON_DAY
         )) {
             if (this.event.all_day) {
                 return _("All day");
@@ -626,8 +626,8 @@ class EventRow {
         const endpointDay = isStart ? this.event.start_date : this.event.end_date;
         const selectedRelation = this.event.relation_to_day(selected);
         const boundaryFlag = isStart
-            ? Calendar.EventDayRelation.STARTS_ON_DAY
-            : Calendar.EventDayRelation.ENDS_ON_DAY;
+            ? NativeCalendar.EventDayRelation.STARTS_ON_DAY
+            : NativeCalendar.EventDayRelation.ENDS_ON_DAY;
 
         if (_relationHas(selectedRelation, boundaryFlag)) {
             if (!this.event.all_day) {

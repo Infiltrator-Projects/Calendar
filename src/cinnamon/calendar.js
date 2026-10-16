@@ -5,7 +5,7 @@
  * Calendar month/period view.
  *
  * The visible calendar is always a 6 x 7 actor grid, but the meaning of a
- * "month" is delegated to Calendar.CalendarSystem. ISO week and Mayan
+ * "month" is delegated to NativeCalendar.CalendarSystem. ISO week and Mayan
  * views can therefore browse their natural periods without JavaScript
  * pretending that every calendar has Gregorian month boundaries.
  *
@@ -13,7 +13,7 @@
  * this controller owns navigation and actor presentation only.
  */
 
-const Calendar = imports.gi.Calendar;
+const NativeCalendar = imports.gi.Calendar;
 const Cinnamon = imports.gi.Cinnamon;
 const Clutter = imports.gi.Clutter;
 const GLib = imports.gi.GLib;
@@ -63,11 +63,11 @@ const FIRST_WEEKDAY_KEY = "first-day-of-week";
 const WEEK_NUMBER_WIDTH_DIGITS = 3;
 const MAX_EVENT_DOTS = 8;
 const DATE_PARTS = Object.freeze({
-    day: Calendar.DatePart.DAY,
-    month: Calendar.DatePart.MONTH,
-    year: Calendar.DatePart.YEAR,
-    short: Calendar.DatePart.SHORT,
-    full: Calendar.DatePart.FULL,
+    day: NativeCalendar.DatePart.DAY,
+    month: NativeCalendar.DatePart.MONTH,
+    year: NativeCalendar.DatePart.YEAR,
+    short: NativeCalendar.DatePart.SHORT,
+    full: NativeCalendar.DatePart.FULL,
 });
 
 const _dateFields = CivilDateApi.fields;
@@ -102,7 +102,7 @@ var Calendar = class Calendar {
         this.show_week_numbers = Boolean(showWeekNumbers);
         this._digitWidth = NaN;
         this._calendarSystemId = "gregorian";
-        this._calendarSystem = Calendar.CalendarSystem.new("gregorian");
+        this._calendarSystem = NativeCalendar.CalendarSystem.new("gregorian");
         this._selectedDate = new Date();
         this._pendingDate = null;
         this._focusAfterUpdate = null;
@@ -154,7 +154,7 @@ var Calendar = class Calendar {
         if (calendarId === this._calendarSystemId) {
             return;
         }
-        const replacement = Calendar.CalendarSystem.new(calendarId);
+        const replacement = NativeCalendar.CalendarSystem.new(calendarId);
         if (replacement === null) {
             global.logError(`Calendar: unknown calendar '${calendarId}'.`);
             return;
@@ -362,7 +362,7 @@ var Calendar = class Calendar {
             const weekday = (this._weekStart + logical) % 7;
             /* Native work-day policy avoids a second JS definition of weekends. */
             const sample = _localDate(2024, 1, 7 + weekday);
-            const workday = Calendar.date_is_work_day(..._dateFields(sample));
+            const workday = NativeCalendar.date_is_work_day(..._dateFields(sample));
             const label = new St.Label({
                 text: _weekdayAbbreviation(weekday),
                 style_class:

@@ -11,7 +11,7 @@
  */
 
 const Applet = imports.ui.applet;
-const Calendar = imports.gi.Calendar;
+const NativeCalendar = imports.gi.Calendar;
 const Cinnamon = imports.gi.Cinnamon;
 const CinnamonDesktop = imports.gi.CinnamonDesktop;
 const St = imports.gi.St;
@@ -40,7 +40,7 @@ const SignalBag = RuntimeSupport.SignalBag;
 const DesktopIntegration = RuntimeSupport.loadLocalModule("desktopIntegration");
 const TemporalPolicy = RuntimeSupport.loadLocalModule("temporalPolicy");
 /* PopupShell owns eventView and the smaller presentation leaf modules. */
-const Calendar = RuntimeSupport.loadLocalModule("calendar");
+const CalendarWidget = RuntimeSupport.loadLocalModule("calendar");
 const EventManager = RuntimeSupport.loadLocalModule("eventManager");
 const PanelClock = RuntimeSupport.loadLocalModule("panelClock");
 const PopupShell = RuntimeSupport.loadLocalModule("popupShell");
@@ -85,7 +85,7 @@ class CalendarApplet extends Applet.Applet {
         this._signals = new SignalBag();
         this._eventSignals = new SignalBag();
 
-        const nativeVersion = Calendar.get_version();
+        const nativeVersion = NativeCalendar.get_version();
         if (typeof expectedVersion !== "string" || expectedVersion.length === 0) {
             throw new Error(`${UUID}: Cinnamon did not provide an applet version.`);
         }
@@ -96,7 +96,7 @@ class CalendarApplet extends Applet.Applet {
             );
         }
 
-        this._calendar_system = Calendar.CalendarSystem.new("gregorian");
+        this._calendar_system = NativeCalendar.CalendarSystem.new("gregorian");
         if (this._calendar_system === null) {
             throw new Error(`${UUID}: native Gregorian calendar unavailable`);
         }
@@ -125,7 +125,7 @@ class CalendarApplet extends Applet.Applet {
         this._desktopIntegration.start();
 
         this.clock = new CinnamonDesktop.WallClock();
-        this.system_clock = Calendar.SystemClock.new();
+        this.system_clock = NativeCalendar.SystemClock.new();
         this._temporalPolicy = new TemporalPolicy.TemporalPolicyResolver(
             this.system_clock,
             PanelClock.isNativeClockMode
@@ -152,7 +152,7 @@ class CalendarApplet extends Applet.Applet {
         this._calendarEventSource = new PopupShell.CalendarEventSource(
             this.events_manager
         );
-        this._calendar = new Calendar.Calendar(
+        this._calendar = new CalendarWidget.Calendar(
             this._calendarEventSource,
             Cinnamon.util_get_week_start(),
             this.show_week_numbers
@@ -381,7 +381,7 @@ class CalendarApplet extends Applet.Applet {
         const temporal = this._temporalPolicy.get();
         if (!this._calendar_system ||
             this._calendar_system.get_id() !== temporal.calendar) {
-            const candidate = Calendar.CalendarSystem.new(temporal.calendar);
+            const candidate = NativeCalendar.CalendarSystem.new(temporal.calendar);
             if (candidate) {
                 this._calendar_system = candidate;
                 this._calendar.setCalendarSystem(temporal.calendar);

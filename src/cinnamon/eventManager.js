@@ -8,10 +8,10 @@
  * while filesystem timezone observation belongs to timezoneMonitor.js. This
  * controller owns event-cache semantics, desired range/selection state and the
  * signals exposed to presentation. External tuples cross the boundary once and
- * are immediately normalized by Calendar.EventStore.
+ * are immediately normalized by NativeCalendar.EventStore.
  */
 
-const Calendar = imports.gi.Calendar;
+const NativeCalendar = imports.gi.Calendar;
 const GLib = imports.gi.GLib;
 const Signals = imports.signals;
 const Mainloop = imports.mainloop;
@@ -111,7 +111,7 @@ class EventRecord {
     }
 
     relation_to_day(day) {
-        return Calendar.event_day_relation(
+        return NativeCalendar.event_day_relation(
             this.start_day_unix,
             this.end_day_unix,
             day.to_unix()
@@ -120,7 +120,7 @@ class EventRecord {
 
     timing(now) {
         const timing = NativeBoundary.decodeEventTiming(
-            Calendar.event_timing(
+            NativeCalendar.event_timing(
                 this.start_unix,
                 this.end_unix,
                 now.to_unix()
@@ -161,7 +161,7 @@ var EventsManager = class EventsManager {
         this.current_selected_civil = null;
         this._rangeState = new EventRangeState();
         this.last_update_timestamp = 0;
-        this.event_store = Calendar.EventStore.new();
+        this.event_store = NativeCalendar.EventStore.new();
 
         this._wireTransport();
         this._wireTimezone();

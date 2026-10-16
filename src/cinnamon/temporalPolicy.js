@@ -9,7 +9,7 @@
  * and reduces it to the scalar clock configuration needed by presentation.
  */
 
-const Calendar = imports.gi.Calendar;
+const NativeCalendar = imports.gi.Calendar;
 
 function _loadRuntimeSupport() {
     try {
@@ -53,7 +53,7 @@ function _freezePolicy(decoded, isNativeClockMode) {
     const calendarIsValid =
         typeof decoded.calendar === "string" &&
         decoded.calendar.length > 0 &&
-        Calendar.CalendarSystem.new(decoded.calendar) !== null;
+        NativeCalendar.CalendarSystem.new(decoded.calendar) !== null;
     const authorityIsValid =
         decoded.authority === "mint-cinnamon" ||
         decoded.authority === "system-settings";

@@ -15,7 +15,7 @@
  * time and surrounding date text.
  */
 
-const Calendar = imports.gi.Calendar;
+const NativeCalendar = imports.gi.Calendar;
 const CinnamonDesktop = imports.gi.CinnamonDesktop;
 
 var CLOCK_MODE_STANDARD_24 = "standard-24";
@@ -76,17 +76,17 @@ const CONVENTIONAL_TIME_FORMATS = Object.freeze([
 ]);
 
 function isNativeClockMode(mode) {
-    return Calendar.time_mode_from_string(mode) !==
-        Calendar.TimeMode.INVALID;
+    return NativeCalendar.time_mode_from_string(mode) !==
+        NativeCalendar.TimeMode.INVALID;
 }
 
 function nativeModeRequiresLocation(mode) {
     if (!isNativeClockMode(mode)) {
         return false;
     }
-    const parsed = Calendar.time_mode_from_string(mode);
-    return Calendar.time_mode_requires_longitude(parsed) ||
-        Calendar.time_mode_requires_latitude(parsed);
+    const parsed = NativeCalendar.time_mode_from_string(mode);
+    return NativeCalendar.time_mode_requires_longitude(parsed) ||
+        NativeCalendar.time_mode_requires_latitude(parsed);
 }
 
 function locationIsConfigured(config) {
@@ -97,13 +97,13 @@ function locationIsConfigured(config) {
         return false;
     }
 
-    const parsed = Calendar.time_mode_from_string(config.mode);
-    if (Calendar.time_mode_requires_latitude(parsed) &&
+    const parsed = NativeCalendar.time_mode_from_string(config.mode);
+    if (NativeCalendar.time_mode_requires_latitude(parsed) &&
         (!Number.isFinite(config.latitude) ||
          config.latitude < -90 || config.latitude > 90)) {
         return false;
     }
-    if (Calendar.time_mode_requires_longitude(parsed) &&
+    if (NativeCalendar.time_mode_requires_longitude(parsed) &&
         (!Number.isFinite(config.longitude) ||
          config.longitude < -180 || config.longitude > 180)) {
         return false;
@@ -223,7 +223,7 @@ function nativePanelText(clock, systemClock, config) {
         if (normalTime === null || normalTime.length === 0) {
             continue;
         }
-        const replaced = Calendar.replace_time(
+        const replaced = NativeCalendar.replace_time(
             shellText,
             normalTime,
             nativeTime
@@ -250,7 +250,7 @@ function selectedCalendarPanelDate(primaryCalendarSystem, config) {
             today.getFullYear(),
             today.getMonth() + 1,
             today.getDate(),
-            Calendar.DatePart.SHORT
+            NativeCalendar.DatePart.SHORT
         );
         return typeof text === "string" && text.length > 0 ? text : null;
     } catch (error) {
@@ -295,11 +295,11 @@ function todayDisplay(clock, primaryCalendarSystem, config) {
     } else {
         shortDate = primaryCalendarSystem.format_date_part(
             ...args,
-            Calendar.DatePart.SHORT
+            NativeCalendar.DatePart.SHORT
         );
         tooltip = primaryCalendarSystem.format_date_part(
             ...args,
-            Calendar.DatePart.FULL
+            NativeCalendar.DatePart.FULL
         );
     }
 
