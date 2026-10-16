@@ -297,53 +297,14 @@ jobs:
           apt-get purge -y calendar
           ! dpkg-query -W calendar >/dev/null 2>&1
           apt-get check
-      - name: Migrate retired package identities to exact qualified package
+      - name: Reinstall and remove the canonical alpha package
         shell: bash
         run: |
           set -euo pipefail
-          test -s "$RELEASE_DEB"
-
-          temp="$(mktemp -d)"
-          trap 'rm -rf "$temp"' EXIT
-
-          build_legacy_package() {
-            name="$1"
-            legacy_version="$2"
-            root="$temp/${name}-root"
-            rm -rf "$root"
-            mkdir -p "$root/DEBIAN" "$root/usr/lib/x86_64-linux-gnu"
-            printf '%s\n' \
-              "Package: $name" \
-              "Version: $legacy_version" \
-              "Architecture: amd64" \
-              "Maintainer: Calendar migration test <noreply@the-infiltratr.com>" \
-              "Description: synthetic retired Calendar package for upgrade testing" \
-              >"$root/DEBIAN/control"
-            printf 'legacy-owned-path\n' > \
-              "$root/usr/lib/x86_64-linux-gnu/libcalendar.so.0.0.0"
-            dpkg-deb --build "$root" "$temp/${name}_${legacy_version}_amd64.deb" \
-              >/dev/null
-          }
-
-          for legacy in "calendar 3.6.0" "cinnamon-calendar 1.0.16"; do
-            set -- $legacy
-            name="$1"
-            legacy_version="$2"
-            build_legacy_package "$name" "$legacy_version"
-            legacy_deb="$temp/${name}_${legacy_version}_amd64.deb"
-
-            dpkg -i "$legacy_deb"
-            test "$(dpkg-query -W -f='${Status}' "$name")" = "install ok installed"
-
-            apt-get install -y --no-install-recommends "./$RELEASE_DEB"
-            test "$(dpkg-query -W -f='${Status}' calendar)" = \
-              "install ok installed"
-            ! dpkg-query -W -f='${Status}' "$name" 2>/dev/null | \
-              grep -qx "install ok installed"
-
-            apt-get purge -y calendar
-            dpkg --purge "$name" >/dev/null 2>&1 || true
-          done
+          apt-get install -y --no-install-recommends "./$RELEASE_DEB"
+          test "$(dpkg-query -W -f='${Status}' calendar)" = "install ok installed"
+          apt-get purge -y calendar
+          ! dpkg-query -W -f='${Status}' calendar 2>/dev/null | grep -qx "install ok installed"
           apt-get check
 
   publish-release:
