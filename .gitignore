@@ -19,8 +19,8 @@ cmake-build-*/
 *.changes
 
 debian/.debhelper/
-debian/infiltrator-calendar/
-debian/infiltrator-calendar-dbgsym/
+debian/calendar/
+debian/calendar-dbgsym/
 debian/files
 debian/*.debhelper.log
 debian/*.substvars

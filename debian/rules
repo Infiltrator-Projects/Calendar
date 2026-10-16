@@ -35,4 +35,4 @@ override_dh_auto_clean:
 
 override_dh_auto_install:
 	$(MAKE) BUILD_MODE=$(CALENDAR_PLUS_BUILD_MODE) install \
-		'DESTDIR=$(CURDIR)/debian/infiltrator-calendar' PREFIX=/usr
+		'DESTDIR=$(CURDIR)/debian/calendar' PREFIX=/usr

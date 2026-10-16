@@ -32,7 +32,7 @@ def make_var(makefile: str, name: str) -> str:
 
 
 def first_changelog_version(changelog: str) -> str:
-    match = re.match(r"infiltrator-calendar \(([^)]+)\) ", changelog)
+    match = re.match(r"calendar \(([^)]+)\) ", changelog)
     assert match, "unexpected debian/changelog header"
     return match.group(1)
 
@@ -271,7 +271,7 @@ def main() -> None:
     assert (common / "VERSION").read_text(encoding="utf-8").strip() == common_version
     assert (common / "LICENSE").is_file()
     assert "libinfiltratr-common.a" in makefile
-    assert "Infiltrator-Projects/Infiltrator-Libraries.git" in read(".gitmodules")
+    assert "Infiltrator-Projects/Libraries.git" in read(".gitmodules")
     for private_source in ("core.c", "arithmetic.c", "timing.c", "dynlib.c"):
         assert f"$(INFILTRATR_COMMON_DIR)/src/{private_source}" not in makefile
 
@@ -311,13 +311,13 @@ def main() -> None:
     assert policy["fallback_is_required_when_mb_corpo_is_unavailable"] is True
 
     # Package identity and runtime ABI boundaries remain explicit.
-    assert "Source: infiltrator-calendar" in control
-    assert "\nPackage: infiltrator-calendar\n" in control
+    assert "Source: calendar" in control
+    assert "\nPackage: calendar\n" in control
     assert "\nPackage: calendar-plus\n" not in control
-    assert "Breaks: calendar-plus, cinnamon-calendar" in control
-    assert "Replaces: calendar-plus, cinnamon-calendar" in control
+    assert "Breaks: infiltrator-calendar (<< ${binary:Version}), calendar-plus, cinnamon-calendar" in control
+    assert "Replaces: infiltrator-calendar (<< ${binary:Version}), calendar-plus, cinnamon-calendar" in control
     assert "cinnamon (>= 6.4)" in control
-    binary_stanza = control.split("\nPackage: infiltrator-calendar\n", 1)[1]
+    binary_stanza = control.split("\nPackage: calendar\n", 1)[1]
     runtime_control = binary_stanza.split("Description:", 1)[0]
     assert "libgtk-3-0," not in runtime_control
     assert "\n python3," not in runtime_control

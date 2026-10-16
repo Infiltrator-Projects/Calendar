@@ -1,3 +1,9 @@
+calendar (1.0.104) unstable; urgency=medium
+
+  * Align product, package and published artifact names; preserve legacy upgrades.
+
+ -- Shannon Smith <infiltratr@yandex.com>  Sat, 17 Oct 2026 10:00:00 +1100
+
 infiltrator-calendar (1.0.103) unstable; urgency=medium
 
   * Scope Calendar's GPL source-header validation to maintained project inputs,

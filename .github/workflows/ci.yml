@@ -290,12 +290,12 @@ jobs:
           set -euo pipefail
           test -s "$RELEASE_DEB"
           apt-get install -y --no-install-recommends "./$RELEASE_DEB"
-          test "$(dpkg-query -W -f='${Status}' infiltrator-calendar)" = "install ok installed"
+          test "$(dpkg-query -W -f='${Status}' calendar)" = "install ok installed"
           /usr/libexec/calendar-plus-about --print-metadata | grep -qx "version=$RELEASE_VERSION"
           /usr/libexec/calendar-plus-about --print-metadata | grep -qx "build-profile=generic"
           CALENDAR_PLUS_EXPECTED_VERSION="$RELEASE_VERSION" gjs tests/smoke-typelib.js >/dev/null
-          apt-get purge -y infiltrator-calendar
-          ! dpkg-query -W infiltrator-calendar >/dev/null 2>&1
+          apt-get purge -y calendar
+          ! dpkg-query -W calendar >/dev/null 2>&1
           apt-get check
       - name: Migrate retired package identities to exact qualified package
         shell: bash
@@ -336,12 +336,12 @@ jobs:
             test "$(dpkg-query -W -f='${Status}' "$name")" = "install ok installed"
 
             apt-get install -y --no-install-recommends "./$RELEASE_DEB"
-            test "$(dpkg-query -W -f='${Status}' infiltrator-calendar)" = \
+            test "$(dpkg-query -W -f='${Status}' calendar)" = \
               "install ok installed"
             ! dpkg-query -W -f='${Status}' "$name" 2>/dev/null | \
               grep -qx "install ok installed"
 
-            apt-get purge -y infiltrator-calendar
+            apt-get purge -y calendar
             dpkg --purge "$name" >/dev/null 2>&1 || true
           done
           apt-get check

@@ -21,15 +21,15 @@ DIST_DIR := dist
 # not redistribute proprietary font binaries; Cinnamon/system fallback remains
 # authoritative when the preferred MB Corpo families are unavailable.
 INFILTRATR_COMMON_DIR := src/vendor/infiltratr-common
-INFILTRATR_COMMON_URL := https://github.com/Infiltrator-Projects/Infiltrator-Libraries.git
+INFILTRATR_COMMON_URL := https://github.com/Infiltrator-Projects/Libraries.git
 INFILTRATR_COMMON_COMMIT := 086b79504e3480167a23fe620820f074002413a7
 INFILTRATR_COMMON_VERSION := 1.19.42
 LIB_BASENAME := calendar-plus
 LIB_SONAME := lib$(LIB_BASENAME).so.0
 LIB_REALNAME := lib$(LIB_BASENAME).so.0.0.0
 ABOUT_BINARY := calendar-plus-about
-ABOUT_DESKTOP_TEMPLATE := src/app/infiltrator-calendar-about.desktop.in
-ABOUT_DESKTOP := $(BUILD_DIR)/infiltrator-calendar-about.desktop
+ABOUT_DESKTOP_TEMPLATE := src/app/calendar-about.desktop.in
+ABOUT_DESKTOP := $(BUILD_DIR)/calendar-about.desktop
 GIR := CalendarPlus-1.0
 CORE_SOURCES := \
 	src/core/clock-engine.c \
@@ -270,17 +270,17 @@ common-check:
 		fi; \
 	fi
 	@test -f "$(INFILTRATR_COMMON_DIR)/VERSION" || { \
-		echo "Unable to retrieve Infiltratr Common $(INFILTRATR_COMMON_VERSION)." >&2; \
+		echo "Unable to retrieve Libraries $(INFILTRATR_COMMON_VERSION)." >&2; \
 		exit 1; \
 	}
 	@test "$$(tr -d '[:space:]' < "$(INFILTRATR_COMMON_DIR)/VERSION")" = \
 		"$(INFILTRATR_COMMON_VERSION)" || { \
-		echo "Infiltratr Common $(INFILTRATR_COMMON_VERSION) is required." >&2; \
+		echo "Libraries $(INFILTRATR_COMMON_VERSION) is required." >&2; \
 		exit 1; \
 	}
 	@actual_commit=$$(git -C "$(INFILTRATR_COMMON_DIR)" rev-parse HEAD 2>/dev/null || true); \
 		if test -n "$$actual_commit" && test "$$actual_commit" != "$(INFILTRATR_COMMON_COMMIT)"; then \
-			echo "Infiltratr Common must be pinned to $(INFILTRATR_COMMON_COMMIT)." >&2; \
+			echo "Libraries must be pinned to $(INFILTRATR_COMMON_COMMIT)." >&2; \
 			exit 1; \
 		fi
 
@@ -313,7 +313,7 @@ check-deps: common-check
 		echo "Missing build dependency: xz" >&2; exit 1; }
 
 $(INFILTRATR_COMMON_HEADERS): | common-check
-	@test -f "$@" || { echo "Unable to materialize pinned Infiltratr Common public header: $@" >&2; exit 1; }
+	@test -f "$@" || { echo "Unable to materialize pinned Libraries public header: $@" >&2; exit 1; }
 
 $(BUILD_DIR)/%.o: src/%.c $(HEADERS)
 	@mkdir -p "$(dir $@)"
@@ -326,7 +326,7 @@ common-build: common-check $(INFILTRATR_COMMON_HEADERS)
 		CFLAGS='$(INFILTRATR_COMMON_CFLAGS)' \
 		BUILD_DIR="$(INFILTRATR_COMMON_BUILD_DIR)" all
 	@test -f "$(INFILTRATR_COMMON_ARCHIVE)" || { \
-		echo "Infiltratr Common did not produce $(INFILTRATR_COMMON_ARCHIVE)" >&2; \
+		echo "Libraries did not produce $(INFILTRATR_COMMON_ARCHIVE)" >&2; \
 		exit 1; \
 	}
 
@@ -595,7 +595,7 @@ sanitize:
 		INFILTRATR_COMMON_EXTRA_CFLAGS="$(SANITIZER_CFLAGS)" \
 		LDFLAGS="-fsanitize=address,undefined" test
 	@nm -u "$(INFILTRATR_COMMON_ARCHIVE)" | grep -Eq '__asan_|__ubsan_' || { \
-		echo "Sanitizer instrumentation is missing from Infiltratr Common." >&2; \
+		echo "Sanitizer instrumentation is missing from Libraries." >&2; \
 		exit 1; \
 	}
 	@for test_path in \
@@ -647,11 +647,11 @@ install: all
 	install -Dm755 "$(BUILD_DIR)/$(ABOUT_BINARY)" \
 		"$(DESTDIR)$(PREFIX)/libexec/$(ABOUT_BINARY)"
 	install -Dm644 "$(ABOUT_DESKTOP)" \
-		"$(DESTDIR)$(PREFIX)/share/applications/infiltrator-calendar-about.desktop"
+		"$(DESTDIR)$(PREFIX)/share/applications/calendar-about.desktop"
 	install -Dm644 "$(ICON_SRC)" \
 		"$(DESTDIR)$(PREFIX)/share/icons/hicolor/256x256/apps/$(ICON_NAME).png"
 	install -Dm644 "$(ICON_SRC)" \
-		"$(DESTDIR)$(PREFIX)/share/app-install/icons/infiltrator-calendar.png"
+		"$(DESTDIR)$(PREFIX)/share/app-install/icons/calendar.png"
 	install -d \
 		"$(DESTDIR)$(PREFIX)/share/cinnamon/applets/$(UUID)" \
 		"$(DESTDIR)$(PREFIX)/share/infiltrator/policy-providers"
@@ -667,15 +667,15 @@ install: all
 			"$(DESTDIR)$(PREFIX)/share/locale/$$language/LC_MESSAGES/$(UUID).mo"; \
 	done < $(I18N_DIR)/LINGUAS
 	install -Dm644 LICENSE \
-		"$(DESTDIR)$(PREFIX)/share/licenses/infiltrator-calendar/LICENSE"
-	install -d "$(DESTDIR)$(PREFIX)/share/doc/infiltrator-calendar"
+		"$(DESTDIR)$(PREFIX)/share/licenses/calendar/LICENSE"
+	install -d "$(DESTDIR)$(PREFIX)/share/doc/calendar"
 	install -m644 README.md \
-		"$(DESTDIR)$(PREFIX)/share/doc/infiltrator-calendar/"
-	printf 'Calendar source version: %s\nBuild mode: %s\nShared C library: Infiltratr Common %s\n' \
+		"$(DESTDIR)$(PREFIX)/share/doc/calendar/"
+	printf 'Calendar source version: %s\nBuild mode: %s\nShared C library: Libraries %s\n' \
 		"$(VERSION)" "$(BUILD_DESCRIPTION)" "$(INFILTRATR_COMMON_VERSION)" \
 		> "$(BUILD_DIR)/BUILD-INFO"
 	install -m644 "$(BUILD_DIR)/BUILD-INFO" \
-		"$(DESTDIR)$(PREFIX)/share/doc/infiltrator-calendar/BUILD-INFO"
+		"$(DESTDIR)$(PREFIX)/share/doc/calendar/BUILD-INFO"
 
 package-source: common-check validate-settings-generated
 	@mkdir -p "$(DIST_DIR)"
@@ -685,8 +685,8 @@ package-source: common-check validate-settings-generated
 		tar -C "$(BUILD_DIR)/source-stage/Calendar-$(VERSION)" -xf -
 	@rm -rf \
 		"$(BUILD_DIR)/source-stage/Calendar-$(VERSION)/debian/.debhelper" \
-		"$(BUILD_DIR)/source-stage/Calendar-$(VERSION)/debian/infiltrator-calendar" \
-		"$(BUILD_DIR)/source-stage/Calendar-$(VERSION)/debian/infiltrator-calendar-dbgsym" \
+		"$(BUILD_DIR)/source-stage/Calendar-$(VERSION)/debian/calendar" \
+		"$(BUILD_DIR)/source-stage/Calendar-$(VERSION)/debian/calendar-dbgsym" \
 		"$(BUILD_DIR)/source-stage/Calendar-$(VERSION)/debian/cinnamon-calendar" \
 		"$(BUILD_DIR)/source-stage/Calendar-$(VERSION)/debian/cinnamon-calendar-dbgsym" \
 		"$(BUILD_DIR)/source-stage/Calendar-$(VERSION)/debian/calendar-plus" \

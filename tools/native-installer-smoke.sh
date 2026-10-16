@@ -31,21 +31,21 @@ grep -Fq "Calendar representative PGO training workload completed." "$TMP/native
 
 DEB="$TMP/output/calendar_${NATIVE_VERSION}_${ARCH}.deb"
 [ -s "$DEB" ]
-[ "$(dpkg-deb -f "$DEB" Package)" = "infiltrator-calendar" ]
+[ "$(dpkg-deb -f "$DEB" Package)" = "calendar" ]
 [ "$(dpkg-deb -f "$DEB" Version)" = "$NATIVE_VERSION" ]
 [ "$(dpkg-deb -f "$DEB" Architecture)" = "$ARCH" ]
 dpkg --compare-versions "$NATIVE_VERSION" gt "$VERSION"
 
 dpkg-deb -x "$DEB" "$TMP/native"
 grep -q '^Build mode: local hardware-native PGO-trained ' \
-    "$TMP/native/usr/share/doc/infiltrator-calendar/BUILD-INFO"
+    "$TMP/native/usr/share/doc/calendar/BUILD-INFO"
 test -f "$TMP/native/usr/lib/$MULTIARCH/libcalendar-plus.so.0.0.0"
 test -f \
     "$TMP/native/usr/lib/$MULTIARCH/girepository-1.0/CalendarPlus-1.0.typelib"
 test -x "$TMP/native/usr/libexec/calendar-plus-about"
 test -f "$TMP/native/usr/share/cinnamon/applets/calendar-plus@the-infiltratr/stylesheet.css"
 test ! -e "$TMP/native/usr/share/cinnamon/applets/calendar-plus@the-infiltratr/settings.py"
-test ! -e "$TMP/native/usr/share/fonts/truetype/infiltrator-calendar"
+test ! -e "$TMP/native/usr/share/fonts/truetype/calendar"
 test -f \
     "$TMP/native/usr/share/locale/en_AU/LC_MESSAGES/calendar-plus@the-infiltratr.mo"
 "$TMP/native/usr/libexec/calendar-plus-about" --print-metadata |

@@ -50,13 +50,13 @@ UTF-8 crossing native/JavaScript/platform boundaries must be validated or handle
 
 ## ABI and compatibility
 
-The installed `libcalendar-plus.so.0` ABI, GObject Introspection identity, gettext domain, applet UUID and established runtime identifiers are compatibility contracts even though the visible product is Calendar and the Debian package is `infiltrator-calendar`.
+The installed `libcalendar-plus.so.0` ABI, GObject Introspection identity, gettext domain, applet UUID and established runtime identifiers are compatibility contracts even though the visible product is Calendar and the Debian package is `calendar`.
 
 Portability work must distinguish public/user-facing naming from compatibility identity. Renaming an internal identifier is not an improvement if it needlessly breaks settings, ABI consumers or upgrades.
 
 ## Dependency boundary
 
-Calendar may depend on Cinnamon, GLib, pinned Infiltratr Common and the shrinking ICU/CLDR boundary where their documented contracts are the strongest engineering choice. A dependency must not silently become the owner of Calendar-specific policy.
+Calendar may depend on Cinnamon, GLib, pinned Libraries and the shrinking ICU/CLDR boundary where their documented contracts are the strongest engineering choice. A dependency must not silently become the owner of Calendar-specific policy.
 
 Generic mechanisms belong in Common when their contract is genuinely reusable and at least as strong as the best local implementation. Calendar-specific chronology, continuation rules and astronomical policy remain in Calendar.
 

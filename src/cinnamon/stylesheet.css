@@ -8,7 +8,7 @@
 
 /* BEGIN GENERATED COMMON TYPOGRAPHY TOKENS */
 /*
- * Generated from Infiltratr Common. Do not hand-edit typography values here.
+ * Generated from Libraries. Do not hand-edit typography values here.
  * Calendar deliberately owns only Cinnamon selectors/widget mechanics.
  */
 .calendar-plus-applet,
@@ -51,7 +51,7 @@
 
 /* BEGIN GENERATED COMMON METRIC TOKENS */
 /*
- * Generated from Infiltratr Common. Calendar keeps selectors local while
+ * Generated from Libraries. Calendar keeps selectors local while
  * Common owns product-family structural rhythm and corner geometry.
  */
 .calendar-plus-popup {
@@ -95,9 +95,9 @@
 
 /* BEGIN GENERATED COMMON THEME TOKENS */
 /*
- * Generated from Infiltratr Common. Do not hand-edit colour values here.
+ * Generated from Libraries. Do not hand-edit colour values here.
  * Calendar deliberately owns only Cinnamon selectors/widget mechanics.
- * The pinned Common design contract carries the complete Linux MBLINK Night reference roles.
+ * The pinned Common design contract carries the complete Linux MBLink Night reference roles.
  */
 
 .calendar-plus-popup.calendar-plus-theme-night,

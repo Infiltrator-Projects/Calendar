@@ -2,9 +2,9 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 """Project Common design tokens into Calendar's Cinnamon surface.
 
-Calendar owns Cinnamon selectors and widget mechanics. Infiltratr Common owns
+Calendar owns Cinnamon selectors and widget mechanics. Libraries owns
 semantic theme values, typography identity and structural metrics. The pinned
-Common design contract carries the complete Linux MBLINK Night reference roles.
+Common design contract carries the complete Linux MBLink Night reference roles.
 This generator keeps the toolkit-specific source native while preventing a
 second private design truth from drifting away from the pinned Common contract.
 """
@@ -47,7 +47,7 @@ def render_typography(data: dict) -> str:
     brand_weight = type_data["brand_weight"]
     return f"""{TYPOGRAPHY_BEGIN}
 /*
- * Generated from Infiltratr Common. Do not hand-edit typography values here.
+ * Generated from Libraries. Do not hand-edit typography values here.
  * Calendar deliberately owns only Cinnamon selectors/widget mechanics.
  */
 .calendar-plus-applet,
@@ -93,7 +93,7 @@ def render_metrics(data: dict) -> str:
     metric_data = metrics(data)
     return f"""{METRICS_BEGIN}
 /*
- * Generated from Infiltratr Common. Calendar keeps selectors local while
+ * Generated from Libraries. Calendar keeps selectors local while
  * Common owns product-family structural rhythm and corner geometry.
  */
 .calendar-plus-popup {{
@@ -193,9 +193,9 @@ def render_theme(data: dict) -> str:
 
     return f"""{THEME_BEGIN}
 /*
- * Generated from Infiltratr Common. Do not hand-edit colour values here.
+ * Generated from Libraries. Do not hand-edit colour values here.
  * Calendar deliberately owns only Cinnamon selectors/widget mechanics.
- * The pinned Common design contract carries the complete Linux MBLINK Night reference roles.
+ * The pinned Common design contract carries the complete Linux MBLink Night reference roles.
  */
 {mode_css("night", night)}
 {mode_css("day", day)}

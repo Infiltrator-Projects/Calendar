@@ -118,7 +118,7 @@ def validate_typography_contract() -> None:
     assert not (ROOT / "src/assets/fonts/mb-corpo-fonts.tar.xz").exists(), (
         "Calendar must not redistribute proprietary MB Corpo font binaries"
     )
-    assert "share/fonts/truetype/infiltrator-calendar" not in makefile, (
+    assert "share/fonts/truetype/calendar" not in makefile, (
         "Calendar packaging must not install proprietary MB Corpo font binaries"
     )
 
@@ -230,15 +230,15 @@ def validate_version() -> None:
     )
     build_mode = os.environ.get("CALENDAR_PLUS_BUILD_MODE", "generic")
     changelog_version_match = re.match(
-        r"^infiltrator-calendar \(([^)]+)\) ", changelog
+        r"^calendar \(([^)]+)\) ", changelog
     )
     assert changelog_version_match is not None, "invalid Debian changelog"
     changelog_version = changelog_version_match.group(1)
     control = (ROOT / "debian/control").read_text(encoding="utf-8")
-    assert re.search(r"^Source: infiltrator-calendar$", control, re.MULTILINE)
-    assert re.search(r"^Package: infiltrator-calendar$", control, re.MULTILINE)
-    assert "Breaks: calendar-plus, cinnamon-calendar" in control
-    assert "Replaces: calendar-plus, cinnamon-calendar" in control
+    assert re.search(r"^Source: calendar$", control, re.MULTILINE)
+    assert re.search(r"^Package: calendar$", control, re.MULTILINE)
+    assert "infiltrator-calendar (<< ${binary:Version}), calendar-plus, cinnamon-calendar" in control
+    assert "Provides: infiltrator-calendar (= ${binary:Version})" in control
     if build_mode == "generic":
         assert changelog_version == version, (
             "generic Debian package and source versions differ"

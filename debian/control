@@ -1,4 +1,4 @@
-Source: infiltrator-calendar
+Source: calendar
 Section: x11
 Priority: optional
 Maintainer: The Infiltratr <noreply@the-infiltratr.com>
@@ -22,10 +22,11 @@ Homepage: https://github.com/Infiltrator-Projects/Calendar
 Vcs-Browser: https://github.com/Infiltrator-Projects/Calendar
 Vcs-Git: https://github.com/Infiltrator-Projects/Calendar.git
 
-Package: infiltrator-calendar
+Package: calendar
 Architecture: any
-Breaks: calendar-plus, cinnamon-calendar
-Replaces: calendar-plus, cinnamon-calendar
+Provides: infiltrator-calendar (= ${binary:Version})
+Breaks: infiltrator-calendar (<< ${binary:Version}), calendar-plus, cinnamon-calendar
+Replaces: infiltrator-calendar (<< ${binary:Version}), calendar-plus, cinnamon-calendar
 Depends:
  cinnamon (>= 6.4),
  libicu72 | libicu73 | libicu74 | libicu75 | libicu76 | libicu77 | libicu78 | libicu79 | libicu80 | libicu81,

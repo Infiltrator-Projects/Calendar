@@ -34,9 +34,9 @@ def read(relative: str) -> str:
 
 
 def changelog_version(text: str) -> str:
-    match = re.match(r"infiltrator-calendar \(([0-9]+\.[0-9]+\.[0-9]+)\) ", text)
+    match = re.match(r"calendar \(([0-9]+\.[0-9]+\.[0-9]+)\) ", text)
     if not match:
-        fail("debian/changelog does not start with an infiltrator-calendar X.Y.Z stanza")
+        fail("debian/changelog does not start with an calendar X.Y.Z stanza")
     return match.group(1)
 
 

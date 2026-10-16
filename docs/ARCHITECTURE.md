@@ -10,7 +10,7 @@ The versioned `calendar_plus_format_date_v1` export is a narrow cross-applicatio
 
 Calendar begins with the behaviour that chronology, astronomy, historical evidence and time standards actually justify rather than treating an existing desktop calendar as the specification.
 
-First principles does not mean reimplementing every dependency. Cinnamon, GLib, ICU/CLDR where still required, and Infiltratr Common are appropriate where their documented contracts are the strongest engineering choice. The project owns the semantics that are specific to Calendar and delegates only the mechanisms or data for which another component is authoritative.
+First principles does not mean reimplementing every dependency. Cinnamon, GLib, ICU/CLDR where still required, and Libraries are appropriate where their documented contracts are the strongest engineering choice. The project owns the semantics that are specific to Calendar and delegates only the mechanisms or data for which another component is authoritative.
 
 A dependency is therefore chosen deliberately. Convenience, convention or similarity to another calendar application is not enough to transfer ownership of product behaviour.
 
@@ -27,7 +27,7 @@ platform-neutral Calendar domain contracts
                     ↓
 chronology / clocks / astronomy / event semantics
 
-ICU / CLDR                    Infiltratr Common (exact pinned release)
+ICU / CLDR                    Libraries (exact pinned release)
      ↓                                  ↓
 locale/calendar authority     reusable checked arithmetic /
 where explicitly delegated    formatting / timing / loading /
@@ -44,7 +44,7 @@ src/
 ├── cinnamon/   Cinnamon composition, presentation and narrow desktop adapters
 ├── i18n/       Gettext sources and translations
 ├── abi/        Exported-library version map
-└── vendor/     Pinned Infiltratr Common submodule
+└── vendor/     Pinned Libraries submodule
 ```
 
 ## Contracts and ownership
@@ -129,7 +129,7 @@ Do not weaken specialised chronology merely to increase reuse. Equally, do not p
 
 The installed `libcalendar-plus.so.0` and versioned symbol map form a runtime stability contract for Calendar itself. They are not currently advertised as a separately supported third-party C SDK.
 
-The typelib, About helper, applet UUID, gettext domain and established `CalendarPlus` / `CALENDAR_PLUS_*` identifiers are compatibility identities. The user-facing application is Calendar and the Debian package is `infiltrator-calendar`; compatibility naming is intentionally allowed to differ from product naming.
+The typelib, About helper, applet UUID, gettext domain and established `CalendarPlus` / `CALENDAR_PLUS_*` identifiers are compatibility identities. The user-facing application is Calendar and the Debian package is `calendar`; compatibility naming is intentionally allowed to differ from product naming.
 
 A supported third-party SDK would require installed headers, package metadata and its own explicit compatibility policy rather than silently promoting internal headers into a public contract.
 

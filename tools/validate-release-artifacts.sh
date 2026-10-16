@@ -31,7 +31,7 @@ done
     exit 1
 }
 
-[ "$(dpkg-deb -f "$DEB" Package)" = "infiltrator-calendar" ]
+[ "$(dpkg-deb -f "$DEB" Package)" = "calendar" ]
 [ "$(dpkg-deb -f "$DEB" Version)" = "$VERSION" ]
 [ "$(dpkg-deb -f "$DEB" Architecture)" = "$ARCH" ]
 dpkg-deb -x "$DEB" "$TMP/generic"
@@ -48,8 +48,8 @@ test ! -e \
     "$TMP/generic/usr/share/cinnamon/applets/calendar-plus@the-infiltratr/settings.py"
 test -x "$TMP/generic/usr/libexec/calendar-plus-about"
 test -f "$TMP/generic/usr/share/icons/hicolor/256x256/apps/infiltratr-calendar.png"
-test -f "$TMP/generic/usr/share/app-install/icons/infiltrator-calendar.png"
-test ! -e "$TMP/generic/usr/share/fonts/truetype/infiltrator-calendar"
+test -f "$TMP/generic/usr/share/app-install/icons/calendar.png"
+test ! -e "$TMP/generic/usr/share/fonts/truetype/calendar"
 test -f \
     "$TMP/generic/usr/share/locale/en_AU/LC_MESSAGES/calendar-plus@the-infiltratr.mo"
 "$TMP/generic/usr/libexec/calendar-plus-about" --print-metadata |
@@ -57,11 +57,11 @@ test -f \
 "$TMP/generic/usr/libexec/calendar-plus-about" --print-metadata |
     grep -qx "build-profile=generic"
 grep -q '^Build mode: generic amd64-compatible (Debian/Mint ICU runtime bridge)$' \
-    "$TMP/generic/usr/share/doc/infiltrator-calendar/BUILD-INFO"
-grep -q "^Shared C library: Infiltratr Common ${COMMON_VERSION}$" \
-    "$TMP/generic/usr/share/doc/infiltrator-calendar/BUILD-INFO"
+    "$TMP/generic/usr/share/doc/calendar/BUILD-INFO"
+grep -q "^Shared C library: Libraries ${COMMON_VERSION}$" \
+    "$TMP/generic/usr/share/doc/calendar/BUILD-INFO"
 if grep -q -- '-march=native' \
-    "$TMP/generic/usr/share/doc/infiltrator-calendar/BUILD-INFO"; then
+    "$TMP/generic/usr/share/doc/calendar/BUILD-INFO"; then
     echo "Generic package contains native CPU tuning" >&2
     exit 1
 fi

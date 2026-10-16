@@ -10,7 +10,7 @@ Calendar combines a portable native chronology/event core, thin adapters and a C
 - Keep GObject, GVariant, main-loop and desktop/platform integration in `src/adapters/`. The platform-neutral core may use GLib foundational data, string, container and civil-time facilities, but it must not acquire GObject/GVariant or Cinnamon presentation dependencies.
 - Keep project identity and the About helper in `src/app/`.
 - Keep Cinnamon runtime code and settings in `src/cinnamon/`.
-- Reuse the pinned Infiltratr Common API when it is the correct shared abstraction; improve Common first if Calendar has the stronger generic implementation.
+- Reuse the pinned Libraries API when it is the correct shared abstraction; improve Common first if Calendar has the stronger generic implementation.
 - Treat unsupported or ambiguous behaviour as unavailable rather than inventing results.
 - Preserve the published runtime ABI unless a deliberate ABI change is part of the work.
 - Add deterministic regression coverage for behavioural, parser, lifecycle, timing, ABI or packaging changes.
@@ -22,7 +22,7 @@ C and C++ are preferred for project-owned native code; neither is preferred over
 
 ## Build and validation
 
-Clone recursively because Calendar pins Infiltratr Common:
+Clone recursively because Calendar pins Libraries:
 
 ```bash
 git clone --recurse-submodules https://github.com/Infiltrator-Projects/Calendar.git

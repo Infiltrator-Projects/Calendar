@@ -229,7 +229,7 @@ var DesktopIntegration = class DesktopIntegration {
     launchAbout() {
         try {
             const appInfo = Gio.DesktopAppInfo.new(
-                "infiltrator-calendar-about.desktop"
+                "calendar-about.desktop"
             );
             if (!appInfo) {
                 throw new Error("Calendar About desktop identity is unavailable");
