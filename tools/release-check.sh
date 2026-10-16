@@ -28,8 +28,8 @@ export DEB_BUILD_OPTIONS
 VERSION=$(cat VERSION)
 make package-source
 SOURCE_ARCHIVE="build/Calendar-${VERSION}-local-source.tar.gz"
-tar -tzf "$SOURCE_ARCHIVE" | grep -qx "Calendar-${VERSION}/PHILOSOPHY.md" || {
-    echo "Local source archive is missing PHILOSOPHY.md" >&2
+tar -tzf "$SOURCE_ARCHIVE" | grep -qx "Calendar-${VERSION}/docs/PHILOSOPHY.md" || {
+    echo "Local source archive is missing docs/PHILOSOPHY.md" >&2
     exit 1
 }
 make package-local-installer

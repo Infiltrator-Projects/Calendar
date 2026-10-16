@@ -225,7 +225,6 @@ DIST_FILES := \
 	LICENSE \
 	Makefile \
 	VERSION \
-	PHILOSOPHY.md \
 	README.md \
 	SECURITY.md \
 	debian \
