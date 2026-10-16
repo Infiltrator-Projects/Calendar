@@ -1,0 +1,167 @@
+/* SPDX-License-Identifier: GPL-3.0-or-later */
+/*
+ * Runtime symbol-stability contract for Calendar components.
+ *
+ * These version nodes prevent accidental package-internal ABI regressions.
+ * They do not by themselves define a supported external C SDK; source-neutral
+ * core headers are intentionally not installed by the runtime package.
+ */
+
+CALENDAR_1.0 {
+    global:
+        calendar_calendar_system_add_months;
+        calendar_calendar_system_add_years;
+        calendar_calendar_system_build_grid;
+        calendar_calendar_system_format_date;
+        calendar_calendar_system_format_date_part;
+        calendar_calendar_system_get_id;
+        calendar_calendar_system_get_name;
+        calendar_calendar_system_get_type;
+        calendar_calendar_system_month_key;
+        calendar_calendar_system_month_start;
+        calendar_calendar_system_new;
+        calendar_event_store_add_or_update;
+        calendar_event_store_clear;
+        calendar_event_store_cull;
+        calendar_event_store_get_colors;
+        calendar_event_store_get_snapshot;
+        calendar_event_store_get_type;
+        calendar_event_store_new;
+        calendar_event_store_remove;
+        calendar_format_time;
+        calendar_replace_time;
+        calendar_system_clock_get_time;
+        calendar_system_clock_get_type;
+        calendar_system_clock_is_running;
+        calendar_system_clock_new;
+        calendar_system_clock_start;
+        calendar_system_clock_stop;
+        calendar_time_delay_to_next_tick;
+        calendar_time_mode_from_string;
+        calendar_time_mode_get_id;
+        calendar_time_mode_requires_longitude;
+        calendar_time_mode_supports_seconds;
+};
+
+CALENDAR_1.1 {
+    global:
+        calendar_get_source_id;
+        calendar_get_version;
+        calendar_date_same;
+        calendar_date_is_work_day;
+        calendar_calendar_system_month_start_parts;
+        calendar_calendar_system_add_months_parts;
+        calendar_calendar_system_add_years_parts;
+        calendar_event_day_relation;
+        calendar_event_state;
+        calendar_event_timing;
+} CALENDAR_1.0;
+
+CALENDAR_1.2 {
+    global:
+        calendar_event_store_refresh_timezone;
+} CALENDAR_1.1;
+
+CALENDAR_2.0 {
+    global:
+        calendar_calendar_catalogue_get;
+        calendar_calendar_catalogue_get_count;
+        calendar_calendar_engine_add_periods;
+        calendar_calendar_engine_add_years;
+        calendar_calendar_engine_build_grid;
+        calendar_calendar_engine_format_date;
+        calendar_calendar_engine_free;
+        calendar_calendar_engine_get_id;
+        calendar_calendar_engine_get_name;
+        calendar_calendar_engine_new;
+        calendar_calendar_engine_period_key;
+        calendar_calendar_engine_period_start;
+        calendar_calendar_grid_clear;
+        calendar_clock_engine_format;
+        calendar_clock_engine_free;
+        calendar_clock_engine_is_running;
+        calendar_clock_engine_new;
+        calendar_clock_engine_start;
+        calendar_clock_engine_stop;
+        calendar_clock_interfaces_are_valid;
+        calendar_date_is_valid;
+        calendar_event_calculate_timing;
+        calendar_event_index_clear;
+        calendar_event_index_cull;
+        calendar_event_index_free;
+        calendar_event_index_make_sink;
+        calendar_event_index_new;
+        calendar_event_index_refresh_timezone;
+        calendar_event_index_remove;
+        calendar_event_index_snapshot;
+        calendar_event_index_upsert;
+        calendar_event_input_is_valid;
+        calendar_event_snapshot_free;
+        calendar_event_source_is_valid;
+        calendar_time_mode_get_at;
+        calendar_time_mode_get_count;
+        calendar_time_mode_get_name;
+    local:
+        *;
+} CALENDAR_1.2;
+
+CALENDAR_2.1 {
+    global:
+        calendar_format_time_at_location;
+        calendar_system_clock_start_at_location;
+        calendar_time_delay_to_next_tick_at_location;
+        calendar_time_mode_requires_latitude;
+} CALENDAR_2.0;
+
+
+CALENDAR_2.2 {
+    global:
+        calendar_system_clock_get_system_mode;
+} CALENDAR_2.1;
+
+
+CALENDAR_2.3 {
+    global:
+        calendar_system_clock_get_system_show_seconds;
+        calendar_system_clock_get_system_location_configured;
+        calendar_system_clock_get_system_latitude;
+        calendar_system_clock_get_system_longitude;
+} CALENDAR_2.2;
+
+CALENDAR_2.4 {
+    global:
+        calendar_system_clock_get_system_calendar;
+} CALENDAR_2.3;
+
+CALENDAR_2.5 {
+    global:
+        calendar_get_build_profile;
+        calendar_get_build_profile_label;
+} CALENDAR_2.4;
+
+CALENDAR_2.6 {
+    global:
+        calendar_system_clock_get_system_policy;
+} CALENDAR_2.5;
+
+CALENDAR_2.7 {
+    global:
+        calendar_event_store_get_color_range;
+} CALENDAR_2.6;
+
+CALENDAR_2.8 {
+    global:
+        calendar_calendar_system_add_days_parts;
+        calendar_date_add_days;
+        calendar_date_weekday;
+} CALENDAR_2.7;
+
+CALENDAR_2.9 {
+    global:
+        calendar_format_date_v1;
+} CALENDAR_2.8;
+
+CALENDAR_2.10 {
+    global:
+        calendar_event_store_add_or_update_in_range;
+} CALENDAR_2.9;

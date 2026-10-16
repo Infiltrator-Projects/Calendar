@@ -2,12 +2,12 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 # Copyright (C) 1993-2026 Shannon Smith
 
-CALENDAR_PLUS_BUILD_MODE ?= generic
+CALENDAR_BUILD_MODE ?= generic
 PGO_MODE ?= none
 PGO_DIR ?= $(CURDIR)/.pgo-data
-export CALENDAR_PLUS_BUILD_MODE PGO_MODE PGO_DIR
+export CALENDAR_BUILD_MODE PGO_MODE PGO_DIR
 
-ifeq ($(CALENDAR_PLUS_BUILD_MODE),native)
+ifeq ($(CALENDAR_BUILD_MODE),native)
 DEB_BUILD_MAINT_OPTIONS := optimize=+lto
 else
 DEB_BUILD_MAINT_OPTIONS := optimize=-lto
@@ -18,11 +18,11 @@ export DEB_BUILD_MAINT_OPTIONS
 	dh $@
 
 override_dh_auto_build:
-	$(MAKE) BUILD_MODE=$(CALENDAR_PLUS_BUILD_MODE) all
+	$(MAKE) BUILD_MODE=$(CALENDAR_BUILD_MODE) all
 
 override_dh_auto_test:
 ifeq (,$(filter nocheck,$(DEB_BUILD_OPTIONS)))
-	$(MAKE) BUILD_MODE=$(CALENDAR_PLUS_BUILD_MODE) \
+	$(MAKE) BUILD_MODE=$(CALENDAR_BUILD_MODE) \
 		test validate-js validate-translations validate-sources \
 		validate-package-inputs validate-release-model validate-architecture \
 		validate-exports validate-abi validate-runtime-deps smoke-gjs
@@ -34,5 +34,5 @@ override_dh_auto_clean:
 	$(MAKE) clean
 
 override_dh_auto_install:
-	$(MAKE) BUILD_MODE=$(CALENDAR_PLUS_BUILD_MODE) install \
+	$(MAKE) BUILD_MODE=$(CALENDAR_BUILD_MODE) install \
 		'DESTDIR=$(CURDIR)/debian/calendar' PREFIX=/usr

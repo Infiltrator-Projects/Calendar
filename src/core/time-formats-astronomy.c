@@ -25,8 +25,8 @@ delay_sidereal_provider(gint64 unix_microseconds,
 {
     (void)utc_offset_seconds;
     return delay_for_clock_seconds(
-        calendar_plus_local_sidereal_seconds(unix_microseconds, longitude),
-        CALENDAR_PLUS_SIDEREAL_RATE,
+        calendar_local_sidereal_seconds(unix_microseconds, longitude),
+        CALENDAR_SIDEREAL_RATE,
         show_seconds);
 }
 
@@ -39,7 +39,7 @@ delay_solar_provider(gint64 unix_microseconds,
 {
     (void)utc_offset_seconds;
     return delay_for_clock_seconds(
-        calendar_plus_apparent_solar_seconds(unix_microseconds, longitude),
+        calendar_apparent_solar_seconds(unix_microseconds, longitude),
         1.0L,
         show_seconds);
 }
@@ -67,7 +67,7 @@ delay_mean_solar_provider(gint64 unix_microseconds,
 {
     (void)utc_offset_seconds;
     return delay_for_clock_seconds(
-        calendar_plus_mean_solar_seconds(unix_microseconds, longitude),
+        calendar_mean_solar_seconds(unix_microseconds, longitude),
         1.0L,
         show_seconds);
 }
@@ -111,7 +111,7 @@ seasonal_period_at(gint64 unix_microseconds,
     long double dawn;
     long double dusk;
     const long double solar =
-        calendar_plus_apparent_solar_seconds(unix_microseconds, longitude);
+        calendar_apparent_solar_seconds(unix_microseconds, longitude);
     long double span;
     long double position;
     long double unit;
@@ -119,7 +119,7 @@ seasonal_period_at(gint64 unix_microseconds,
 
     g_return_val_if_fail(period != NULL, FALSE);
 
-    if (!calendar_plus_solar_day_boundaries(unix_microseconds,
+    if (!calendar_solar_day_boundaries(unix_microseconds,
                                             latitude,
                                             solar_depression_degrees,
                                             &dawn,
@@ -345,7 +345,7 @@ solar_origin_window(gint64 unix_microseconds,
 
         if (!infiltratr_i64_add_checked(unix_microseconds, delta, &sample))
             continue;
-        if (!calendar_plus_solar_boundary_instants(sample,
+        if (!calendar_solar_boundary_instants(sample,
                                                    latitude,
                                                    longitude,
                                                    0.833,

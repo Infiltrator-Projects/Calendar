@@ -1,33 +1,33 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 // Copyright (C) 1993-2026 Shannon Smith
 
-#ifndef CALENDAR_PLUS_SYSTEM_CLOCK_H
-#define CALENDAR_PLUS_SYSTEM_CLOCK_H
+#ifndef CALENDAR_SYSTEM_CLOCK_H
+#define CALENDAR_SYSTEM_CLOCK_H
 
 #include <glib-object.h>
 
 G_BEGIN_DECLS
 
-#define CALENDAR_PLUS_TYPE_SYSTEM_CLOCK \
-    (calendar_plus_system_clock_get_type())
+#define CALENDAR_TYPE_SYSTEM_CLOCK \
+    (calendar_system_clock_get_type())
 
-G_DECLARE_FINAL_TYPE(CalendarPlusSystemClock,
-                     calendar_plus_system_clock,
-                     CALENDAR_PLUS,
+G_DECLARE_FINAL_TYPE(CalendarSystemClock,
+                     calendar_system_clock,
+                     CALENDAR,
                      SYSTEM_CLOCK,
                      GObject)
 
 /**
- * calendar_plus_system_clock_new:
+ * calendar_system_clock_new:
  *
  * Creates the native timing engine used by the Cinnamon presentation layer.
  *
  * Returns: (transfer full): a new multi-system clock
  */
-CalendarPlusSystemClock *calendar_plus_system_clock_new(void);
+CalendarSystemClock *calendar_system_clock_new(void);
 
 /**
- * calendar_plus_system_clock_start:
+ * calendar_system_clock_start:
  * @self: a multi-system clock
  * @mode: a native clock-mode settings value
  * @show_seconds: whether to show the mode's finer practical unit
@@ -35,17 +35,17 @@ CalendarPlusSystemClock *calendar_plus_system_clock_new(void);
  * @longitude: degrees east of Greenwich
  *
  * Starts the native clock or atomically applies changed display options. The
- * clock emits #CalendarPlusSystemClock::tick only when its visible value can
+ * clock emits #CalendarSystemClock::tick only when its visible value can
  * change.
  */
-void calendar_plus_system_clock_start(CalendarPlusSystemClock *self,
+void calendar_system_clock_start(CalendarSystemClock *self,
                                       const gchar *mode,
                                       gboolean show_seconds,
                                       gboolean vertical,
                                       gdouble longitude);
 
 /**
- * calendar_plus_system_clock_start_at_location:
+ * calendar_system_clock_start_at_location:
  * @self: a multi-system clock
  * @mode: a native clock-mode settings value
  * @show_seconds: whether to show the mode's finer practical unit
@@ -57,8 +57,8 @@ void calendar_plus_system_clock_start(CalendarPlusSystemClock *self,
  * solar-origin and seasonal clocks. The legacy start method remains an
  * ABI-compatible equatorial wrapper.
  */
-void calendar_plus_system_clock_start_at_location(
-    CalendarPlusSystemClock *self,
+void calendar_system_clock_start_at_location(
+    CalendarSystemClock *self,
     const gchar *mode,
     gboolean show_seconds,
     gboolean vertical,
@@ -66,34 +66,34 @@ void calendar_plus_system_clock_start_at_location(
     gdouble longitude);
 
 /**
- * calendar_plus_system_clock_stop:
+ * calendar_system_clock_stop:
  * @self: a multi-system clock
  *
  * Stops the native timer. Calling this more than once is harmless.
  */
-void calendar_plus_system_clock_stop(CalendarPlusSystemClock *self);
+void calendar_system_clock_stop(CalendarSystemClock *self);
 
 /**
- * calendar_plus_system_clock_get_time:
+ * calendar_system_clock_get_time:
  * @self: a multi-system clock
  *
  * Formats the current instant using this clock's active time system.
  *
  * Returns: (transfer full): the newly allocated clock string
  */
-gchar *calendar_plus_system_clock_get_time(CalendarPlusSystemClock *self);
+gchar *calendar_system_clock_get_time(CalendarSystemClock *self);
 
 /**
- * calendar_plus_system_clock_is_running:
+ * calendar_system_clock_is_running:
  * @self: a multi-system clock
  *
  * Returns: %TRUE while the native timer is active
  */
-gboolean calendar_plus_system_clock_is_running(
-    CalendarPlusSystemClock *self);
+gboolean calendar_system_clock_is_running(
+    CalendarSystemClock *self);
 
 /**
- * calendar_plus_system_clock_get_system_policy:
+ * calendar_system_clock_get_system_policy:
  * @self: a multi-system clock
  *
  * Returns one coherent snapshot of the effective temporal presentation state.
@@ -102,17 +102,17 @@ gboolean calendar_plus_system_clock_is_running(
  *
  * The authority identifier is "mint-cinnamon" unless an installed temporal-v3
  * provider and a valid persisted policy are both present; only then is it
- * "infiltrator-system-settings". The provider-available flag therefore
+ * "system-settings". The provider-available flag therefore
  * distinguishes an installed-but-not-yet-configured System Settings package
  * from an active richer policy.
  *
  * Returns: (transfer full): a #GVariant tuple (ssbbddsb)
  */
-GVariant *calendar_plus_system_clock_get_system_policy(
-    CalendarPlusSystemClock *self);
+GVariant *calendar_system_clock_get_system_policy(
+    CalendarSystemClock *self);
 
 /**
- * calendar_plus_system_clock_get_system_mode:
+ * calendar_system_clock_get_system_mode:
  * @self: a multi-system clock
  *
  * Resolves System Settings' installed temporal policy to a Calendar clock mode.
@@ -123,11 +123,11 @@ GVariant *calendar_plus_system_clock_get_system_policy(
  *
  * Returns: (transfer full): a newly allocated Calendar clock-mode identifier
  */
-gchar *calendar_plus_system_clock_get_system_mode(
-    CalendarPlusSystemClock *self);
+gchar *calendar_system_clock_get_system_mode(
+    CalendarSystemClock *self);
 
 /**
- * calendar_plus_system_clock_get_system_calendar:
+ * calendar_system_clock_get_system_calendar:
  * @self: a multi-system clock
  *
  * If System Settings is absent, or its Infiltrator policy is missing/invalid,
@@ -135,11 +135,11 @@ gchar *calendar_plus_system_clock_get_system_mode(
  *
  * Returns: (transfer full): the effective system-wide calendar identifier
  */
-gchar *calendar_plus_system_clock_get_system_calendar(
-    CalendarPlusSystemClock *self);
+gchar *calendar_system_clock_get_system_calendar(
+    CalendarSystemClock *self);
 
 /**
- * calendar_plus_system_clock_get_system_show_seconds:
+ * calendar_system_clock_get_system_show_seconds:
  * @self: a multi-system clock
  *
  * A valid policy from installed System Settings is authoritative. Otherwise
@@ -148,35 +148,35 @@ gchar *calendar_plus_system_clock_get_system_calendar(
  *
  * Returns: whether the effective system policy requests seconds or a finer unit
  */
-gboolean calendar_plus_system_clock_get_system_show_seconds(
-    CalendarPlusSystemClock *self);
+gboolean calendar_system_clock_get_system_show_seconds(
+    CalendarSystemClock *self);
 
 /**
- * calendar_plus_system_clock_get_system_location_configured:
+ * calendar_system_clock_get_system_location_configured:
  * @self: a multi-system clock
  *
  * Returns: whether a system-wide geographic location is configured
  */
-gboolean calendar_plus_system_clock_get_system_location_configured(
-    CalendarPlusSystemClock *self);
+gboolean calendar_system_clock_get_system_location_configured(
+    CalendarSystemClock *self);
 
 /**
- * calendar_plus_system_clock_get_system_latitude:
+ * calendar_system_clock_get_system_latitude:
  * @self: a multi-system clock
  *
  * Returns: system-wide latitude in degrees north
  */
-gdouble calendar_plus_system_clock_get_system_latitude(
-    CalendarPlusSystemClock *self);
+gdouble calendar_system_clock_get_system_latitude(
+    CalendarSystemClock *self);
 
 /**
- * calendar_plus_system_clock_get_system_longitude:
+ * calendar_system_clock_get_system_longitude:
  * @self: a multi-system clock
  *
  * Returns: system-wide longitude in degrees east
  */
-gdouble calendar_plus_system_clock_get_system_longitude(
-    CalendarPlusSystemClock *self);
+gdouble calendar_system_clock_get_system_longitude(
+    CalendarSystemClock *self);
 
 G_END_DECLS
 

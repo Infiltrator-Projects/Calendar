@@ -47,15 +47,15 @@ test_gregorian_jdn_round_trip(void)
                 gint returned_day;
                 gint64 jdn;
 
-                if (!calendar_plus_gregorian_date_is_valid(year,
+                if (!calendar_gregorian_date_is_valid(year,
                                                             month,
                                                             day))
                 {
                     continue;
                 }
 
-                jdn = calendar_plus_gregorian_to_jdn(year, month, day);
-                calendar_plus_jdn_to_gregorian(jdn,
+                jdn = calendar_gregorian_to_jdn(year, month, day);
+                calendar_jdn_to_gregorian(jdn,
                                                &returned_year,
                                                &returned_month,
                                                &returned_day);
@@ -73,15 +73,15 @@ test_all_calendar_grid_properties(void)
     gsize calendar_index;
 
     for (calendar_index = 0;
-         calendar_index < calendar_plus_calendar_catalogue_get_count();
+         calendar_index < calendar_calendar_catalogue_get_count();
          calendar_index++)
     {
-        CalendarPlusCalendarDescriptor descriptor = { 0 };
-        g_autoptr(CalendarPlusCalendarSystem) calendar = NULL;
+        CalendarCalendarDescriptor descriptor = { 0 };
+        g_autoptr(CalendarCalendarSystem) calendar = NULL;
 
         g_assert_true(
-            calendar_plus_calendar_catalogue_get(calendar_index, &descriptor));
-        calendar = calendar_plus_calendar_system_new(descriptor.id);
+            calendar_calendar_catalogue_get(calendar_index, &descriptor));
+        calendar = calendar_calendar_system_new(descriptor.id);
         gint year;
 
         g_assert_nonnull(calendar);
@@ -93,7 +93,7 @@ test_all_calendar_grid_properties(void)
             {
                 const gint day = month == 2 ? 28 : 29;
                 g_autoptr(GVariant) grid =
-                    calendar_plus_calendar_system_build_grid(calendar,
+                    calendar_calendar_system_build_grid(calendar,
                                                              year,
                                                              month,
                                                              day,
@@ -130,7 +130,7 @@ test_all_calendar_grid_properties(void)
                     g_variant_get_child(cell, 4, "i", &row);
                     g_variant_get_child(cell, 5, "i", &column);
                     g_variant_get_child(cell, 9, "b", &is_selected);
-                    g_assert_true(calendar_plus_gregorian_date_is_valid(
+                    g_assert_true(calendar_gregorian_date_is_valid(
                         cell_year, cell_month, cell_day));
                     g_assert_cmpint(row, ==,
                                     2 + (gint)(cell_index / 7));
@@ -154,7 +154,7 @@ date_parts(GVariant *parts,
     g_assert_nonnull(parts);
     g_assert_true(g_variant_is_of_type(parts, G_VARIANT_TYPE("(iii)")));
     g_variant_get(parts, "(iii)", year, month, day);
-    g_assert_true(calendar_plus_gregorian_date_is_valid(*year,
+    g_assert_true(calendar_gregorian_date_is_valid(*year,
                                                          *month,
                                                          *day));
 }
@@ -165,17 +165,17 @@ test_all_calendar_typed_navigation(void)
     gsize calendar_index;
 
     for (calendar_index = 0;
-         calendar_index < calendar_plus_calendar_catalogue_get_count();
+         calendar_index < calendar_calendar_catalogue_get_count();
          calendar_index++)
     {
-        CalendarPlusCalendarDescriptor descriptor = { 0 };
-        g_autoptr(CalendarPlusCalendarSystem) calendar = NULL;
+        CalendarCalendarDescriptor descriptor = { 0 };
+        g_autoptr(CalendarCalendarSystem) calendar = NULL;
 
         g_assert_true(
-            calendar_plus_calendar_catalogue_get(calendar_index, &descriptor));
-        calendar = calendar_plus_calendar_system_new(descriptor.id);
+            calendar_calendar_catalogue_get(calendar_index, &descriptor));
+        calendar = calendar_calendar_system_new(descriptor.id);
         g_autoptr(GVariant) start =
-            calendar_plus_calendar_system_month_start_parts(calendar,
+            calendar_calendar_system_month_start_parts(calendar,
                                                             2026,
                                                             7,
                                                             29);
@@ -192,13 +192,13 @@ test_all_calendar_typed_navigation(void)
         g_autoptr(GVariant) returned = NULL;
 
         date_parts(start, &start_year, &start_month, &start_day);
-        next = calendar_plus_calendar_system_add_months_parts(calendar,
+        next = calendar_calendar_system_add_months_parts(calendar,
                                                               start_year,
                                                               start_month,
                                                               start_day,
                                                               1);
         date_parts(next, &next_year, &next_month, &next_day);
-        returned = calendar_plus_calendar_system_add_months_parts(calendar,
+        returned = calendar_calendar_system_add_months_parts(calendar,
                                                                   next_year,
                                                                   next_month,
                                                                   next_day,
@@ -208,7 +208,7 @@ test_all_calendar_typed_navigation(void)
                    &returned_month,
                    &returned_day);
 
-        g_assert_true(calendar_plus_date_same(start_year,
+        g_assert_true(calendar_date_same(start_year,
                                               start_month,
                                               start_day,
                                               returned_year,
@@ -217,10 +217,10 @@ test_all_calendar_typed_navigation(void)
 
         {
             g_autoptr(GVariant) year_parts =
-                calendar_plus_calendar_system_add_years_parts(
+                calendar_calendar_system_add_years_parts(
                     calendar, 2026, 7, 29, 1);
             g_autofree gchar *year_iso =
-                calendar_plus_calendar_system_add_years(
+                calendar_calendar_system_add_years(
                     calendar, 2026, 7, 29, 1);
             gint typed_year;
             gint typed_month;
@@ -267,8 +267,8 @@ event_variant(const gchar *id,
 static void
 test_unbounded_event_interval(void)
 {
-    g_autoptr(CalendarPlusEventStore) store =
-        calendar_plus_event_store_new();
+    g_autoptr(CalendarEventStore) store =
+        calendar_event_store_new();
     g_autoptr(GVariant) event =
         event_variant("long",
                       local_unix(2020, 1, 1, 12),
@@ -278,8 +278,8 @@ test_unbounded_event_interval(void)
     gint64 revision;
 
     g_assert_true(
-        calendar_plus_event_store_add_or_update(store, event, 10));
-    snapshot = calendar_plus_event_store_get_snapshot(
+        calendar_event_store_add_or_update(store, event, 10));
+    snapshot = calendar_event_store_get_snapshot(
         store,
         local_unix(2026, 7, 29, 0),
         local_unix(2026, 7, 29, 12));
@@ -295,8 +295,8 @@ test_unbounded_event_interval(void)
 static void
 test_malformed_event_variants(void)
 {
-    g_autoptr(CalendarPlusEventStore) store =
-        calendar_plus_event_store_new();
+    g_autoptr(CalendarEventStore) store =
+        calendar_event_store_new();
     g_autoptr(GVariant) too_short =
         g_variant_ref_sink(g_variant_new("(ss)", "id", "colour"));
     g_autoptr(GVariant) wrong_types =
@@ -362,28 +362,28 @@ test_malformed_event_variants(void)
                           G_MAXINT64,
                           (gint64)1));
 
-    g_assert_false(calendar_plus_event_store_add_or_update(store,
+    g_assert_false(calendar_event_store_add_or_update(store,
                                                            NULL,
                                                            1));
-    g_assert_false(calendar_plus_event_store_add_or_update(store,
+    g_assert_false(calendar_event_store_add_or_update(store,
                                                            too_short,
                                                            1));
-    g_assert_false(calendar_plus_event_store_add_or_update(store,
+    g_assert_false(calendar_event_store_add_or_update(store,
                                                            wrong_types,
                                                            1));
-    g_assert_false(calendar_plus_event_store_add_or_update(store,
+    g_assert_false(calendar_event_store_add_or_update(store,
                                                            empty_id,
                                                            1));
-    g_assert_false(calendar_plus_event_store_add_or_update(store,
+    g_assert_false(calendar_event_store_add_or_update(store,
                                                            bad_color,
                                                            1));
-    g_assert_false(calendar_plus_event_store_add_or_update(store,
+    g_assert_false(calendar_event_store_add_or_update(store,
                                                            huge_id,
                                                            1));
-    g_assert_false(calendar_plus_event_store_add_or_update(store,
+    g_assert_false(calendar_event_store_add_or_update(store,
                                                            huge_summary,
                                                            1));
-    g_assert_false(calendar_plus_event_store_add_or_update(store,
+    g_assert_false(calendar_event_store_add_or_update(store,
                                                            impossible_time,
                                                            1));
 }
@@ -392,8 +392,8 @@ static void
 test_event_store_clear_contract(void)
 {
     const gint64 day = local_unix(2026, 7, 29, 0);
-    g_autoptr(CalendarPlusEventStore) store =
-        calendar_plus_event_store_new();
+    g_autoptr(CalendarEventStore) store =
+        calendar_event_store_new();
     g_autoptr(GVariant) event =
         event_variant("clear-me",
                       local_unix(2026, 7, 29, 9),
@@ -403,35 +403,35 @@ test_event_store_clear_contract(void)
     g_auto(GStrv) colors = NULL;
     gint64 revision = 0;
 
-    g_assert_true(calendar_plus_event_store_add_or_update(store, event, 1));
-    snapshot = calendar_plus_event_store_get_snapshot(
+    g_assert_true(calendar_event_store_add_or_update(store, event, 1));
+    snapshot = calendar_event_store_get_snapshot(
         store, day, local_unix(2026, 7, 29, 9));
     g_variant_get(snapshot, "(x@a(sssbbxxxxx))", &revision, &rows);
     g_assert_cmpuint(g_variant_n_children(rows), ==, 1);
 
-    calendar_plus_event_store_clear(store);
+    calendar_event_store_clear(store);
     g_clear_pointer(&snapshot, g_variant_unref);
     g_clear_pointer(&rows, g_variant_unref);
-    snapshot = calendar_plus_event_store_get_snapshot(
+    snapshot = calendar_event_store_get_snapshot(
         store, day, local_unix(2026, 7, 29, 9));
     g_variant_get(snapshot, "(x@a(sssbbxxxxx))", &revision, &rows);
     g_assert_cmpuint(g_variant_n_children(rows), ==, 0);
 
-    colors = calendar_plus_event_store_get_colors(
+    colors = calendar_event_store_get_colors(
         store, day, local_unix(2026, 7, 29, 9));
     g_assert_nonnull(colors);
     g_assert_cmpuint(g_strv_length(colors), ==, 0);
 
     /* Clearing an already-empty store is deliberately harmless. */
-    calendar_plus_event_store_clear(store);
+    calendar_event_store_clear(store);
 }
 
 static void
 test_event_stale_revision_rejected(void)
 {
     const gint64 day = local_unix(2026, 7, 29, 0);
-    g_autoptr(CalendarPlusEventStore) store =
-        calendar_plus_event_store_new();
+    g_autoptr(CalendarEventStore) store =
+        calendar_event_store_new();
     g_autoptr(GVariant) newer =
         g_variant_ref_sink(
             g_variant_new("(sssbxxx)",
@@ -459,11 +459,11 @@ test_event_stale_revision_rejected(void)
     gint64 revision;
 
     g_assert_true(
-        calendar_plus_event_store_add_or_update(store, newer, 100));
+        calendar_event_store_add_or_update(store, newer, 100));
     g_assert_false(
-        calendar_plus_event_store_add_or_update(store, older, 200));
+        calendar_event_store_add_or_update(store, older, 200));
 
-    snapshot = calendar_plus_event_store_get_snapshot(
+    snapshot = calendar_event_store_get_snapshot(
         store, day, local_unix(2026, 7, 29, 12));
     g_variant_get(snapshot, "(x@a(sssbbxxxxx))", &revision, &rows);
     g_assert_cmpint(revision, >, 0);
@@ -479,7 +479,7 @@ test_event_color_range_skipped_civil_day(void)
 {
     const gchar *original_timezone = g_getenv("TZ");
     g_autofree gchar *saved_timezone = g_strdup(original_timezone);
-    g_autoptr(CalendarPlusEventStore) store = NULL;
+    g_autoptr(CalendarEventStore) store = NULL;
     g_autoptr(GVariant) event = NULL;
     g_autoptr(GVariant) range = NULL;
     guint day;
@@ -487,13 +487,13 @@ test_event_color_range_skipped_civil_day(void)
     g_assert_true(g_setenv("TZ", "Pacific/Apia", TRUE));
     tzset();
 
-    store = calendar_plus_event_store_new();
+    store = calendar_event_store_new();
     event = event_variant(
         "apia-event",
         local_unix(2011, 12, 31, 12),
         local_unix(2011, 12, 31, 13));
-    g_assert_true(calendar_plus_event_store_add_or_update(store, event, 1));
-    range = calendar_plus_event_store_get_color_range(
+    g_assert_true(calendar_event_store_add_or_update(store, event, 1));
+    range = calendar_event_store_get_color_range(
         store,
         local_unix(2011, 12, 29, 0),
         4,
@@ -523,8 +523,8 @@ test_event_store_range_admission(void)
 {
     const gint64 range_start = local_unix(2026, 7, 29, 0);
     const gint64 range_end = local_unix(2026, 7, 29, 23) + 3599;
-    g_autoptr(CalendarPlusEventStore) store =
-        calendar_plus_event_store_new();
+    g_autoptr(CalendarEventStore) store =
+        calendar_event_store_new();
     g_autoptr(GVariant) inside =
         event_variant("inside",
                       local_unix(2026, 7, 29, 9),
@@ -543,16 +543,16 @@ test_event_store_range_admission(void)
     g_autoptr(GVariant) rows = NULL;
     gint64 revision = 0;
 
-    g_assert_true(calendar_plus_event_store_add_or_update_in_range(
+    g_assert_true(calendar_event_store_add_or_update_in_range(
         store, inside, 10, range_start, range_end));
-    g_assert_false(calendar_plus_event_store_add_or_update_in_range(
+    g_assert_false(calendar_event_store_add_or_update_in_range(
         store, outside, 10, range_start, range_end));
-    g_assert_false(calendar_plus_event_store_add_or_update_in_range(
+    g_assert_false(calendar_event_store_add_or_update_in_range(
         store, all_day_touching, 10, range_start, range_end));
-    g_assert_false(calendar_plus_event_store_add_or_update_in_range(
+    g_assert_false(calendar_event_store_add_or_update_in_range(
         store, inside, 10, range_end, range_start));
 
-    snapshot = calendar_plus_event_store_get_snapshot(
+    snapshot = calendar_event_store_get_snapshot(
         store, range_start, local_unix(2026, 7, 29, 12));
     g_variant_get(snapshot, "(x@a(sssbbxxxxx))", &revision, &rows);
     g_assert_cmpuint(g_variant_n_children(rows), ==, 1);
@@ -563,8 +563,8 @@ test_event_today_ordering_consistency(void)
 {
     const gint64 day = local_unix(2026, 7, 29, 0);
     const gint64 now = local_unix(2026, 7, 29, 12);
-    g_autoptr(CalendarPlusEventStore) store =
-        calendar_plus_event_store_new();
+    g_autoptr(CalendarEventStore) store =
+        calendar_event_store_new();
     g_autoptr(GVariant) future = g_variant_ref_sink(
         g_variant_new("(sssbxxx)",
                       "future", "#333333", "Future", FALSE,
@@ -592,15 +592,15 @@ test_event_today_ordering_consistency(void)
     guint item;
 
     /* Deliberately ingest out of display order. */
-    g_assert_true(calendar_plus_event_store_add_or_update(store, future, 1));
-    g_assert_true(calendar_plus_event_store_add_or_update(store, all_day, 1));
-    g_assert_true(calendar_plus_event_store_add_or_update(store, ended, 1));
+    g_assert_true(calendar_event_store_add_or_update(store, future, 1));
+    g_assert_true(calendar_event_store_add_or_update(store, all_day, 1));
+    g_assert_true(calendar_event_store_add_or_update(store, ended, 1));
 
-    snapshot = calendar_plus_event_store_get_snapshot(store, day, now);
+    snapshot = calendar_event_store_get_snapshot(store, day, now);
     g_variant_get(snapshot, "(x@a(sssbbxxxxx))", &revision, &rows);
     g_assert_cmpuint(g_variant_n_children(rows), ==, G_N_ELEMENTS(expected));
 
-    range = calendar_plus_event_store_get_color_range(store, day, 1, now, 8);
+    range = calendar_event_store_get_color_range(store, day, 1, now, 8);
     g_assert_nonnull(range);
     range_colors = g_variant_get_child_value(range, 0);
     g_assert_cmpuint(g_variant_n_children(range_colors), ==,
@@ -624,8 +624,8 @@ static void
 test_event_color_range(void)
 {
     const gint64 first_day = local_unix(2026, 7, 29, 0);
-    g_autoptr(CalendarPlusEventStore) store =
-        calendar_plus_event_store_new();
+    g_autoptr(CalendarEventStore) store =
+        calendar_event_store_new();
     g_autoptr(GVariant) event =
         event_variant("range-event",
                       local_unix(2026, 7, 29, 12),
@@ -633,8 +633,8 @@ test_event_color_range(void)
     g_autoptr(GVariant) range = NULL;
     guint day;
 
-    g_assert_true(calendar_plus_event_store_add_or_update(store, event, 1));
-    range = calendar_plus_event_store_get_color_range(
+    g_assert_true(calendar_event_store_add_or_update(store, event, 1));
+    range = calendar_event_store_get_color_range(
         store,
         first_day,
         3,
@@ -668,15 +668,15 @@ test_calendar_navigation_public_year_bounds(void)
 
     for (index = 0; index < G_N_ELEMENTS(ids); index++)
     {
-        g_autoptr(CalendarPlusCalendarSystem) calendar =
-            calendar_plus_calendar_system_new(ids[index]);
+        g_autoptr(CalendarCalendarSystem) calendar =
+            calendar_calendar_system_new(ids[index]);
         g_autoptr(GVariant) above = NULL;
         g_autoptr(GVariant) below = NULL;
 
         g_assert_nonnull(calendar);
-        above = calendar_plus_calendar_system_add_years_parts(
+        above = calendar_calendar_system_add_years_parts(
             calendar, G_MAXINT, 1, 1, 1);
-        below = calendar_plus_calendar_system_add_years_parts(
+        below = calendar_calendar_system_add_years_parts(
             calendar, G_MININT, 1, 1, -1);
 
         g_assert_null(above);
@@ -689,8 +689,8 @@ test_event_timezone_refresh(void)
 {
     const gchar *original_timezone = g_getenv("TZ");
     g_autofree gchar *saved_timezone = g_strdup(original_timezone);
-    g_autoptr(CalendarPlusEventStore) store =
-        calendar_plus_event_store_new();
+    g_autoptr(CalendarEventStore) store =
+        calendar_event_store_new();
     g_autoptr(GVariant) initial_midnight = NULL;
     g_autoptr(GVariant) refresh_midnight = NULL;
     g_auto(GStrv) colors = NULL;
@@ -711,18 +711,18 @@ test_event_timezone_refresh(void)
         "refresh-midnight",
         local_unix(2026, 7, 28, 19),
         local_unix(2026, 7, 28, 20));
-    g_assert_true(calendar_plus_event_store_add_or_update(
+    g_assert_true(calendar_event_store_add_or_update(
         store, initial_midnight, 1));
-    g_assert_true(calendar_plus_event_store_add_or_update(
+    g_assert_true(calendar_event_store_add_or_update(
         store, refresh_midnight, 1));
-    g_assert_false(calendar_plus_event_store_refresh_timezone(store));
+    g_assert_false(calendar_event_store_refresh_timezone(store));
 
-    colors = calendar_plus_event_store_get_colors(
+    colors = calendar_event_store_get_colors(
         store, local_unix(2026, 7, 28, 12), local_unix(2026, 7, 28, 12));
     g_assert_nonnull(colors);
     g_assert_cmpuint(g_strv_length(colors), ==, 2);
     g_clear_pointer(&colors, g_strfreev);
-    colors = calendar_plus_event_store_get_colors(
+    colors = calendar_event_store_get_colors(
         store, local_unix(2026, 7, 29, 12), local_unix(2026, 7, 29, 12));
     g_assert_nonnull(colors);
     g_assert_cmpuint(g_strv_length(colors), ==, 0);
@@ -730,15 +730,15 @@ test_event_timezone_refresh(void)
 
     g_assert_true(g_setenv("TZ", "UTC", TRUE));
     tzset();
-    g_assert_true(calendar_plus_event_store_refresh_timezone(store));
-    g_assert_false(calendar_plus_event_store_refresh_timezone(store));
+    g_assert_true(calendar_event_store_refresh_timezone(store));
+    g_assert_false(calendar_event_store_refresh_timezone(store));
 
-    colors = calendar_plus_event_store_get_colors(
+    colors = calendar_event_store_get_colors(
         store, local_unix(2026, 7, 28, 12), local_unix(2026, 7, 28, 12));
     g_assert_nonnull(colors);
     g_assert_cmpuint(g_strv_length(colors), ==, 1);
     g_clear_pointer(&colors, g_strfreev);
-    colors = calendar_plus_event_store_get_colors(
+    colors = calendar_event_store_get_colors(
         store, local_unix(2026, 7, 29, 12), local_unix(2026, 7, 29, 12));
     g_assert_nonnull(colors);
     g_assert_cmpuint(g_strv_length(colors), ==, 1);
@@ -753,40 +753,40 @@ test_event_timezone_refresh(void)
 static void
 test_typed_date_api_and_validation(void)
 {
-    g_autoptr(CalendarPlusCalendarSystem) calendar =
-        calendar_plus_calendar_system_new("gregorian");
+    g_autoptr(CalendarCalendarSystem) calendar =
+        calendar_calendar_system_new("gregorian");
     g_autofree gchar *typed =
-        calendar_plus_calendar_system_format_date_part(
+        calendar_calendar_system_format_date_part(
             calendar,
             2026,
             7,
             29,
-            CALENDAR_PLUS_DATE_PART_SHORT);
+            CALENDAR_DATE_PART_SHORT);
     g_autofree gchar *legacy =
-        calendar_plus_calendar_system_format_date(calendar,
+        calendar_calendar_system_format_date(calendar,
                                                   2026,
                                                   7,
                                                   29,
                                                   "short");
     g_autofree gchar *bad_day =
-        calendar_plus_calendar_system_format_date_part(
+        calendar_calendar_system_format_date_part(
             calendar,
             2026,
             2,
             30,
-            CALENDAR_PLUS_DATE_PART_SHORT);
+            CALENDAR_DATE_PART_SHORT);
     g_autofree gchar *bad_part =
-        calendar_plus_calendar_system_format_date_part(
+        calendar_calendar_system_format_date_part(
             calendar,
             2026,
             7,
             29,
-            CALENDAR_PLUS_DATE_PART_INVALID);
+            CALENDAR_DATE_PART_INVALID);
 
     g_assert_cmpstr(typed, ==, legacy);
     g_assert_cmpstr(bad_day, ==, "");
     g_assert_cmpstr(bad_part, ==, "");
-    g_assert_null(calendar_plus_calendar_system_build_grid(calendar,
+    g_assert_null(calendar_calendar_system_build_grid(calendar,
                                                            2026,
                                                            2,
                                                            30,
@@ -799,105 +799,105 @@ test_typed_date_api_and_validation(void)
 static void
 test_time_registry_contract(void)
 {
-    const gsize count = calendar_plus_time_mode_get_count();
+    const gsize count = calendar_time_mode_get_count();
     gsize index;
 
     g_assert_cmpuint(count, ==,
-                     (gsize)CALENDAR_PLUS_TIME_MODE_JAPANESE_TEMPORAL_EARLY);
+                     (gsize)CALENDAR_TIME_MODE_JAPANESE_TEMPORAL_EARLY);
 
     for (index = 0; index < count; index++)
     {
-        const CalendarPlusTimeMode mode =
-            calendar_plus_time_mode_get_at(index);
-        const gchar *id = calendar_plus_time_mode_get_id(mode);
-        const gchar *name = calendar_plus_time_mode_get_name(mode);
+        const CalendarTimeMode mode =
+            calendar_time_mode_get_at(index);
+        const gchar *id = calendar_time_mode_get_id(mode);
+        const gchar *name = calendar_time_mode_get_name(mode);
         gsize other;
 
-        g_assert_cmpint(mode, !=, CALENDAR_PLUS_TIME_MODE_INVALID);
+        g_assert_cmpint(mode, !=, CALENDAR_TIME_MODE_INVALID);
         g_assert_nonnull(id);
         g_assert_cmpuint(strlen(id), >, 0U);
         g_assert_nonnull(name);
         g_assert_cmpuint(strlen(name), >, 0U);
-        g_assert_cmpint(calendar_plus_time_mode_from_string(id), ==, mode);
+        g_assert_cmpint(calendar_time_mode_from_string(id), ==, mode);
 
         for (other = index + 1; other < count; other++)
         {
-            const CalendarPlusTimeMode other_mode =
-                calendar_plus_time_mode_get_at(other);
+            const CalendarTimeMode other_mode =
+                calendar_time_mode_get_at(other);
             g_assert_cmpstr(id, !=,
-                calendar_plus_time_mode_get_id(other_mode));
+                calendar_time_mode_get_id(other_mode));
         }
     }
 
-    g_assert_cmpint(calendar_plus_time_mode_get_at(count), ==,
-                    CALENDAR_PLUS_TIME_MODE_INVALID);
-    g_assert_cmpint(calendar_plus_time_mode_from_string(NULL), ==,
-                    CALENDAR_PLUS_TIME_MODE_INVALID);
-    g_assert_cmpint(calendar_plus_time_mode_from_string("missing"), ==,
-                    CALENDAR_PLUS_TIME_MODE_INVALID);
+    g_assert_cmpint(calendar_time_mode_get_at(count), ==,
+                    CALENDAR_TIME_MODE_INVALID);
+    g_assert_cmpint(calendar_time_mode_from_string(NULL), ==,
+                    CALENDAR_TIME_MODE_INVALID);
+    g_assert_cmpint(calendar_time_mode_from_string("missing"), ==,
+                    CALENDAR_TIME_MODE_INVALID);
 
-    g_assert_true(calendar_plus_time_mode_requires_longitude(
-        CALENDAR_PLUS_TIME_MODE_SIDEREAL));
-    g_assert_true(calendar_plus_time_mode_requires_longitude(
-        CALENDAR_PLUS_TIME_MODE_SOLAR));
-    g_assert_true(calendar_plus_time_mode_requires_longitude(
-        CALENDAR_PLUS_TIME_MODE_MEAN_SOLAR));
-    g_assert_true(calendar_plus_time_mode_requires_longitude(
-        CALENDAR_PLUS_TIME_MODE_ROMAN_TEMPORAL));
-    g_assert_true(calendar_plus_time_mode_requires_longitude(
-        CALENDAR_PLUS_TIME_MODE_JAPANESE_TEMPORAL));
-    g_assert_true(calendar_plus_time_mode_requires_longitude(
-        CALENDAR_PLUS_TIME_MODE_JAPANESE_TEMPORAL_EARLY));
-    g_assert_true(calendar_plus_time_mode_requires_longitude(
-        CALENDAR_PLUS_TIME_MODE_ITALIAN_HOURS));
-    g_assert_true(calendar_plus_time_mode_requires_longitude(
-        CALENDAR_PLUS_TIME_MODE_BABYLONIAN_HOURS));
-    g_assert_false(calendar_plus_time_mode_requires_longitude(
-        CALENDAR_PLUS_TIME_MODE_NUREMBERG_HOURS));
-    g_assert_true(calendar_plus_time_mode_requires_longitude(
-        CALENDAR_PLUS_TIME_MODE_BABYLONIAN_ANCIENT));
-    g_assert_true(calendar_plus_time_mode_requires_longitude(
-        CALENDAR_PLUS_TIME_MODE_NUREMBERG_SOLAR));
-    g_assert_true(calendar_plus_time_mode_requires_latitude(
-        CALENDAR_PLUS_TIME_MODE_ROMAN_TEMPORAL));
-    g_assert_true(calendar_plus_time_mode_requires_latitude(
-        CALENDAR_PLUS_TIME_MODE_JAPANESE_TEMPORAL));
-    g_assert_true(calendar_plus_time_mode_requires_latitude(
-        CALENDAR_PLUS_TIME_MODE_JAPANESE_TEMPORAL_EARLY));
-    g_assert_true(calendar_plus_time_mode_requires_latitude(
-        CALENDAR_PLUS_TIME_MODE_ITALIAN_HOURS));
-    g_assert_true(calendar_plus_time_mode_requires_latitude(
-        CALENDAR_PLUS_TIME_MODE_BABYLONIAN_HOURS));
-    g_assert_true(calendar_plus_time_mode_requires_latitude(
-        CALENDAR_PLUS_TIME_MODE_INDIAN_GHATI));
-    g_assert_false(calendar_plus_time_mode_requires_latitude(
-        CALENDAR_PLUS_TIME_MODE_NUREMBERG_HOURS));
-    g_assert_true(calendar_plus_time_mode_requires_latitude(
-        CALENDAR_PLUS_TIME_MODE_BABYLONIAN_ANCIENT));
-    g_assert_true(calendar_plus_time_mode_requires_latitude(
-        CALENDAR_PLUS_TIME_MODE_NUREMBERG_SOLAR));
-    g_assert_false(calendar_plus_time_mode_requires_latitude(
-        CALENDAR_PLUS_TIME_MODE_CHINESE_KE));
-    g_assert_false(calendar_plus_time_mode_requires_latitude(
-        CALENDAR_PLUS_TIME_MODE_SOLAR));
+    g_assert_true(calendar_time_mode_requires_longitude(
+        CALENDAR_TIME_MODE_SIDEREAL));
+    g_assert_true(calendar_time_mode_requires_longitude(
+        CALENDAR_TIME_MODE_SOLAR));
+    g_assert_true(calendar_time_mode_requires_longitude(
+        CALENDAR_TIME_MODE_MEAN_SOLAR));
+    g_assert_true(calendar_time_mode_requires_longitude(
+        CALENDAR_TIME_MODE_ROMAN_TEMPORAL));
+    g_assert_true(calendar_time_mode_requires_longitude(
+        CALENDAR_TIME_MODE_JAPANESE_TEMPORAL));
+    g_assert_true(calendar_time_mode_requires_longitude(
+        CALENDAR_TIME_MODE_JAPANESE_TEMPORAL_EARLY));
+    g_assert_true(calendar_time_mode_requires_longitude(
+        CALENDAR_TIME_MODE_ITALIAN_HOURS));
+    g_assert_true(calendar_time_mode_requires_longitude(
+        CALENDAR_TIME_MODE_BABYLONIAN_HOURS));
+    g_assert_false(calendar_time_mode_requires_longitude(
+        CALENDAR_TIME_MODE_NUREMBERG_HOURS));
+    g_assert_true(calendar_time_mode_requires_longitude(
+        CALENDAR_TIME_MODE_BABYLONIAN_ANCIENT));
+    g_assert_true(calendar_time_mode_requires_longitude(
+        CALENDAR_TIME_MODE_NUREMBERG_SOLAR));
+    g_assert_true(calendar_time_mode_requires_latitude(
+        CALENDAR_TIME_MODE_ROMAN_TEMPORAL));
+    g_assert_true(calendar_time_mode_requires_latitude(
+        CALENDAR_TIME_MODE_JAPANESE_TEMPORAL));
+    g_assert_true(calendar_time_mode_requires_latitude(
+        CALENDAR_TIME_MODE_JAPANESE_TEMPORAL_EARLY));
+    g_assert_true(calendar_time_mode_requires_latitude(
+        CALENDAR_TIME_MODE_ITALIAN_HOURS));
+    g_assert_true(calendar_time_mode_requires_latitude(
+        CALENDAR_TIME_MODE_BABYLONIAN_HOURS));
+    g_assert_true(calendar_time_mode_requires_latitude(
+        CALENDAR_TIME_MODE_INDIAN_GHATI));
+    g_assert_false(calendar_time_mode_requires_latitude(
+        CALENDAR_TIME_MODE_NUREMBERG_HOURS));
+    g_assert_true(calendar_time_mode_requires_latitude(
+        CALENDAR_TIME_MODE_BABYLONIAN_ANCIENT));
+    g_assert_true(calendar_time_mode_requires_latitude(
+        CALENDAR_TIME_MODE_NUREMBERG_SOLAR));
+    g_assert_false(calendar_time_mode_requires_latitude(
+        CALENDAR_TIME_MODE_CHINESE_KE));
+    g_assert_false(calendar_time_mode_requires_latitude(
+        CALENDAR_TIME_MODE_SOLAR));
     g_assert_cmpint(
-        calendar_plus_time_mode_from_string("roman-temporal@-36.3800"),
+        calendar_time_mode_from_string("roman-temporal@-36.3800"),
         ==,
-        CALENDAR_PLUS_TIME_MODE_INVALID);
-    g_assert_false(calendar_plus_time_mode_supports_seconds(
-        CALENDAR_PLUS_TIME_MODE_UNIX));
-    g_assert_true(calendar_plus_time_mode_supports_seconds(
-        CALENDAR_PLUS_TIME_MODE_CHINESE));
-    g_assert_true(calendar_plus_time_mode_supports_seconds(
-        CALENDAR_PLUS_TIME_MODE_ROMAN_TEMPORAL));
-    g_assert_false(calendar_plus_time_mode_supports_seconds(
-        CALENDAR_PLUS_TIME_MODE_JAPANESE_TEMPORAL));
-    g_assert_false(calendar_plus_time_mode_supports_seconds(
-        CALENDAR_PLUS_TIME_MODE_JAPANESE_TEMPORAL_EARLY));
-    g_assert_null(calendar_plus_time_mode_get_id(
-        CALENDAR_PLUS_TIME_MODE_INVALID));
-    g_assert_null(calendar_plus_time_mode_get_name(
-        CALENDAR_PLUS_TIME_MODE_INVALID));
+        CALENDAR_TIME_MODE_INVALID);
+    g_assert_false(calendar_time_mode_supports_seconds(
+        CALENDAR_TIME_MODE_UNIX));
+    g_assert_true(calendar_time_mode_supports_seconds(
+        CALENDAR_TIME_MODE_CHINESE));
+    g_assert_true(calendar_time_mode_supports_seconds(
+        CALENDAR_TIME_MODE_ROMAN_TEMPORAL));
+    g_assert_false(calendar_time_mode_supports_seconds(
+        CALENDAR_TIME_MODE_JAPANESE_TEMPORAL));
+    g_assert_false(calendar_time_mode_supports_seconds(
+        CALENDAR_TIME_MODE_JAPANESE_TEMPORAL_EARLY));
+    g_assert_null(calendar_time_mode_get_id(
+        CALENDAR_TIME_MODE_INVALID));
+    g_assert_null(calendar_time_mode_get_name(
+        CALENDAR_TIME_MODE_INVALID));
 }
 
 static void
@@ -906,14 +906,14 @@ test_all_time_modes_runtime_contract(void)
     const gint64 normal_instant =
         G_GINT64_CONSTANT(1788177600) * G_USEC_PER_SEC;
     const gint64 extremes[] = { G_MININT64, G_MAXINT64 };
-    const gsize count = calendar_plus_time_mode_get_count();
+    const gsize count = calendar_time_mode_get_count();
     gsize index;
 
     for (index = 0; index < count; index++)
     {
-        const CalendarPlusTimeMode mode =
-            calendar_plus_time_mode_get_at(index);
-        const gchar *id = calendar_plus_time_mode_get_id(mode);
+        const CalendarTimeMode mode =
+            calendar_time_mode_get_at(index);
+        const gchar *id = calendar_time_mode_get_id(mode);
         guint show_seconds;
         guint vertical;
         gsize extreme_index;
@@ -923,7 +923,7 @@ test_all_time_modes_runtime_contract(void)
             for (vertical = 0; vertical <= 1; vertical++)
             {
                 g_autofree gchar *formatted =
-                    calendar_plus_format_time_at_location(
+                    calendar_format_time_at_location(
                         mode,
                         normal_instant,
                         10 * 60 * 60,
@@ -932,7 +932,7 @@ test_all_time_modes_runtime_contract(void)
                         -36.3833,
                         145.4000);
                 const guint delay =
-                    calendar_plus_time_delay_to_next_tick_at_location(
+                    calendar_time_delay_to_next_tick_at_location(
                         mode,
                         normal_instant,
                         10 * 60 * 60,
@@ -946,29 +946,29 @@ test_all_time_modes_runtime_contract(void)
             }
         }
 
-        if (calendar_plus_time_mode_requires_latitude(mode))
+        if (calendar_time_mode_requires_latitude(mode))
         {
             g_autofree gchar *missing_latitude =
-                calendar_plus_format_time_at_location(
+                calendar_format_time_at_location(
                     mode, normal_instant, 10 * 60 * 60,
                     FALSE, FALSE, NAN, 145.4000);
             g_assert_cmpstr(missing_latitude, ==, "");
             g_assert_cmpuint(
-                calendar_plus_time_delay_to_next_tick_at_location(
+                calendar_time_delay_to_next_tick_at_location(
                     mode, normal_instant, 10 * 60 * 60,
                     FALSE, NAN, 145.4000),
                 ==, 3600000U);
         }
 
-        if (calendar_plus_time_mode_requires_longitude(mode))
+        if (calendar_time_mode_requires_longitude(mode))
         {
             g_autofree gchar *missing_longitude =
-                calendar_plus_format_time_at_location(
+                calendar_format_time_at_location(
                     mode, normal_instant, 10 * 60 * 60,
                     FALSE, FALSE, -36.3833, NAN);
             g_assert_cmpstr(missing_longitude, ==, "");
             g_assert_cmpuint(
-                calendar_plus_time_delay_to_next_tick_at_location(
+                calendar_time_delay_to_next_tick_at_location(
                     mode, normal_instant, 10 * 60 * 60,
                     FALSE, -36.3833, NAN),
                 ==, 3600000U);
@@ -979,7 +979,7 @@ test_all_time_modes_runtime_contract(void)
              extreme_index++)
         {
             g_autofree gchar *extreme =
-                calendar_plus_format_time_at_location(
+                calendar_format_time_at_location(
                     mode,
                     extremes[extreme_index],
                     G_MAXINT,
@@ -988,7 +988,7 @@ test_all_time_modes_runtime_contract(void)
                     -36.3833,
                     145.4000);
             const guint delay =
-                calendar_plus_time_delay_to_next_tick_at_location(
+                calendar_time_delay_to_next_tick_at_location(
                     mode,
                     extremes[extreme_index],
                     G_MAXINT,
@@ -1005,13 +1005,13 @@ test_all_time_modes_runtime_contract(void)
 
     {
         g_autofree gchar *invalid =
-            calendar_plus_format_time_at_location(
-                CALENDAR_PLUS_TIME_MODE_INVALID,
+            calendar_format_time_at_location(
+                CALENDAR_TIME_MODE_INVALID,
                 normal_instant, 0, FALSE, FALSE, 0.0, 0.0);
         g_assert_cmpstr(invalid, ==, "");
         g_assert_cmpuint(
-            calendar_plus_time_delay_to_next_tick_at_location(
-                CALENDAR_PLUS_TIME_MODE_INVALID,
+            calendar_time_delay_to_next_tick_at_location(
+                CALENDAR_TIME_MODE_INVALID,
                 normal_instant, 0, FALSE, 0.0, 0.0),
             ==, 1000U);
     }
@@ -1020,10 +1020,10 @@ test_all_time_modes_runtime_contract(void)
 static void
 test_system_clock_policy_accessors(void)
 {
-    g_autoptr(CalendarPlusSystemClock) clock =
-        calendar_plus_system_clock_new();
+    g_autoptr(CalendarSystemClock) clock =
+        calendar_system_clock_new();
     g_autoptr(GVariant) policy =
-        calendar_plus_system_clock_get_system_policy(clock);
+        calendar_system_clock_get_system_policy(clock);
     const gchar *snapshot_mode = NULL;
     const gchar *snapshot_calendar = NULL;
     const gchar *authority = NULL;
@@ -1048,28 +1048,28 @@ test_system_clock_policy_accessors(void)
                   &authority,
                   &provider_available);
 
-    mode = calendar_plus_system_clock_get_system_mode(clock);
-    calendar = calendar_plus_system_clock_get_system_calendar(clock);
+    mode = calendar_system_clock_get_system_mode(clock);
+    calendar = calendar_system_clock_get_system_calendar(clock);
 
     g_assert_cmpstr(mode, ==, snapshot_mode);
     g_assert_cmpstr(calendar, ==, snapshot_calendar);
-    g_assert_cmpint(calendar_plus_system_clock_get_system_show_seconds(clock),
+    g_assert_cmpint(calendar_system_clock_get_system_show_seconds(clock),
                     ==, snapshot_seconds);
     g_assert_cmpint(
-        calendar_plus_system_clock_get_system_location_configured(clock),
+        calendar_system_clock_get_system_location_configured(clock),
         ==, snapshot_location);
     g_assert_cmpfloat(
-        calendar_plus_system_clock_get_system_latitude(clock),
+        calendar_system_clock_get_system_latitude(clock),
         ==, snapshot_latitude);
     g_assert_cmpfloat(
-        calendar_plus_system_clock_get_system_longitude(clock),
+        calendar_system_clock_get_system_longitude(clock),
         ==, snapshot_longitude);
     g_assert_true(isfinite(snapshot_latitude));
     g_assert_true(isfinite(snapshot_longitude));
     g_assert_true(
         g_str_equal(authority, "mint-cinnamon") ||
-        g_str_equal(authority, "infiltrator-system-settings"));
-    if (g_str_equal(authority, "infiltrator-system-settings"))
+        g_str_equal(authority, "system-settings"));
+    if (g_str_equal(authority, "system-settings"))
         g_assert_true(provider_available);
 }
 

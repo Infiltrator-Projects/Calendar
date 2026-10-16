@@ -16,8 +16,8 @@
 
 enum
 {
-    CALENDAR_PLUS_ISLAMIC_CIVIL_EPOCH_JDN = 1948440,
-    CALENDAR_PLUS_ISLAMIC_TBLA_EPOCH_JDN = 1948439
+    CALENDAR_ISLAMIC_CIVIL_EPOCH_JDN = 1948440,
+    CALENDAR_ISLAMIC_TBLA_EPOCH_JDN = 1948439
 };
 
 #define UMM_AL_QURA_FIRST_YEAR G_GINT64_CONSTANT(1300)
@@ -106,10 +106,10 @@ G_STATIC_ASSERT(G_N_ELEMENTS(umm_al_qura_year_offsets) == 302);
 static gboolean
 islamic_is_leap(gint64 year)
 {
-    const gint64 numerator = calendar_plus_i64_add_saturating(
-        calendar_plus_i64_multiply_saturating(11, year), 14);
+    const gint64 numerator = calendar_i64_add_saturating(
+        calendar_i64_multiply_saturating(11, year), 14);
 
-    return calendar_plus_positive_modulo(numerator, 30) < 11;
+    return calendar_positive_modulo(numerator, 30) < 11;
 }
 
 static gint
@@ -130,23 +130,23 @@ islamic_to_jdn(gint64 year,
                gint64 epoch)
 {
     const gint64 month_index = month - 1;
-    const gint64 month_days = calendar_plus_floor_divide(
-        calendar_plus_i64_add_saturating(
-            calendar_plus_i64_multiply_saturating(59, month_index), 1),
+    const gint64 month_days = calendar_floor_divide(
+        calendar_i64_add_saturating(
+            calendar_i64_multiply_saturating(59, month_index), 1),
         2);
-    gint64 result = calendar_plus_i64_subtract_saturating(epoch, 1);
+    gint64 result = calendar_i64_subtract_saturating(epoch, 1);
 
-    result = calendar_plus_i64_add_saturating(result, day);
-    result = calendar_plus_i64_add_saturating(result, month_days);
-    result = calendar_plus_i64_add_saturating(
+    result = calendar_i64_add_saturating(result, day);
+    result = calendar_i64_add_saturating(result, month_days);
+    result = calendar_i64_add_saturating(
         result,
-        calendar_plus_i64_multiply_saturating(
-            354, calendar_plus_i64_subtract_saturating(year, 1)));
-    result = calendar_plus_i64_add_saturating(
+        calendar_i64_multiply_saturating(
+            354, calendar_i64_subtract_saturating(year, 1)));
+    result = calendar_i64_add_saturating(
         result,
-        calendar_plus_floor_divide(
-            calendar_plus_i64_add_saturating(
-                3, calendar_plus_i64_multiply_saturating(11, year)),
+        calendar_floor_divide(
+            calendar_i64_add_saturating(
+                3, calendar_i64_multiply_saturating(11, year)),
             30));
     return result;
 }
@@ -154,12 +154,12 @@ islamic_to_jdn(gint64 year,
 static void
 islamic_from_jdn(gint64 jdn,
                  gint64 epoch,
-                 CalendarPlusCalendarFields *fields)
+                 CalendarCalendarFields *fields)
 {
-    const gint64 year = calendar_plus_floor_divide(
-        calendar_plus_i64_add_saturating(
-            calendar_plus_i64_multiply_saturating(
-                30, calendar_plus_i64_subtract_saturating(jdn, epoch)),
+    const gint64 year = calendar_floor_divide(
+        calendar_i64_add_saturating(
+            calendar_i64_multiply_saturating(
+                30, calendar_i64_subtract_saturating(jdn, epoch)),
             10646),
         10631);
     gint month = 1;
@@ -170,11 +170,11 @@ islamic_from_jdn(gint64 jdn,
         month++;
     }
 
-    *fields = (CalendarPlusCalendarFields){
+    *fields = (CalendarCalendarFields){
         .year = year,
         .month = month,
-        .day = (gint)calendar_plus_i64_add_saturating(
-            calendar_plus_i64_subtract_saturating(
+        .day = (gint)calendar_i64_add_saturating(
+            calendar_i64_subtract_saturating(
                 jdn, islamic_to_jdn(year, month, 1, epoch)),
             1),
         .auxiliary = 0,
@@ -209,25 +209,25 @@ umm_al_qura_to_jdn(gint64 year,
     if (year < UMM_AL_QURA_FIRST_YEAR || year > UMM_AL_QURA_LAST_YEAR ||
         month < 1 || month > 12)
     {
-        return CALENDAR_PLUS_UNIX_EPOCH_JDN;
+        return CALENDAR_UNIX_EPOCH_JDN;
     }
 
-    result = calendar_plus_i64_add_saturating(
+    result = calendar_i64_add_saturating(
         UMM_AL_QURA_FIRST_JDN,
         umm_al_qura_year_offsets[year - UMM_AL_QURA_FIRST_YEAR]);
     for (current_month = 1; current_month < month; current_month++)
     {
-        result = calendar_plus_i64_add_saturating(
+        result = calendar_i64_add_saturating(
             result, umm_al_qura_month_length(year, current_month));
     }
-    return calendar_plus_i64_add_saturating(result, day - 1);
+    return calendar_i64_add_saturating(result, day - 1);
 }
 
 static gboolean
 umm_al_qura_from_jdn(gint64 jdn,
-                     CalendarPlusCalendarFields *fields)
+                     CalendarCalendarFields *fields)
 {
-    const gint64 day_offset = calendar_plus_i64_subtract_saturating(
+    const gint64 day_offset = calendar_i64_subtract_saturating(
         jdn, UMM_AL_QURA_FIRST_JDN);
     gsize low = 0;
     gsize high = G_N_ELEMENTS(umm_al_qura_month_masks);
@@ -252,7 +252,7 @@ umm_al_qura_from_jdn(gint64 jdn,
             high = middle;
     }
     year_index = low;
-    day_of_year = calendar_plus_i64_subtract_saturating(
+    day_of_year = calendar_i64_subtract_saturating(
         day_offset, umm_al_qura_year_offsets[year_index]);
 
     while (month < 12)
@@ -262,12 +262,12 @@ umm_al_qura_from_jdn(gint64 jdn,
 
         if (day_of_year < length)
             break;
-        day_of_year = calendar_plus_i64_subtract_saturating(
+        day_of_year = calendar_i64_subtract_saturating(
             day_of_year, length);
         month++;
     }
 
-    *fields = (CalendarPlusCalendarFields){
+    *fields = (CalendarCalendarFields){
         .year = UMM_AL_QURA_FIRST_YEAR + (gint64)year_index,
         .month = month,
         .day = (gint)day_of_year + 1,
@@ -278,22 +278,22 @@ umm_al_qura_from_jdn(gint64 jdn,
 }
 
 gboolean
-calendar_plus_arithmetic_islamic_fields_from_jdn(
-    CalendarPlusCalendarMode mode,
+calendar_arithmetic_islamic_fields_from_jdn(
+    CalendarCalendarMode mode,
     gint64 jdn,
-    CalendarPlusCalendarFields *fields)
+    CalendarCalendarFields *fields)
 {
     switch (mode)
     {
-        case CALENDAR_PLUS_CALENDAR_MODE_ISLAMIC_CIVIL:
+        case CALENDAR_CALENDAR_MODE_ISLAMIC_CIVIL:
             islamic_from_jdn(
-                jdn, CALENDAR_PLUS_ISLAMIC_CIVIL_EPOCH_JDN, fields);
+                jdn, CALENDAR_ISLAMIC_CIVIL_EPOCH_JDN, fields);
             return TRUE;
-        case CALENDAR_PLUS_CALENDAR_MODE_ISLAMIC_TBLA:
+        case CALENDAR_CALENDAR_MODE_ISLAMIC_TBLA:
             islamic_from_jdn(
-                jdn, CALENDAR_PLUS_ISLAMIC_TBLA_EPOCH_JDN, fields);
+                jdn, CALENDAR_ISLAMIC_TBLA_EPOCH_JDN, fields);
             return TRUE;
-        case CALENDAR_PLUS_CALENDAR_MODE_ISLAMIC_UMM_AL_QURA:
+        case CALENDAR_CALENDAR_MODE_ISLAMIC_UMM_AL_QURA:
             return umm_al_qura_from_jdn(jdn, fields);
         default:
             return FALSE;
@@ -301,39 +301,39 @@ calendar_plus_arithmetic_islamic_fields_from_jdn(
 }
 
 gint64
-calendar_plus_arithmetic_islamic_fields_to_jdn(
-    CalendarPlusCalendarMode mode,
+calendar_arithmetic_islamic_fields_to_jdn(
+    CalendarCalendarMode mode,
     gint64 year,
     gint month,
     gint day)
 {
     switch (mode)
     {
-        case CALENDAR_PLUS_CALENDAR_MODE_ISLAMIC_CIVIL:
+        case CALENDAR_CALENDAR_MODE_ISLAMIC_CIVIL:
             return islamic_to_jdn(
-                year, month, day, CALENDAR_PLUS_ISLAMIC_CIVIL_EPOCH_JDN);
-        case CALENDAR_PLUS_CALENDAR_MODE_ISLAMIC_TBLA:
+                year, month, day, CALENDAR_ISLAMIC_CIVIL_EPOCH_JDN);
+        case CALENDAR_CALENDAR_MODE_ISLAMIC_TBLA:
             return islamic_to_jdn(
-                year, month, day, CALENDAR_PLUS_ISLAMIC_TBLA_EPOCH_JDN);
-        case CALENDAR_PLUS_CALENDAR_MODE_ISLAMIC_UMM_AL_QURA:
+                year, month, day, CALENDAR_ISLAMIC_TBLA_EPOCH_JDN);
+        case CALENDAR_CALENDAR_MODE_ISLAMIC_UMM_AL_QURA:
             return umm_al_qura_to_jdn(year, month, day);
         default:
-            return CALENDAR_PLUS_UNIX_EPOCH_JDN;
+            return CALENDAR_UNIX_EPOCH_JDN;
     }
 }
 
 gint
-calendar_plus_arithmetic_islamic_month_length(
-    CalendarPlusCalendarMode mode,
+calendar_arithmetic_islamic_month_length(
+    CalendarCalendarMode mode,
     gint64 year,
     gint month)
 {
     switch (mode)
     {
-        case CALENDAR_PLUS_CALENDAR_MODE_ISLAMIC_CIVIL:
-        case CALENDAR_PLUS_CALENDAR_MODE_ISLAMIC_TBLA:
+        case CALENDAR_CALENDAR_MODE_ISLAMIC_CIVIL:
+        case CALENDAR_CALENDAR_MODE_ISLAMIC_TBLA:
             return islamic_month_length(year, month);
-        case CALENDAR_PLUS_CALENDAR_MODE_ISLAMIC_UMM_AL_QURA:
+        case CALENDAR_CALENDAR_MODE_ISLAMIC_UMM_AL_QURA:
             return umm_al_qura_month_length(year, month);
         default:
             return 0;
@@ -341,16 +341,16 @@ calendar_plus_arithmetic_islamic_month_length(
 }
 
 gboolean
-calendar_plus_arithmetic_islamic_year_supported(
-    CalendarPlusCalendarMode mode,
+calendar_arithmetic_islamic_year_supported(
+    CalendarCalendarMode mode,
     gint64 year)
 {
     switch (mode)
     {
-        case CALENDAR_PLUS_CALENDAR_MODE_ISLAMIC_CIVIL:
-        case CALENDAR_PLUS_CALENDAR_MODE_ISLAMIC_TBLA:
+        case CALENDAR_CALENDAR_MODE_ISLAMIC_CIVIL:
+        case CALENDAR_CALENDAR_MODE_ISLAMIC_TBLA:
             return TRUE;
-        case CALENDAR_PLUS_CALENDAR_MODE_ISLAMIC_UMM_AL_QURA:
+        case CALENDAR_CALENDAR_MODE_ISLAMIC_UMM_AL_QURA:
             return year >= UMM_AL_QURA_FIRST_YEAR &&
                    year <= UMM_AL_QURA_LAST_YEAR;
         default:

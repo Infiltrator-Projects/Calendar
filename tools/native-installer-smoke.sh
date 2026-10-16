@@ -39,21 +39,21 @@ dpkg --compare-versions "$NATIVE_VERSION" gt "$VERSION"
 dpkg-deb -x "$DEB" "$TMP/native"
 grep -q '^Build mode: local hardware-native PGO-trained ' \
     "$TMP/native/usr/share/doc/calendar/BUILD-INFO"
-test -f "$TMP/native/usr/lib/$MULTIARCH/libcalendar-plus.so.0.0.0"
+test -f "$TMP/native/usr/lib/$MULTIARCH/libcalendar.so.0.0.0"
 test -f \
-    "$TMP/native/usr/lib/$MULTIARCH/girepository-1.0/CalendarPlus-1.0.typelib"
-test -x "$TMP/native/usr/libexec/calendar-plus-about"
-test -f "$TMP/native/usr/share/cinnamon/applets/calendar-plus@the-infiltratr/stylesheet.css"
-test ! -e "$TMP/native/usr/share/cinnamon/applets/calendar-plus@the-infiltratr/settings.py"
+    "$TMP/native/usr/lib/$MULTIARCH/girepository-1.0/Calendar-1.0.typelib"
+test -x "$TMP/native/usr/libexec/calendar-about"
+test -f "$TMP/native/usr/share/cinnamon/applets/calendar@the-infiltratr/stylesheet.css"
+test ! -e "$TMP/native/usr/share/cinnamon/applets/calendar@the-infiltratr/settings.py"
 test ! -e "$TMP/native/usr/share/fonts/truetype/calendar"
 test -f \
-    "$TMP/native/usr/share/locale/en_AU/LC_MESSAGES/calendar-plus@the-infiltratr.mo"
-"$TMP/native/usr/libexec/calendar-plus-about" --print-metadata |
+    "$TMP/native/usr/share/locale/en_AU/LC_MESSAGES/calendar@the-infiltratr.mo"
+"$TMP/native/usr/libexec/calendar-about" --print-metadata |
     grep -qx "version=$VERSION"
-"$TMP/native/usr/libexec/calendar-plus-about" --print-metadata |
+"$TMP/native/usr/libexec/calendar-about" --print-metadata |
     grep -qx "build-profile=native"
 
-CALENDAR_PLUS_EXPECTED_VERSION="$VERSION" \
+CALENDAR_EXPECTED_VERSION="$VERSION" \
 LD_LIBRARY_PATH="$TMP/native/usr/lib/$MULTIARCH" \
 GI_TYPELIB_PATH="$TMP/native/usr/lib/$MULTIARCH/girepository-1.0" \
     gjs "$ROOT/tests/smoke-typelib.js" >/dev/null

@@ -25,12 +25,12 @@
 
 #include <glib/gi18n-lib.h>
 
-#define floor_divide calendar_plus_floor_divide
-#define gregorian_to_jdn calendar_plus_gregorian_to_jdn
-#define jdn_to_gregorian calendar_plus_jdn_to_gregorian
-#define julian_to_jdn calendar_plus_julian_to_jdn
-#define jdn_to_julian calendar_plus_jdn_to_julian
-#define positive_modulo calendar_plus_positive_modulo
+#define floor_divide calendar_floor_divide
+#define gregorian_to_jdn calendar_gregorian_to_jdn
+#define jdn_to_gregorian calendar_jdn_to_gregorian
+#define julian_to_jdn calendar_julian_to_jdn
+#define jdn_to_julian calendar_jdn_to_julian
+#define positive_modulo calendar_positive_modulo
 
 static const gchar *const months[] = {
     "", N_("January"), N_("February"), N_("March"), N_("April"),
@@ -44,15 +44,15 @@ normal_month_length(gint64 year,
                     gboolean gregorian)
 {
     return gregorian ?
-        calendar_plus_gregorian_month_length(year, month) :
-        calendar_plus_julian_month_length(year, month);
+        calendar_gregorian_month_length(year, month) :
+        calendar_julian_month_length(year, month);
 }
 
 static gint64
 swedish_style_start_jdn(void)
 {
     /* Swedish 1700-03-01 coincides with Julian 1700-02-29. */
-    return calendar_plus_i64_subtract_saturating(
+    return calendar_i64_subtract_saturating(
         julian_to_jdn(1700, 3, 1), 1);
 }
 
@@ -71,9 +71,9 @@ gregorian_adoption_jdn(void)
 }
 
 void
-calendar_plus_swedish_fields_from_jdn(
+calendar_swedish_fields_from_jdn(
     gint64 jdn,
-    CalendarPlusCalendarFields *fields)
+    CalendarCalendarFields *fields)
 {
     const gint64 style_start = swedish_style_start_jdn();
     const gint64 style_last = swedish_style_last_jdn();
@@ -92,7 +92,7 @@ calendar_plus_swedish_fields_from_jdn(
     else if (jdn < style_last)
     {
         /* During Swedish style the displayed date is Julian + one day. */
-        jdn_to_julian(calendar_plus_i64_add_saturating(jdn, 1),
+        jdn_to_julian(calendar_i64_add_saturating(jdn, 1),
                       &year, &month, &day);
     }
     else if (jdn == style_last)
@@ -106,7 +106,7 @@ calendar_plus_swedish_fields_from_jdn(
         jdn_to_gregorian(jdn, &year, &month, &day);
     }
 
-    *fields = (CalendarPlusCalendarFields){
+    *fields = (CalendarCalendarFields){
         .year = year,
         .month = month,
         .day = day,
@@ -116,8 +116,8 @@ calendar_plus_swedish_fields_from_jdn(
 }
 
 gint64
-calendar_plus_swedish_fields_to_jdn(
-    const CalendarPlusCalendarFields *fields)
+calendar_swedish_fields_to_jdn(
+    const CalendarCalendarFields *fields)
 {
     g_return_val_if_fail(fields != NULL, gregorian_to_jdn(2000, 1, 1));
 
@@ -132,7 +132,7 @@ calendar_plus_swedish_fields_to_jdn(
     {
         if (fields->year == 1712 && fields->month == 2 && fields->day == 30)
             return swedish_style_last_jdn();
-        return calendar_plus_i64_subtract_saturating(
+        return calendar_i64_subtract_saturating(
             julian_to_jdn(fields->year, fields->month, fields->day), 1);
     }
 
@@ -146,8 +146,8 @@ calendar_plus_swedish_fields_to_jdn(
 }
 
 gint
-calendar_plus_swedish_month_length(
-    const CalendarPlusCalendarFields *fields)
+calendar_swedish_month_length(
+    const CalendarCalendarFields *fields)
 {
     g_return_val_if_fail(fields != NULL, 0);
     g_return_val_if_fail(fields->month >= 1 && fields->month <= 12, 0);
@@ -166,9 +166,9 @@ calendar_plus_swedish_month_length(
 }
 
 gchar *
-calendar_plus_swedish_format(
-    const CalendarPlusCalendarFields *fields,
-    CalendarPlusDatePart part)
+calendar_swedish_format(
+    const CalendarCalendarFields *fields,
+    CalendarDatePart part)
 {
     const gchar *month_name;
 
@@ -177,11 +177,11 @@ calendar_plus_swedish_format(
                          g_strdup(""));
 
     month_name = _(months[fields->month]);
-    if (part == CALENDAR_PLUS_DATE_PART_DAY)
+    if (part == CALENDAR_DATE_PART_DAY)
         return g_strdup_printf("%d", fields->day);
-    if (part == CALENDAR_PLUS_DATE_PART_MONTH)
+    if (part == CALENDAR_DATE_PART_MONTH)
         return g_strdup(month_name);
-    if (part == CALENDAR_PLUS_DATE_PART_YEAR)
+    if (part == CALENDAR_DATE_PART_YEAR)
         return g_strdup_printf("%" G_GINT64_FORMAT, fields->year);
 
     return g_strdup_printf(_("%d %s %lld"),
@@ -191,47 +191,47 @@ calendar_plus_swedish_format(
 }
 
 gint64
-calendar_plus_swedish_month_start(gint64 jdn)
+calendar_swedish_month_start(gint64 jdn)
 {
-    CalendarPlusCalendarFields fields;
+    CalendarCalendarFields fields;
 
-    calendar_plus_swedish_fields_from_jdn(jdn, &fields);
+    calendar_swedish_fields_from_jdn(jdn, &fields);
     fields.day = 1;
     fields.special = FALSE;
-    return calendar_plus_swedish_fields_to_jdn(&fields);
+    return calendar_swedish_fields_to_jdn(&fields);
 }
 
 gint64
-calendar_plus_swedish_add_months(gint64 jdn,
+calendar_swedish_add_months(gint64 jdn,
                                  gint amount)
 {
-    CalendarPlusCalendarFields fields;
+    CalendarCalendarFields fields;
     gint64 serial;
 
-    calendar_plus_swedish_fields_from_jdn(jdn, &fields);
-    serial = calendar_plus_i64_add_saturating(
-        calendar_plus_i64_add_saturating(
-            calendar_plus_i64_multiply_saturating(fields.year, 12),
+    calendar_swedish_fields_from_jdn(jdn, &fields);
+    serial = calendar_i64_add_saturating(
+        calendar_i64_add_saturating(
+            calendar_i64_multiply_saturating(fields.year, 12),
             fields.month - 1),
         amount);
     fields.year = floor_divide(serial, 12);
     fields.month = (gint)positive_modulo(serial, 12) + 1;
-    fields.day = MIN(fields.day, calendar_plus_swedish_month_length(&fields));
+    fields.day = MIN(fields.day, calendar_swedish_month_length(&fields));
     fields.special = fields.year == 1712 &&
                      fields.month == 2 && fields.day == 30;
-    return calendar_plus_swedish_fields_to_jdn(&fields);
+    return calendar_swedish_fields_to_jdn(&fields);
 }
 
 gint64
-calendar_plus_swedish_add_years(gint64 jdn,
+calendar_swedish_add_years(gint64 jdn,
                                 gint amount)
 {
-    CalendarPlusCalendarFields fields;
+    CalendarCalendarFields fields;
 
-    calendar_plus_swedish_fields_from_jdn(jdn, &fields);
-    fields.year = calendar_plus_i64_add_saturating(fields.year, amount);
-    fields.day = MIN(fields.day, calendar_plus_swedish_month_length(&fields));
+    calendar_swedish_fields_from_jdn(jdn, &fields);
+    fields.year = calendar_i64_add_saturating(fields.year, amount);
+    fields.day = MIN(fields.day, calendar_swedish_month_length(&fields));
     fields.special = fields.year == 1712 &&
                      fields.month == 2 && fields.day == 30;
-    return calendar_plus_swedish_fields_to_jdn(&fields);
+    return calendar_swedish_fields_to_jdn(&fields);
 }

@@ -12,7 +12,7 @@ Calendar is a native Cinnamon panel clock and calendar with alternative clock mo
 **Build-tested bases:** Debian 13, Linux Mint 22 and Ubuntu 24.04\
 **Shared foundation:** an exact pinned Libraries release, including canonical theme, typography and structural-metric contracts
 
-Date and clock wording follows the desktop UI language while the selected calendar and clock retain their own rules. Traditional Chinese time renders as `Shēn hour` or `Shēn, first half` in English, and native Chinese forms in Chinese. Roman seasonal daylight clocks retain Roman numerals and native twelfths with translated wording. The panel schedules updates at those native boundaries. Calendar also exposes `calendar_plus_format_date_v1`, a bounded C date-rendering entry point used by Common's optional POSIX bridge; date conversion remains in this native engine.
+Date and clock wording follows the desktop UI language while the selected calendar and clock retain their own rules. Traditional Chinese time renders as `Shēn hour` or `Shēn, first half` in English, and native Chinese forms in Chinese. Roman seasonal daylight clocks retain Roman numerals and native twelfths with translated wording. The panel schedules updates at those native boundaries. Calendar also exposes `calendar_format_date_v1`, a bounded C date-rendering entry point used by Common's optional POSIX bridge; date conversion remains in this native engine.
 
 Chinese and Korean Dangi dates/year headings use native cyclic year names, such as `bing-wu`, `丙午` or `병오`, without adding a Gregorian reference year or a bare cycle counter. Edo clocks retain Japanese bell numerals with localized branch names and wording; explicit 12-hour clocks use locale-specific day-period markers and ordering. The same date output is supplied to Files and System Settings.
 
@@ -28,7 +28,7 @@ The same principle applies across the wider software family: study what is known
 
 ## System temporal authority
 
-Calendar does not own temporal presentation preferences. When Infiltrator System Settings is installed, its valid shared policy is the richer authority for clock system, calendar system, seconds and geographic location, and Calendar watches that pinned Common policy for live changes. When System Settings is not installed, Calendar deliberately ignores any stale policy file left in the user's profile and behaves as a native Mint replacement: Cinnamon/locale settings remain authoritative for conventional 12/24-hour time, date visibility and presentation, seconds, first day of week and timezone; the stock Gregorian month view is used and no geographic extension is assumed. Calendar's own settings contain only Calendar-specific behaviour such as appearance, events, week numbers and keyboard shortcuts.
+Calendar does not own temporal presentation preferences. When System Settings is installed, its valid shared policy is the richer authority for clock system, calendar system, seconds and geographic location, and Calendar watches that pinned Common policy for live changes. When System Settings is not installed, Calendar deliberately ignores any stale policy file left in the user's profile and behaves as a native Mint replacement: Cinnamon/locale settings remain authoritative for conventional 12/24-hour time, date visibility and presentation, seconds, first day of week and timezone; the stock Gregorian month view is used and no geographic extension is assumed. Calendar's own settings contain only Calendar-specific behaviour such as appearance, events, week numbers and keyboard shortcuts.
 
 ## Capabilities
 
@@ -97,7 +97,7 @@ src/
 
 Calendar-specific chronology, continuation and astronomy policy remains local. Common owns only genuinely generic mechanisms. Cinnamon owns desktop integration. Fixed-rule calendar arithmetic is now Calendar-owned; ICU/CLDR remains authoritative only for the remaining lunisolar/astronomical providers and locale-formatting data Calendar still explicitly delegates.
 
-The installed `libcalendar-plus.so.0` ABI and established `CalendarPlus` compatibility identifiers remain stable runtime contracts even though the visible product is **Calendar** and the Debian package is `calendar`.
+The installed `libcalendar.so.0` ABI and established `Calendar` compatibility identifiers remain stable runtime contracts even though the visible product is **Calendar** and the Debian package is `calendar`.
 
 Detailed representation, event ownership, failure, security and release contracts are maintained in [Architecture](docs/ARCHITECTURE.md) and [Portability](docs/PORTABILITY.md).
 
@@ -163,7 +163,7 @@ The `.run` performs a two-pass local build. Pass 1 instruments Calendar and the 
 
 After installation, add **Calendar** from **System Settings → Applets**.
 
-The previous `calendar-plus` and `cinnamon-calendar` Debian names are migration identities only. The central Infiltrator repository supplies transitional packages so installed systems move to `calendar` without losing the application.
+The previous `calendar` and `cinnamon-calendar` Debian names are migration identities only. The central Infiltrator repository supplies transitional packages so installed systems move to `calendar` without losing the application.
 
 GitHub supplies the standard source ZIP and tarball for each immutable release tag, so the project does not upload a redundant source archive.
 

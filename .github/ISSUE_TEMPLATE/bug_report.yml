@@ -64,7 +64,7 @@ body:
     id: configuration
     attributes:
       label: Relevant configuration
-      description: Include relevant Calendar-specific settings and, for clock/date issues, the temporal choices selected in Infiltrator System Settings. Do not publish precise coordinates unless they are necessary and you are comfortable doing so.
+      description: Include relevant Calendar-specific settings and, for clock/date issues, the temporal choices selected in System Settings. Do not publish precise coordinates unless they are necessary and you are comfortable doing so.
 
   - type: textarea
     id: problem

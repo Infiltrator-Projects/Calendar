@@ -12,7 +12,7 @@
 const Gio = imports.gi.Gio;
 const Signals = imports.signals;
 
-const APPLET_UUID = "calendar-plus@the-infiltratr";
+const APPLET_UUID = "calendar@the-infiltratr";
 const LOCALTIME_PATH = "/etc/localtime";
 const ETC_PATH = "/etc";
 

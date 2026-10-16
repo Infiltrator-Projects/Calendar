@@ -11,40 +11,40 @@
  * Generated from Libraries. Do not hand-edit typography values here.
  * Calendar deliberately owns only Cinnamon selectors/widget mechanics.
  */
-.calendar-plus-applet,
-.calendar-plus-applet *,
-.calendar-plus-popup,
-.calendar-plus-popup * {
+.calendar-applet,
+.calendar-applet *,
+.calendar-popup,
+.calendar-popup * {
     font-family: "MB Corpo S Title WEB";
     font-weight: 400;
 }
 
-.calendar-plus-panel-clock {
+.calendar-panel-clock {
     font-family: "MB Corpo S Title WEB";
     font-weight: 400;
     font-size: 1.08em;
     font-feature-settings: "tnum" 1;
 }
 
-.calendar-plus-popup .calendar-today-day-label,
-.calendar-plus-popup .calendar-day-heading,
-.calendar-plus-popup .calendar-events-date-label,
-.calendar-plus-popup .calendar-events-no-events-label {
+.calendar-popup .calendar-today-day-label,
+.calendar-popup .calendar-day-heading,
+.calendar-popup .calendar-events-date-label,
+.calendar-popup .calendar-events-no-events-label {
     font-family: "MB Corpo S Title WEB";
     font-weight: 700;
 }
 
-.calendar-plus-popup .calendar-month-label {
+.calendar-popup .calendar-month-label {
     font-family: "MB Corpo A Title Cond WEB";
     font-weight: 400;
     font-size: 27px;
 }
 
-.calendar-plus-popup .calendar-events-date-label {
+.calendar-popup .calendar-events-date-label {
     font-size: 16px;
 }
 
-.calendar-plus-popup .calendar-day-heading {
+.calendar-popup .calendar-day-heading {
     font-size: 10px;
 }
 /* END GENERATED COMMON TYPOGRAPHY TOKENS */
@@ -54,34 +54,34 @@
  * Generated from Libraries. Calendar keeps selectors local while
  * Common owns product-family structural rhythm and corner geometry.
  */
-.calendar-plus-popup {
+.calendar-popup {
     border-radius: 18px;
 }
 
-.calendar-plus-popup .calendar-main-box {
+.calendar-popup .calendar-main-box {
     spacing: 18px;
 }
 
-.calendar-plus-popup .calendar {
+.calendar-popup .calendar {
     border-radius: 12px;
 }
 
-.calendar-plus-popup .calendar-events-main-box {
+.calendar-popup .calendar-events-main-box {
     border-radius: 12px;
     spacing: 10px;
 }
 
-.calendar-plus-popup .calendar-today-home-button,
-.calendar-plus-popup .calendar-today-home-button-enabled {
+.calendar-popup .calendar-today-home-button,
+.calendar-popup .calendar-today-home-button-enabled {
     min-height: 30px;
     border-radius: 10px;
 }
 
-.calendar-plus-popup .calendar-day-base {
+.calendar-popup .calendar-day-base {
     border-radius: 6px;
 }
 
-.calendar-plus-popup .popup-menu-item {
+.calendar-popup .popup-menu-item {
     min-height: 30px;
     border-radius: 6px;
 }
@@ -100,112 +100,112 @@
  * The pinned Common design contract carries the complete Linux MBLink Night reference roles.
  */
 
-.calendar-plus-popup.calendar-plus-theme-night,
-.calendar-plus-popup.calendar-plus-theme-night .calendar-main-box {
+.calendar-popup.calendar-theme-night,
+.calendar-popup.calendar-theme-night .calendar-main-box {
     background-color: #050608;
     color: #E8ECEF;
 }
 
-.calendar-plus-popup.calendar-plus-theme-night .calendar,
-.calendar-plus-popup.calendar-plus-theme-night .calendar-events-main-box {
+.calendar-popup.calendar-theme-night .calendar,
+.calendar-popup.calendar-theme-night .calendar-events-main-box {
     background-color: #171B20;
     color: #E8ECEF;
     border-color: #353A40;
 }
 
-.calendar-plus-popup.calendar-plus-theme-night .calendar-today-home-button,
-.calendar-plus-popup.calendar-plus-theme-night .calendar-today-home-button-enabled {
+.calendar-popup.calendar-theme-night .calendar-today-home-button,
+.calendar-popup.calendar-theme-night .calendar-today-home-button-enabled {
     background-color: #0D1014;
     color: #E7EBEE;
     border-color: #3B4147;
 }
 
-.calendar-plus-popup.calendar-plus-theme-night .calendar-month-label,
-.calendar-plus-popup.calendar-plus-theme-night .calendar-events-date-label,
-.calendar-plus-popup.calendar-plus-theme-night .calendar-events-no-events-label {
+.calendar-popup.calendar-theme-night .calendar-month-label,
+.calendar-popup.calendar-theme-night .calendar-events-date-label,
+.calendar-popup.calendar-theme-night .calendar-events-no-events-label {
     color: #E7EBEE;
 }
 
-.calendar-plus-popup.calendar-plus-theme-night .calendar-day-heading {
+.calendar-popup.calendar-theme-night .calendar-day-heading {
     color: #98A1A9;
 }
 
-.calendar-plus-popup.calendar-plus-theme-night .calendar-day-base {
+.calendar-popup.calendar-theme-night .calendar-day-base {
     color: #E8ECEF;
 }
 
-.calendar-plus-popup.calendar-plus-theme-night .calendar-day-base:hover,
-.calendar-plus-popup.calendar-plus-theme-night .calendar-today-home-button-enabled:hover,
-.calendar-plus-popup.calendar-plus-theme-night .popup-menu-item:hover {
+.calendar-popup.calendar-theme-night .calendar-day-base:hover,
+.calendar-popup.calendar-theme-night .calendar-today-home-button-enabled:hover,
+.calendar-popup.calendar-theme-night .popup-menu-item:hover {
     background-color: #171B20;
 }
 
-.calendar-plus-popup.calendar-plus-theme-night .calendar-day-base.calendar-day-selected,
-.calendar-plus-popup.calendar-plus-theme-night .calendar-day-base.calendar-today {
+.calendar-popup.calendar-theme-night .calendar-day-base.calendar-day-selected,
+.calendar-popup.calendar-theme-night .calendar-day-base.calendar-today {
     background-color: #00ADEF;
     color: #031018;
 }
 
-.calendar-plus-popup.calendar-plus-theme-night .popup-menu-item {
+.calendar-popup.calendar-theme-night .popup-menu-item {
     color: #E8ECEF;
 }
 
-.calendar-plus-popup.calendar-plus-theme-night .popup-separator-menu-item {
+.calendar-popup.calendar-theme-night .popup-separator-menu-item {
     color: #353A40;
 }
 
 
-.calendar-plus-popup.calendar-plus-theme-day,
-.calendar-plus-popup.calendar-plus-theme-day .calendar-main-box {
+.calendar-popup.calendar-theme-day,
+.calendar-popup.calendar-theme-day .calendar-main-box {
     background-color: #FFFFFF;
     color: #20252B;
 }
 
-.calendar-plus-popup.calendar-plus-theme-day .calendar,
-.calendar-plus-popup.calendar-plus-theme-day .calendar-events-main-box {
+.calendar-popup.calendar-theme-day .calendar,
+.calendar-popup.calendar-theme-day .calendar-events-main-box {
     background-color: #F8F9FA;
     color: #20252B;
     border-color: #C7CDD3;
 }
 
-.calendar-plus-popup.calendar-plus-theme-day .calendar-today-home-button,
-.calendar-plus-popup.calendar-plus-theme-day .calendar-today-home-button-enabled {
+.calendar-popup.calendar-theme-day .calendar-today-home-button,
+.calendar-popup.calendar-theme-day .calendar-today-home-button-enabled {
     background-color: #ECEFF2;
     color: #111418;
     border-color: #C7CDD3;
 }
 
-.calendar-plus-popup.calendar-plus-theme-day .calendar-month-label,
-.calendar-plus-popup.calendar-plus-theme-day .calendar-events-date-label,
-.calendar-plus-popup.calendar-plus-theme-day .calendar-events-no-events-label {
+.calendar-popup.calendar-theme-day .calendar-month-label,
+.calendar-popup.calendar-theme-day .calendar-events-date-label,
+.calendar-popup.calendar-theme-day .calendar-events-no-events-label {
     color: #111418;
 }
 
-.calendar-plus-popup.calendar-plus-theme-day .calendar-day-heading {
+.calendar-popup.calendar-theme-day .calendar-day-heading {
     color: #59636C;
 }
 
-.calendar-plus-popup.calendar-plus-theme-day .calendar-day-base {
+.calendar-popup.calendar-theme-day .calendar-day-base {
     color: #20252B;
 }
 
-.calendar-plus-popup.calendar-plus-theme-day .calendar-day-base:hover,
-.calendar-plus-popup.calendar-plus-theme-day .calendar-today-home-button-enabled:hover,
-.calendar-plus-popup.calendar-plus-theme-day .popup-menu-item:hover {
+.calendar-popup.calendar-theme-day .calendar-day-base:hover,
+.calendar-popup.calendar-theme-day .calendar-today-home-button-enabled:hover,
+.calendar-popup.calendar-theme-day .popup-menu-item:hover {
     background-color: #F1F3F5;
 }
 
-.calendar-plus-popup.calendar-plus-theme-day .calendar-day-base.calendar-day-selected,
-.calendar-plus-popup.calendar-plus-theme-day .calendar-day-base.calendar-today {
+.calendar-popup.calendar-theme-day .calendar-day-base.calendar-day-selected,
+.calendar-popup.calendar-theme-day .calendar-day-base.calendar-today {
     background-color: #00ADEF;
     color: #031018;
 }
 
-.calendar-plus-popup.calendar-plus-theme-day .popup-menu-item {
+.calendar-popup.calendar-theme-day .popup-menu-item {
     color: #20252B;
 }
 
-.calendar-plus-popup.calendar-plus-theme-day .popup-separator-menu-item {
+.calendar-popup.calendar-theme-day .popup-separator-menu-item {
     color: #C7CDD3;
 }
 

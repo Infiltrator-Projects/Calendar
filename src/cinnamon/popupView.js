@@ -8,12 +8,12 @@ const St = imports.gi.St;
 const PopupMenu = imports.ui.popupMenu;
 const Gettext = imports.gettext;
 
-const UUID = "calendar-plus@the-infiltratr";
+const UUID = "calendar@the-infiltratr";
 Gettext.bindtextdomain(UUID, "/usr/share/locale");
-const CalendarPlusGettext = Gettext.domain(UUID);
+const CalendarGettext = Gettext.domain(UUID);
 
 function CP_(text) {
-    return CalendarPlusGettext.gettext(text);
+    return CalendarGettext.gettext(text);
 }
 
 var PopupView = class PopupView {

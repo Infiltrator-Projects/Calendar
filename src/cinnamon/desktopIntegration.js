@@ -14,7 +14,7 @@ const Gio = imports.gi.Gio;
 const Main = imports.ui.main;
 const Util = imports.misc.util;
 
-const UUID = "calendar-plus@the-infiltratr";
+const UUID = "calendar@the-infiltratr";
 
 var DesktopIntegration = class DesktopIntegration {
     constructor(applet, SignalBag, callbacks = {}) {

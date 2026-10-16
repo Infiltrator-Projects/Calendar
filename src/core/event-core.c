@@ -37,7 +37,7 @@ typedef struct
     GSequenceIter *end_iter;
 } EventRecord;
 
-struct _CalendarPlusEventIndex
+struct _CalendarEventIndex
 {
     /*
      * The hash key is the EventRecord-owned id pointer; the table therefore
@@ -71,7 +71,7 @@ event_record_free(EventRecord *event)
 }
 
 static void
-touch_index(CalendarPlusEventIndex *index)
+touch_index(CalendarEventIndex *index)
 {
     const gint64 now = g_get_monotonic_time();
 
@@ -93,7 +93,7 @@ local_day_start_for_civil(gint year,
     gint minute_of_day;
 
     if (result == NULL ||
-        !calendar_plus_gregorian_date_is_valid(year, month, day))
+        !calendar_gregorian_date_is_valid(year, month, day))
     {
         return FALSE;
     }
@@ -150,52 +150,52 @@ local_day_start(gint64 unix_time)
 }
 
 guint
-calendar_plus_event_day_relation(gint64 start_day_unix,
+calendar_event_day_relation(gint64 start_day_unix,
                                  gint64 end_day_unix,
                                  gint64 comparison_unix)
 {
     const gint64 start_day = local_day_start(start_day_unix);
     const gint64 end_day = local_day_start(end_day_unix);
     const gint64 comparison_day = local_day_start(comparison_unix);
-    guint relation = CALENDAR_PLUS_EVENT_DAY_RELATION_NONE;
+    guint relation = CALENDAR_EVENT_DAY_RELATION_NONE;
 
     if (start_day == comparison_day)
-        relation |= CALENDAR_PLUS_EVENT_DAY_RELATION_STARTS_ON_DAY;
+        relation |= CALENDAR_EVENT_DAY_RELATION_STARTS_ON_DAY;
     if (end_day == comparison_day)
-        relation |= CALENDAR_PLUS_EVENT_DAY_RELATION_ENDS_ON_DAY;
+        relation |= CALENDAR_EVENT_DAY_RELATION_ENDS_ON_DAY;
     if (start_day < comparison_day)
-        relation |= CALENDAR_PLUS_EVENT_DAY_RELATION_STARTED_BEFORE_DAY;
+        relation |= CALENDAR_EVENT_DAY_RELATION_STARTED_BEFORE_DAY;
     if (end_day < comparison_day)
-        relation |= CALENDAR_PLUS_EVENT_DAY_RELATION_ENDED_BEFORE_DAY;
+        relation |= CALENDAR_EVENT_DAY_RELATION_ENDED_BEFORE_DAY;
     if (end_day > comparison_day)
-        relation |= CALENDAR_PLUS_EVENT_DAY_RELATION_ENDS_AFTER_DAY;
+        relation |= CALENDAR_EVENT_DAY_RELATION_ENDS_AFTER_DAY;
     if (start_day > comparison_day)
-        relation |= CALENDAR_PLUS_EVENT_DAY_RELATION_STARTED_AFTER_DAY;
+        relation |= CALENDAR_EVENT_DAY_RELATION_STARTED_AFTER_DAY;
 
     return relation;
 }
 
-CalendarPlusEventState
-calendar_plus_event_state(gint64 start_unix,
+CalendarEventState
+calendar_event_state(gint64 start_unix,
                           gint64 end_unix,
                           gint64 now_unix)
 {
     if (end_unix < start_unix)
-        return CALENDAR_PLUS_EVENT_STATE_INVALID;
+        return CALENDAR_EVENT_STATE_INVALID;
     if (end_unix < now_unix)
-        return CALENDAR_PLUS_EVENT_STATE_PAST;
+        return CALENDAR_EVENT_STATE_PAST;
     if (start_unix > now_unix)
-        return CALENDAR_PLUS_EVENT_STATE_FUTURE;
-    return CALENDAR_PLUS_EVENT_STATE_PRESENT;
+        return CALENDAR_EVENT_STATE_FUTURE;
+    return CALENDAR_EVENT_STATE_PRESENT;
 }
 
-CalendarPlusEventTiming
-calendar_plus_event_calculate_timing(gint64 start_unix,
+CalendarEventTiming
+calendar_event_calculate_timing(gint64 start_unix,
                                      gint64 end_unix,
                                      gint64 now_unix)
 {
-    const CalendarPlusEventTiming result = {
-        calendar_plus_event_state(start_unix, end_unix, now_unix),
+    const CalendarEventTiming result = {
+        calendar_event_state(start_unix, end_unix, now_unix),
         infiltratr_i64_subtract_saturating(start_unix, now_unix),
         infiltratr_i64_subtract_saturating(end_unix, now_unix)
     };
@@ -246,18 +246,18 @@ color_is_valid(const gchar *color)
 }
 
 gboolean
-calendar_plus_event_input_is_valid(const CalendarPlusEventInput *input)
+calendar_event_input_is_valid(const CalendarEventInput *input)
 {
     return input != NULL &&
            text_is_valid(input->id,
-                         CALENDAR_PLUS_EVENT_MAX_ID_BYTES,
+                         CALENDAR_EVENT_MAX_ID_BYTES,
                          FALSE) &&
            text_is_valid(input->color,
-                         CALENDAR_PLUS_EVENT_MAX_COLOR_BYTES,
+                         CALENDAR_EVENT_MAX_COLOR_BYTES,
                          FALSE) &&
            color_is_valid(input->color) &&
            text_is_valid(input->summary,
-                         CALENDAR_PLUS_EVENT_MAX_SUMMARY_BYTES,
+                         CALENDAR_EVENT_MAX_SUMMARY_BYTES,
                          TRUE) &&
            unix_time_is_local_datetime(input->start_unix) &&
            unix_time_is_local_datetime(input->end_unix) &&
@@ -285,11 +285,11 @@ event_end_day_unix(const EventRecord *event)
 }
 
 static EventRecord *
-event_record_from_input(const CalendarPlusEventInput *input)
+event_record_from_input(const CalendarEventInput *input)
 {
     EventRecord *event;
 
-    if (!calendar_plus_event_input_is_valid(input))
+    if (!calendar_event_input_is_valid(input))
         return NULL;
 
     event = g_new0(EventRecord, 1);
@@ -345,7 +345,7 @@ compare_end_day(gconstpointer left,
 }
 
 static void
-index_record(CalendarPlusEventIndex *index,
+index_record(CalendarEventIndex *index,
              EventRecord *event)
 {
     event->start_iter = g_sequence_insert_sorted(index->events_by_start,
@@ -374,7 +374,7 @@ unindex_record(EventRecord *event)
 }
 
 static void
-rebuild_temporal_indexes(CalendarPlusEventIndex *index)
+rebuild_temporal_indexes(CalendarEventIndex *index)
 {
     GHashTableIter iter;
     gpointer value;
@@ -395,10 +395,10 @@ rebuild_temporal_indexes(CalendarPlusEventIndex *index)
     }
 }
 
-CalendarPlusEventIndex *
-calendar_plus_event_index_new(void)
+CalendarEventIndex *
+calendar_event_index_new(void)
 {
-    CalendarPlusEventIndex *index = g_new0(CalendarPlusEventIndex, 1);
+    CalendarEventIndex *index = g_new0(CalendarEventIndex, 1);
 
     /*
      * Keys alias EventRecord.id, so no key destroy function is installed.
@@ -416,7 +416,7 @@ calendar_plus_event_index_new(void)
 }
 
 void
-calendar_plus_event_index_free(CalendarPlusEventIndex *index)
+calendar_event_index_free(CalendarEventIndex *index)
 {
     if (index == NULL)
         return;
@@ -431,7 +431,7 @@ calendar_plus_event_index_free(CalendarPlusEventIndex *index)
 }
 
 gboolean
-calendar_plus_event_index_remove(CalendarPlusEventIndex *index,
+calendar_event_index_remove(CalendarEventIndex *index,
                                  const gchar *id)
 {
     EventRecord *event;
@@ -451,8 +451,8 @@ calendar_plus_event_index_remove(CalendarPlusEventIndex *index,
 }
 
 gboolean
-calendar_plus_event_index_upsert(CalendarPlusEventIndex *index,
-                                 const CalendarPlusEventInput *input)
+calendar_event_index_upsert(CalendarEventIndex *index,
+                                 const CalendarEventInput *input)
 {
     EventRecord *existing;
     EventRecord *replacement;
@@ -525,7 +525,7 @@ calendar_plus_event_index_upsert(CalendarPlusEventIndex *index,
 }
 
 gboolean
-calendar_plus_event_index_cull(CalendarPlusEventIndex *index,
+calendar_event_index_cull(CalendarEventIndex *index,
                                gint64 minimum_update_timestamp)
 {
     g_autoptr(GPtrArray) stale_ids =
@@ -555,13 +555,13 @@ calendar_plus_event_index_cull(CalendarPlusEventIndex *index,
     {
         const gchar *id = g_ptr_array_index(stale_ids, item);
 
-        calendar_plus_event_index_remove(index, id);
+        calendar_event_index_remove(index, id);
     }
     return stale_ids->len > 0;
 }
 
 void
-calendar_plus_event_index_clear(CalendarPlusEventIndex *index)
+calendar_event_index_clear(CalendarEventIndex *index)
 {
     gboolean changed;
 
@@ -581,7 +581,7 @@ calendar_plus_event_index_clear(CalendarPlusEventIndex *index)
 }
 
 gboolean
-calendar_plus_event_index_refresh_timezone(CalendarPlusEventIndex *index)
+calendar_event_index_refresh_timezone(CalendarEventIndex *index)
 {
     GHashTableIter iter;
     gpointer value;
@@ -645,7 +645,7 @@ compare_records(gconstpointer left,
 }
 
 static GSequenceIter *
-start_day_upper_bound(CalendarPlusEventIndex *index,
+start_day_upper_bound(CalendarEventIndex *index,
                       gint64 day)
 {
     EventRecord probe = { .start_day_unix = day };
@@ -666,7 +666,7 @@ start_day_upper_bound(CalendarPlusEventIndex *index,
 }
 
 static GSequenceIter *
-end_day_lower_bound(CalendarPlusEventIndex *index,
+end_day_lower_bound(CalendarEventIndex *index,
                     gint64 day)
 {
     EventRecord probe = { .end_day_unix = day };
@@ -688,7 +688,7 @@ end_day_lower_bound(CalendarPlusEventIndex *index,
 }
 
 static void
-append_overlapping_candidates(CalendarPlusEventIndex *index,
+append_overlapping_candidates(CalendarEventIndex *index,
                               gint64 first_day,
                               gint64 last_day,
                               GPtrArray *result)
@@ -784,7 +784,7 @@ sort_records_for_day(GPtrArray *records,
 }
 
 static GPtrArray *
-ordered_records(CalendarPlusEventIndex *index,
+ordered_records(CalendarEventIndex *index,
                 gint64 local_day_unix,
                 gint64 now_unix)
 {
@@ -806,7 +806,7 @@ ordered_records(CalendarPlusEventIndex *index,
 }
 
 gchar **
-calendar_plus_event_index_colors(CalendarPlusEventIndex *index,
+calendar_event_index_colors(CalendarEventIndex *index,
                                  gint64 local_day_unix,
                                  gint64 now_unix)
 {
@@ -875,18 +875,18 @@ build_local_day_range(gint64 first_local_day_unix,
     first_year = g_date_time_get_year(first);
     first_month = g_date_time_get_month(first);
     first_day = g_date_time_get_day_of_month(first);
-    first_jdn = calendar_plus_gregorian_to_jdn(
+    first_jdn = calendar_gregorian_to_jdn(
         first_year, first_month, first_day);
 
     for (item = 0; item < day_count; item++)
     {
-        const gint64 jdn = calendar_plus_i64_add_saturating(
+        const gint64 jdn = calendar_i64_add_saturating(
             first_jdn, (gint64)item);
         gint year;
         gint month;
         gint day;
 
-        calendar_plus_jdn_to_gregorian(jdn, &year, &month, &day);
+        calendar_jdn_to_gregorian(jdn, &year, &month, &day);
         day_valid[item] =
             local_day_start_for_civil(year, month, day, &days[item]);
     }
@@ -918,15 +918,15 @@ copy_ordered_bucket_colors(GPtrArray *bucket,
     return colors;
 }
 
-CalendarPlusEventColorRange *
-calendar_plus_event_index_color_range(CalendarPlusEventIndex *index,
+CalendarEventColorRange *
+calendar_event_index_color_range(CalendarEventIndex *index,
                                       gint64 first_local_day_unix,
                                       gsize day_count,
                                       gint64 now_unix,
                                       gsize maximum_colors_per_day)
 {
     enum { MAX_RANGE_DAYS = 366 };
-    CalendarPlusEventColorRange *range;
+    CalendarEventColorRange *range;
     g_autofree gint64 *days = NULL;
     g_autofree gboolean *day_valid = NULL;
     g_autofree gint64 *valid_days = NULL;
@@ -1005,7 +1005,7 @@ calendar_plus_event_index_color_range(CalendarPlusEventIndex *index,
     g_clear_pointer(&valid_days, g_free);
     g_clear_pointer(&valid_indexes, g_free);
 
-    range = g_new0(CalendarPlusEventColorRange, 1);
+    range = g_new0(CalendarEventColorRange, 1);
     range->day_count = day_count;
     range->colors = g_new0(gchar **, day_count);
     for (item = 0; item < day_count; item++)
@@ -1024,7 +1024,7 @@ calendar_plus_event_index_color_range(CalendarPlusEventIndex *index,
 }
 
 void
-calendar_plus_event_color_range_free(CalendarPlusEventColorRange *range)
+calendar_event_color_range_free(CalendarEventColorRange *range)
 {
     gsize item;
 
@@ -1036,13 +1036,13 @@ calendar_plus_event_color_range_free(CalendarPlusEventColorRange *range)
     g_free(range);
 }
 
-CalendarPlusEventSnapshot *
-calendar_plus_event_index_snapshot(CalendarPlusEventIndex *index,
+CalendarEventSnapshot *
+calendar_event_index_snapshot(CalendarEventIndex *index,
                                    gint64 local_day_unix,
                                    gint64 now_unix)
 {
     g_autoptr(GPtrArray) ordered = NULL;
-    CalendarPlusEventSnapshot *snapshot;
+    CalendarEventSnapshot *snapshot;
     guint item;
 
     if (index == NULL)
@@ -1053,15 +1053,15 @@ calendar_plus_event_index_snapshot(CalendarPlusEventIndex *index,
      * Snapshots deep-copy transport-facing text so the caller can retain a
      * view while the mutable index accepts the next CalendarServer burst.
      */
-    snapshot = g_new0(CalendarPlusEventSnapshot, 1);
+    snapshot = g_new0(CalendarEventSnapshot, 1);
     snapshot->revision = index->revision;
     snapshot->length = ordered->len;
-    snapshot->events = g_new0(CalendarPlusEvent, snapshot->length);
+    snapshot->events = g_new0(CalendarEvent, snapshot->length);
 
     for (item = 0; item < ordered->len; item++)
     {
         const EventRecord *source = g_ptr_array_index(ordered, item);
-        CalendarPlusEvent *target = &snapshot->events[item];
+        CalendarEvent *target = &snapshot->events[item];
 
         target->id = g_strdup(source->id);
         target->color = g_strdup(source->color);
@@ -1079,7 +1079,7 @@ calendar_plus_event_index_snapshot(CalendarPlusEventIndex *index,
 }
 
 void
-calendar_plus_event_snapshot_free(CalendarPlusEventSnapshot *snapshot)
+calendar_event_snapshot_free(CalendarEventSnapshot *snapshot)
 {
     gsize item;
 

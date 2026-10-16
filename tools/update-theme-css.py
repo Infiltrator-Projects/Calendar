@@ -50,40 +50,40 @@ def render_typography(data: dict) -> str:
  * Generated from Libraries. Do not hand-edit typography values here.
  * Calendar deliberately owns only Cinnamon selectors/widget mechanics.
  */
-.calendar-plus-applet,
-.calendar-plus-applet *,
-.calendar-plus-popup,
-.calendar-plus-popup * {{
+.calendar-applet,
+.calendar-applet *,
+.calendar-popup,
+.calendar-popup * {{
     font-family: "{ui}";
     font-weight: {regular};
 }}
 
-.calendar-plus-panel-clock {{
+.calendar-panel-clock {{
     font-family: "{ui}";
     font-weight: {regular};
     font-size: 1.08em;
     font-feature-settings: "tnum" 1;
 }}
 
-.calendar-plus-popup .calendar-today-day-label,
-.calendar-plus-popup .calendar-day-heading,
-.calendar-plus-popup .calendar-events-date-label,
-.calendar-plus-popup .calendar-events-no-events-label {{
+.calendar-popup .calendar-today-day-label,
+.calendar-popup .calendar-day-heading,
+.calendar-popup .calendar-events-date-label,
+.calendar-popup .calendar-events-no-events-label {{
     font-family: "{ui}";
     font-weight: {bold};
 }}
 
-.calendar-plus-popup .calendar-month-label {{
+.calendar-popup .calendar-month-label {{
     font-family: "{brand}";
     font-weight: {brand_weight};
     font-size: 27px;
 }}
 
-.calendar-plus-popup .calendar-events-date-label {{
+.calendar-popup .calendar-events-date-label {{
     font-size: 16px;
 }}
 
-.calendar-plus-popup .calendar-day-heading {{
+.calendar-popup .calendar-day-heading {{
     font-size: 10px;
 }}
 {TYPOGRAPHY_END}"""
@@ -96,34 +96,34 @@ def render_metrics(data: dict) -> str:
  * Generated from Libraries. Calendar keeps selectors local while
  * Common owns product-family structural rhythm and corner geometry.
  */
-.calendar-plus-popup {{
+.calendar-popup {{
     border-radius: {metric_data["panel_radius"]}px;
 }}
 
-.calendar-plus-popup .calendar-main-box {{
+.calendar-popup .calendar-main-box {{
     spacing: {metric_data["section_spacing"]}px;
 }}
 
-.calendar-plus-popup .calendar {{
+.calendar-popup .calendar {{
     border-radius: {metric_data["card_radius"]}px;
 }}
 
-.calendar-plus-popup .calendar-events-main-box {{
+.calendar-popup .calendar-events-main-box {{
     border-radius: {metric_data["card_radius"]}px;
     spacing: {metric_data["control_spacing"]}px;
 }}
 
-.calendar-plus-popup .calendar-today-home-button,
-.calendar-plus-popup .calendar-today-home-button-enabled {{
+.calendar-popup .calendar-today-home-button,
+.calendar-popup .calendar-today-home-button-enabled {{
     min-height: 30px;
     border-radius: {metric_data["control_radius"]}px;
 }}
 
-.calendar-plus-popup .calendar-day-base {{
+.calendar-popup .calendar-day-base {{
     border-radius: {metric_data["small_radius"]}px;
 }}
 
-.calendar-plus-popup .popup-menu-item {{
+.calendar-popup .popup-menu-item {{
     min-height: 30px;
     border-radius: {metric_data["small_radius"]}px;
 }}
@@ -134,7 +134,7 @@ def render_theme(data: dict) -> str:
     night = palette(data, "night")
 
     def mode_css(mode: str, p: dict[str, str]) -> str:
-        root = f".calendar-plus-popup.calendar-plus-theme-{mode}"
+        root = f".calendar-popup.calendar-theme-{mode}"
         return f"""
 {root},
 {root} .calendar-main-box {{

@@ -20,12 +20,12 @@ import subprocess
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
-MAP = ROOT / "src/abi/calendar-plus.map"
+MAP = ROOT / "src/abi/calendar.map"
 BASELINE = ROOT / "tests/abi-baseline.txt"
-NODE_RE = re.compile(r"^(CALENDAR_PLUS_\d+\.\d+)\s*\{")
-SYMBOL_RE = re.compile(r"^(calendar_plus_[A-Za-z0-9_]+);$")
+NODE_RE = re.compile(r"^(CALENDAR_\d+\.\d+)\s*\{")
+SYMBOL_RE = re.compile(r"^(calendar_[A-Za-z0-9_]+);$")
 DYNAMIC_RE = re.compile(
-    r"\b(calendar_plus_[A-Za-z0-9_]+)@@(CALENDAR_PLUS_\d+\.\d+)\b"
+    r"\b(calendar_[A-Za-z0-9_]+)@@(CALENDAR_\d+\.\d+)\b"
 )
 
 
@@ -76,7 +76,7 @@ def parse_baseline() -> dict[str, str]:
             symbol, node = line.split("@", 1)
         except ValueError as error:
             raise AssertionError(f"invalid ABI baseline line {number}: {line}") from error
-        assert symbol.startswith("calendar_plus_"), f"invalid symbol on line {number}"
+        assert symbol.startswith("calendar_"), f"invalid symbol on line {number}"
         assert NODE_RE.match(f"{node} {{"), f"invalid ABI node on line {number}"
         assert symbol not in mapping, f"duplicate ABI baseline symbol: {symbol}"
         mapping[symbol] = node

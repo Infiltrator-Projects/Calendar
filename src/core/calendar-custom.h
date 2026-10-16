@@ -5,34 +5,34 @@
  * Private algorithms for non-ICU calendar systems.
  */
 
-#ifndef CALENDAR_PLUS_CALENDAR_CUSTOM_H
-#define CALENDAR_PLUS_CALENDAR_CUSTOM_H
+#ifndef CALENDAR_CALENDAR_CUSTOM_H
+#define CALENDAR_CALENDAR_CUSTOM_H
 
 #include "calendar-internal.h"
 #include "calendar-types.h"
 
 G_BEGIN_DECLS
 
-void calendar_plus_custom_fields_from_jdn(
-    CalendarPlusCalendarMode mode,
+void calendar_custom_fields_from_jdn(
+    CalendarCalendarMode mode,
     gint64 jdn,
-    CalendarPlusCalendarFields *fields);
-gchar *calendar_plus_custom_format(
-    CalendarPlusCalendarMode mode,
-    const CalendarPlusCalendarFields *fields,
-    CalendarPlusDatePart part);
-gint64 calendar_plus_custom_month_start(
-    CalendarPlusCalendarMode mode,
+    CalendarCalendarFields *fields);
+gchar *calendar_custom_format(
+    CalendarCalendarMode mode,
+    const CalendarCalendarFields *fields,
+    CalendarDatePart part);
+gint64 calendar_custom_month_start(
+    CalendarCalendarMode mode,
     gint64 jdn);
-gint64 calendar_plus_custom_add_months(
-    CalendarPlusCalendarMode mode,
+gint64 calendar_custom_add_months(
+    CalendarCalendarMode mode,
     gint64 jdn,
     gint amount);
-gint64 calendar_plus_custom_add_years(
-    CalendarPlusCalendarMode mode,
+gint64 calendar_custom_add_years(
+    CalendarCalendarMode mode,
     gint64 jdn,
     gint amount);
-gint calendar_plus_custom_iso_week_number(gint64 jdn);
+gint calendar_custom_iso_week_number(gint64 jdn);
 
 G_END_DECLS
 

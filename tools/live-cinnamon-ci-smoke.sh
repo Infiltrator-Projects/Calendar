@@ -9,13 +9,13 @@
 set -eu
 
 ROOT=$(CDPATH='' cd -- "$(dirname -- "$0")/.." && pwd)
-UUID=calendar-plus@the-infiltratr
+UUID=calendar@the-infiltratr
 EXPECTED_VERSION=$(cat "$ROOT/VERSION")
 UID_NOW=$(id -u)
 RUNTIME_DIR="/run/user/$UID_NOW"
 SYSTEM_APPLET_DIR="/usr/share/cinnamon/applets/$UUID"
 USER_APPLET_DIR="${XDG_DATA_HOME:-$HOME/.local/share}/cinnamon/applets/$UUID"
-ABOUT=/usr/libexec/calendar-plus-about
+ABOUT=/usr/libexec/calendar-about
 
 detect_session() {
     case "${XDG_CURRENT_DESKTOP:-}" in
@@ -127,8 +127,8 @@ EOF
 }
 
 exact_artifact_host_ready() {
-    [ -n "${CALENDAR_PLUS_EXACT_DEB:-}" ] || return 1
-    [ -s "$CALENDAR_PLUS_EXACT_DEB" ] || return 1
+    [ -n "${CALENDAR_EXACT_DEB:-}" ] || return 1
+    [ -s "$CALENDAR_EXACT_DEB" ] || return 1
     for command_name in dpkg-deb Xvfb dbus-run-session cinnamon gdbus; do
         command -v "$command_name" >/dev/null 2>&1 || return 1
     done
@@ -177,13 +177,13 @@ detect_session || {
 }
 report_qualification_environment
 
-mode="${CALENDAR_PLUS_LIVE_MODE:-installed}"
+mode="${CALENDAR_LIVE_MODE:-installed}"
 if [ "$mode" = "artifact-runtime" ]; then
     exact_artifact_host_ready || {
         echo "The exact Calendar artifact or isolated Cinnamon runtime prerequisites are unavailable." >&2
         exit 1
     }
-    exec bash "$ROOT/tools/isolated-cinnamon-artifact-smoke.sh" "$CALENDAR_PLUS_EXACT_DEB"
+    exec bash "$ROOT/tools/isolated-cinnamon-artifact-smoke.sh" "$CALENDAR_EXACT_DEB"
 fi
 
 if [ "$mode" = "install" ]; then
@@ -199,7 +199,7 @@ if [ "$mode" = "install" ]; then
     }
 
     cd "$ROOT"
-    CALENDAR_PLUS_BUILD_MODE=generic dpkg-buildpackage -us -uc -b
+    CALENDAR_BUILD_MODE=generic dpkg-buildpackage -us -uc -b
     DEB="../calendar_${EXPECTED_VERSION}_amd64.deb"
     [ -s "$DEB" ] || {
         printf 'Current Calendar package was not produced: %s\n' "$DEB" >&2
@@ -265,7 +265,7 @@ if [ "$mode" = "user-runtime" ]; then
         exit 1
     }
     sleep 1
-    CALENDAR_PLUS_APPLET_DIR="$USER_APPLET_DIR" \
+    CALENDAR_APPLET_DIR="$USER_APPLET_DIR" \
         "$ROOT/tools/cinnamon-smoke.sh"
     exit 0
 fi

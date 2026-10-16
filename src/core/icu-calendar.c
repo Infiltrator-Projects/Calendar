@@ -99,7 +99,7 @@ open_icu_calendar(const gchar *calendar_keyword,
 static UDate
 jdn_to_udate(gint64 jdn)
 {
-    return (UDate)(jdn - CALENDAR_PLUS_UNIX_EPOCH_JDN) *
+    return (UDate)(jdn - CALENDAR_UNIX_EPOCH_JDN) *
                MILLISECONDS_PER_DAY +
            MILLISECONDS_PER_DAY / 2.0;
 }
@@ -108,14 +108,14 @@ static gint64
 udate_to_jdn(UDate date)
 {
     return (gint64)floor(date / MILLISECONDS_PER_DAY) +
-           CALENDAR_PLUS_UNIX_EPOCH_JDN;
+           CALENDAR_UNIX_EPOCH_JDN;
 }
 
 gboolean
-calendar_plus_icu_fields_from_jdn(
+calendar_icu_fields_from_jdn(
     const gchar *calendar_keyword,
     gint64 jdn,
-    CalendarPlusCalendarFields *fields)
+    CalendarCalendarFields *fields)
 {
     UErrorCode status = U_ZERO_ERROR;
     UCalendar *calendar;
@@ -176,40 +176,40 @@ utf16_to_utf8(const UChar *source,
 }
 
 static const gchar *
-pattern_for_part(CalendarPlusCalendarMode mode,
-                 CalendarPlusDatePart part)
+pattern_for_part(CalendarCalendarMode mode,
+                 CalendarDatePart part)
 {
     const gboolean era_calendar =
-        mode == CALENDAR_PLUS_CALENDAR_MODE_BUDDHIST ||
-        mode == CALENDAR_PLUS_CALENDAR_MODE_JAPANESE ||
-        mode == CALENDAR_PLUS_CALENDAR_MODE_MINGUO;
+        mode == CALENDAR_CALENDAR_MODE_BUDDHIST ||
+        mode == CALENDAR_CALENDAR_MODE_JAPANESE ||
+        mode == CALENDAR_CALENDAR_MODE_MINGUO;
     /* These lunisolar calendars name years in their native sixty-year cycle.
      * `r` would inject a Gregorian reference year; `y` alone is only an
      * unexplained 1..60 counter. ICU's `U` supplies the localized year name. */
     const gboolean cyclic_year =
-        mode == CALENDAR_PLUS_CALENDAR_MODE_CHINESE ||
-        mode == CALENDAR_PLUS_CALENDAR_MODE_DANGI;
+        mode == CALENDAR_CALENDAR_MODE_CHINESE ||
+        mode == CALENDAR_CALENDAR_MODE_DANGI;
     const gboolean omit_era =
-        mode == CALENDAR_PLUS_CALENDAR_MODE_GREGORIAN ||
-        mode == CALENDAR_PLUS_CALENDAR_MODE_PERSIAN ||
-        mode == CALENDAR_PLUS_CALENDAR_MODE_CHINESE ||
-        mode == CALENDAR_PLUS_CALENDAR_MODE_INDIAN ||
-        mode == CALENDAR_PLUS_CALENDAR_MODE_COPTIC ||
-        mode == CALENDAR_PLUS_CALENDAR_MODE_ETHIOPIAN ||
-        mode == CALENDAR_PLUS_CALENDAR_MODE_ETHIOPIC_AMETE_ALEM ||
-        mode == CALENDAR_PLUS_CALENDAR_MODE_DANGI;
+        mode == CALENDAR_CALENDAR_MODE_GREGORIAN ||
+        mode == CALENDAR_CALENDAR_MODE_PERSIAN ||
+        mode == CALENDAR_CALENDAR_MODE_CHINESE ||
+        mode == CALENDAR_CALENDAR_MODE_INDIAN ||
+        mode == CALENDAR_CALENDAR_MODE_COPTIC ||
+        mode == CALENDAR_CALENDAR_MODE_ETHIOPIAN ||
+        mode == CALENDAR_CALENDAR_MODE_ETHIOPIC_AMETE_ALEM ||
+        mode == CALENDAR_CALENDAR_MODE_DANGI;
 
-    if (part == CALENDAR_PLUS_DATE_PART_DAY)
+    if (part == CALENDAR_DATE_PART_DAY)
         return "d";
-    if (part == CALENDAR_PLUS_DATE_PART_MONTH)
+    if (part == CALENDAR_DATE_PART_MONTH)
         return "LLLL";
-    if (part == CALENDAR_PLUS_DATE_PART_YEAR)
+    if (part == CALENDAR_DATE_PART_YEAR)
     {
         if (cyclic_year)
             return "U";
         return era_calendar ? "G y" : "y";
     }
-    if (part == CALENDAR_PLUS_DATE_PART_FULL)
+    if (part == CALENDAR_DATE_PART_FULL)
     {
         if (cyclic_year)
             return "EEEE, d MMMM U";
@@ -226,10 +226,10 @@ pattern_for_part(CalendarPlusCalendarMode mode,
 }
 
 gchar *
-calendar_plus_icu_format(CalendarPlusCalendarMode format_profile,
+calendar_icu_format(CalendarCalendarMode format_profile,
                          const gchar *calendar_keyword,
                          gint64 jdn,
-                         CalendarPlusDatePart part)
+                         CalendarDatePart part)
 {
     UErrorCode status = U_ZERO_ERROR;
     gchar locale[ULOC_FULLNAME_CAPACITY];
@@ -358,7 +358,7 @@ icu_add(const gchar *calendar_keyword,
 }
 
 gint64
-calendar_plus_icu_month_start(const gchar *calendar_keyword,
+calendar_icu_month_start(const gchar *calendar_keyword,
                               gint64 jdn)
 {
     UErrorCode status = U_ZERO_ERROR;
@@ -376,7 +376,7 @@ calendar_plus_icu_month_start(const gchar *calendar_keyword,
 }
 
 gint64
-calendar_plus_icu_add_months(const gchar *calendar_keyword,
+calendar_icu_add_months(const gchar *calendar_keyword,
                              gint64 jdn,
                              gint amount)
 {
@@ -384,7 +384,7 @@ calendar_plus_icu_add_months(const gchar *calendar_keyword,
 }
 
 gint64
-calendar_plus_icu_add_years(const gchar *calendar_keyword,
+calendar_icu_add_years(const gchar *calendar_keyword,
                             gint64 jdn,
                             gint amount)
 {

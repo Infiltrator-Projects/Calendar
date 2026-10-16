@@ -257,8 +257,8 @@ def main() -> None:
     assert "BUILD_MODE ?= generic" in makefile
     assert "PGO_MODE ?= none" in makefile
     assert "-march=native" in makefile
-    assert "CALENDAR_PLUS_BUILD_MODE ?= generic" in rules
-    assert "BUILD_MODE=$(CALENDAR_PLUS_BUILD_MODE)" in rules
+    assert "CALENDAR_BUILD_MODE ?= generic" in rules
+    assert "BUILD_MODE=$(CALENDAR_BUILD_MODE)" in rules
     assert "filter nocheck,$(DEB_BUILD_OPTIONS)" in rules
     assert "export CFLAGS" not in makefile
 
@@ -313,9 +313,6 @@ def main() -> None:
     # Package identity and runtime ABI boundaries remain explicit.
     assert "Source: calendar" in control
     assert "\nPackage: calendar\n" in control
-    assert "\nPackage: calendar-plus\n" not in control
-    assert "Breaks: infiltrator-calendar (<< ${binary:Version}), calendar-plus, cinnamon-calendar" in control
-    assert "Replaces: infiltrator-calendar (<< ${binary:Version}), calendar-plus, cinnamon-calendar" in control
     assert "cinnamon (>= 6.4)" in control
     binary_stanza = control.split("\nPackage: calendar\n", 1)[1]
     runtime_control = binary_stanza.split("Description:", 1)[0]
@@ -327,7 +324,7 @@ def main() -> None:
 
     # Local native/PGO installation is distinct from the portable release .deb.
     assert 'NATIVE_VERSION="${VERSION}+nativepgo${NATIVE_REVISION}"' in installer
-    assert "CALENDAR_PLUS_BUILD_MODE=native" in installer
+    assert "CALENDAR_BUILD_MODE=native" in installer
     assert "PGO_MODE=generate" in installer
     assert "PGO_MODE=use" in installer
     assert "--build-only" in installer

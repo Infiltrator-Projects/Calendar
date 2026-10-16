@@ -30,14 +30,14 @@
 
 #include <glib/gi18n-lib.h>
 
-typedef CalendarPlusCalendarMode CalendarMode;
-typedef CalendarPlusCalendarFields CalendarFields;
+typedef CalendarCalendarMode CalendarMode;
+typedef CalendarCalendarFields CalendarFields;
 
 typedef void (*FieldsFromJdnFunc)(gint64 jdn, CalendarFields *fields);
 typedef gint64 (*FieldsToJdnFunc)(const CalendarFields *fields);
 typedef gint (*MonthLengthFunc)(const CalendarFields *fields);
 typedef gchar *(*FormatFunc)(const CalendarFields *fields,
-                             CalendarPlusDatePart part);
+                             CalendarDatePart part);
 typedef gint (*PeriodIndexFunc)(gint month);
 typedef gint (*MonthFromPeriodFunc)(gint period);
 
@@ -56,15 +56,15 @@ typedef struct
     gboolean clamp_iso_weeks;
 } CustomCalendarProvider;
 
-#define floor_divide calendar_plus_floor_divide
-#define positive_modulo calendar_plus_positive_modulo
-#define gregorian_is_leap calendar_plus_gregorian_is_leap
-#define gregorian_to_jdn calendar_plus_gregorian_to_jdn
-#define jdn_to_gregorian calendar_plus_jdn_to_gregorian
-#define julian_to_jdn calendar_plus_julian_to_jdn
-#define jdn_to_julian calendar_plus_jdn_to_julian
-#define gregorian_day_of_year calendar_plus_gregorian_day_of_year
-#define iso_weekday calendar_plus_iso_weekday
+#define floor_divide calendar_floor_divide
+#define positive_modulo calendar_positive_modulo
+#define gregorian_is_leap calendar_gregorian_is_leap
+#define gregorian_to_jdn calendar_gregorian_to_jdn
+#define jdn_to_gregorian calendar_jdn_to_gregorian
+#define julian_to_jdn calendar_julian_to_jdn
+#define jdn_to_julian calendar_jdn_to_julian
+#define gregorian_day_of_year calendar_gregorian_day_of_year
+#define iso_weekday calendar_iso_weekday
 
 static const gchar *const french_months[] = {
     "", N_("Vendémiaire"), N_("Brumaire"), N_("Frimaire"),
@@ -133,12 +133,12 @@ iso_fields_from_jdn(gint64 jdn,
 
     if (week < 1)
     {
-        year = calendar_plus_i64_subtract_saturating(year, 1);
+        year = calendar_i64_subtract_saturating(year, 1);
         week = iso_weeks_in_year(year);
     }
     else if (week > iso_weeks_in_year(year))
     {
-        year = calendar_plus_i64_add_saturating(year, 1);
+        year = calendar_i64_add_saturating(year, 1);
         week = 1;
     }
 
@@ -160,7 +160,7 @@ iso_fields_to_jdn(const CalendarFields *fields)
         january_fourth - (iso_weekday(january_fourth) - 1);
 
     return week_one_monday +
-           (gint64)(fields->month - 1) * CALENDAR_PLUS_DAYS_PER_WEEK +
+           (gint64)(fields->month - 1) * CALENDAR_DAYS_PER_WEEK +
            fields->day - 1;
 }
 
@@ -191,7 +191,7 @@ julian_fields_to_jdn(const CalendarFields *fields)
 static gint
 julian_month_length(const CalendarFields *fields)
 {
-    return calendar_plus_julian_month_length(fields->year, fields->month);
+    return calendar_julian_month_length(fields->year, fields->month);
 }
 
 static gint
@@ -205,7 +205,7 @@ static gint
 french_month_length(const CalendarFields *fields)
 {
     return fields->month == 13 ?
-           (calendar_plus_french_is_leap(fields->year) ? 6 : 5) : 30;
+           (calendar_french_is_leap(fields->year) ? 6 : 5) : 30;
 }
 
 static gint
@@ -219,25 +219,25 @@ static gint
 bahai_month_length(const CalendarFields *fields)
 {
     return fields->month == 0 ?
-           calendar_plus_bahai_intercalary_days(fields->year) : 19;
+           calendar_bahai_intercalary_days(fields->year) : 19;
 }
 
 static gint
 fixed_month_length(const CalendarFields *fields)
 {
-    return calendar_plus_fixed_month_length(fields->year, fields->month);
+    return calendar_fixed_month_length(fields->year, fields->month);
 }
 
 static gint
 world_month_length(const CalendarFields *fields)
 {
-    return calendar_plus_world_month_length(fields->year, fields->month);
+    return calendar_world_month_length(fields->year, fields->month);
 }
 
 static gint
 positivist_month_length(const CalendarFields *fields)
 {
-    return calendar_plus_positivist_month_length(fields->year, fields->month);
+    return calendar_positivist_month_length(fields->year, fields->month);
 }
 
 static gint
@@ -254,20 +254,20 @@ default_month_from_period(gint period)
 
 static gchar *
 format_julian(const CalendarFields *fields,
-              CalendarPlusDatePart part)
+              CalendarDatePart part)
 {
-    return calendar_plus_format_named_date(fields, part, common_months, G_N_ELEMENTS(common_months), NULL);
+    return calendar_format_named_date(fields, part, common_months, G_N_ELEMENTS(common_months), NULL);
 }
 
 static gchar *
 format_iso(const CalendarFields *fields,
-           CalendarPlusDatePart part)
+           CalendarDatePart part)
 {
-    if (part == CALENDAR_PLUS_DATE_PART_DAY)
+    if (part == CALENDAR_DATE_PART_DAY)
         return g_strdup_printf("%d", fields->day);
-    if (part == CALENDAR_PLUS_DATE_PART_MONTH)
+    if (part == CALENDAR_DATE_PART_MONTH)
         return g_strdup_printf(_("Week %02d"), fields->month);
-    if (part == CALENDAR_PLUS_DATE_PART_YEAR)
+    if (part == CALENDAR_DATE_PART_YEAR)
         return g_strdup_printf("%" G_GINT64_FORMAT, fields->year);
 
     return g_strdup_printf("%04" G_GINT64_FORMAT "-W%02d-%d",
@@ -278,34 +278,34 @@ format_iso(const CalendarFields *fields,
 
 static gchar *
 format_roman(const CalendarFields *fields,
-             CalendarPlusDatePart part)
+             CalendarDatePart part)
 {
-    if (part == CALENDAR_PLUS_DATE_PART_DAY)
-        return calendar_plus_roman_number(fields->day);
-    if (part == CALENDAR_PLUS_DATE_PART_MONTH)
+    if (part == CALENDAR_DATE_PART_DAY)
+        return calendar_roman_number(fields->day);
+    if (part == CALENDAR_DATE_PART_MONTH)
         return g_strdup(_(roman_months[fields->month]));
-    if (part == CALENDAR_PLUS_DATE_PART_YEAR)
-        return calendar_plus_roman_number(
-            calendar_plus_i64_add_saturating(fields->year, 753));
+    if (part == CALENDAR_DATE_PART_YEAR)
+        return calendar_roman_number(
+            calendar_i64_add_saturating(fields->year, 753));
 
-    return calendar_plus_roman_format_date(fields);
+    return calendar_roman_format_date(fields);
 }
 
 static gchar *
 format_french(const CalendarFields *fields,
-              CalendarPlusDatePart part)
+              CalendarDatePart part)
 {
     const gchar *month_name = _(french_months[fields->month]);
     g_autofree gchar *roman_year = NULL;
 
-    if (part == CALENDAR_PLUS_DATE_PART_DAY)
+    if (part == CALENDAR_DATE_PART_DAY)
         return g_strdup_printf("%d", fields->day);
-    if (part == CALENDAR_PLUS_DATE_PART_MONTH)
+    if (part == CALENDAR_DATE_PART_MONTH)
         return g_strdup(month_name);
-    if (part == CALENDAR_PLUS_DATE_PART_YEAR)
-        return calendar_plus_roman_number(fields->year);
+    if (part == CALENDAR_DATE_PART_YEAR)
+        return calendar_roman_number(fields->year);
 
-    roman_year = calendar_plus_roman_number(fields->year);
+    roman_year = calendar_roman_number(fields->year);
     return g_strdup_printf(_("%d %s, An %s"),
                            fields->day,
                            month_name,
@@ -314,15 +314,15 @@ format_french(const CalendarFields *fields,
 
 static gchar *
 format_bahai(const CalendarFields *fields,
-             CalendarPlusDatePart part)
+             CalendarDatePart part)
 {
     const gchar *month_name = _(bahai_months[fields->month]);
 
-    if (part == CALENDAR_PLUS_DATE_PART_DAY)
+    if (part == CALENDAR_DATE_PART_DAY)
         return g_strdup_printf("%d", fields->day);
-    if (part == CALENDAR_PLUS_DATE_PART_MONTH)
+    if (part == CALENDAR_DATE_PART_MONTH)
         return g_strdup(month_name);
-    if (part == CALENDAR_PLUS_DATE_PART_YEAR)
+    if (part == CALENDAR_DATE_PART_YEAR)
         return g_strdup_printf("%" G_GINT64_FORMAT, fields->year);
 
     return g_strdup_printf(_("%d %s %lld B.E."),
@@ -333,13 +333,13 @@ format_bahai(const CalendarFields *fields,
 
 static gchar *
 format_fixed(const CalendarFields *fields,
-             CalendarPlusDatePart part)
+             CalendarDatePart part)
 {
-    if (part == CALENDAR_PLUS_DATE_PART_DAY && fields->special)
+    if (part == CALENDAR_DATE_PART_DAY && fields->special)
         return g_strdup(fields->month == 6 ? "L" : "Y");
     if (fields->special &&
-        part != CALENDAR_PLUS_DATE_PART_MONTH &&
-        part != CALENDAR_PLUS_DATE_PART_YEAR)
+        part != CALENDAR_DATE_PART_MONTH &&
+        part != CALENDAR_DATE_PART_YEAR)
     {
         return g_strdup_printf("%s, %" G_GINT64_FORMAT,
                                fields->month == 6 ?
@@ -347,18 +347,18 @@ format_fixed(const CalendarFields *fields,
                                fields->year);
     }
 
-    return calendar_plus_format_named_date(fields, part, fixed_months, G_N_ELEMENTS(fixed_months), NULL);
+    return calendar_format_named_date(fields, part, fixed_months, G_N_ELEMENTS(fixed_months), NULL);
 }
 
 static gchar *
 format_world(const CalendarFields *fields,
-             CalendarPlusDatePart part)
+             CalendarDatePart part)
 {
-    if (part == CALENDAR_PLUS_DATE_PART_DAY && fields->special)
+    if (part == CALENDAR_DATE_PART_DAY && fields->special)
         return g_strdup(fields->month == 6 ? "L" : "W");
     if (fields->special &&
-        part != CALENDAR_PLUS_DATE_PART_MONTH &&
-        part != CALENDAR_PLUS_DATE_PART_YEAR)
+        part != CALENDAR_DATE_PART_MONTH &&
+        part != CALENDAR_DATE_PART_YEAR)
     {
         return g_strdup_printf("%s, %" G_GINT64_FORMAT,
                                fields->month == 6 ?
@@ -366,18 +366,18 @@ format_world(const CalendarFields *fields,
                                fields->year);
     }
 
-    return calendar_plus_format_named_date(fields, part, common_months, G_N_ELEMENTS(common_months), NULL);
+    return calendar_format_named_date(fields, part, common_months, G_N_ELEMENTS(common_months), NULL);
 }
 
 static gchar *
 format_positivist(const CalendarFields *fields,
-                  CalendarPlusDatePart part)
+                  CalendarDatePart part)
 {
-    if (part == CALENDAR_PLUS_DATE_PART_DAY && fields->special)
+    if (part == CALENDAR_DATE_PART_DAY && fields->special)
         return g_strdup(fields->day == 29 ? "D" : "H");
     if (fields->special &&
-        part != CALENDAR_PLUS_DATE_PART_MONTH &&
-        part != CALENDAR_PLUS_DATE_PART_YEAR)
+        part != CALENDAR_DATE_PART_MONTH &&
+        part != CALENDAR_DATE_PART_YEAR)
     {
         return g_strdup_printf("%s, %" G_GINT64_FORMAT,
                                fields->day == 29 ?
@@ -386,102 +386,102 @@ format_positivist(const CalendarFields *fields,
                                fields->year);
     }
 
-    return calendar_plus_format_named_date(fields, part, positivist_months, G_N_ELEMENTS(positivist_months), NULL);
+    return calendar_format_named_date(fields, part, positivist_months, G_N_ELEMENTS(positivist_months), NULL);
 }
 
 /*
  * Sparse, mode-indexed provider registry.  Empty slots correspond to ICU
  * calendars and are intentionally rejected by custom_provider().
  */
-static const CustomCalendarProvider custom_providers[CALENDAR_PLUS_CALENDAR_MODE_COUNT] = {
-    [CALENDAR_PLUS_CALENDAR_MODE_JULIAN] = {
+static const CustomCalendarProvider custom_providers[CALENDAR_CALENDAR_MODE_COUNT] = {
+    [CALENDAR_CALENDAR_MODE_JULIAN] = {
         julian_fields_from_jdn, julian_fields_to_jdn, julian_month_length,
         format_julian, default_period_index, default_month_from_period,
         12, 0, 0, 1, FALSE
     },
-    [CALENDAR_PLUS_CALENDAR_MODE_ISO_WEEK] = {
+    [CALENDAR_CALENDAR_MODE_ISO_WEEK] = {
         iso_fields_from_jdn, iso_fields_to_jdn, iso_month_length,
         format_iso, default_period_index, default_month_from_period,
         0, 7, 0, 1, TRUE
     },
-    [CALENDAR_PLUS_CALENDAR_MODE_FRENCH_REPUBLICAN] = {
-        calendar_plus_french_fields_from_jdn,
-        calendar_plus_french_fields_to_jdn,
+    [CALENDAR_CALENDAR_MODE_FRENCH_REPUBLICAN] = {
+        calendar_french_fields_from_jdn,
+        calendar_french_fields_to_jdn,
         french_month_length, format_french,
         default_period_index, default_month_from_period,
         13, 0, 0, 1, FALSE
     },
-    [CALENDAR_PLUS_CALENDAR_MODE_ROMAN] = {
+    [CALENDAR_CALENDAR_MODE_ROMAN] = {
         julian_fields_from_jdn, julian_fields_to_jdn, julian_month_length,
         format_roman, default_period_index, default_month_from_period,
         12, 0, 0, 1, FALSE
     },
-    [CALENDAR_PLUS_CALENDAR_MODE_MAYAN] = {
-        calendar_plus_mayan_fields_from_jdn,
-        calendar_plus_mayan_fields_to_jdn,
-        mayan_month_length, calendar_plus_mayan_format,
+    [CALENDAR_CALENDAR_MODE_MAYAN] = {
+        calendar_mayan_fields_from_jdn,
+        calendar_mayan_fields_to_jdn,
+        mayan_month_length, calendar_mayan_format,
         default_period_index, default_month_from_period,
         18, 20, 360, 0, FALSE
     },
-    [CALENDAR_PLUS_CALENDAR_MODE_BAHAI] = {
-        calendar_plus_bahai_fields_from_jdn,
-        calendar_plus_bahai_fields_to_jdn,
+    [CALENDAR_CALENDAR_MODE_BAHAI] = {
+        calendar_bahai_fields_from_jdn,
+        calendar_bahai_fields_to_jdn,
         bahai_month_length, format_bahai,
-        calendar_plus_bahai_period_index,
-        calendar_plus_bahai_month_from_period,
+        calendar_bahai_period_index,
+        calendar_bahai_month_from_period,
         20, 0, 0, 1, FALSE
     },
-    [CALENDAR_PLUS_CALENDAR_MODE_INTERNATIONAL_FIXED] = {
-        calendar_plus_fixed_fields_from_jdn,
-        calendar_plus_fixed_fields_to_jdn,
+    [CALENDAR_CALENDAR_MODE_INTERNATIONAL_FIXED] = {
+        calendar_fixed_fields_from_jdn,
+        calendar_fixed_fields_to_jdn,
         fixed_month_length, format_fixed,
         default_period_index, default_month_from_period,
         13, 0, 0, 1, FALSE
     },
-    [CALENDAR_PLUS_CALENDAR_MODE_WORLD] = {
-        calendar_plus_world_fields_from_jdn,
-        calendar_plus_world_fields_to_jdn,
+    [CALENDAR_CALENDAR_MODE_WORLD] = {
+        calendar_world_fields_from_jdn,
+        calendar_world_fields_to_jdn,
         world_month_length, format_world,
         default_period_index, default_month_from_period,
         12, 0, 0, 1, FALSE
     },
-    [CALENDAR_PLUS_CALENDAR_MODE_POSITIVIST] = {
-        calendar_plus_positivist_fields_from_jdn,
-        calendar_plus_positivist_fields_to_jdn,
+    [CALENDAR_CALENDAR_MODE_POSITIVIST] = {
+        calendar_positivist_fields_from_jdn,
+        calendar_positivist_fields_to_jdn,
         positivist_month_length, format_positivist,
         default_period_index, default_month_from_period,
         13, 0, 0, 1, FALSE
     },
-    [CALENDAR_PLUS_CALENDAR_MODE_REVISED_JULIAN] = {
-        calendar_plus_revised_julian_fields_from_jdn,
-        calendar_plus_revised_julian_fields_to_jdn,
-        calendar_plus_revised_julian_month_length,
-        calendar_plus_revised_julian_format,
+    [CALENDAR_CALENDAR_MODE_REVISED_JULIAN] = {
+        calendar_revised_julian_fields_from_jdn,
+        calendar_revised_julian_fields_to_jdn,
+        calendar_revised_julian_month_length,
+        calendar_revised_julian_format,
         default_period_index, default_month_from_period,
         12, 0, 0, 1, FALSE
     },
-    [CALENDAR_PLUS_CALENDAR_MODE_BYZANTINE] = {
-        calendar_plus_byzantine_fields_from_jdn,
-        calendar_plus_byzantine_fields_to_jdn,
-        calendar_plus_byzantine_month_length,
-        calendar_plus_byzantine_format,
-        calendar_plus_byzantine_period_index,
-        calendar_plus_byzantine_month_from_period,
+    [CALENDAR_CALENDAR_MODE_BYZANTINE] = {
+        calendar_byzantine_fields_from_jdn,
+        calendar_byzantine_fields_to_jdn,
+        calendar_byzantine_month_length,
+        calendar_byzantine_format,
+        calendar_byzantine_period_index,
+        calendar_byzantine_month_from_period,
         12, 0, 0, 1, FALSE
     },
-    [CALENDAR_PLUS_CALENDAR_MODE_EGYPTIAN_NABONASSAR] = {
-        calendar_plus_egyptian_fields_from_jdn,
-        calendar_plus_egyptian_fields_to_jdn,
-        calendar_plus_egyptian_month_length,
-        calendar_plus_egyptian_format,
+    [CALENDAR_CALENDAR_MODE_EGYPTIAN_NABONASSAR] = {
+        calendar_egyptian_fields_from_jdn,
+        calendar_egyptian_fields_to_jdn,
+        calendar_egyptian_month_length,
+        calendar_egyptian_format,
         default_period_index, default_month_from_period,
         13, 0, 365, 1, FALSE
     },
-    [CALENDAR_PLUS_CALENDAR_MODE_ARMENIAN_TRADITIONAL] = {
-        calendar_plus_armenian_fields_from_jdn,
-        calendar_plus_armenian_fields_to_jdn,
-        calendar_plus_armenian_month_length,
-        calendar_plus_armenian_format,
+    [CALENDAR_CALENDAR_MODE_ARMENIAN_TRADITIONAL] = {
+        calendar_armenian_fields_from_jdn,
+        calendar_armenian_fields_to_jdn,
+        calendar_armenian_month_length,
+        calendar_armenian_format,
         default_period_index, default_month_from_period,
         13, 0, 365, 1, FALSE
     }
@@ -492,7 +492,7 @@ custom_provider(CalendarMode mode)
 {
     const CustomCalendarProvider *provider;
 
-    if (mode < 0 || mode >= CALENDAR_PLUS_CALENDAR_MODE_COUNT)
+    if (mode < 0 || mode >= CALENDAR_CALENDAR_MODE_COUNT)
         return NULL;
 
     provider = &custom_providers[mode];
@@ -500,7 +500,7 @@ custom_provider(CalendarMode mode)
 }
 
 void
-calendar_plus_custom_fields_from_jdn(CalendarMode mode,
+calendar_custom_fields_from_jdn(CalendarMode mode,
                                      gint64 jdn,
                                      CalendarFields *fields)
 {
@@ -514,9 +514,9 @@ calendar_plus_custom_fields_from_jdn(CalendarMode mode,
 }
 
 gchar *
-calendar_plus_custom_format(CalendarMode mode,
+calendar_custom_format(CalendarMode mode,
                             const CalendarFields *fields,
-                            CalendarPlusDatePart part)
+                            CalendarDatePart part)
 {
     const CustomCalendarProvider *provider = custom_provider(mode);
 
@@ -527,14 +527,14 @@ calendar_plus_custom_format(CalendarMode mode,
 }
 
 gint64
-calendar_plus_custom_month_start(CalendarMode mode,
+calendar_custom_month_start(CalendarMode mode,
                                  gint64 jdn)
 {
     const CustomCalendarProvider *provider = custom_provider(mode);
     CalendarFields fields;
 
     if (provider == NULL)
-        return CALENDAR_PLUS_UNIX_EPOCH_JDN;
+        return CALENDAR_UNIX_EPOCH_JDN;
 
     provider->fields_from_jdn(jdn, &fields);
     fields.day = provider->period_origin_day;
@@ -542,7 +542,7 @@ calendar_plus_custom_month_start(CalendarMode mode,
 }
 
 gint64
-calendar_plus_custom_add_months(CalendarMode mode,
+calendar_custom_add_months(CalendarMode mode,
                                 gint64 jdn,
                                 gint amount)
 {
@@ -555,16 +555,16 @@ calendar_plus_custom_add_months(CalendarMode mode,
         return jdn;
 
     if (provider->fixed_period_days > 0)
-        return calendar_plus_i64_add_saturating(
+        return calendar_i64_add_saturating(
             jdn,
-            calendar_plus_i64_multiply_saturating(
+            calendar_i64_multiply_saturating(
                 amount, provider->fixed_period_days));
 
     provider->fields_from_jdn(jdn, &fields);
     period = provider->period_index(fields.month);
-    serial = calendar_plus_i64_add_saturating(
-        calendar_plus_i64_add_saturating(
-            calendar_plus_i64_multiply_saturating(
+    serial = calendar_i64_add_saturating(
+        calendar_i64_add_saturating(
+            calendar_i64_multiply_saturating(
                 fields.year, provider->periods_per_year),
             period),
         amount);
@@ -577,7 +577,7 @@ calendar_plus_custom_add_months(CalendarMode mode,
 }
 
 gint64
-calendar_plus_custom_add_years(CalendarMode mode,
+calendar_custom_add_years(CalendarMode mode,
                                gint64 jdn,
                                gint amount)
 {
@@ -588,13 +588,13 @@ calendar_plus_custom_add_years(CalendarMode mode,
         return jdn;
 
     if (provider->fixed_year_days > 0)
-        return calendar_plus_i64_add_saturating(
+        return calendar_i64_add_saturating(
             jdn,
-            calendar_plus_i64_multiply_saturating(
+            calendar_i64_multiply_saturating(
                 amount, provider->fixed_year_days));
 
     provider->fields_from_jdn(jdn, &fields);
-    fields.year = calendar_plus_i64_add_saturating(fields.year, amount);
+    fields.year = calendar_i64_add_saturating(fields.year, amount);
     if (provider->clamp_iso_weeks)
         fields.month = MIN(fields.month, iso_weeks_in_year(fields.year));
     fields.day = MIN(fields.day, provider->month_length(&fields));
@@ -603,7 +603,7 @@ calendar_plus_custom_add_years(CalendarMode mode,
 }
 
 gint
-calendar_plus_custom_iso_week_number(gint64 jdn)
+calendar_custom_iso_week_number(gint64 jdn)
 {
     CalendarFields fields;
 

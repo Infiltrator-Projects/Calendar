@@ -19,7 +19,7 @@
 
 static void
 assert_time_mode(const gchar *mode,
-                 CalendarPlusTimeMode parsed,
+                 CalendarTimeMode parsed,
                  gint64 unix_microseconds,
                  gint utc_offset_seconds,
                  gboolean show_seconds,
@@ -28,15 +28,15 @@ assert_time_mode(const gchar *mode,
                  const gchar *expected)
 {
     g_autofree gchar *actual =
-        calendar_plus_format_time(parsed,
+        calendar_format_time(parsed,
                                   unix_microseconds,
                                   utc_offset_seconds,
                                   show_seconds,
                                   vertical,
                                   longitude);
 
-    g_assert_cmpint(parsed, !=, CALENDAR_PLUS_TIME_MODE_INVALID);
-    g_assert_cmpstr(calendar_plus_time_mode_get_id(parsed), ==, mode);
+    g_assert_cmpint(parsed, !=, CALENDAR_TIME_MODE_INVALID);
+    g_assert_cmpstr(calendar_time_mode_get_id(parsed), ==, mode);
     g_assert_cmpstr(actual, ==, expected);
 }
 
@@ -50,10 +50,10 @@ assert_time_at_location(const gchar *mode,
                         gdouble longitude,
                         const gchar *expected)
 {
-    const CalendarPlusTimeMode parsed =
-        calendar_plus_time_mode_from_string(mode);
+    const CalendarTimeMode parsed =
+        calendar_time_mode_from_string(mode);
     g_autofree gchar *actual =
-        calendar_plus_format_time_at_location(
+        calendar_format_time_at_location(
             parsed,
             unix_microseconds,
             utc_offset_seconds,
@@ -62,8 +62,8 @@ assert_time_at_location(const gchar *mode,
             latitude,
             longitude);
 
-    g_assert_cmpint(parsed, !=, CALENDAR_PLUS_TIME_MODE_INVALID);
-    g_assert_cmpstr(calendar_plus_time_mode_get_id(parsed), ==, mode);
+    g_assert_cmpint(parsed, !=, CALENDAR_TIME_MODE_INVALID);
+    g_assert_cmpstr(calendar_time_mode_get_id(parsed), ==, mode);
     g_assert_cmpstr(actual, ==, expected);
 }
 static void
@@ -75,8 +75,8 @@ assert_time(const gchar *mode,
             gdouble longitude,
             const gchar *expected)
 {
-    const CalendarPlusTimeMode parsed =
-        calendar_plus_time_mode_from_string(mode);
+    const CalendarTimeMode parsed =
+        calendar_time_mode_from_string(mode);
 
     assert_time_mode(mode,
                      parsed,
@@ -117,39 +117,39 @@ test_mode_parser(void)
     for (index = 0; index < G_N_ELEMENTS(valid_modes); index++)
     {
         g_assert_cmpint(
-            calendar_plus_time_mode_from_string(valid_modes[index]),
+            calendar_time_mode_from_string(valid_modes[index]),
             !=,
-            CALENDAR_PLUS_TIME_MODE_INVALID);
+            CALENDAR_TIME_MODE_INVALID);
     }
 
-    g_assert_cmpint(calendar_plus_time_mode_from_string("standard"),
+    g_assert_cmpint(calendar_time_mode_from_string("standard"),
                     ==,
-                    CALENDAR_PLUS_TIME_MODE_INVALID);
-    g_assert_cmpint(calendar_plus_time_mode_from_string("decimal@0.0000"),
+                    CALENDAR_TIME_MODE_INVALID);
+    g_assert_cmpint(calendar_time_mode_from_string("decimal@0.0000"),
                     ==,
-                    CALENDAR_PLUS_TIME_MODE_INVALID);
+                    CALENDAR_TIME_MODE_INVALID);
     g_assert_cmpint(
-        calendar_plus_time_mode_from_string("roman-temporal@0.0000"),
+        calendar_time_mode_from_string("roman-temporal@0.0000"),
         ==,
-        CALENDAR_PLUS_TIME_MODE_INVALID);
+        CALENDAR_TIME_MODE_INVALID);
     g_assert_cmpint(
-        calendar_plus_time_mode_from_string("japanese-temporal@0.0000"),
+        calendar_time_mode_from_string("japanese-temporal@0.0000"),
         ==,
-        CALENDAR_PLUS_TIME_MODE_INVALID);
+        CALENDAR_TIME_MODE_INVALID);
     g_assert_cmpint(
-        calendar_plus_time_mode_from_string("italian-hours@0.0000"),
+        calendar_time_mode_from_string("italian-hours@0.0000"),
         ==,
-        CALENDAR_PLUS_TIME_MODE_INVALID);
+        CALENDAR_TIME_MODE_INVALID);
     g_assert_cmpint(
-        calendar_plus_time_mode_from_string("babylonian-hours@0.0000"),
+        calendar_time_mode_from_string("babylonian-hours@0.0000"),
         ==,
-        CALENDAR_PLUS_TIME_MODE_INVALID);
-    g_assert_cmpint(calendar_plus_time_mode_from_string("unknown"),
+        CALENDAR_TIME_MODE_INVALID);
+    g_assert_cmpint(calendar_time_mode_from_string("unknown"),
                     ==,
-                    CALENDAR_PLUS_TIME_MODE_INVALID);
-    g_assert_cmpint(calendar_plus_time_mode_from_string(NULL),
+                    CALENDAR_TIME_MODE_INVALID);
+    g_assert_cmpint(calendar_time_mode_from_string(NULL),
                     ==,
-                    CALENDAR_PLUS_TIME_MODE_INVALID);
+                    CALENDAR_TIME_MODE_INVALID);
 }
 
 static void
@@ -292,19 +292,19 @@ test_historical_and_scientific_times(void)
 static void
 test_invalid_location_is_unavailable(void)
 {
-    const CalendarPlusTimeMode roman_mode =
-        calendar_plus_time_mode_from_string("roman-temporal");
-    const CalendarPlusTimeMode solar_mode =
-        calendar_plus_time_mode_from_string("solar");
+    const CalendarTimeMode roman_mode =
+        calendar_time_mode_from_string("roman-temporal");
+    const CalendarTimeMode solar_mode =
+        calendar_time_mode_from_string("solar");
     g_autofree gchar *roman_invalid_latitude =
-        calendar_plus_format_time_at_location(
+        calendar_format_time_at_location(
             roman_mode, USECONDS(946728000), 0, FALSE, FALSE, NAN, 0.0);
     g_autofree gchar *solar_invalid_longitude =
-        calendar_plus_format_time_at_location(
+        calendar_format_time_at_location(
             solar_mode, USECONDS(946728000), 0, TRUE, FALSE, 0.0, INFINITY);
     g_autofree gchar *decimal_ignores_location =
-        calendar_plus_format_time_at_location(
-            CALENDAR_PLUS_TIME_MODE_DECIMAL,
+        calendar_format_time_at_location(
+            CALENDAR_TIME_MODE_DECIMAL,
             USECONDS(0),
             0,
             TRUE,
@@ -317,7 +317,7 @@ test_invalid_location_is_unavailable(void)
     g_assert_cmpstr(decimal_ignores_location, ==, "0:00:00");
 
     g_assert_cmpuint(
-        calendar_plus_time_delay_to_next_tick_at_location(
+        calendar_time_delay_to_next_tick_at_location(
             roman_mode,
             USECONDS(946728000),
             0,
@@ -327,7 +327,7 @@ test_invalid_location_is_unavailable(void)
         ==,
         3600000U);
     g_assert_cmpuint(
-        calendar_plus_time_delay_to_next_tick_at_location(
+        calendar_time_delay_to_next_tick_at_location(
             solar_mode,
             USECONDS(946728000),
             0,
@@ -342,70 +342,70 @@ static void
 test_tick_boundaries(void)
 {
     g_assert_cmpuint(
-        calendar_plus_time_delay_to_next_tick(
-            CALENDAR_PLUS_TIME_MODE_DECIMAL, 0, 0, TRUE, 0.0),
+        calendar_time_delay_to_next_tick(
+            CALENDAR_TIME_MODE_DECIMAL, 0, 0, TRUE, 0.0),
         ==,
         864);
     g_assert_cmpuint(
-        calendar_plus_time_delay_to_next_tick(
-            CALENDAR_PLUS_TIME_MODE_DECIMAL, 0, 0, FALSE, 0.0),
+        calendar_time_delay_to_next_tick(
+            CALENDAR_TIME_MODE_DECIMAL, 0, 0, FALSE, 0.0),
         ==,
         86400);
     g_assert_cmpuint(
-        calendar_plus_time_delay_to_next_tick(
-            CALENDAR_PLUS_TIME_MODE_UNIX, 0, 0, FALSE, 0.0),
+        calendar_time_delay_to_next_tick(
+            CALENDAR_TIME_MODE_UNIX, 0, 0, FALSE, 0.0),
         ==,
         1000);
     g_assert_cmpuint(
-        calendar_plus_time_delay_to_next_tick(
-            CALENDAR_PLUS_TIME_MODE_HEXADECIMAL, 0, 0, FALSE, 0.0),
+        calendar_time_delay_to_next_tick(
+            CALENDAR_TIME_MODE_HEXADECIMAL, 0, 0, FALSE, 0.0),
         ==,
         1319);
     g_assert_cmpuint(
-        calendar_plus_time_delay_to_next_tick(
-            CALENDAR_PLUS_TIME_MODE_BINARY, 0, 0, FALSE, 0.0),
+        calendar_time_delay_to_next_tick(
+            CALENDAR_TIME_MODE_BINARY, 0, 0, FALSE, 0.0),
         ==,
         60000);
     g_assert_cmpuint(
-        calendar_plus_time_delay_to_next_tick(
-            CALENDAR_PLUS_TIME_MODE_JULIAN, 0, 0, TRUE, 0.0),
+        calendar_time_delay_to_next_tick(
+            CALENDAR_TIME_MODE_JULIAN, 0, 0, TRUE, 0.0),
         ==,
         864);
     g_assert_cmpuint(
-        calendar_plus_time_delay_to_next_tick(
-            CALENDAR_PLUS_TIME_MODE_MEAN_SOLAR, 0, 0, TRUE, 15.0),
+        calendar_time_delay_to_next_tick(
+            CALENDAR_TIME_MODE_MEAN_SOLAR, 0, 0, TRUE, 15.0),
         ==,
         1000);
     g_assert_cmpuint(
-        calendar_plus_time_delay_to_next_tick(
-            CALENDAR_PLUS_TIME_MODE_MODIFIED_JULIAN, 0, 0, TRUE, 0.0),
+        calendar_time_delay_to_next_tick(
+            CALENDAR_TIME_MODE_MODIFIED_JULIAN, 0, 0, TRUE, 0.0),
         ==,
         864);
     g_assert_cmpuint(
-        calendar_plus_time_delay_to_next_tick(
-            CALENDAR_PLUS_TIME_MODE_CHINESE, 0, 0, FALSE, 0.0),
+        calendar_time_delay_to_next_tick(
+            CALENDAR_TIME_MODE_CHINESE, 0, 0, FALSE, 0.0),
         ==,
         3600000);
     {
-        const CalendarPlusTimeMode roman_mode =
-            calendar_plus_time_mode_from_string("roman-temporal");
-        const CalendarPlusTimeMode japanese_mode =
-            calendar_plus_time_mode_from_string("japanese-temporal");
+        const CalendarTimeMode roman_mode =
+            calendar_time_mode_from_string("roman-temporal");
+        const CalendarTimeMode japanese_mode =
+            calendar_time_mode_from_string("japanese-temporal");
         const guint roman_delay =
-            calendar_plus_time_delay_to_next_tick_at_location(
+            calendar_time_delay_to_next_tick_at_location(
                 roman_mode, USECONDS(946728000), 0, FALSE, 0.0, 0.0);
         const guint japanese_delay =
-            calendar_plus_time_delay_to_next_tick_at_location(
+            calendar_time_delay_to_next_tick_at_location(
                 japanese_mode, USECONDS(946728000), 0, FALSE, 0.0, 0.0);
 
         /* Roman scheduling refines the solar-phase estimate into the first
          * SI millisecond at which Common advances the displayed hour. */
         g_assert_cmpuint(roman_delay, >=, 174250);
         g_assert_cmpuint(roman_delay, <=, 174350);
-        g_autofree gchar *roman_before = calendar_plus_format_time_at_location(
+        g_autofree gchar *roman_before = calendar_format_time_at_location(
             roman_mode, USECONDS(946728000) + (gint64)roman_delay * 1000 - 1000,
             0, FALSE, FALSE, 0.0, 0.0);
-        g_autofree gchar *roman_at = calendar_plus_format_time_at_location(
+        g_autofree gchar *roman_at = calendar_format_time_at_location(
             roman_mode, USECONDS(946728000) + (gint64)roman_delay * 1000,
             0, FALSE, FALSE, 0.0, 0.0);
         g_assert_cmpstr(roman_before, ==, "Hour VI");
@@ -420,11 +420,11 @@ static void
 test_label_replacement(void)
 {
     g_autofree gchar *replaced =
-        calendar_plus_replace_time("Tuesday, July 28, 22:03",
+        calendar_replace_time("Tuesday, July 28, 22:03",
                                    "22:03",
                                    "@918");
     g_autofree gchar *missing =
-        calendar_plus_replace_time("Tuesday, July 28",
+        calendar_replace_time("Tuesday, July 28",
                                    "22:03",
                                    "@918");
 
@@ -435,49 +435,49 @@ test_label_replacement(void)
 static void
 test_clock_lifecycle(void)
 {
-    g_autoptr(CalendarPlusSystemClock) clock =
-        calendar_plus_system_clock_new();
+    g_autoptr(CalendarSystemClock) clock =
+        calendar_system_clock_new();
     g_autofree gchar *current_time = NULL;
 
-    g_assert_false(calendar_plus_system_clock_is_running(clock));
+    g_assert_false(calendar_system_clock_is_running(clock));
 
-    calendar_plus_system_clock_start(clock,
+    calendar_system_clock_start(clock,
                                      "decimal",
                                      TRUE,
                                      FALSE,
                                      0.0);
-    g_assert_true(calendar_plus_system_clock_is_running(clock));
+    g_assert_true(calendar_system_clock_is_running(clock));
 
-    current_time = calendar_plus_system_clock_get_time(clock);
+    current_time = calendar_system_clock_get_time(clock);
     g_assert_nonnull(current_time);
     g_assert_nonnull(strchr(current_time, ':'));
 
-    calendar_plus_system_clock_start(clock,
+    calendar_system_clock_start(clock,
                                      "internet",
                                      FALSE,
                                      FALSE,
                                      0.0);
     g_clear_pointer(&current_time, g_free);
-    current_time = calendar_plus_system_clock_get_time(clock);
+    current_time = calendar_system_clock_get_time(clock);
     g_assert_true(g_str_has_prefix(current_time, "@"));
 
-    calendar_plus_system_clock_start_at_location(
+    calendar_system_clock_start_at_location(
         clock, "roman-temporal", FALSE, FALSE, 0.0, 0.0);
     g_clear_pointer(&current_time, g_free);
-    current_time = calendar_plus_system_clock_get_time(clock);
+    current_time = calendar_system_clock_get_time(clock);
     g_assert_true(g_str_has_prefix(current_time, "Hour") ||
                   g_str_has_prefix(current_time, "Watch"));
 
-    calendar_plus_system_clock_start_at_location(
+    calendar_system_clock_start_at_location(
         clock, "roman-temporal", FALSE, FALSE, NAN, 0.0);
-    g_assert_false(calendar_plus_system_clock_is_running(clock));
+    g_assert_false(calendar_system_clock_is_running(clock));
 
-    calendar_plus_system_clock_stop(clock);
-    g_assert_false(calendar_plus_system_clock_is_running(clock));
+    calendar_system_clock_stop(clock);
+    g_assert_false(calendar_system_clock_is_running(clock));
 
     /* Stop is deliberately idempotent for Cinnamon applet teardown. */
-    calendar_plus_system_clock_stop(clock);
-    g_assert_false(calendar_plus_system_clock_is_running(clock));
+    calendar_system_clock_stop(clock);
+    g_assert_false(calendar_system_clock_is_running(clock));
 }
 
 static void
@@ -498,7 +498,7 @@ test_temporal_authority_resolution(void)
     persisted.longitude = 145.36;
 
     /* A stale policy is ignored when the provider package is absent. */
-    g_assert_true(calendar_plus_system_clock_resolve_effective_policy(
+    g_assert_true(calendar_system_clock_resolve_effective_policy(
         FALSE, TRUE, &persisted, TRUE, &effective, &authority));
     g_assert_false(authority);
     g_assert_cmpstr(effective.clock_mode, ==, "standard");
@@ -507,13 +507,13 @@ test_temporal_authority_resolution(void)
     g_assert_false(effective.location_configured);
 
     /* Mint's own seconds state remains authoritative in fallback. */
-    g_assert_true(calendar_plus_system_clock_resolve_effective_policy(
+    g_assert_true(calendar_system_clock_resolve_effective_policy(
         FALSE, FALSE, NULL, FALSE, &effective, &authority));
     g_assert_false(authority);
     g_assert_false(effective.show_seconds);
 
     /* Installed provider plus a valid saved policy activates enrichment. */
-    g_assert_true(calendar_plus_system_clock_resolve_effective_policy(
+    g_assert_true(calendar_system_clock_resolve_effective_policy(
         TRUE, TRUE, &persisted, TRUE, &effective, &authority));
     g_assert_true(authority);
     g_assert_cmpstr(effective.clock_mode, ==, "roman-temporal");
@@ -524,7 +524,7 @@ test_temporal_authority_resolution(void)
     g_assert_cmpfloat(effective.longitude, ==, 145.36);
 
     /* Installed but unconfigured/corrupt provider safely falls back to Mint. */
-    g_assert_true(calendar_plus_system_clock_resolve_effective_policy(
+    g_assert_true(calendar_system_clock_resolve_effective_policy(
         TRUE, FALSE, NULL, TRUE, &effective, &authority));
     g_assert_false(authority);
     g_assert_cmpstr(effective.clock_mode, ==, "standard");
@@ -532,7 +532,7 @@ test_temporal_authority_resolution(void)
     g_assert_true(effective.show_seconds);
 
     /* Runtime provider removal immediately resolves back to Mint semantics. */
-    g_assert_true(calendar_plus_system_clock_resolve_effective_policy(
+    g_assert_true(calendar_system_clock_resolve_effective_policy(
         FALSE, TRUE, &persisted, FALSE, &effective, &authority));
     g_assert_false(authority);
     g_assert_cmpstr(effective.clock_mode, ==, "standard");
@@ -547,11 +547,11 @@ calendar_format(const gchar *calendar_id,
                 gint day,
                 const gchar *part)
 {
-    g_autoptr(CalendarPlusCalendarSystem) calendar =
-        calendar_plus_calendar_system_new(calendar_id);
+    g_autoptr(CalendarCalendarSystem) calendar =
+        calendar_calendar_system_new(calendar_id);
 
     g_assert_nonnull(calendar);
-    return calendar_plus_calendar_system_format_date(calendar,
+    return calendar_calendar_system_format_date(calendar,
                                                       year,
                                                       month,
                                                       day,
@@ -613,35 +613,35 @@ test_calendar_catalogue(void)
 
     for (index = 0; index < G_N_ELEMENTS(calendar_ids); index++)
     {
-        g_autoptr(CalendarPlusCalendarSystem) calendar =
-            calendar_plus_calendar_system_new(calendar_ids[index]);
+        g_autoptr(CalendarCalendarSystem) calendar =
+            calendar_calendar_system_new(calendar_ids[index]);
         g_autofree gchar *formatted = NULL;
         g_autofree gchar *month_start = NULL;
         g_autofree gchar *month_key = NULL;
 
         g_assert_nonnull(calendar);
         g_assert_cmpstr(
-            calendar_plus_calendar_system_get_id(calendar),
+            calendar_calendar_system_get_id(calendar),
             ==,
             calendar_ids[index]);
         g_assert_cmpstr(
-            calendar_plus_calendar_system_get_name(calendar),
+            calendar_calendar_system_get_name(calendar),
             !=,
             "");
 
         formatted =
-            calendar_plus_calendar_system_format_date(calendar,
+            calendar_calendar_system_format_date(calendar,
                                                       2026,
                                                       7,
                                                       29,
                                                       "short");
         month_start =
-            calendar_plus_calendar_system_month_start(calendar,
+            calendar_calendar_system_month_start(calendar,
                                                       2026,
                                                       7,
                                                       29);
         month_key =
-            calendar_plus_calendar_system_month_key(calendar,
+            calendar_calendar_system_month_key(calendar,
                                                     2026,
                                                     7,
                                                     29);
@@ -650,8 +650,8 @@ test_calendar_catalogue(void)
         g_assert_cmpstr(month_key, !=, "");
     }
 
-    g_assert_null(calendar_plus_calendar_system_new("unknown"));
-    g_assert_null(calendar_plus_calendar_system_new(NULL));
+    g_assert_null(calendar_calendar_system_new("unknown"));
+    g_assert_null(calendar_calendar_system_new(NULL));
 }
 
 static void
@@ -660,12 +660,12 @@ test_locale_workday_policy(void)
     gboolean known = FALSE;
 
     g_assert_true(
-        calendar_plus_locale_is_work_day("en_US", 1, &known));
+        calendar_locale_is_work_day("en_US", 1, &known));
     g_assert_true(known);
 
     known = FALSE;
     g_assert_false(
-        calendar_plus_locale_is_work_day("en_US", 7, &known));
+        calendar_locale_is_work_day("en_US", 7, &known));
     g_assert_true(known);
 
     /*
@@ -674,40 +674,40 @@ test_locale_workday_policy(void)
      */
     known = FALSE;
     g_assert_false(
-        calendar_plus_locale_is_work_day("ar_SA", 5, &known));
+        calendar_locale_is_work_day("ar_SA", 5, &known));
     g_assert_true(known);
 
     known = FALSE;
     g_assert_false(
-        calendar_plus_locale_is_work_day("ar_SA", 6, &known));
+        calendar_locale_is_work_day("ar_SA", 6, &known));
     g_assert_true(known);
 
     known = FALSE;
     g_assert_true(
-        calendar_plus_locale_is_work_day("ar_SA", 7, &known));
+        calendar_locale_is_work_day("ar_SA", 7, &known));
     g_assert_true(known);
 }
 
 static void
 test_locale_workday_grid_policy(void)
 {
-    CalendarPlusCalendarEngine *engine =
-        calendar_plus_calendar_engine_new("gregorian");
-    const CalendarPlusDate selected = { 2026, 8, 15 };
-    const CalendarPlusDate today = { 2026, 8, 15 };
-    CalendarPlusCalendarGrid grid = { 0 };
+    CalendarCalendarEngine *engine =
+        calendar_calendar_engine_new("gregorian");
+    const CalendarDate selected = { 2026, 8, 15 };
+    const CalendarDate today = { 2026, 8, 15 };
+    CalendarCalendarGrid grid = { 0 };
     gboolean saw_friday = FALSE;
     gboolean saw_saturday = FALSE;
     gboolean saw_sunday = FALSE;
     guint index;
 
     g_assert_nonnull(engine);
-    g_assert_true(calendar_plus_calendar_engine_build_grid_for_locale(
+    g_assert_true(calendar_calendar_engine_build_grid_for_locale(
         engine, &selected, &today, 0, "ar_SA", &grid));
 
-    for (index = 0; index < CALENDAR_PLUS_CALENDAR_GRID_CELLS; index++)
+    for (index = 0; index < CALENDAR_CALENDAR_GRID_CELLS; index++)
     {
-        const CalendarPlusCalendarCell *cell = &grid.cells[index];
+        const CalendarCalendarCell *cell = &grid.cells[index];
 
         if (cell->date.year != 2026 || cell->date.month != 8)
             continue;
@@ -732,28 +732,28 @@ test_locale_workday_grid_policy(void)
     g_assert_true(saw_friday);
     g_assert_true(saw_saturday);
     g_assert_true(saw_sunday);
-    calendar_plus_calendar_grid_clear(&grid);
+    calendar_calendar_grid_clear(&grid);
 
     /*
      * Keep the grid contract's rejection branches exercised alongside the
      * locale regression. These are caller-boundary failures, not assertions
      * about implementation structure.
      */
-    g_assert_false(calendar_plus_calendar_engine_build_grid_for_locale(
+    g_assert_false(calendar_calendar_engine_build_grid_for_locale(
         NULL, &selected, &today, 0, "ar_SA", &grid));
-    g_assert_false(calendar_plus_calendar_engine_build_grid_for_locale(
+    g_assert_false(calendar_calendar_engine_build_grid_for_locale(
         engine, &selected, &today, -1, "ar_SA", &grid));
-    g_assert_false(calendar_plus_calendar_engine_build_grid_for_locale(
+    g_assert_false(calendar_calendar_engine_build_grid_for_locale(
         engine, &selected, &today, 7, "ar_SA", &grid));
     {
-        const CalendarPlusDate invalid = { 2026, 2, 30 };
-        g_assert_false(calendar_plus_calendar_engine_build_grid_for_locale(
+        const CalendarDate invalid = { 2026, 2, 30 };
+        g_assert_false(calendar_calendar_engine_build_grid_for_locale(
             engine, &invalid, &today, 0, "ar_SA", &grid));
     }
-    g_assert_false(calendar_plus_calendar_engine_build_grid_for_locale(
+    g_assert_false(calendar_calendar_engine_build_grid_for_locale(
         engine, &selected, &today, 0, "ar_SA", NULL));
 
-    calendar_plus_calendar_engine_free(engine);
+    calendar_calendar_engine_free(engine);
 }
 
 static void
@@ -826,36 +826,36 @@ test_historical_calendar_references(void)
 static void
 test_calendar_navigation(void)
 {
-    g_autoptr(CalendarPlusCalendarSystem) julian =
-        calendar_plus_calendar_system_new("julian");
-    g_autoptr(CalendarPlusCalendarSystem) iso =
-        calendar_plus_calendar_system_new("iso-week");
-    g_autoptr(CalendarPlusCalendarSystem) fixed =
-        calendar_plus_calendar_system_new("international-fixed");
+    g_autoptr(CalendarCalendarSystem) julian =
+        calendar_calendar_system_new("julian");
+    g_autoptr(CalendarCalendarSystem) iso =
+        calendar_calendar_system_new("iso-week");
+    g_autoptr(CalendarCalendarSystem) fixed =
+        calendar_calendar_system_new("international-fixed");
     g_autofree gchar *julian_start =
-        calendar_plus_calendar_system_month_start(julian,
+        calendar_calendar_system_month_start(julian,
                                                   2026,
                                                   7,
                                                   29);
     g_autofree gchar *julian_next =
-        calendar_plus_calendar_system_add_months(julian,
+        calendar_calendar_system_add_months(julian,
                                                  2026,
                                                  7,
                                                  29,
                                                  1);
     g_autofree gchar *iso_start =
-        calendar_plus_calendar_system_month_start(iso,
+        calendar_calendar_system_month_start(iso,
                                                   2026,
                                                   7,
                                                   29);
     g_autofree gchar *iso_next =
-        calendar_plus_calendar_system_add_months(iso,
+        calendar_calendar_system_add_months(iso,
                                                  2026,
                                                  7,
                                                  29,
                                                  1);
     g_autofree gchar *leap_day =
-        calendar_plus_calendar_system_format_date(fixed,
+        calendar_calendar_system_format_date(fixed,
                                                   2024,
                                                   6,
                                                   17,
@@ -874,41 +874,41 @@ test_calendar_round_trips(void)
     gsize index;
 
     for (index = 0;
-         index < calendar_plus_calendar_catalogue_get_count();
+         index < calendar_calendar_catalogue_get_count();
          index++)
     {
-        CalendarPlusCalendarDescriptor descriptor = { 0 };
-        g_autoptr(CalendarPlusCalendarSystem) calendar = NULL;
+        CalendarCalendarDescriptor descriptor = { 0 };
+        g_autoptr(CalendarCalendarSystem) calendar = NULL;
 
-        g_assert_true(calendar_plus_calendar_catalogue_get(index, &descriptor));
-        calendar = calendar_plus_calendar_system_new(descriptor.id);
+        g_assert_true(calendar_calendar_catalogue_get(index, &descriptor));
+        calendar = calendar_calendar_system_new(descriptor.id);
         g_autofree gchar *month_start =
-            calendar_plus_calendar_system_month_start(calendar,
+            calendar_calendar_system_month_start(calendar,
                                                       2026,
                                                       7,
                                                       29);
         g_autofree gchar *original_key =
-            calendar_plus_calendar_system_month_key(calendar,
+            calendar_calendar_system_month_key(calendar,
                                                     2026,
                                                     7,
                                                     29);
         g_autofree gchar *start_key = NULL;
         g_autofree gchar *next_month =
-            calendar_plus_calendar_system_add_months(calendar,
+            calendar_calendar_system_add_months(calendar,
                                                      2026,
                                                      7,
                                                      29,
                                                      1);
         g_autofree gchar *previous_month = NULL;
         g_autofree gchar *next_year =
-            calendar_plus_calendar_system_add_years(calendar,
+            calendar_calendar_system_add_years(calendar,
                                                     2026,
                                                     7,
                                                     29,
                                                     1);
         g_autofree gchar *previous_year = NULL;
         g_autoptr(GVariant) grid =
-            calendar_plus_calendar_system_build_grid(calendar,
+            calendar_calendar_system_build_grid(calendar,
                                                      2026,
                                                      7,
                                                      29,
@@ -925,7 +925,7 @@ test_calendar_round_trips(void)
 
         parse_iso_date(month_start, &year, &month, &day);
         start_key =
-            calendar_plus_calendar_system_month_key(calendar,
+            calendar_calendar_system_month_key(calendar,
                                                     year,
                                                     month,
                                                     day);
@@ -933,7 +933,7 @@ test_calendar_round_trips(void)
 
         parse_iso_date(next_month, &year, &month, &day);
         previous_month =
-            calendar_plus_calendar_system_add_months(calendar,
+            calendar_calendar_system_add_months(calendar,
                                                      year,
                                                      month,
                                                      day,
@@ -942,7 +942,7 @@ test_calendar_round_trips(void)
 
         parse_iso_date(next_year, &year, &month, &day);
         previous_year =
-            calendar_plus_calendar_system_add_years(calendar,
+            calendar_calendar_system_add_years(calendar,
                                                     year,
                                                     month,
                                                     day,
@@ -954,10 +954,10 @@ test_calendar_round_trips(void)
 static void
 test_calendar_grid(void)
 {
-    g_autoptr(CalendarPlusCalendarSystem) gregorian =
-        calendar_plus_calendar_system_new("gregorian");
+    g_autoptr(CalendarCalendarSystem) gregorian =
+        calendar_calendar_system_new("gregorian");
     g_autoptr(GVariant) grid =
-        calendar_plus_calendar_system_build_grid(gregorian,
+        calendar_calendar_system_build_grid(gregorian,
                                                  2026,
                                                  7,
                                                  29,
@@ -1011,7 +1011,7 @@ test_calendar_grid(void)
                       &is_left_edge);
 
         g_assert_cmpstr(day_label, !=, "");
-        g_assert_true(calendar_plus_gregorian_date_is_valid(year,
+        g_assert_true(calendar_gregorian_date_is_valid(year,
                                                              month,
                                                              day));
         g_assert_cmpint(row, ==, 2 + (gint)index / 7);
@@ -1020,7 +1020,7 @@ test_calendar_grid(void)
         g_assert_cmpint(is_left_edge, ==, column == 0);
         g_assert_cmpint(is_work_day,
                         ==,
-                        calendar_plus_date_is_work_day(year,
+                        calendar_date_is_work_day(year,
                                                        month,
                                                        day));
 
@@ -1083,63 +1083,63 @@ test_native_contract_helpers(void)
     const gint64 end = test_local_time(2026, 8, 14, 10, 0);
     const gint64 now = test_local_time(2026, 8, 14, 9, 30);
     g_autoptr(GVariant) timing =
-        calendar_plus_event_timing(start, end, now);
+        calendar_event_timing(start, end, now);
     gint state;
     gint64 seconds_to_start;
     gint64 seconds_to_finish;
     guint relation;
 
-    g_assert_cmpstr(calendar_plus_get_version(), ==, CALENDAR_PLUS_VERSION);
-    g_assert_cmpstr(calendar_plus_get_source_id(), ==,
-                    CALENDAR_PLUS_SOURCE_ID);
-    g_assert_cmpstr(calendar_plus_get_build_profile(), ==,
-                    CALENDAR_PLUS_BUILD_PROFILE);
-    g_assert_nonnull(calendar_plus_get_build_profile_label());
-    g_assert_cmpuint(strlen(calendar_plus_get_build_profile_label()), >, 0U);
+    g_assert_cmpstr(calendar_get_version(), ==, CALENDAR_VERSION);
+    g_assert_cmpstr(calendar_get_source_id(), ==,
+                    CALENDAR_SOURCE_ID);
+    g_assert_cmpstr(calendar_get_build_profile(), ==,
+                    CALENDAR_BUILD_PROFILE);
+    g_assert_nonnull(calendar_get_build_profile_label());
+    g_assert_cmpuint(strlen(calendar_get_build_profile_label()), >, 0U);
 
-    g_assert_true(calendar_plus_date_same(2026, 8, 14,
+    g_assert_true(calendar_date_same(2026, 8, 14,
                                           2026, 8, 14));
-    g_assert_false(calendar_plus_date_same(2026, 8, 14,
+    g_assert_false(calendar_date_same(2026, 8, 14,
                                            2026, 8, 15));
-    g_assert_false(calendar_plus_date_same(2026, 2, 30,
+    g_assert_false(calendar_date_same(2026, 2, 30,
                                            2026, 2, 30));
-    g_assert_true(calendar_plus_date_is_work_day(2026, 8, 10));
-    g_assert_true(calendar_plus_date_is_work_day(2026, 8, 14));
-    g_assert_false(calendar_plus_date_is_work_day(2026, 8, 15));
-    g_assert_false(calendar_plus_date_is_work_day(2026, 8, 16));
+    g_assert_true(calendar_date_is_work_day(2026, 8, 10));
+    g_assert_true(calendar_date_is_work_day(2026, 8, 14));
+    g_assert_false(calendar_date_is_work_day(2026, 8, 15));
+    g_assert_false(calendar_date_is_work_day(2026, 8, 16));
     (void)monday;
     (void)friday;
 
-    relation = calendar_plus_event_day_relation(
+    relation = calendar_event_day_relation(
         test_local_time(2026, 8, 13, 0, 0),
         test_local_time(2026, 8, 15, 0, 0),
         test_local_time(2026, 8, 14, 12, 0));
     g_assert_true((relation &
-                   CALENDAR_PLUS_EVENT_DAY_RELATION_STARTED_BEFORE_DAY) != 0);
+                   CALENDAR_EVENT_DAY_RELATION_STARTED_BEFORE_DAY) != 0);
     g_assert_true((relation &
-                   CALENDAR_PLUS_EVENT_DAY_RELATION_ENDS_AFTER_DAY) != 0);
+                   CALENDAR_EVENT_DAY_RELATION_ENDS_AFTER_DAY) != 0);
     g_assert_false((relation &
-                    CALENDAR_PLUS_EVENT_DAY_RELATION_STARTS_ON_DAY) != 0);
+                    CALENDAR_EVENT_DAY_RELATION_STARTS_ON_DAY) != 0);
 
-    g_assert_cmpint(calendar_plus_event_state(start, end, now),
+    g_assert_cmpint(calendar_event_state(start, end, now),
                     ==,
-                    CALENDAR_PLUS_EVENT_STATE_PRESENT);
-    g_assert_cmpint(calendar_plus_event_state(start, end, start - 1),
+                    CALENDAR_EVENT_STATE_PRESENT);
+    g_assert_cmpint(calendar_event_state(start, end, start - 1),
                     ==,
-                    CALENDAR_PLUS_EVENT_STATE_FUTURE);
-    g_assert_cmpint(calendar_plus_event_state(start, end, end + 1),
+                    CALENDAR_EVENT_STATE_FUTURE);
+    g_assert_cmpint(calendar_event_state(start, end, end + 1),
                     ==,
-                    CALENDAR_PLUS_EVENT_STATE_PAST);
-    g_assert_cmpint(calendar_plus_event_state(end, start, now),
+                    CALENDAR_EVENT_STATE_PAST);
+    g_assert_cmpint(calendar_event_state(end, start, now),
                     ==,
-                    CALENDAR_PLUS_EVENT_STATE_INVALID);
+                    CALENDAR_EVENT_STATE_INVALID);
 
     g_variant_get(timing,
                   "(ixx)",
                   &state,
                   &seconds_to_start,
                   &seconds_to_finish);
-    g_assert_cmpint(state, ==, CALENDAR_PLUS_EVENT_STATE_PRESENT);
+    g_assert_cmpint(state, ==, CALENDAR_EVENT_STATE_PRESENT);
     g_assert_cmpint(seconds_to_start, ==, -30 * 60);
     g_assert_cmpint(seconds_to_finish, ==, 30 * 60);
 
@@ -1173,8 +1173,8 @@ test_event_store(void)
     const gint64 day = test_local_time(2026, 7, 29, 0, 0);
     const gint64 next_day = test_local_time(2026, 7, 30, 0, 0);
     const gint64 now = test_local_time(2026, 7, 29, 12, 0);
-    g_autoptr(CalendarPlusEventStore) store =
-        calendar_plus_event_store_new();
+    g_autoptr(CalendarEventStore) store =
+        calendar_event_store_new();
     g_autoptr(GVariant) past =
         test_event_variant("past",
                            "#111111",
@@ -1205,11 +1205,11 @@ test_event_store(void)
     g_auto(GStrv) colors = NULL;
 
     g_assert_true(
-        calendar_plus_event_store_add_or_update(store, future, 100));
+        calendar_event_store_add_or_update(store, future, 100));
     g_assert_true(
-        calendar_plus_event_store_add_or_update(store, all_day, 100));
+        calendar_event_store_add_or_update(store, all_day, 100));
     g_assert_true(
-        calendar_plus_event_store_add_or_update(store, past, 100));
+        calendar_event_store_add_or_update(store, past, 100));
     {
         g_autoptr(GVariant) backwards =
             test_event_variant("backwards",
@@ -1229,13 +1229,13 @@ test_event_store(void)
                                1);
 
         g_assert_false(
-            calendar_plus_event_store_add_or_update(store, backwards, 100));
+            calendar_event_store_add_or_update(store, backwards, 100));
         g_assert_false(
-            calendar_plus_event_store_add_or_update(store, empty_all_day, 100));
+            calendar_event_store_add_or_update(store, empty_all_day, 100));
     }
 
     snapshot =
-        calendar_plus_event_store_get_snapshot(store, day, now);
+        calendar_event_store_get_snapshot(store, day, now);
     g_assert_true(
         g_variant_is_of_type(snapshot,
                              G_VARIANT_TYPE("(xa(sssbbxxxxx))")));
@@ -1300,7 +1300,7 @@ test_event_store(void)
         g_assert_cmpint(modified, ==, 1);
     }
 
-    colors = calendar_plus_event_store_get_colors(store, day, now);
+    colors = calendar_event_store_get_colors(store, day, now);
     if (colors == NULL)
         g_error("event store returned a NULL colour vector");
 
@@ -1309,14 +1309,14 @@ test_event_store(void)
     g_assert_cmpstr(colors[1], ==, "#222222");
     g_assert_cmpstr(colors[2], ==, "#333333");
 
-    g_assert_true(calendar_plus_event_store_remove(store,
+    g_assert_true(calendar_event_store_remove(store,
                                                    "past::future"));
-    g_assert_false(calendar_plus_event_store_remove(store, "missing"));
-    g_assert_true(calendar_plus_event_store_cull(store, 101));
+    g_assert_false(calendar_event_store_remove(store, "missing"));
+    g_assert_true(calendar_event_store_cull(store, 101));
 
     g_clear_pointer(&snapshot, g_variant_unref);
     snapshot =
-        calendar_plus_event_store_get_snapshot(store, day, now);
+        calendar_event_store_get_snapshot(store, day, now);
     g_clear_pointer(&rows, g_variant_unref);
     g_variant_get(snapshot,
                   "(x@a(sssbbxxxxx))",
@@ -1331,8 +1331,8 @@ test_event_store_multiday(void)
     const gint64 first_day = test_local_time(2026, 10, 3, 0, 0);
     const gint64 middle_day = test_local_time(2026, 10, 4, 0, 0);
     const gint64 final_day = test_local_time(2026, 10, 5, 0, 0);
-    g_autoptr(CalendarPlusEventStore) store =
-        calendar_plus_event_store_new();
+    g_autoptr(CalendarEventStore) store =
+        calendar_event_store_new();
     g_autoptr(GVariant) event =
         test_event_variant("conference",
                            "#8844cc",
@@ -1349,12 +1349,12 @@ test_event_store_multiday(void)
     gsize index;
 
     g_assert_true(
-        calendar_plus_event_store_add_or_update(store, event, 500));
+        calendar_event_store_add_or_update(store, event, 500));
 
     for (index = 0; index < G_N_ELEMENTS(days); index++)
     {
         g_autoptr(GVariant) snapshot =
-            calendar_plus_event_store_get_snapshot(store,
+            calendar_event_store_get_snapshot(store,
                                                    days[index],
                                                    test_local_time(2026,
                                                                    10,

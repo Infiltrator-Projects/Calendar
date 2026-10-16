@@ -10,12 +10,12 @@
  * out of applet.js leaves the applet controller responsible for lifecycle and
  * wiring rather than clock-format policy.
  *
- * Native time is still calculated and boundary-scheduled in libcalendar-plus;
+ * Native time is still calculated and boundary-scheduled in libcalendar;
  * CinnamonDesktop.WallClock remains authoritative for conventional localized
  * time and surrounding date text.
  */
 
-const CalendarPlus = imports.gi.CalendarPlus;
+const Calendar = imports.gi.Calendar;
 const CinnamonDesktop = imports.gi.CinnamonDesktop;
 
 var CLOCK_MODE_STANDARD_24 = "standard-24";
@@ -76,17 +76,17 @@ const CONVENTIONAL_TIME_FORMATS = Object.freeze([
 ]);
 
 function isNativeClockMode(mode) {
-    return CalendarPlus.time_mode_from_string(mode) !==
-        CalendarPlus.TimeMode.INVALID;
+    return Calendar.time_mode_from_string(mode) !==
+        Calendar.TimeMode.INVALID;
 }
 
 function nativeModeRequiresLocation(mode) {
     if (!isNativeClockMode(mode)) {
         return false;
     }
-    const parsed = CalendarPlus.time_mode_from_string(mode);
-    return CalendarPlus.time_mode_requires_longitude(parsed) ||
-        CalendarPlus.time_mode_requires_latitude(parsed);
+    const parsed = Calendar.time_mode_from_string(mode);
+    return Calendar.time_mode_requires_longitude(parsed) ||
+        Calendar.time_mode_requires_latitude(parsed);
 }
 
 function locationIsConfigured(config) {
@@ -97,13 +97,13 @@ function locationIsConfigured(config) {
         return false;
     }
 
-    const parsed = CalendarPlus.time_mode_from_string(config.mode);
-    if (CalendarPlus.time_mode_requires_latitude(parsed) &&
+    const parsed = Calendar.time_mode_from_string(config.mode);
+    if (Calendar.time_mode_requires_latitude(parsed) &&
         (!Number.isFinite(config.latitude) ||
          config.latitude < -90 || config.latitude > 90)) {
         return false;
     }
-    if (CalendarPlus.time_mode_requires_longitude(parsed) &&
+    if (Calendar.time_mode_requires_longitude(parsed) &&
         (!Number.isFinite(config.longitude) ||
          config.longitude < -180 || config.longitude > 180)) {
         return false;
@@ -181,7 +181,7 @@ function configureWallClock(clock, config) {
     }
 
     if (!clock.set_format_string(format)) {
-        global.logError("calendar-plus@the-infiltratr: invalid panel time format.");
+        global.logError("calendar@the-infiltratr: invalid panel time format.");
         clock.set_format_string("~CLOCK FORMAT ERROR~ %l:%M %p");
     }
 }
@@ -223,7 +223,7 @@ function nativePanelText(clock, systemClock, config) {
         if (normalTime === null || normalTime.length === 0) {
             continue;
         }
-        const replaced = CalendarPlus.replace_time(
+        const replaced = Calendar.replace_time(
             shellText,
             normalTime,
             nativeTime
@@ -250,7 +250,7 @@ function selectedCalendarPanelDate(primaryCalendarSystem, config) {
             today.getFullYear(),
             today.getMonth() + 1,
             today.getDate(),
-            CalendarPlus.DatePart.SHORT
+            Calendar.DatePart.SHORT
         );
         return typeof text === "string" && text.length > 0 ? text : null;
     } catch (error) {
@@ -295,11 +295,11 @@ function todayDisplay(clock, primaryCalendarSystem, config) {
     } else {
         shortDate = primaryCalendarSystem.format_date_part(
             ...args,
-            CalendarPlus.DatePart.SHORT
+            Calendar.DatePart.SHORT
         );
         tooltip = primaryCalendarSystem.format_date_part(
             ...args,
-            CalendarPlus.DatePart.FULL
+            Calendar.DatePart.FULL
         );
     }
 

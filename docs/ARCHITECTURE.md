@@ -4,7 +4,7 @@
 
 Calendar separates platform-neutral chronology, clock scheduling, astronomy and event semantics from Cinnamon presentation, GObject/GVariant/main-loop adapters and reusable Common mechanisms. That separation is a correctness boundary: desktop code should present completed Calendar-owned state rather than becoming a second implementation of chronology or timekeeping rules.
 
-The versioned `calendar_plus_format_date_v1` export is a narrow cross-application boundary over the native chronology engine. It accepts a calendar ID, a Gregorian civil date and `short`/`full` presentation, writes bounded UTF-8 into caller storage, and leaves output unchanged on failure. Common's POSIX adapter owns discovery and validation of that entry point. This route does not construct GObject calendar types or transfer chronology into Common.
+The versioned `calendar_format_date_v1` export is a narrow cross-application boundary over the native chronology engine. It accepts a calendar ID, a Gregorian civil date and `short`/`full` presentation, writes bounded UTF-8 into caller storage, and leaves output unchanged on failure. Common's POSIX adapter owns discovery and validation of that entry point. This route does not construct GObject calendar types or transfer chronology into Common.
 
 ## First-principles design
 
@@ -67,7 +67,7 @@ Cross-layer shortcuts require a documented reason. GObject/GVariant, toolkit or 
 
 Calendar uses more than one time representation because the domains are different:
 
-- `CalendarPlusDate` is a proleptic-Gregorian civil coordinate used as the stable date boundary;
+- `CalendarDate` is a proleptic-Gregorian civil coordinate used as the stable date boundary;
 - date-only native algorithms use an integral midnight-based Julian Day Number;
 - astronomical Julian Date is a separate fractional quantity whose conventional boundary is noon;
 - clock and astronomy absolute instants use signed Unix microseconds from 1970-01-01T00:00:00Z;
@@ -127,9 +127,9 @@ Do not weaken specialised chronology merely to increase reuse. Equally, do not p
 
 ## Native ABI and compatibility
 
-The installed `libcalendar-plus.so.0` and versioned symbol map form a runtime stability contract for Calendar itself. They are not currently advertised as a separately supported third-party C SDK.
+The installed `libcalendar.so.0` and versioned symbol map form a runtime stability contract for Calendar itself. They are not currently advertised as a separately supported third-party C SDK.
 
-The typelib, About helper, applet UUID, gettext domain and established `CalendarPlus` / `CALENDAR_PLUS_*` identifiers are compatibility identities. The user-facing application is Calendar and the Debian package is `calendar`; compatibility naming is intentionally allowed to differ from product naming.
+The typelib, About helper, applet UUID, gettext domain and established `Calendar` / `CALENDAR_*` identifiers are compatibility identities. The user-facing application is Calendar and the Debian package is `calendar`; compatibility naming is intentionally allowed to differ from product naming.
 
 A supported third-party SDK would require installed headers, package metadata and its own explicit compatibility policy rather than silently promoting internal headers into a public contract.
 

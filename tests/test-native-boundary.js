@@ -19,7 +19,7 @@ const variant = (value) => ({ deep_unpack: () => value });
 
 const policy = boundary.decodeTemporalPolicy(variant([
     "standard-24", "gregorian", true, false, -36.3, 145.4,
-    "infiltrator-system-settings", true,
+    "system-settings", true,
 ]));
 assert.equal(policy.mode, "standard-24");
 assert.equal(policy.calendar, "gregorian");

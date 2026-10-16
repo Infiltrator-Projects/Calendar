@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 // Copyright (C) 1993-2026 Shannon Smith
 
-#ifndef CALENDAR_PLUS_CALENDAR_ARITHMETIC_H
-#define CALENDAR_PLUS_CALENDAR_ARITHMETIC_H
+#ifndef CALENDAR_CALENDAR_ARITHMETIC_H
+#define CALENDAR_CALENDAR_ARITHMETIC_H
 
 #include "calendar-internal.h"
 
@@ -16,19 +16,19 @@ G_BEGIN_DECLS
  * Navigation helpers use G_MAXINT64 as an internal invalid-JDN sentinel when a
  * requested destination lies outside a maintained provider domain.
  */
-gboolean calendar_plus_arithmetic_fields_from_jdn(
-    CalendarPlusCalendarMode mode,
+gboolean calendar_arithmetic_fields_from_jdn(
+    CalendarCalendarMode mode,
     gint64 jdn,
-    CalendarPlusCalendarFields *fields);
-gint64 calendar_plus_arithmetic_month_start(
-    CalendarPlusCalendarMode mode,
+    CalendarCalendarFields *fields);
+gint64 calendar_arithmetic_month_start(
+    CalendarCalendarMode mode,
     gint64 jdn);
-gint64 calendar_plus_arithmetic_add_months(
-    CalendarPlusCalendarMode mode,
+gint64 calendar_arithmetic_add_months(
+    CalendarCalendarMode mode,
     gint64 jdn,
     gint amount);
-gint64 calendar_plus_arithmetic_add_years(
-    CalendarPlusCalendarMode mode,
+gint64 calendar_arithmetic_add_years(
+    CalendarCalendarMode mode,
     gint64 jdn,
     gint amount);
 

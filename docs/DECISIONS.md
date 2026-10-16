@@ -52,8 +52,8 @@ This file records durable architectural decisions for Calendar. It complements `
 
 ## ADR-007 — Civil chronology has one native implementation
 
-**Decision.** Civil-day navigation and weekday calculation are native CalendarPlus responsibilities. Cinnamon JavaScript consumes the native APIs and must not maintain a second chronology implementation for the same operations.
+**Decision.** Civil-day navigation and weekday calculation are native Calendar responsibilities. Cinnamon JavaScript consumes the native APIs and must not maintain a second chronology implementation for the same operations.
 
 **Why.** Parallel date arithmetic creates silent divergence at calendar boundaries, skipped local dates and large year ranges, while the native implementation is already the tested chronology authority.
 
-**Consequence.** New civil-date arithmetic belongs below the JavaScript/native boundary. Cinnamon may coordinate navigation and presentation, but it delegates chronology semantics to CalendarPlus.
+**Consequence.** New civil-date arithmetic belongs below the JavaScript/native boundary. Cinnamon may coordinate navigation and presentation, but it delegates chronology semantics to Calendar.

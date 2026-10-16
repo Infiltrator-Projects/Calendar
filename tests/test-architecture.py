@@ -205,7 +205,7 @@ def main() -> None:
     # The build must preserve a separately testable portable archive and the
     # architecture check itself as a required validation gate.
     makefile = read("Makefile")
-    assert "libcalendar-plus-core.a" in makefile
+    assert "libcalendar-core.a" in makefile
     assert "test-portable-core.c $(CORE_SOURCES)" in makefile
     assert "$(CORE_CFLAGS)" in makefile
     assert "validate-architecture" in makefile
@@ -216,10 +216,10 @@ def main() -> None:
     # sentence: prose may improve without weakening this contract.
     public_event_adapter = code("src/adapters/event-store.h")
     assert "GVariant *event_data" in public_event_adapter
-    assert "CalendarPlusEventInput" not in public_event_adapter
+    assert "CalendarEventInput" not in public_event_adapter
     event_source = code("src/core/event-source.h")
-    assert "CalendarPlusEventInput" in event_source
-    assert "CalendarPlusEventSource" in event_source
+    assert "CalendarEventInput" in event_source
+    assert "CalendarEventSource" in event_source
 
     # Positional native tuples have one JavaScript decoder. EventRecord may
     # preserve its small historical array API for the view, but it must obtain
@@ -230,7 +230,7 @@ def main() -> None:
     assert "decodeEventTiming(variant)" in native_boundary
     assert "NativeBoundary.decodeEventTiming(" in event_manager
     event_timing_call = re.search(
-        r"CalendarPlus\.event_timing\(.*?\)", event_manager, re.DOTALL
+        r"Calendar\.event_timing\(.*?\)", event_manager, re.DOTALL
     )
     assert event_timing_call is not None
     assert "deep_unpack" not in event_timing_call.group(0)

@@ -14,7 +14,7 @@
 
 enum
 {
-    CALENDAR_PLUS_PERSIAN_EPOCH_JDN = 1948320
+    CALENDAR_PERSIAN_EPOCH_JDN = 1948320
 };
 
 static const gint persian_non_leap_corrections[] = {
@@ -61,34 +61,34 @@ persian_is_leap(gint64 year)
     if (persian_is_correction_year(year))
         return FALSE;
     if (persian_is_correction_year(
-            calendar_plus_i64_subtract_saturating(year, 1)))
+            calendar_i64_subtract_saturating(year, 1)))
     {
         return TRUE;
     }
 
-    return calendar_plus_positive_modulo(
-        calendar_plus_i64_add_saturating(
-            calendar_plus_i64_multiply_saturating(year, 25), 11),
+    return calendar_positive_modulo(
+        calendar_i64_add_saturating(
+            calendar_i64_multiply_saturating(year, 25), 11),
         33) < 8;
 }
 
 static gint64
 persian_first_day_offset(gint64 year)
 {
-    gint64 result = calendar_plus_i64_multiply_saturating(
-        365, calendar_plus_i64_subtract_saturating(year, 1));
+    gint64 result = calendar_i64_multiply_saturating(
+        365, calendar_i64_subtract_saturating(year, 1));
 
-    result = calendar_plus_i64_add_saturating(
+    result = calendar_i64_add_saturating(
         result,
-        calendar_plus_floor_divide(
-            calendar_plus_i64_add_saturating(
-                calendar_plus_i64_multiply_saturating(8, year), 21),
+        calendar_floor_divide(
+            calendar_i64_add_saturating(
+                calendar_i64_multiply_saturating(8, year), 21),
             33));
     if (year > persian_non_leap_corrections[0] &&
         persian_is_correction_year(
-            calendar_plus_i64_subtract_saturating(year, 1)))
+            calendar_i64_subtract_saturating(year, 1)))
     {
-        result = calendar_plus_i64_subtract_saturating(result, 1);
+        result = calendar_i64_subtract_saturating(result, 1);
     }
     return result;
 }
@@ -118,54 +118,54 @@ persian_to_jdn(gint64 year,
     gint64 result;
 
     if (month < 1 || month > 12)
-        return CALENDAR_PLUS_PERSIAN_EPOCH_JDN;
+        return CALENDAR_PERSIAN_EPOCH_JDN;
 
-    result = calendar_plus_i64_add_saturating(
-        CALENDAR_PLUS_PERSIAN_EPOCH_JDN,
+    result = calendar_i64_add_saturating(
+        CALENDAR_PERSIAN_EPOCH_JDN,
         persian_first_day_offset(year));
-    result = calendar_plus_i64_add_saturating(
+    result = calendar_i64_add_saturating(
         result, month_offsets[month]);
-    return calendar_plus_i64_add_saturating(result, day - 1);
+    return calendar_i64_add_saturating(result, day - 1);
 }
 
 static void
 persian_from_jdn(gint64 jdn,
-                 CalendarPlusCalendarFields *fields)
+                 CalendarCalendarFields *fields)
 {
     static const gint month_offsets[] = {
         0, 0, 31, 62, 93, 124, 155, 186,
         216, 246, 276, 306, 336
     };
-    const gint64 days_since_epoch = calendar_plus_i64_subtract_saturating(
-        jdn, CALENDAR_PLUS_PERSIAN_EPOCH_JDN);
-    gint64 year = calendar_plus_i64_add_saturating(
-        calendar_plus_floor_divide(
-            calendar_plus_i64_add_saturating(
-                calendar_plus_i64_multiply_saturating(
+    const gint64 days_since_epoch = calendar_i64_subtract_saturating(
+        jdn, CALENDAR_PERSIAN_EPOCH_JDN);
+    gint64 year = calendar_i64_add_saturating(
+        calendar_floor_divide(
+            calendar_i64_add_saturating(
+                calendar_i64_multiply_saturating(
                     33, days_since_epoch),
                 3),
             12053),
         1);
-    gint64 day_index = calendar_plus_i64_subtract_saturating(
+    gint64 day_index = calendar_i64_subtract_saturating(
         days_since_epoch, persian_first_day_offset(year));
     gint month;
 
     if (day_index == 365 && persian_is_correction_year(year))
     {
-        year = calendar_plus_i64_add_saturating(year, 1);
+        year = calendar_i64_add_saturating(year, 1);
         day_index = 0;
     }
 
     month = day_index < 216 ?
-        (gint)calendar_plus_floor_divide(day_index, 31) + 1 :
-        (gint)calendar_plus_floor_divide(
-            calendar_plus_i64_subtract_saturating(day_index, 6), 30) + 1;
+        (gint)calendar_floor_divide(day_index, 31) + 1 :
+        (gint)calendar_floor_divide(
+            calendar_i64_subtract_saturating(day_index, 6), 30) + 1;
 
-    *fields = (CalendarPlusCalendarFields){
+    *fields = (CalendarCalendarFields){
         .year = year,
         .month = month,
-        .day = (gint)calendar_plus_i64_add_saturating(
-            calendar_plus_i64_subtract_saturating(
+        .day = (gint)calendar_i64_add_saturating(
+            calendar_i64_subtract_saturating(
                 day_index, month_offsets[month]),
             1),
         .auxiliary = 0,
@@ -174,14 +174,14 @@ persian_from_jdn(gint64 jdn,
 }
 
 gint
-calendar_plus_arithmetic_persian_month_length(gint64 year,
+calendar_arithmetic_persian_month_length(gint64 year,
                                                gint month)
 {
     return persian_month_length(year, month);
 }
 
 gint64
-calendar_plus_arithmetic_persian_fields_to_jdn(gint64 year,
+calendar_arithmetic_persian_fields_to_jdn(gint64 year,
                                                 gint month,
                                                 gint day)
 {
@@ -189,9 +189,9 @@ calendar_plus_arithmetic_persian_fields_to_jdn(gint64 year,
 }
 
 void
-calendar_plus_arithmetic_persian_fields_from_jdn(
+calendar_arithmetic_persian_fields_from_jdn(
     gint64 jdn,
-    CalendarPlusCalendarFields *fields)
+    CalendarCalendarFields *fields)
 {
     persian_from_jdn(jdn, fields);
 }

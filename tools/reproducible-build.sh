@@ -16,7 +16,7 @@ export LC_ALL=C
 export TZ=UTC
 export PYTHONHASHSEED=0
 export ZERO_AR_DATE=1
-export CALENDAR_PLUS_BUILD_MODE=generic
+export CALENDAR_BUILD_MODE=generic
 case " ${DEB_BUILD_OPTIONS:-} " in
     *" nocheck "*) ;;
     *) DEB_BUILD_OPTIONS="${DEB_BUILD_OPTIONS:+$DEB_BUILD_OPTIONS }nocheck" ;;
@@ -35,7 +35,7 @@ copy_source() {
             --exclude='./debian/.debhelper' \
             --exclude='./debian/calendar' \
         --exclude='./debian/cinnamon-calendar' \
-            --exclude='./debian/calendar-plus' \
+            --exclude='./debian/calendar' \
             --exclude='./debian/files' \
             --exclude='./debian/*.substvars' \
             --exclude='./debian/debhelper-build-stamp' \

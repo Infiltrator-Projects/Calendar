@@ -14,7 +14,7 @@ delay_nuremberg_hours_provider(gint64 unix_microseconds,
                                 gdouble longitude G_GNUC_UNUSED)
 {
     const guint solar_tick = delay_for_clock_seconds(
-        calendar_plus_apparent_solar_seconds(unix_microseconds, 11.0767),
+        calendar_apparent_solar_seconds(unix_microseconds, 11.0767),
         1.0L, show_seconds);
     const guint civil_day_boundary = delay_for_integer_period(
         unix_microseconds, MICROSECONDS_PER_DAY);
@@ -43,7 +43,7 @@ boundary_window(gint64 instant, gdouble latitude, gdouble longitude,
         const gint64 delta = (gint64)offset * MICROSECONDS_PER_DAY;
         gint64 sample, dawn, dusk;
         if (!infiltratr_i64_add_checked(instant, delta, &sample) ||
-            !calendar_plus_solar_boundary_instants(
+            !calendar_solar_boundary_instants(
                 sample, latitude, longitude, 0.833, &dawn, &dusk))
             continue;
         const gint64 candidates[2] = { dawn, dusk };

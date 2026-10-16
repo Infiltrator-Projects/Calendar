@@ -162,7 +162,7 @@ function evaluateApplet(nativeVersion = version, loaderMode = "legacy") {
                         };
                     },
                 },
-                CalendarPlus: {
+                Calendar: {
                     get_version() { return nativeVersion; },
                     CalendarSystem: {
                         new(id) {
@@ -200,12 +200,12 @@ function evaluateApplet(nativeVersion = version, loaderMode = "legacy") {
         "utf8"
     );
     vm.runInContext(
-        `${source}\nglobalThis.__CalendarPlusApplet = CalendarPlusApplet;`,
+        `${source}\nglobalThis.__CalendarApplet = CalendarApplet;`,
         context,
         { filename: "applet.js" }
     );
-    context.__CalendarPlusApplet.loaderObservations = loaderObservations;
-    return context.__CalendarPlusApplet;
+    context.__CalendarApplet.loaderObservations = loaderObservations;
+    return context.__CalendarApplet;
 }
 
 function evaluateDesktopIntegration() {
@@ -308,7 +308,7 @@ function evaluateEventView() {
         imports: {
             gi: {
                 Atk: { Role: { LIST: 1, LIST_ITEM: 2 } },
-                CalendarPlus: {
+                Calendar: {
                     EventDayRelation: { STARTS_ON_DAY: 1, ENDS_ON_DAY: 2 },
                     EventState: { PAST: 0, FUTURE: 1, PRESENT: 2 },
                 },
@@ -514,7 +514,7 @@ function evaluateCalendar() {
                 Cinnamon: {
                     util_get_week_start() { return 0; },
                 },
-                CalendarPlus: {
+                Calendar: {
                     DatePart: { DAY: 1, MONTH: 2, YEAR: 3, SHORT: 4, FULL: 5 },
                     CalendarSystem: {
                         new(id) {
@@ -632,7 +632,7 @@ function evaluatePanelClock() {
         global: { logError() {} },
         imports: {
             gi: {
-                CalendarPlus: {
+                Calendar: {
                     DatePart: { SHORT: 4, FULL: 5 },
                     TimeMode: { INVALID: 0 },
                     time_mode_from_string(mode) {

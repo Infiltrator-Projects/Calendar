@@ -27,8 +27,8 @@
 
 #include <glib/gi18n-lib.h>
 
-#define floor_divide calendar_plus_floor_divide
-#define positive_modulo calendar_plus_positive_modulo
+#define floor_divide calendar_floor_divide
+#define positive_modulo calendar_positive_modulo
 
 #define MAYAN_EPOCH_JDN ((gint64)584283)
 
@@ -70,9 +70,9 @@ static const gchar *const roman_month_abbreviations[] = {
 };
 
 void
-calendar_plus_mayan_fields_from_jdn(
+calendar_mayan_fields_from_jdn(
     gint64 jdn,
-    CalendarPlusCalendarFields *fields)
+    CalendarCalendarFields *fields)
 {
     const gint64 total_kin = jdn - MAYAN_EPOCH_JDN;
     const gint64 tun = floor_divide(total_kin, MAYAN_KIN_PER_TUN);
@@ -89,26 +89,26 @@ calendar_plus_mayan_fields_from_jdn(
 }
 
 gint64
-calendar_plus_mayan_fields_to_jdn(
-    const CalendarPlusCalendarFields *fields)
+calendar_mayan_fields_to_jdn(
+    const CalendarCalendarFields *fields)
 {
     g_return_val_if_fail(fields != NULL, MAYAN_EPOCH_JDN);
 
     gint64 result = MAYAN_EPOCH_JDN;
 
-    result = calendar_plus_i64_add_saturating(
+    result = calendar_i64_add_saturating(
         result,
-        calendar_plus_i64_multiply_saturating(
+        calendar_i64_multiply_saturating(
             fields->year, MAYAN_KIN_PER_TUN));
-    result = calendar_plus_i64_add_saturating(
+    result = calendar_i64_add_saturating(
         result,
-        calendar_plus_i64_multiply_saturating(
+        calendar_i64_multiply_saturating(
             fields->month, MAYAN_KIN_PER_UINAL));
-    return calendar_plus_i64_add_saturating(result, fields->day);
+    return calendar_i64_add_saturating(result, fields->day);
 }
 
 gchar *
-calendar_plus_roman_number(gint64 value)
+calendar_roman_number(gint64 value)
 {
     static const struct
     {
@@ -158,8 +158,8 @@ calendar_plus_roman_number(gint64 value)
 }
 
 gchar *
-calendar_plus_roman_format_date(
-    const CalendarPlusCalendarFields *fields)
+calendar_roman_format_date(
+    const CalendarCalendarFields *fields)
 {
     gint nones;
     gint ides;
@@ -182,7 +182,7 @@ calendar_plus_roman_format_date(
     target_month = fields->month;
     target_year = fields->year;
     /* A.U.C. year numbering is the Julian/Gregorian year plus 753. */
-    year_roman = calendar_plus_roman_number(calendar_plus_i64_add_saturating(fields->year, 753));
+    year_roman = calendar_roman_number(calendar_i64_add_saturating(fields->year, 753));
 
     if (fields->day == 1)
     {
@@ -216,7 +216,7 @@ calendar_plus_roman_format_date(
          * V, IV, III and pridie then follow unchanged.
          */
         if (fields->month == 2 && fields->day == 24 &&
-            calendar_plus_julian_month_length(fields->year, 2) == 29)
+            calendar_julian_month_length(fields->year, 2) == 29)
         {
             count = 6;
             bissextile = TRUE;
@@ -228,22 +228,22 @@ calendar_plus_roman_format_date(
              * the +2 is intentional inclusive counting.
              */
             count =
-                calendar_plus_julian_month_length(fields->year, fields->month) -
+                calendar_julian_month_length(fields->year, fields->month) -
                 fields->day + 2;
         }
         target_month++;
         if (target_month > 12)
         {
             target_month = 1;
-            target_year = calendar_plus_i64_add_saturating(target_year, 1);
+            target_year = calendar_i64_add_saturating(target_year, 1);
             g_clear_pointer(&year_roman, g_free);
-            year_roman = calendar_plus_roman_number(calendar_plus_i64_add_saturating(target_year, 753));
+            year_roman = calendar_roman_number(calendar_i64_add_saturating(target_year, 753));
         }
     }
 
     if (bissextile)
     {
-        count_roman = calendar_plus_roman_number(count);
+        count_roman = calendar_roman_number(count);
         return g_strdup_printf("a.d. bis %s %s %s, %s A.U.C.",
                                count_roman,
                                marker,
@@ -266,7 +266,7 @@ calendar_plus_roman_format_date(
                                year_roman);
     }
 
-    count_roman = calendar_plus_roman_number(count);
+    count_roman = calendar_roman_number(count);
     return g_strdup_printf("a.d. %s %s %s, %s A.U.C.",
                            count_roman,
                            marker,
@@ -275,9 +275,9 @@ calendar_plus_roman_format_date(
 }
 
 gchar *
-calendar_plus_mayan_format(
-    const CalendarPlusCalendarFields *fields,
-    CalendarPlusDatePart part)
+calendar_mayan_format(
+    const CalendarCalendarFields *fields,
+    CalendarDatePart part)
 {
     gint64 remaining;
     gint64 baktun;
@@ -292,11 +292,11 @@ calendar_plus_mayan_format(
     katun = remaining / 20;
     tun = remaining % 20;
 
-    if (part == CALENDAR_PLUS_DATE_PART_DAY)
+    if (part == CALENDAR_DATE_PART_DAY)
         return g_strdup_printf("%d", fields->day);
-    if (part == CALENDAR_PLUS_DATE_PART_MONTH)
+    if (part == CALENDAR_DATE_PART_MONTH)
         return g_strdup_printf(_("Uinal %d"), fields->month);
-    if (part == CALENDAR_PLUS_DATE_PART_YEAR)
+    if (part == CALENDAR_DATE_PART_YEAR)
     {
         return g_strdup_printf("%" G_GINT64_FORMAT ".%" G_GINT64_FORMAT
                                ".%" G_GINT64_FORMAT,
@@ -306,21 +306,21 @@ calendar_plus_mayan_format(
     }
 
     {
-        gint64 total_kin = calendar_plus_i64_multiply_saturating(
+        gint64 total_kin = calendar_i64_multiply_saturating(
             fields->year, MAYAN_KIN_PER_TUN);
 
-        total_kin = calendar_plus_i64_add_saturating(
+        total_kin = calendar_i64_add_saturating(
             total_kin,
-            calendar_plus_i64_multiply_saturating(
+            calendar_i64_multiply_saturating(
                 fields->month, MAYAN_KIN_PER_UINAL));
-        total_kin = calendar_plus_i64_add_saturating(
+        total_kin = calendar_i64_add_saturating(
             total_kin, fields->day);
         const gint tzolkin_number =
-            (gint)positive_modulo(calendar_plus_i64_add_saturating(total_kin, 3), 13) + 1;
+            (gint)positive_modulo(calendar_i64_add_saturating(total_kin, 3), 13) + 1;
         const gint tzolkin_name =
-            (gint)positive_modulo(calendar_plus_i64_add_saturating(total_kin, 19), 20);
+            (gint)positive_modulo(calendar_i64_add_saturating(total_kin, 19), 20);
         const gint haab_index =
-            (gint)positive_modulo(calendar_plus_i64_add_saturating(total_kin, 348), MAYAN_KIN_PER_HAAB);
+            (gint)positive_modulo(calendar_i64_add_saturating(total_kin, 348), MAYAN_KIN_PER_HAAB);
         const gint haab_month = haab_index < 360 ? haab_index / 20 : 18;
         const gint haab_day =
             haab_index < 360 ? haab_index % 20 : haab_index - 360;

@@ -15,7 +15,7 @@ fi
 
 ROOT=$(CDPATH='' cd -- "$(dirname -- "$0")/.." && pwd)
 DEB=$1
-UUID=calendar-plus@the-infiltratr
+UUID=calendar@the-infiltratr
 EXPECTED_VERSION=$(cat "$ROOT/VERSION")
 
 [[ -s "$DEB" ]] || {
@@ -81,9 +81,9 @@ trap cleanup EXIT HUP INT TERM
 chmod 700 "$TEST_RUNTIME"
 dpkg-deb -x "$DEB" "$STAGE_ROOT"
 
-EXACT_ABOUT="$STAGE_ROOT/usr/libexec/calendar-plus-about"
-EXACT_TYPELIB=$(find "$STAGE_ROOT/usr/lib" -type f -name 'CalendarPlus-1.0.typelib' -print -quit)
-EXACT_LIBRARY=$(find "$STAGE_ROOT/usr/lib" -type f -name 'libcalendar-plus.so.0.0.0' -print -quit)
+EXACT_ABOUT="$STAGE_ROOT/usr/libexec/calendar-about"
+EXACT_TYPELIB=$(find "$STAGE_ROOT/usr/lib" -type f -name 'Calendar-1.0.typelib' -print -quit)
+EXACT_LIBRARY=$(find "$STAGE_ROOT/usr/lib" -type f -name 'libcalendar.so.0.0.0' -print -quit)
 if [[ ! -x "$EXACT_ABOUT" || -z "$EXACT_TYPELIB" || -z "$EXACT_LIBRARY" ]]; then
     echo "Exact Calendar package is missing its native qualification payload." >&2
     exit 1
@@ -101,7 +101,7 @@ ACTUAL_VERSION=$(LD_LIBRARY_PATH="$LIBRARY_DIR${LD_LIBRARY_PATH:+:$LD_LIBRARY_PA
 
 GI_TYPELIB_PATH="$TYPELIB_DIR${GI_TYPELIB_PATH:+:$GI_TYPELIB_PATH}" \
 LD_LIBRARY_PATH="$LIBRARY_DIR${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}" \
-CALENDAR_PLUS_EXPECTED_VERSION="$EXPECTED_VERSION" \
+CALENDAR_EXPECTED_VERSION="$EXPECTED_VERSION" \
     "$JS_RUNTIME" "$ROOT/tests/smoke-typelib.js" >/dev/null
 
 mkdir -p \
@@ -200,9 +200,9 @@ version_result=$(gdbus call --session \
     --dest org.Cinnamon \
     --object-path /org/Cinnamon \
     --method org.Cinnamon.Eval \
-    'imports.gi.versions.CalendarPlus="1.0"; imports.gi.CalendarPlus.get_version()')
+    'imports.gi.versions.Calendar="1.0"; imports.gi.Calendar.get_version()')
 [[ "$version_result" == *"$CALENDAR_TEST_VERSION"* ]] || {
-    printf 'Isolated Cinnamon loaded the wrong CalendarPlus version: %s\n' \
+    printf 'Isolated Cinnamon loaded the wrong Calendar version: %s\n' \
         "$version_result" >&2
     exit 1
 }
@@ -242,7 +242,7 @@ health_result=$(gdbus call --session \
     --dest org.Cinnamon \
     --object-path /org/Cinnamon \
     --method org.Cinnamon.Eval \
-    "(() => { const a=AppletManager.getRunningInstancesForUuid(\"$CALENDAR_TEST_UUID\")[0]; a._updateClockAndDate(); a._resetCalendar(); a._onResume(); a._rebalancePopupWidth(); if (a.menu) { a.menu.open(); a.menu.close(); } return {healthy:true,version:imports.gi.CalendarPlus.get_version()}; })()")
+    "(() => { const a=AppletManager.getRunningInstancesForUuid(\"$CALENDAR_TEST_UUID\")[0]; a._updateClockAndDate(); a._resetCalendar(); a._onResume(); a._rebalancePopupWidth(); if (a.menu) { a.menu.open(); a.menu.close(); } return {healthy:true,version:imports.gi.Calendar.get_version()}; })()")
 [[ "$health_result" == *'healthy\":true'* || "$health_result" == *'healthy":true'* ]] || {
     printf 'Exact Calendar applet health evaluation failed: %s\n' "$health_result" >&2
     exit 1

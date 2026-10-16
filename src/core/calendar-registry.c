@@ -26,252 +26,252 @@
 
 typedef struct
 {
-    CalendarPlusCalendarProvider interface;
-    CalendarPlusCalendarMode mode;
+    CalendarCalendarProvider interface;
+    CalendarCalendarMode mode;
     const gchar *icu_keyword;
 } BuiltinCalendarProvider;
 
 static const BuiltinCalendarProvider *
-builtin_provider(const CalendarPlusCalendarProvider *provider)
+builtin_provider(const CalendarCalendarProvider *provider)
 {
     /* The first-member invariant makes this container cast well-defined. */
     return (const BuiltinCalendarProvider *)provider;
 }
 
 static gboolean
-icu_fields(const CalendarPlusCalendarProvider *provider,
+icu_fields(const CalendarCalendarProvider *provider,
            gint64 jdn,
-           CalendarPlusCalendarFields *fields)
+           CalendarCalendarFields *fields)
 {
     const BuiltinCalendarProvider *builtin = builtin_provider(provider);
 
-    return calendar_plus_icu_fields_from_jdn(
+    return calendar_icu_fields_from_jdn(
         builtin->icu_keyword, jdn, fields);
 }
 
 static gchar *
-icu_format(const CalendarPlusCalendarProvider *provider,
+icu_format(const CalendarCalendarProvider *provider,
            gint64 jdn,
-           CalendarPlusDatePart part)
+           CalendarDatePart part)
 {
     const BuiltinCalendarProvider *builtin = builtin_provider(provider);
 
-    return calendar_plus_icu_format(
+    return calendar_icu_format(
         builtin->mode, builtin->icu_keyword, jdn, part);
 }
 
 static gint64
-icu_period_start(const CalendarPlusCalendarProvider *provider,
+icu_period_start(const CalendarCalendarProvider *provider,
                  gint64 jdn)
 {
     const BuiltinCalendarProvider *builtin = builtin_provider(provider);
 
-    return calendar_plus_icu_month_start(builtin->icu_keyword, jdn);
+    return calendar_icu_month_start(builtin->icu_keyword, jdn);
 }
 
 static gint64
-icu_add_periods(const CalendarPlusCalendarProvider *provider,
+icu_add_periods(const CalendarCalendarProvider *provider,
                 gint64 jdn,
                 gint amount)
 {
     const BuiltinCalendarProvider *builtin = builtin_provider(provider);
 
-    return calendar_plus_icu_add_months(
+    return calendar_icu_add_months(
         builtin->icu_keyword, jdn, amount);
 }
 
 static gint64
-icu_add_years(const CalendarPlusCalendarProvider *provider,
+icu_add_years(const CalendarCalendarProvider *provider,
               gint64 jdn,
               gint amount)
 {
     const BuiltinCalendarProvider *builtin = builtin_provider(provider);
 
-    return calendar_plus_icu_add_years(
+    return calendar_icu_add_years(
         builtin->icu_keyword, jdn, amount);
 }
 
 static gboolean
-arithmetic_fields(const CalendarPlusCalendarProvider *provider,
+arithmetic_fields(const CalendarCalendarProvider *provider,
                   gint64 jdn,
-                  CalendarPlusCalendarFields *fields)
+                  CalendarCalendarFields *fields)
 {
     const BuiltinCalendarProvider *builtin = builtin_provider(provider);
 
-    return calendar_plus_arithmetic_fields_from_jdn(
+    return calendar_arithmetic_fields_from_jdn(
         builtin->mode, jdn, fields);
 }
 
 static gint64
-arithmetic_period_start(const CalendarPlusCalendarProvider *provider,
+arithmetic_period_start(const CalendarCalendarProvider *provider,
                         gint64 jdn)
 {
     const BuiltinCalendarProvider *builtin = builtin_provider(provider);
 
-    return calendar_plus_arithmetic_month_start(builtin->mode, jdn);
+    return calendar_arithmetic_month_start(builtin->mode, jdn);
 }
 
 static gint64
-arithmetic_add_periods(const CalendarPlusCalendarProvider *provider,
+arithmetic_add_periods(const CalendarCalendarProvider *provider,
                        gint64 jdn,
                        gint amount)
 {
     const BuiltinCalendarProvider *builtin = builtin_provider(provider);
 
-    return calendar_plus_arithmetic_add_months(
+    return calendar_arithmetic_add_months(
         builtin->mode, jdn, amount);
 }
 
 static gint64
-arithmetic_add_years(const CalendarPlusCalendarProvider *provider,
+arithmetic_add_years(const CalendarCalendarProvider *provider,
                      gint64 jdn,
                      gint amount)
 {
     const BuiltinCalendarProvider *builtin = builtin_provider(provider);
 
-    return calendar_plus_arithmetic_add_years(
+    return calendar_arithmetic_add_years(
         builtin->mode, jdn, amount);
 }
 
 static gboolean
-custom_fields(const CalendarPlusCalendarProvider *provider,
+custom_fields(const CalendarCalendarProvider *provider,
               gint64 jdn,
-              CalendarPlusCalendarFields *fields)
+              CalendarCalendarFields *fields)
 {
     const BuiltinCalendarProvider *builtin = builtin_provider(provider);
 
-    calendar_plus_custom_fields_from_jdn(builtin->mode, jdn, fields);
+    calendar_custom_fields_from_jdn(builtin->mode, jdn, fields);
     return TRUE;
 }
 
 static gchar *
-custom_format(const CalendarPlusCalendarProvider *provider,
+custom_format(const CalendarCalendarProvider *provider,
               gint64 jdn,
-              CalendarPlusDatePart part)
+              CalendarDatePart part)
 {
     const BuiltinCalendarProvider *builtin = builtin_provider(provider);
-    CalendarPlusCalendarFields fields;
+    CalendarCalendarFields fields;
 
-    calendar_plus_custom_fields_from_jdn(builtin->mode, jdn, &fields);
-    return calendar_plus_custom_format(builtin->mode, &fields, part);
+    calendar_custom_fields_from_jdn(builtin->mode, jdn, &fields);
+    return calendar_custom_format(builtin->mode, &fields, part);
 }
 
 static gint64
-custom_period_start(const CalendarPlusCalendarProvider *provider,
+custom_period_start(const CalendarCalendarProvider *provider,
                     gint64 jdn)
 {
     const BuiltinCalendarProvider *builtin = builtin_provider(provider);
 
-    return calendar_plus_custom_month_start(builtin->mode, jdn);
+    return calendar_custom_month_start(builtin->mode, jdn);
 }
 
 static gint64
-custom_add_periods(const CalendarPlusCalendarProvider *provider,
+custom_add_periods(const CalendarCalendarProvider *provider,
                    gint64 jdn,
                    gint amount)
 {
     const BuiltinCalendarProvider *builtin = builtin_provider(provider);
 
-    return calendar_plus_custom_add_months(builtin->mode, jdn, amount);
+    return calendar_custom_add_months(builtin->mode, jdn, amount);
 }
 
 static gint64
-custom_add_years(const CalendarPlusCalendarProvider *provider,
+custom_add_years(const CalendarCalendarProvider *provider,
                  gint64 jdn,
                  gint amount)
 {
     const BuiltinCalendarProvider *builtin = builtin_provider(provider);
 
-    return calendar_plus_custom_add_years(builtin->mode, jdn, amount);
+    return calendar_custom_add_years(builtin->mode, jdn, amount);
 }
 
 static gboolean
-swedish_fields(const CalendarPlusCalendarProvider *provider,
+swedish_fields(const CalendarCalendarProvider *provider,
                gint64 jdn,
-               CalendarPlusCalendarFields *fields)
+               CalendarCalendarFields *fields)
 {
     (void)provider;
-    calendar_plus_swedish_fields_from_jdn(jdn, fields);
+    calendar_swedish_fields_from_jdn(jdn, fields);
     return TRUE;
 }
 
 static gchar *
-swedish_format(const CalendarPlusCalendarProvider *provider,
+swedish_format(const CalendarCalendarProvider *provider,
                gint64 jdn,
-               CalendarPlusDatePart part)
+               CalendarDatePart part)
 {
-    CalendarPlusCalendarFields fields;
+    CalendarCalendarFields fields;
 
     (void)provider;
-    calendar_plus_swedish_fields_from_jdn(jdn, &fields);
-    return calendar_plus_swedish_format(&fields, part);
+    calendar_swedish_fields_from_jdn(jdn, &fields);
+    return calendar_swedish_format(&fields, part);
 }
 
 static gint64
-swedish_period_start(const CalendarPlusCalendarProvider *provider,
+swedish_period_start(const CalendarCalendarProvider *provider,
                      gint64 jdn)
 {
     (void)provider;
-    return calendar_plus_swedish_month_start(jdn);
+    return calendar_swedish_month_start(jdn);
 }
 
 static gint64
-swedish_add_periods(const CalendarPlusCalendarProvider *provider,
+swedish_add_periods(const CalendarCalendarProvider *provider,
                     gint64 jdn,
                     gint amount)
 {
     (void)provider;
-    return calendar_plus_swedish_add_months(jdn, amount);
+    return calendar_swedish_add_months(jdn, amount);
 }
 
 static gint64
-swedish_add_years(const CalendarPlusCalendarProvider *provider,
+swedish_add_years(const CalendarCalendarProvider *provider,
                   gint64 jdn,
                   gint amount)
 {
     (void)provider;
-    return calendar_plus_swedish_add_years(jdn, amount);
+    return calendar_swedish_add_years(jdn, amount);
 }
 
 #define PROVIDER_INTERFACE(mode_, id_, fields_, format_, start_, add_, years_) \
     { \
-        CALENDAR_PLUS_CALENDAR_PROVIDER_ABI, \
+        CALENDAR_CALENDAR_PROVIDER_ABI, \
         id_, \
-        CALENDAR_PLUS_CALENDAR_MODE_##mode_, \
+        CALENDAR_CALENDAR_MODE_##mode_, \
         fields_, format_, start_, add_, years_ \
     }
 
 #define ICU_PROVIDER(mode_, id_, keyword_) \
-    [CALENDAR_PLUS_CALENDAR_MODE_##mode_] = { \
+    [CALENDAR_CALENDAR_MODE_##mode_] = { \
         PROVIDER_INTERFACE(mode_, id_, \
                            icu_fields, icu_format, icu_period_start, \
                            icu_add_periods, icu_add_years), \
-        CALENDAR_PLUS_CALENDAR_MODE_##mode_, keyword_ \
+        CALENDAR_CALENDAR_MODE_##mode_, keyword_ \
     }
 
 #define ARITHMETIC_PROVIDER(mode_, id_, keyword_) \
-    [CALENDAR_PLUS_CALENDAR_MODE_##mode_] = { \
+    [CALENDAR_CALENDAR_MODE_##mode_] = { \
         PROVIDER_INTERFACE(mode_, id_, \
                            arithmetic_fields, icu_format, \
                            arithmetic_period_start, arithmetic_add_periods, \
                            arithmetic_add_years), \
-        CALENDAR_PLUS_CALENDAR_MODE_##mode_, keyword_ \
+        CALENDAR_CALENDAR_MODE_##mode_, keyword_ \
     }
 
 #define CUSTOM_PROVIDER(mode_, id_) \
-    [CALENDAR_PLUS_CALENDAR_MODE_##mode_] = { \
+    [CALENDAR_CALENDAR_MODE_##mode_] = { \
         PROVIDER_INTERFACE(mode_, id_, \
                            custom_fields, custom_format, custom_period_start, \
                            custom_add_periods, custom_add_years), \
-        CALENDAR_PLUS_CALENDAR_MODE_##mode_, NULL \
+        CALENDAR_CALENDAR_MODE_##mode_, NULL \
     }
 
 #define SWEDISH_PROVIDER(mode_, id_) \
-    [CALENDAR_PLUS_CALENDAR_MODE_##mode_] = { \
+    [CALENDAR_CALENDAR_MODE_##mode_] = { \
         PROVIDER_INTERFACE(mode_, id_, \
                            swedish_fields, swedish_format, swedish_period_start, \
                            swedish_add_periods, swedish_add_years), \
-        CALENDAR_PLUS_CALENDAR_MODE_##mode_, NULL \
+        CALENDAR_CALENDAR_MODE_##mode_, NULL \
     }
 
 /*
@@ -314,9 +314,9 @@ static const BuiltinCalendarProvider providers[] = {
     CUSTOM_PROVIDER(POSITIVIST, "positivist")
 };
 
-G_STATIC_ASSERT(G_N_ELEMENTS(providers) == CALENDAR_PLUS_CALENDAR_MODE_COUNT);
+G_STATIC_ASSERT(G_N_ELEMENTS(providers) == CALENDAR_CALENDAR_MODE_COUNT);
 
-static const CalendarPlusCalendarProvider *
+static const CalendarCalendarProvider *
 provider_from_id_unchecked(const gchar *calendar_id)
 {
     gsize index;
@@ -336,13 +336,13 @@ provider_from_id_unchecked(const gchar *calendar_id)
 }
 
 gsize
-calendar_plus_calendar_provider_get_count(void)
+calendar_calendar_provider_get_count(void)
 {
     return G_N_ELEMENTS(providers);
 }
 
-const CalendarPlusCalendarProvider *
-calendar_plus_calendar_provider_at(gsize index)
+const CalendarCalendarProvider *
+calendar_calendar_provider_at(gsize index)
 {
     if (index >= G_N_ELEMENTS(providers))
         return NULL;
@@ -351,11 +351,11 @@ calendar_plus_calendar_provider_at(gsize index)
 }
 
 const InfiltratrTemporalCalendarInfo *
-calendar_plus_calendar_provider_info(
-    const CalendarPlusCalendarProvider *provider)
+calendar_calendar_provider_info(
+    const CalendarCalendarProvider *provider)
 {
     if (provider == NULL ||
-        provider->abi_version != CALENDAR_PLUS_CALENDAR_PROVIDER_ABI ||
+        provider->abi_version != CALENDAR_CALENDAR_PROVIDER_ABI ||
         provider->calendar_id == NULL)
     {
         return NULL;
@@ -364,8 +364,8 @@ calendar_plus_calendar_provider_info(
     return infiltratr_temporal_calendar_find(provider->calendar_id);
 }
 
-const CalendarPlusCalendarProvider *
-calendar_plus_calendar_provider_from_id(const gchar *calendar_id)
+const CalendarCalendarProvider *
+calendar_calendar_provider_from_id(const gchar *calendar_id)
 {
     return provider_from_id_unchecked(calendar_id);
 }

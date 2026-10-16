@@ -17,7 +17,7 @@ const GLib = imports.gi.GLib;
 const Signals = imports.signals;
 const Mainloop = imports.mainloop;
 
-const APPLET_UUID = "calendar-plus@the-infiltratr";
+const APPLET_UUID = "calendar@the-infiltratr";
 const CALENDAR_SERVER_BUS_NAME = "org.cinnamon.CalendarServer";
 var STATUS_UNKNOWN = 0;
 var STATUS_NO_CALENDARS = 1;

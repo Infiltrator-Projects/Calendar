@@ -76,7 +76,7 @@ def main() -> None:
     if sys.argv[1:] not in ([], ["--check"]):
         raise SystemExit("usage: update-translations.py [--check]")
 
-    tracked = [PO_DIR / "calendar-plus.pot"]
+    tracked = [PO_DIR / "calendar.pot"]
     languages = [
         line.strip()
         for line in (PO_DIR / "LINGUAS").read_text(encoding="utf-8").splitlines()
@@ -105,9 +105,9 @@ def main() -> None:
         )
         settings_source = Path(temporary.name)
 
-    c_pot = PO_DIR / ".calendar-plus-c.pot"
-    js_pot = PO_DIR / ".calendar-plus-js.pot"
-    output = PO_DIR / "calendar-plus.pot"
+    c_pot = PO_DIR / ".calendar-c.pot"
+    js_pot = PO_DIR / ".calendar-js.pot"
+    output = PO_DIR / "calendar.pot"
     c_files = [
         str(path.relative_to(ROOT))
         for source_dir in (

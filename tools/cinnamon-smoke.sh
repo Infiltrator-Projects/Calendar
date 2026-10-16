@@ -5,12 +5,12 @@
 set -eu
 
 ROOT=$(CDPATH='' cd -- "$(dirname -- "$0")/.." && pwd)
-UUID=calendar-plus@the-infiltratr
+UUID=calendar@the-infiltratr
 SOURCE_DIR=src/cinnamon
 EXPECTED_VERSION=$(cat "$ROOT/VERSION")
-APPLET_DIR="${CALENDAR_PLUS_APPLET_DIR:-/usr/share/cinnamon/applets/$UUID}"
-ABOUT="${CALENDAR_PLUS_ABOUT:-/usr/libexec/calendar-plus-about}"
-JS_RUNTIME="${CALENDAR_PLUS_JS_RUNTIME:-}"
+APPLET_DIR="${CALENDAR_APPLET_DIR:-/usr/share/cinnamon/applets/$UUID}"
+ABOUT="${CALENDAR_ABOUT:-/usr/libexec/calendar-about}"
+JS_RUNTIME="${CALENDAR_JS_RUNTIME:-}"
 if [ -z "$JS_RUNTIME" ]; then
     if command -v gjs >/dev/null 2>&1; then
         JS_RUNTIME=$(command -v gjs)
@@ -72,7 +72,7 @@ done < "$ROOT/$SOURCE_DIR/runtime-sources.sha256"
 
 "$ABOUT" --print-metadata | grep -qx "version=$EXPECTED_VERSION"
 
-CALENDAR_PLUS_EXPECTED_VERSION="$EXPECTED_VERSION" \
+CALENDAR_EXPECTED_VERSION="$EXPECTED_VERSION" \
     "$JS_RUNTIME" "$ROOT/tests/smoke-typelib.js" >/dev/null
 
 command -v gdbus >/dev/null 2>&1 || {

@@ -11,7 +11,7 @@
 
 typedef struct
 {
-    CalendarPlusClockTimerFunc callback;
+    CalendarClockTimerFunc callback;
     gpointer callback_data;
 } GlibTimerDispatch;
 
@@ -52,10 +52,10 @@ dispatch_timer(gpointer user_data)
     return G_SOURCE_REMOVE;
 }
 
-static CalendarPlusClockTimer
+static CalendarClockTimer
 glib_schedule_once(gpointer context,
                    guint delay_milliseconds,
-                   CalendarPlusClockTimerFunc callback,
+                   CalendarClockTimerFunc callback,
                    gpointer callback_data)
 {
     GlibTimerDispatch *dispatch = g_new(GlibTimerDispatch, 1);
@@ -69,12 +69,12 @@ glib_schedule_once(gpointer context,
                                 dispatch_timer,
                                 dispatch,
                                 g_free);
-    return (CalendarPlusClockTimer)source;
+    return (CalendarClockTimer)source;
 }
 
 static void
 glib_cancel(gpointer context,
-            CalendarPlusClockTimer timer)
+            CalendarClockTimer timer)
 {
     (void)context;
     if (timer <= G_MAXUINT)
@@ -82,19 +82,19 @@ glib_cancel(gpointer context,
 }
 
 void
-calendar_plus_clock_glib_interfaces(
-    CalendarPlusClockTimeSource *time_source,
-    CalendarPlusClockScheduler *scheduler)
+calendar_clock_glib_interfaces(
+    CalendarClockTimeSource *time_source,
+    CalendarClockScheduler *scheduler)
 {
     g_return_if_fail(time_source != NULL);
     g_return_if_fail(scheduler != NULL);
 
-    time_source->abi_version = CALENDAR_PLUS_CLOCK_TIME_SOURCE_ABI;
+    time_source->abi_version = CALENDAR_CLOCK_TIME_SOURCE_ABI;
     time_source->context = NULL;
     time_source->now = glib_now;
     time_source->utc_offset = glib_utc_offset;
 
-    scheduler->abi_version = CALENDAR_PLUS_CLOCK_SCHEDULER_ABI;
+    scheduler->abi_version = CALENDAR_CLOCK_SCHEDULER_ABI;
     scheduler->context = NULL;
     scheduler->schedule_once = glib_schedule_once;
     scheduler->cancel = glib_cancel;

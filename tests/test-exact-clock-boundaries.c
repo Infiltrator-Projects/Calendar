@@ -3,7 +3,7 @@
 
 /*
  * Calendar-specific integration tests for the exact timing primitives supplied
- * by Infiltratr Common. These tests exercise the boundary semantics through the
+ * by Libraries. These tests exercise the boundary semantics through the
  * Calendar public clock functions rather than retesting Common in isolation.
  */
 
@@ -19,20 +19,20 @@
 static void
 test_decimal_exact_boundaries(void)
 {
-    g_autofree gchar *before = calendar_plus_format_time(
-        CALENDAR_PLUS_TIME_MODE_DECIMAL, 863999, 0, TRUE, FALSE, 0.0);
-    g_autofree gchar *at = calendar_plus_format_time(
-        CALENDAR_PLUS_TIME_MODE_DECIMAL, 864000, 0, TRUE, FALSE, 0.0);
+    g_autofree gchar *before = calendar_format_time(
+        CALENDAR_TIME_MODE_DECIMAL, 863999, 0, TRUE, FALSE, 0.0);
+    g_autofree gchar *at = calendar_format_time(
+        CALENDAR_TIME_MODE_DECIMAL, 864000, 0, TRUE, FALSE, 0.0);
 
     g_assert_cmpstr(before, ==, "0:00:00");
-    g_assert_cmpuint(calendar_plus_time_delay_to_next_tick(
-                         CALENDAR_PLUS_TIME_MODE_DECIMAL,
+    g_assert_cmpuint(calendar_time_delay_to_next_tick(
+                         CALENDAR_TIME_MODE_DECIMAL,
                          863999, 0, TRUE, 0.0),
                      ==, 1);
 
     g_assert_cmpstr(at, ==, "0:00:01");
-    g_assert_cmpuint(calendar_plus_time_delay_to_next_tick(
-                         CALENDAR_PLUS_TIME_MODE_DECIMAL,
+    g_assert_cmpuint(calendar_time_delay_to_next_tick(
+                         CALENDAR_TIME_MODE_DECIMAL,
                          864000, 0, TRUE, 0.0),
                      ==, 864);
 }
@@ -47,22 +47,22 @@ test_hexadecimal_rational_boundary(void)
      * first representable whole-microsecond instant after it. The one-shot
      * delay is rounded upward and therefore can never fire early.
      */
-    g_autofree gchar *before = calendar_plus_format_time(
-        CALENDAR_PLUS_TIME_MODE_HEXADECIMAL,
+    g_autofree gchar *before = calendar_format_time(
+        CALENDAR_TIME_MODE_HEXADECIMAL,
         1318359, 0, FALSE, FALSE, 0.0);
-    g_autofree gchar *after = calendar_plus_format_time(
-        CALENDAR_PLUS_TIME_MODE_HEXADECIMAL,
+    g_autofree gchar *after = calendar_format_time(
+        CALENDAR_TIME_MODE_HEXADECIMAL,
         1318360, 0, FALSE, FALSE, 0.0);
 
     g_assert_cmpstr(before, ==, "0000");
-    g_assert_cmpuint(calendar_plus_time_delay_to_next_tick(
-                         CALENDAR_PLUS_TIME_MODE_HEXADECIMAL,
+    g_assert_cmpuint(calendar_time_delay_to_next_tick(
+                         CALENDAR_TIME_MODE_HEXADECIMAL,
                          1318359, 0, FALSE, 0.0),
                      ==, 1);
 
     g_assert_cmpstr(after, ==, "0001");
-    g_assert_cmpuint(calendar_plus_time_delay_to_next_tick(
-                         CALENDAR_PLUS_TIME_MODE_HEXADECIMAL,
+    g_assert_cmpuint(calendar_time_delay_to_next_tick(
+                         CALENDAR_TIME_MODE_HEXADECIMAL,
                          1318360, 0, FALSE, 0.0),
                      ==, 1319);
 }
@@ -70,20 +70,20 @@ test_hexadecimal_rational_boundary(void)
 static void
 test_signed_unix_boundaries(void)
 {
-    g_autofree gchar *negative = calendar_plus_format_time(
-        CALENDAR_PLUS_TIME_MODE_UNIX, -1, 0, FALSE, FALSE, 0.0);
-    g_autofree gchar *zero = calendar_plus_format_time(
-        CALENDAR_PLUS_TIME_MODE_UNIX, 0, 0, FALSE, FALSE, 0.0);
+    g_autofree gchar *negative = calendar_format_time(
+        CALENDAR_TIME_MODE_UNIX, -1, 0, FALSE, FALSE, 0.0);
+    g_autofree gchar *zero = calendar_format_time(
+        CALENDAR_TIME_MODE_UNIX, 0, 0, FALSE, FALSE, 0.0);
 
     g_assert_cmpstr(negative, ==, "-1");
-    g_assert_cmpuint(calendar_plus_time_delay_to_next_tick(
-                         CALENDAR_PLUS_TIME_MODE_UNIX,
+    g_assert_cmpuint(calendar_time_delay_to_next_tick(
+                         CALENDAR_TIME_MODE_UNIX,
                          -1, 0, FALSE, 0.0),
                      ==, 1);
 
     g_assert_cmpstr(zero, ==, "0");
-    g_assert_cmpuint(calendar_plus_time_delay_to_next_tick(
-                         CALENDAR_PLUS_TIME_MODE_UNIX,
+    g_assert_cmpuint(calendar_time_delay_to_next_tick(
+                         CALENDAR_TIME_MODE_UNIX,
                          0, 0, FALSE, 0.0),
                      ==, 1000);
 }
@@ -102,23 +102,23 @@ test_extreme_instant_normalisation(void)
 
     for (index = 0; index < G_N_ELEMENTS(instants); index++)
     {
-        g_autofree gchar *decimal = calendar_plus_format_time(
-            CALENDAR_PLUS_TIME_MODE_DECIMAL,
+        g_autofree gchar *decimal = calendar_format_time(
+            CALENDAR_TIME_MODE_DECIMAL,
             instants[index], offsets[index], TRUE, FALSE, 0.0);
-        g_autofree gchar *internet = calendar_plus_format_time(
-            CALENDAR_PLUS_TIME_MODE_INTERNET,
+        g_autofree gchar *internet = calendar_format_time(
+            CALENDAR_TIME_MODE_INTERNET,
             instants[index], offsets[index], TRUE, FALSE, 0.0);
 
         g_assert_nonnull(decimal);
         g_assert_cmpstr(decimal, !=, "");
         g_assert_nonnull(internet);
         g_assert_true(g_str_has_prefix(internet, "@"));
-        g_assert_cmpuint(calendar_plus_time_delay_to_next_tick(
-                             CALENDAR_PLUS_TIME_MODE_DECIMAL,
+        g_assert_cmpuint(calendar_time_delay_to_next_tick(
+                             CALENDAR_TIME_MODE_DECIMAL,
                              instants[index], offsets[index], TRUE, 0.0),
                          >, 0);
-        g_assert_cmpuint(calendar_plus_time_delay_to_next_tick(
-                             CALENDAR_PLUS_TIME_MODE_CHINESE,
+        g_assert_cmpuint(calendar_time_delay_to_next_tick(
+                             CALENDAR_TIME_MODE_CHINESE,
                              instants[index], offsets[index], FALSE, 0.0),
                          >, 0);
     }
@@ -129,12 +129,12 @@ assert_gregorian_round_trip(gint year,
                             gint month,
                             gint day)
 {
-    const gint64 jdn = calendar_plus_gregorian_to_jdn(year, month, day);
+    const gint64 jdn = calendar_gregorian_to_jdn(year, month, day);
     gint actual_year = 0;
     gint actual_month = 0;
     gint actual_day = 0;
 
-    calendar_plus_jdn_to_gregorian(jdn,
+    calendar_jdn_to_gregorian(jdn,
                                    &actual_year,
                                    &actual_month,
                                    &actual_day);
@@ -148,12 +148,12 @@ assert_julian_round_trip(gint year,
                         gint month,
                         gint day)
 {
-    const gint64 jdn = calendar_plus_julian_to_jdn(year, month, day);
+    const gint64 jdn = calendar_julian_to_jdn(year, month, day);
     gint actual_year = 0;
     gint actual_month = 0;
     gint actual_day = 0;
 
-    calendar_plus_jdn_to_julian(jdn,
+    calendar_jdn_to_julian(jdn,
                                 &actual_year,
                                 &actual_month,
                                 &actual_day);
@@ -172,13 +172,13 @@ test_solar_instant_overflow_rejection(void)
      * The instant API must reject values whose containing solar day cannot be
      * represented without overflow; it must never silently clamp them.
      */
-    g_assert_false(calendar_plus_solar_boundary_instants(
+    g_assert_false(calendar_solar_boundary_instants(
         G_MININT64, -36.3833, 145.4000, 0.833, &dawn, &dusk));
-    g_assert_false(calendar_plus_solar_boundary_instants(
+    g_assert_false(calendar_solar_boundary_instants(
         G_MAXINT64, -36.3833, 145.4000, 0.833, &dawn, &dusk));
 
     /* A normal mid-latitude date remains representable and ordered. */
-    g_assert_true(calendar_plus_solar_boundary_instants(
+    g_assert_true(calendar_solar_boundary_instants(
         1788177600LL * G_USEC_PER_SEC,
         -36.3833, 145.4000, 0.833, &dawn, &dusk));
     g_assert_cmpint(dawn, <, dusk);
@@ -201,31 +201,31 @@ test_complete_civil_year_domain(void)
 static void
 test_extreme_navigation_is_bounded(void)
 {
-    CalendarPlusCalendarEngine *gregorian =
-        calendar_plus_calendar_engine_new("gregorian");
-    CalendarPlusCalendarEngine *iso =
-        calendar_plus_calendar_engine_new("iso-week");
-    const CalendarPlusDate maximum = { G_MAXINT, 12, 31 };
-    const CalendarPlusDate minimum = { G_MININT, 1, 1 };
-    CalendarPlusDate result = { 0 };
+    CalendarCalendarEngine *gregorian =
+        calendar_calendar_engine_new("gregorian");
+    CalendarCalendarEngine *iso =
+        calendar_calendar_engine_new("iso-week");
+    const CalendarDate maximum = { G_MAXINT, 12, 31 };
+    const CalendarDate minimum = { G_MININT, 1, 1 };
+    CalendarDate result = { 0 };
 
     g_assert_nonnull(gregorian);
     g_assert_nonnull(iso);
-    g_assert_false(calendar_plus_calendar_engine_add_years(
+    g_assert_false(calendar_calendar_engine_add_years(
         gregorian, &maximum, 1, &result));
-    g_assert_false(calendar_plus_calendar_engine_add_years(
+    g_assert_false(calendar_calendar_engine_add_years(
         gregorian, &minimum, -1, &result));
-    g_assert_false(calendar_plus_calendar_engine_add_years(
+    g_assert_false(calendar_calendar_engine_add_years(
         iso, &maximum, 1, &result));
 
-    calendar_plus_calendar_engine_free(iso);
-    calendar_plus_calendar_engine_free(gregorian);
+    calendar_calendar_engine_free(iso);
+    calendar_calendar_engine_free(gregorian);
 }
 
 static void
 test_roman_extreme_format_is_bounded(void)
 {
-    g_autofree gchar *large = calendar_plus_roman_number(G_MAXINT);
+    g_autofree gchar *large = calendar_roman_number(G_MAXINT);
 
     g_assert_cmpstr(large, ==, "2147483647");
 }
@@ -234,48 +234,48 @@ static void
 test_native_historical_precision_boundaries(void)
 {
     const gint64 before = 3600LL * G_USEC_PER_SEC - 1;
-    g_autofree gchar *initial = calendar_plus_format_time(
-        CALENDAR_PLUS_TIME_MODE_CHINESE, before, 0, TRUE, FALSE, 0.0);
-    g_autofree gchar *next = calendar_plus_format_time(
-        CALENDAR_PLUS_TIME_MODE_CHINESE, before + 1, 0, TRUE, FALSE, 0.0);
+    g_autofree gchar *initial = calendar_format_time(
+        CALENDAR_TIME_MODE_CHINESE, before, 0, TRUE, FALSE, 0.0);
+    g_autofree gchar *next = calendar_format_time(
+        CALENDAR_TIME_MODE_CHINESE, before + 1, 0, TRUE, FALSE, 0.0);
     g_assert_cmpstr(initial, ==, "Zǐ, second half");
     g_assert_cmpstr(next, ==, "Chǒu, first half");
-    g_assert_cmpuint(calendar_plus_time_delay_to_next_tick(
-        CALENDAR_PLUS_TIME_MODE_CHINESE, before, 0, TRUE, 0.0), ==, 1);
+    g_assert_cmpuint(calendar_time_delay_to_next_tick(
+        CALENDAR_TIME_MODE_CHINESE, before, 0, TRUE, 0.0), ==, 1);
 
     /* The half-shi boundary changes fine text but not the double-hour label. */
-    g_assert_cmpuint(calendar_plus_time_delay_to_next_tick(
-        CALENDAR_PLUS_TIME_MODE_CHINESE, 23 * 3600LL * G_USEC_PER_SEC,
+    g_assert_cmpuint(calendar_time_delay_to_next_tick(
+        CALENDAR_TIME_MODE_CHINESE, 23 * 3600LL * G_USEC_PER_SEC,
         0, TRUE, 0.0), ==, 3600000);
-    g_assert_cmpuint(calendar_plus_time_delay_to_next_tick(
-        CALENDAR_PLUS_TIME_MODE_CHINESE, 23 * 3600LL * G_USEC_PER_SEC,
+    g_assert_cmpuint(calendar_time_delay_to_next_tick(
+        CALENDAR_TIME_MODE_CHINESE, 23 * 3600LL * G_USEC_PER_SEC,
         0, FALSE, 0.0), ==, 7200000);
     const gint64 midday = (946728000LL + 1200) * G_USEC_PER_SEC;
-    const guint fine = calendar_plus_time_delay_to_next_tick_at_location(
-        CALENDAR_PLUS_TIME_MODE_ROMAN_TEMPORAL, midday, 0, TRUE, 0.0, 0.0);
-    const guint coarse = calendar_plus_time_delay_to_next_tick_at_location(
-        CALENDAR_PLUS_TIME_MODE_ROMAN_TEMPORAL, midday, 0, FALSE, 0.0, 0.0);
-    g_autofree gchar *fine_text = calendar_plus_format_time_at_location(
-        CALENDAR_PLUS_TIME_MODE_ROMAN_TEMPORAL, midday, 0, TRUE, FALSE, 0.0, 0.0);
+    const guint fine = calendar_time_delay_to_next_tick_at_location(
+        CALENDAR_TIME_MODE_ROMAN_TEMPORAL, midday, 0, TRUE, 0.0, 0.0);
+    const guint coarse = calendar_time_delay_to_next_tick_at_location(
+        CALENDAR_TIME_MODE_ROMAN_TEMPORAL, midday, 0, FALSE, 0.0, 0.0);
+    g_autofree gchar *fine_text = calendar_format_time_at_location(
+        CALENDAR_TIME_MODE_ROMAN_TEMPORAL, midday, 0, TRUE, FALSE, 0.0, 0.0);
     g_assert_nonnull(strstr(fine_text, "twelfth"));
     g_assert_cmpuint(fine, >, 0);
     g_assert_cmpuint(fine, <, coarse);
     /* A solar-phase estimate alone can wake before Common's label changes.
      * The scheduled millisecond must be the first actual displayed change. */
     const gint64 boundary = midday + (gint64)fine * 1000;
-    g_autofree gchar *before_tick = calendar_plus_format_time_at_location(
-        CALENDAR_PLUS_TIME_MODE_ROMAN_TEMPORAL, boundary - 1000,
+    g_autofree gchar *before_tick = calendar_format_time_at_location(
+        CALENDAR_TIME_MODE_ROMAN_TEMPORAL, boundary - 1000,
         0, TRUE, FALSE, 0.0, 0.0);
-    g_autofree gchar *at_tick = calendar_plus_format_time_at_location(
-        CALENDAR_PLUS_TIME_MODE_ROMAN_TEMPORAL, boundary,
+    g_autofree gchar *at_tick = calendar_format_time_at_location(
+        CALENDAR_TIME_MODE_ROMAN_TEMPORAL, boundary,
         0, TRUE, FALSE, 0.0, 0.0);
     g_assert_cmpstr(before_tick, ==, fine_text);
     g_assert_cmpstr(at_tick, !=, fine_text);
     const gint64 night = 946684800LL * G_USEC_PER_SEC;
-    g_assert_cmpuint(calendar_plus_time_delay_to_next_tick_at_location(
-        CALENDAR_PLUS_TIME_MODE_ROMAN_TEMPORAL, night, 0, TRUE, 0.0, 0.0),
-        ==, calendar_plus_time_delay_to_next_tick_at_location(
-        CALENDAR_PLUS_TIME_MODE_ROMAN_TEMPORAL, night, 0, FALSE, 0.0, 0.0));
+    g_assert_cmpuint(calendar_time_delay_to_next_tick_at_location(
+        CALENDAR_TIME_MODE_ROMAN_TEMPORAL, night, 0, TRUE, 0.0, 0.0),
+        ==, calendar_time_delay_to_next_tick_at_location(
+        CALENDAR_TIME_MODE_ROMAN_TEMPORAL, night, 0, FALSE, 0.0, 0.0));
 }
 
 static void
@@ -284,19 +284,19 @@ test_date_renderer_runtime_contract(void)
     char buffer[512] = "keep";
     size_t length = 99;
 
-    g_assert_true(calendar_plus_format_date_v1("roman", 2026, 7, 29,
+    g_assert_true(calendar_format_date_v1("roman", 2026, 7, 29,
         "short", buffer, sizeof(buffer), &length));
     g_assert_cmpstr(buffer, ==, "a.d. XVII Kal. Aug., MMDCCLXXIX A.U.C.");
     g_assert_cmpuint(length, ==, strlen(buffer));
     strcpy(buffer, "keep");
     length = 99;
-    g_assert_false(calendar_plus_format_date_v1("roman", 2026, 7, 29,
+    g_assert_false(calendar_format_date_v1("roman", 2026, 7, 29,
         "short", buffer, 5, &length));
-    g_assert_false(calendar_plus_format_date_v1("roman", 2026, 2, 30,
+    g_assert_false(calendar_format_date_v1("roman", 2026, 2, 30,
         "short", buffer, sizeof(buffer), &length));
-    g_assert_false(calendar_plus_format_date_v1("unknown", 2026, 7, 29,
+    g_assert_false(calendar_format_date_v1("unknown", 2026, 7, 29,
         "short", buffer, sizeof(buffer), &length));
-    g_assert_false(calendar_plus_format_date_v1("roman", 2026, 7, 29,
+    g_assert_false(calendar_format_date_v1("roman", 2026, 7, 29,
         "invalid", buffer, sizeof(buffer), &length));
     g_assert_cmpstr(buffer, ==, "keep");
     g_assert_cmpuint(length, ==, 99);

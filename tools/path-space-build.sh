@@ -17,7 +17,7 @@ mkdir -p "$TARGET"
         --exclude='./debian/.debhelper' \
         --exclude='./debian/calendar' \
         --exclude='./debian/cinnamon-calendar' \
-        --exclude='./debian/calendar-plus' \
+        --exclude='./debian/calendar' \
         --exclude='./debian/files' \
         --exclude='./debian/*.substvars' \
         --exclude='./debian/debhelper-build-stamp' \
@@ -43,10 +43,10 @@ make -C "$TARGET" all >/dev/null
 # x86_64-linux-gnu, so validate the directory the build actually selected.
 MULTIARCH=$(${CC:-cc} -dumpmachine)
 STAGE="$TARGET/debian/calendar"
-test -f "$STAGE/usr/lib/$MULTIARCH/libcalendar-plus.so.0.0.0"
-test -f "$STAGE/usr/lib/$MULTIARCH/girepository-1.0/CalendarPlus-1.0.typelib"
-test -f "$STAGE/usr/share/cinnamon/applets/calendar-plus@the-infiltratr/applet.js"
-test -f "$STAGE/usr/share/cinnamon/applets/calendar-plus@the-infiltratr/stylesheet.css"
-test ! -e "$STAGE/usr/share/cinnamon/applets/calendar-plus@the-infiltratr/settings.py"
+test -f "$STAGE/usr/lib/$MULTIARCH/libcalendar.so.0.0.0"
+test -f "$STAGE/usr/lib/$MULTIARCH/girepository-1.0/Calendar-1.0.typelib"
+test -f "$STAGE/usr/share/cinnamon/applets/calendar@the-infiltratr/applet.js"
+test -f "$STAGE/usr/share/cinnamon/applets/calendar@the-infiltratr/stylesheet.css"
+test ! -e "$STAGE/usr/share/cinnamon/applets/calendar@the-infiltratr/settings.py"
 
 printf 'Path-with-spaces build/install smoke test passed: %s\n' "$TARGET"

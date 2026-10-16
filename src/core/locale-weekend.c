@@ -102,7 +102,7 @@ locale_territory(const gchar *locale,
 }
 
 gboolean
-calendar_plus_locale_is_work_day(const gchar *locale,
+calendar_locale_is_work_day(const gchar *locale,
                                  gint iso_weekday,
                                  gboolean *known)
 {

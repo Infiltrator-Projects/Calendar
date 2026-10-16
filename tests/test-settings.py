@@ -171,7 +171,7 @@ def main() -> None:
     assert theme["default"] == "system"
     assert set(theme["options"].values()) == {"system", "day", "night"}
     require_tokens(desktop_integration, '"changed::gtk-theme"')
-    require_tokens(applet, "calendar-plus-theme-${effectiveTheme}")
+    require_tokens(applet, "calendar-theme-${effectiveTheme}")
 
     common_design = json.loads(
         (
@@ -201,14 +201,14 @@ def main() -> None:
         assert colour.lower() in canonical_colours
 
     # System Settings is optional. GJS consumes one coherent policy snapshot.
-    require_tokens(applet, "CalendarPlus.SystemClock.new()", "TemporalPolicy.TemporalPolicyResolver")
+    require_tokens(applet, "Calendar.SystemClock.new()", "TemporalPolicy.TemporalPolicyResolver")
     forbid_tokens(js_code(applet), "get_system_policy()", "decodeTemporalPolicy", "deep_unpack")
     require_tokens(
         temporal_policy,
         "get_system_policy()",
         "NativeBoundary.decodeTemporalPolicy",
         '"mint-cinnamon"',
-        '"infiltrator-system-settings"',
+        '"system-settings"',
     )
     forbid_tokens(
         js_code(applet),
@@ -222,7 +222,7 @@ def main() -> None:
 
     # Native facade owns clock composition only; policy-source owns discovery,
     # persistence fallback and monitoring in an independently compiled module.
-    require_tokens(system_clock, "CalendarPlusClockEngine", "CalendarPlusTemporalPolicySource")
+    require_tokens(system_clock, "CalendarClockEngine", "CalendarTemporalPolicySource")
     forbid_tokens(
         system_clock,
         "infiltratr_temporal_posix_provider_available",
@@ -307,7 +307,7 @@ def main() -> None:
     require_tokens(loader_tool, "CANONICAL", "function _loadRuntimeSupport()", "--check")
 
     # Public identity/accessibility compatibility remains stable.
-    require_tokens(applet, '"calendar-plus@the-infiltratr"', "openAbout()")
+    require_tokens(applet, '"calendar@the-infiltratr"', "openAbout()")
     require_tokens(event_view, '"changed::calendar-backend"', "Atk.Role.LIST_ITEM")
     require_tokens(calendar, '"key-press-event"', "grab_key_focus()")
     assert METADATA["cinnamon-version"] == ["6.4", "6.6", "6.7"]

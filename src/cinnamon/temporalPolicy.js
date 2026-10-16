@@ -9,7 +9,7 @@
  * and reduces it to the scalar clock configuration needed by presentation.
  */
 
-const CalendarPlus = imports.gi.CalendarPlus;
+const Calendar = imports.gi.Calendar;
 
 function _loadRuntimeSupport() {
     try {
@@ -53,10 +53,10 @@ function _freezePolicy(decoded, isNativeClockMode) {
     const calendarIsValid =
         typeof decoded.calendar === "string" &&
         decoded.calendar.length > 0 &&
-        CalendarPlus.CalendarSystem.new(decoded.calendar) !== null;
+        Calendar.CalendarSystem.new(decoded.calendar) !== null;
     const authorityIsValid =
         decoded.authority === "mint-cinnamon" ||
-        decoded.authority === "infiltrator-system-settings";
+        decoded.authority === "system-settings";
 
     if (typeof decoded.mode !== "string" || !modeIsValid ||
         !calendarIsValid ||

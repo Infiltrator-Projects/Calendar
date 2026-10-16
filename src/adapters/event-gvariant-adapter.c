@@ -5,7 +5,7 @@
  * CalendarServer/GVariant adapter for the neutral event index.
  *
  * Required tuple fields are type-checked and string fields are size-limited
- * here, then mapped once into CalendarPlusEventInput. Event semantics never
+ * here, then mapped once into CalendarEventInput. Event semantics never
  * depend on tuple positions or a desktop-specific transport schema.
  */
 
@@ -92,12 +92,12 @@ variant_get_int64(GVariant *value,
 }
 
 GVariant *
-calendar_plus_event_timing(gint64 start_unix,
+calendar_event_timing(gint64 start_unix,
                            gint64 end_unix,
                            gint64 now_unix)
 {
-    const CalendarPlusEventTiming timing =
-        calendar_plus_event_calculate_timing(start_unix,
+    const CalendarEventTiming timing =
+        calendar_event_calculate_timing(start_unix,
                                              end_unix,
                                              now_unix);
 
@@ -111,7 +111,7 @@ calendar_plus_event_timing(gint64 start_unix,
 static gboolean
 event_input_from_variant(GVariant *event_data,
                          gint64 update_timestamp,
-                         CalendarPlusEventInput *input,
+                         CalendarEventInput *input,
                          gchar **id,
                          gchar **color,
                          gchar **summary)
@@ -147,13 +147,13 @@ event_input_from_variant(GVariant *event_data,
     modified_value = event_child(tuple, 6);
 
     *id = variant_dup_string_limited(id_value,
-                                     CALENDAR_PLUS_EVENT_MAX_ID_BYTES,
+                                     CALENDAR_EVENT_MAX_ID_BYTES,
                                      FALSE);
     *color = variant_dup_string_limited(color_value,
-                                        CALENDAR_PLUS_EVENT_MAX_COLOR_BYTES,
+                                        CALENDAR_EVENT_MAX_COLOR_BYTES,
                                         FALSE);
     *summary = variant_dup_string_limited(
-        summary_value, CALENDAR_PLUS_EVENT_MAX_SUMMARY_BYTES, TRUE);
+        summary_value, CALENDAR_EVENT_MAX_SUMMARY_BYTES, TRUE);
 
     input->id = *id;
     input->color = *color;
@@ -173,7 +173,7 @@ event_input_from_variant(GVariant *event_data,
 }
 
 static gboolean
-event_input_overlaps_range(const CalendarPlusEventInput *input,
+event_input_overlaps_range(const CalendarEventInput *input,
                            gint64 range_start_unix,
                            gint64 range_end_unix)
 {
@@ -190,16 +190,16 @@ event_input_overlaps_range(const CalendarPlusEventInput *input,
 }
 
 gboolean
-calendar_plus_event_store_add_or_update(CalendarPlusEventStore *self,
+calendar_event_store_add_or_update(CalendarEventStore *self,
                                         GVariant *event_data,
                                         gint64 update_timestamp)
 {
     g_autofree gchar *id = NULL;
     g_autofree gchar *color = NULL;
     g_autofree gchar *summary = NULL;
-    CalendarPlusEventInput input = { 0 };
+    CalendarEventInput input = { 0 };
 
-    g_return_val_if_fail(CALENDAR_PLUS_IS_EVENT_STORE(self), FALSE);
+    g_return_val_if_fail(CALENDAR_IS_EVENT_STORE(self), FALSE);
     if (!event_input_from_variant(event_data,
                                   update_timestamp,
                                   &input,
@@ -210,13 +210,13 @@ calendar_plus_event_store_add_or_update(CalendarPlusEventStore *self,
         return FALSE;
     }
 
-    return calendar_plus_event_index_upsert(
-        calendar_plus_event_store_get_index(self), &input);
+    return calendar_event_index_upsert(
+        calendar_event_store_get_index(self), &input);
 }
 
 gboolean
-calendar_plus_event_store_add_or_update_in_range(
-    CalendarPlusEventStore *self,
+calendar_event_store_add_or_update_in_range(
+    CalendarEventStore *self,
     GVariant *event_data,
     gint64 update_timestamp,
     gint64 range_start_unix,
@@ -225,9 +225,9 @@ calendar_plus_event_store_add_or_update_in_range(
     g_autofree gchar *id = NULL;
     g_autofree gchar *color = NULL;
     g_autofree gchar *summary = NULL;
-    CalendarPlusEventInput input = { 0 };
+    CalendarEventInput input = { 0 };
 
-    g_return_val_if_fail(CALENDAR_PLUS_IS_EVENT_STORE(self), FALSE);
+    g_return_val_if_fail(CALENDAR_IS_EVENT_STORE(self), FALSE);
     if (!event_input_from_variant(event_data,
                                   update_timestamp,
                                   &input,
@@ -241,23 +241,23 @@ calendar_plus_event_store_add_or_update_in_range(
         return FALSE;
     }
 
-    return calendar_plus_event_index_upsert(
-        calendar_plus_event_store_get_index(self), &input);
+    return calendar_event_index_upsert(
+        calendar_event_store_get_index(self), &input);
 }
 
 GVariant *
-calendar_plus_event_store_get_snapshot(CalendarPlusEventStore *self,
+calendar_event_store_get_snapshot(CalendarEventStore *self,
                                        gint64 local_day_unix,
                                        gint64 now_unix)
 {
-    CalendarPlusEventSnapshot *snapshot;
+    CalendarEventSnapshot *snapshot;
     GVariantBuilder rows;
     gsize item;
     GVariant *result;
 
-    g_return_val_if_fail(CALENDAR_PLUS_IS_EVENT_STORE(self), NULL);
-    snapshot = calendar_plus_event_index_snapshot(
-        calendar_plus_event_store_get_index(self),
+    g_return_val_if_fail(CALENDAR_IS_EVENT_STORE(self), NULL);
+    snapshot = calendar_event_index_snapshot(
+        calendar_event_store_get_index(self),
         local_day_unix,
         now_unix);
     if (snapshot == NULL)
@@ -266,7 +266,7 @@ calendar_plus_event_store_get_snapshot(CalendarPlusEventStore *self,
     g_variant_builder_init(&rows, G_VARIANT_TYPE("a(sssbbxxxxx)"));
     for (item = 0; item < snapshot->length; item++)
     {
-        const CalendarPlusEvent *event = &snapshot->events[item];
+        const CalendarEvent *event = &snapshot->events[item];
 
         g_variant_builder_add(&rows,
                               "(sssbbxxxxx)",
@@ -286,24 +286,24 @@ calendar_plus_event_store_get_snapshot(CalendarPlusEventStore *self,
         g_variant_new("(x@a(sssbbxxxxx))",
                       snapshot->revision,
                       g_variant_builder_end(&rows)));
-    calendar_plus_event_snapshot_free(snapshot);
+    calendar_event_snapshot_free(snapshot);
     return result;
 }
 
 GVariant *
-calendar_plus_event_store_get_color_range(CalendarPlusEventStore *self,
+calendar_event_store_get_color_range(CalendarEventStore *self,
                                           gint64 first_local_day_unix,
                                           guint day_count,
                                           gint64 now_unix,
                                           guint maximum_colors_per_day)
 {
-    CalendarPlusEventColorRange *range;
+    CalendarEventColorRange *range;
     GVariantBuilder days;
     gsize day;
 
-    g_return_val_if_fail(CALENDAR_PLUS_IS_EVENT_STORE(self), NULL);
-    range = calendar_plus_event_index_color_range(
-        calendar_plus_event_store_get_index(self),
+    g_return_val_if_fail(CALENDAR_IS_EVENT_STORE(self), NULL);
+    range = calendar_event_index_color_range(
+        calendar_event_store_get_index(self),
         first_local_day_unix,
         day_count,
         now_unix,
@@ -323,7 +323,7 @@ calendar_plus_event_store_get_color_range(CalendarPlusEventStore *self,
         g_variant_builder_add_value(&days, g_variant_builder_end(&colors));
     }
 
-    calendar_plus_event_color_range_free(range);
+    calendar_event_color_range_free(range);
     return g_variant_ref_sink(g_variant_builder_end(&days));
 }
 

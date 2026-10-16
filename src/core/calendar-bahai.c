@@ -35,9 +35,9 @@
 
 #include <math.h>
 
-#define floor_divide calendar_plus_floor_divide
-#define gregorian_to_jdn calendar_plus_gregorian_to_jdn
-#define jdn_to_gregorian calendar_plus_jdn_to_gregorian
+#define floor_divide calendar_floor_divide
+#define gregorian_to_jdn calendar_gregorian_to_jdn
+#define jdn_to_gregorian calendar_jdn_to_gregorian
 
 #define JULIAN_DATE_UNIX_EPOCH 2440587.5L
 #define SECONDS_PER_DAY 86400.0L
@@ -130,33 +130,33 @@ modern_naw_ruz_jdn(gint gregorian_year)
     const gint64 unix_microseconds = (gint64)llroundl(
         (jd_utc - JULIAN_DATE_UNIX_EPOCH) *
         SECONDS_PER_DAY * G_USEC_PER_SEC);
-    const gint64 local_microseconds = calendar_plus_i64_add_saturating(
+    const gint64 local_microseconds = calendar_i64_add_saturating(
         unix_microseconds,
-        calendar_plus_i64_multiply_saturating(
+        calendar_i64_multiply_saturating(
             TEHRAN_UTC_OFFSET_SECONDS, G_USEC_PER_SEC));
-    const gint64 tehran_civil_jdn = calendar_plus_i64_add_saturating(
+    const gint64 tehran_civil_jdn = calendar_i64_add_saturating(
         floor_divide(local_microseconds, MICROSECONDS_PER_DAY),
-        CALENDAR_PLUS_UNIX_EPOCH_JDN);
+        CALENDAR_UNIX_EPOCH_JDN);
     long double dawn = 0.0L;
     long double dusk = 0.0L;
     const long double apparent =
-        calendar_plus_apparent_solar_seconds(
+        calendar_apparent_solar_seconds(
             unix_microseconds, TEHRAN_LONGITUDE);
 
-    if (!calendar_plus_solar_day_boundaries(
+    if (!calendar_solar_day_boundaries(
             unix_microseconds, TEHRAN_LATITUDE, 0.833, &dawn, &dusk))
     {
         return tehran_civil_jdn;
     }
 
     (void)dawn;
-    return apparent < dusk ? tehran_civil_jdn : calendar_plus_i64_add_saturating(tehran_civil_jdn, 1);
+    return apparent < dusk ? tehran_civil_jdn : calendar_i64_add_saturating(tehran_civil_jdn, 1);
 }
 
 static gint64
 bahai_year_start_jdn(gint64 bahai_year)
 {
-    const gint64 gregorian_year = calendar_plus_i64_add_saturating(
+    const gint64 gregorian_year = calendar_i64_add_saturating(
         bahai_year, BAHAI_TO_GREGORIAN_YEAR_OFFSET);
 
     if (bahai_year >= MODERN_BAHAI_FIRST_YEAR &&
@@ -172,20 +172,20 @@ bahai_year_start_jdn(gint64 bahai_year)
 }
 
 gint
-calendar_plus_bahai_intercalary_days(gint64 bahai_year)
+calendar_bahai_intercalary_days(gint64 bahai_year)
 {
-    return (gint)calendar_plus_i64_subtract_saturating(
-        calendar_plus_i64_subtract_saturating(
+    return (gint)calendar_i64_subtract_saturating(
+        calendar_i64_subtract_saturating(
             bahai_year_start_jdn(
-                calendar_plus_i64_add_saturating(bahai_year, 1)),
+                calendar_i64_add_saturating(bahai_year, 1)),
             bahai_year_start_jdn(bahai_year)),
         361);
 }
 
 void
-calendar_plus_bahai_fields_from_jdn(
+calendar_bahai_fields_from_jdn(
     gint64 jdn,
-    CalendarPlusCalendarFields *fields)
+    CalendarCalendarFields *fields)
 {
     gint gregorian_year;
     gint gregorian_month;
@@ -206,21 +206,21 @@ calendar_plus_bahai_fields_from_jdn(
     start = bahai_year_start_jdn(bahai_year);
     if (jdn < start)
     {
-        bahai_year = calendar_plus_i64_subtract_saturating(
+        bahai_year = calendar_i64_subtract_saturating(
             bahai_year, 1);
         start = bahai_year_start_jdn(bahai_year);
     }
-    else if (jdn >= bahai_year_start_jdn(calendar_plus_i64_add_saturating(bahai_year, 1)))
+    else if (jdn >= bahai_year_start_jdn(calendar_i64_add_saturating(bahai_year, 1)))
     {
-        bahai_year = calendar_plus_i64_add_saturating(
+        bahai_year = calendar_i64_add_saturating(
             bahai_year, 1);
         start = bahai_year_start_jdn(bahai_year);
     }
 
     fields->year = bahai_year;
-    day_index = (gint)calendar_plus_i64_subtract_saturating(
+    day_index = (gint)calendar_i64_subtract_saturating(
         jdn, start);
-    intercalary = calendar_plus_bahai_intercalary_days(bahai_year);
+    intercalary = calendar_bahai_intercalary_days(bahai_year);
 
     if (day_index < 18 * 19)
     {
@@ -245,7 +245,7 @@ calendar_plus_bahai_fields_from_jdn(
 }
 
 gint
-calendar_plus_bahai_period_index(gint month)
+calendar_bahai_period_index(gint month)
 {
     if (month == 0)
         return 18;
@@ -255,7 +255,7 @@ calendar_plus_bahai_period_index(gint month)
 }
 
 gint
-calendar_plus_bahai_month_from_period(gint period)
+calendar_bahai_month_from_period(gint period)
 {
     if (period == 18)
         return 0;
@@ -265,8 +265,8 @@ calendar_plus_bahai_month_from_period(gint period)
 }
 
 gint64
-calendar_plus_bahai_fields_to_jdn(
-    const CalendarPlusCalendarFields *fields)
+calendar_bahai_fields_to_jdn(
+    const CalendarCalendarFields *fields)
 {
     gint64 start;
     gint offset;
@@ -279,9 +279,9 @@ calendar_plus_bahai_fields_to_jdn(
     else if (fields->month == 0)
         offset = 18 * 19;
     else
-        offset = 18 * 19 + calendar_plus_bahai_intercalary_days(fields->year);
+        offset = 18 * 19 + calendar_bahai_intercalary_days(fields->year);
 
-    return calendar_plus_i64_add_saturating(
-        calendar_plus_i64_add_saturating(start, offset),
+    return calendar_i64_add_saturating(
+        calendar_i64_add_saturating(start, offset),
         fields->day - 1);
 }

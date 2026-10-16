@@ -67,7 +67,7 @@ solar_terms(gint64 unix_microseconds,
             gdouble *declination_radians)
 {
     const gint64 unix_seconds =
-        calendar_plus_floor_divide(unix_microseconds, G_USEC_PER_SEC);
+        calendar_floor_divide(unix_microseconds, G_USEC_PER_SEC);
     g_autoptr(GDateTime) utc = g_date_time_new_from_unix_utc(unix_seconds);
     gdouble fractional_hour;
     gdouble gamma;
@@ -113,18 +113,18 @@ solar_terms(gint64 unix_microseconds,
 }
 
 long double
-calendar_plus_julian_date(gint64 unix_microseconds)
+calendar_julian_date(gint64 unix_microseconds)
 {
     return JULIAN_DATE_UNIX_EPOCH +
            (long double)unix_microseconds / MICROSECONDS_PER_DAY;
 }
 
 long double
-calendar_plus_local_sidereal_seconds(gint64 unix_microseconds,
+calendar_local_sidereal_seconds(gint64 unix_microseconds,
                                      gdouble longitude)
 {
     const long double days_since_j2000 =
-        calendar_plus_julian_date(unix_microseconds) - JULIAN_DATE_J2000;
+        calendar_julian_date(unix_microseconds) - JULIAN_DATE_J2000;
     const long double gmst_hours =
         18.697374558L + 24.06570982441908L * days_since_j2000;
     long double local_hours =
@@ -137,11 +137,11 @@ calendar_plus_local_sidereal_seconds(gint64 unix_microseconds,
 }
 
 long double
-calendar_plus_mean_solar_seconds(gint64 unix_microseconds,
+calendar_mean_solar_seconds(gint64 unix_microseconds,
                                  gdouble longitude)
 {
     const gint64 utc_microseconds =
-        calendar_plus_positive_modulo(unix_microseconds, MICROSECONDS_PER_DAY);
+        calendar_positive_modulo(unix_microseconds, MICROSECONDS_PER_DAY);
     long double seconds =
         (long double)utc_microseconds / G_USEC_PER_SEC +
         normalise_longitude(longitude) * 240.0L;
@@ -154,14 +154,14 @@ calendar_plus_mean_solar_seconds(gint64 unix_microseconds,
 }
 
 long double
-calendar_plus_apparent_solar_seconds(gint64 unix_microseconds,
+calendar_apparent_solar_seconds(gint64 unix_microseconds,
                                      gdouble longitude)
 {
     gdouble equation_minutes = 0.0;
     long double seconds;
 
     (void)solar_terms(unix_microseconds, &equation_minutes, NULL);
-    seconds = calendar_plus_mean_solar_seconds(unix_microseconds, longitude) +
+    seconds = calendar_mean_solar_seconds(unix_microseconds, longitude) +
               equation_minutes * 60.0L;
 
     seconds = fmodl(seconds, SECONDS_PER_DAY);
@@ -172,7 +172,7 @@ calendar_plus_apparent_solar_seconds(gint64 unix_microseconds,
 }
 
 gboolean
-calendar_plus_solar_day_boundaries(gint64 unix_microseconds,
+calendar_solar_day_boundaries(gint64 unix_microseconds,
                                    gdouble latitude,
                                    gdouble solar_depression_degrees,
                                    long double *dawn_seconds,
@@ -231,7 +231,7 @@ calendar_plus_solar_day_boundaries(gint64 unix_microseconds,
  * sunrise/sunset origin.
  */
 gboolean
-calendar_plus_solar_boundary_instants(gint64 unix_microseconds,
+calendar_solar_boundary_instants(gint64 unix_microseconds,
                                       gdouble latitude,
                                       gdouble longitude,
                                       gdouble solar_depression_degrees,
@@ -267,7 +267,7 @@ calendar_plus_solar_boundary_instants(gint64 unix_microseconds,
         return FALSE;
     }
 
-    day_index = calendar_plus_floor_divide(unix_microseconds, MICROSECONDS_PER_DAY);
+    day_index = calendar_floor_divide(unix_microseconds, MICROSECONDS_PER_DAY);
     /*
      * This API reports whether a physical boundary can be represented. An
      * overflowing day origin is therefore failure, not a value to saturate.

@@ -19,7 +19,7 @@
 #include <infiltratr/posix_path.h>
 #include <infiltratr/temporal_posix.h>
 
-struct _CalendarPlusTemporalPolicySource
+struct _CalendarTemporalPolicySource
 {
     GSettings *cinnamon_interface_settings;
     gchar *policy_directory;
@@ -31,7 +31,7 @@ struct _CalendarPlusTemporalPolicySource
     InfiltratrTemporalPolicyV3 effective_policy;
     gboolean provider_available;
     gboolean infiltrator_authority;
-    CalendarPlusTemporalPolicyChangedFunc changed;
+    CalendarTemporalPolicyChangedFunc changed;
     gpointer changed_data;
 };
 
@@ -50,7 +50,7 @@ policy_equal(const InfiltratrTemporalPolicyV3 *left,
 }
 
 gboolean
-calendar_plus_system_clock_resolve_effective_policy(
+calendar_system_clock_resolve_effective_policy(
     gboolean provider_available,
     gboolean policy_found,
     const InfiltratrTemporalPolicyV3 *persisted_policy,
@@ -77,7 +77,7 @@ calendar_plus_system_clock_resolve_effective_policy(
 }
 
 static gboolean
-cinnamon_show_seconds(const CalendarPlusTemporalPolicySource *source)
+cinnamon_show_seconds(const CalendarTemporalPolicySource *source)
 {
     return source != NULL && source->cinnamon_interface_settings != NULL
         ? g_settings_get_boolean(source->cinnamon_interface_settings,
@@ -86,7 +86,7 @@ cinnamon_show_seconds(const CalendarPlusTemporalPolicySource *source)
 }
 
 static gboolean
-refresh_effective_policy(CalendarPlusTemporalPolicySource *source,
+refresh_effective_policy(CalendarTemporalPolicySource *source,
                          gboolean notify)
 {
     InfiltratrTemporalPolicyV3 persisted;
@@ -113,7 +113,7 @@ refresh_effective_policy(CalendarPlusTemporalPolicySource *source,
         }
     }
 
-    if (!calendar_plus_system_clock_resolve_effective_policy(
+    if (!calendar_system_clock_resolve_effective_policy(
             next_provider_available,
             load_result == INFILTRATR_IO_OK && found,
             load_result == INFILTRATR_IO_OK && found ? &persisted : NULL,
@@ -139,7 +139,7 @@ refresh_effective_policy(CalendarPlusTemporalPolicySource *source,
 static gboolean
 refresh_deferred(gpointer user_data)
 {
-    CalendarPlusTemporalPolicySource *source = user_data;
+    CalendarTemporalPolicySource *source = user_data;
 
     source->refresh_source_id = 0;
     (void)refresh_effective_policy(source, TRUE);
@@ -147,7 +147,7 @@ refresh_deferred(gpointer user_data)
 }
 
 static void
-schedule_refresh(CalendarPlusTemporalPolicySource *source)
+schedule_refresh(CalendarTemporalPolicySource *source)
 {
     if (source == NULL || source->refresh_source_id != 0)
         return;
@@ -186,7 +186,7 @@ on_policy_directory_changed(GFileMonitor *monitor G_GNUC_UNUSED,
     schedule_refresh(user_data);
 }
 
-static void setup_policy_directory_monitor(CalendarPlusTemporalPolicySource *source);
+static void setup_policy_directory_monitor(CalendarTemporalPolicySource *source);
 
 static void
 on_config_home_changed(GFileMonitor *monitor G_GNUC_UNUSED,
@@ -195,7 +195,7 @@ on_config_home_changed(GFileMonitor *monitor G_GNUC_UNUSED,
                        GFileMonitorEvent event_type G_GNUC_UNUSED,
                        gpointer user_data)
 {
-    CalendarPlusTemporalPolicySource *source = user_data;
+    CalendarTemporalPolicySource *source = user_data;
     const gchar *policy_basename = source->policy_directory != NULL
         ? infiltratr_path_basename(source->policy_directory)
         : NULL;
@@ -217,7 +217,7 @@ on_provider_directory_changed(GFileMonitor *monitor G_GNUC_UNUSED,
                               GFileMonitorEvent event_type G_GNUC_UNUSED,
                               gpointer user_data)
 {
-    CalendarPlusTemporalPolicySource *source = user_data;
+    CalendarTemporalPolicySource *source = user_data;
 
     if (source->provider_marker_basename == NULL ||
         (!file_has_basename(file, source->provider_marker_basename) &&
@@ -260,7 +260,7 @@ monitor_directory_path(const gchar *path,
 }
 
 static void
-setup_policy_directory_monitor(CalendarPlusTemporalPolicySource *source)
+setup_policy_directory_monitor(CalendarTemporalPolicySource *source)
 {
     g_autoptr(GFile) directory = NULL;
     g_autoptr(GError) error = NULL;
@@ -305,13 +305,13 @@ create_cinnamon_interface_settings(void)
     return settings;
 }
 
-CalendarPlusTemporalPolicySource *
-calendar_plus_temporal_policy_source_new(
-    CalendarPlusTemporalPolicyChangedFunc changed,
+CalendarTemporalPolicySource *
+calendar_temporal_policy_source_new(
+    CalendarTemporalPolicyChangedFunc changed,
     gpointer user_data)
 {
-    CalendarPlusTemporalPolicySource *source =
-        g_new0(CalendarPlusTemporalPolicySource, 1);
+    CalendarTemporalPolicySource *source =
+        g_new0(CalendarTemporalPolicySource, 1);
     char policy_directory[4096];
     char policy_parent[4096];
     char provider_marker[4096];
@@ -357,8 +357,8 @@ calendar_plus_temporal_policy_source_new(
 }
 
 void
-calendar_plus_temporal_policy_source_free(
-    CalendarPlusTemporalPolicySource *source)
+calendar_temporal_policy_source_free(
+    CalendarTemporalPolicySource *source)
 {
     if (source == NULL)
         return;
@@ -378,22 +378,22 @@ calendar_plus_temporal_policy_source_free(
 }
 
 const InfiltratrTemporalPolicyV3 *
-calendar_plus_temporal_policy_source_get_policy(
-    const CalendarPlusTemporalPolicySource *source)
+calendar_temporal_policy_source_get_policy(
+    const CalendarTemporalPolicySource *source)
 {
     return source != NULL ? &source->effective_policy : NULL;
 }
 
 gboolean
-calendar_plus_temporal_policy_source_get_provider_available(
-    const CalendarPlusTemporalPolicySource *source)
+calendar_temporal_policy_source_get_provider_available(
+    const CalendarTemporalPolicySource *source)
 {
     return source != NULL && source->provider_available;
 }
 
 gboolean
-calendar_plus_temporal_policy_source_get_infiltrator_authority(
-    const CalendarPlusTemporalPolicySource *source)
+calendar_temporal_policy_source_get_infiltrator_authority(
+    const CalendarTemporalPolicySource *source)
 {
     return source != NULL && source->infiltrator_authority;
 }

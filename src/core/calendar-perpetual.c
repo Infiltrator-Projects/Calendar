@@ -16,10 +16,10 @@
 
 #include "julian-day.h"
 
-#define gregorian_is_leap calendar_plus_gregorian_is_leap
-#define gregorian_to_jdn calendar_plus_gregorian_to_jdn
-#define jdn_to_gregorian calendar_plus_jdn_to_gregorian
-#define gregorian_day_of_year calendar_plus_gregorian_day_of_year
+#define gregorian_is_leap calendar_gregorian_is_leap
+#define gregorian_to_jdn calendar_gregorian_to_jdn
+#define jdn_to_gregorian calendar_jdn_to_gregorian
+#define gregorian_day_of_year calendar_gregorian_day_of_year
 
 enum
 {
@@ -27,7 +27,7 @@ enum
 };
 
 gint
-calendar_plus_fixed_month_length(gint64 year,
+calendar_fixed_month_length(gint64 year,
                                  gint month)
 {
     if (month == 6 && gregorian_is_leap(year))
@@ -38,9 +38,9 @@ calendar_plus_fixed_month_length(gint64 year,
 }
 
 void
-calendar_plus_fixed_fields_from_jdn(
+calendar_fixed_fields_from_jdn(
     gint64 jdn,
-    CalendarPlusCalendarFields *fields)
+    CalendarCalendarFields *fields)
 {
     gint year;
     gint month;
@@ -87,8 +87,8 @@ calendar_plus_fixed_fields_from_jdn(
 }
 
 gint64
-calendar_plus_fixed_fields_to_jdn(
-    const CalendarPlusCalendarFields *fields)
+calendar_fixed_fields_to_jdn(
+    const CalendarCalendarFields *fields)
 {
     gint ordinal;
 
@@ -106,7 +106,7 @@ calendar_plus_fixed_fields_to_jdn(
             ordinal++;
     }
 
-    return calendar_plus_i64_add_saturating(
+    return calendar_i64_add_saturating(
         gregorian_to_jdn(fields->year, 1, 1),
         ordinal - 1);
 }
@@ -119,7 +119,7 @@ static const gint world_base_lengths[MONTHS_PER_GREGORIAN_YEAR] = {
 };
 
 gint
-calendar_plus_world_month_length(gint64 year,
+calendar_world_month_length(gint64 year,
                                  gint month)
 {
     gint length;
@@ -138,8 +138,8 @@ calendar_plus_world_month_length(gint64 year,
 }
 
 gint64
-calendar_plus_world_fields_to_jdn(
-    const CalendarPlusCalendarFields *fields)
+calendar_world_fields_to_jdn(
+    const CalendarCalendarFields *fields)
 {
     gint ordinal;
     gint cursor;
@@ -149,17 +149,17 @@ calendar_plus_world_fields_to_jdn(
 
     ordinal = fields->day;
     for (cursor = 1; cursor < fields->month; cursor++)
-        ordinal += calendar_plus_world_month_length(fields->year, cursor);
+        ordinal += calendar_world_month_length(fields->year, cursor);
 
-    return calendar_plus_i64_add_saturating(
+    return calendar_i64_add_saturating(
         gregorian_to_jdn(fields->year, 1, 1),
         ordinal - 1);
 }
 
 void
-calendar_plus_world_fields_from_jdn(
+calendar_world_fields_from_jdn(
     gint64 jdn,
-    CalendarPlusCalendarFields *fields)
+    CalendarCalendarFields *fields)
 {
     gint year;
     gint gregorian_month;
@@ -173,9 +173,9 @@ calendar_plus_world_fields_from_jdn(
     remaining = gregorian_day_of_year(year,
                                       gregorian_month,
                                       gregorian_day);
-    while (remaining > calendar_plus_world_month_length(year, month))
+    while (remaining > calendar_world_month_length(year, month))
     {
-        remaining -= calendar_plus_world_month_length(year, month);
+        remaining -= calendar_world_month_length(year, month);
         month++;
     }
 

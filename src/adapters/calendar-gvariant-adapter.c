@@ -12,49 +12,49 @@
 #include "calendar-system-private.h"
 
 static GVariant *
-date_to_variant(const CalendarPlusDate *date)
+date_to_variant(const CalendarDate *date)
 {
     return g_variant_ref_sink(
         g_variant_new("(iii)", date->year, date->month, date->day));
 }
 
-typedef gboolean (*DateOperation)(const CalendarPlusCalendarEngine *engine,
-                                  const CalendarPlusDate *date,
+typedef gboolean (*DateOperation)(const CalendarCalendarEngine *engine,
+                                  const CalendarDate *date,
                                   gint amount,
-                                  CalendarPlusDate *result);
+                                  CalendarDate *result);
 
 static gboolean
-add_days_operation(const CalendarPlusCalendarEngine *engine,
-                   const CalendarPlusDate *date,
+add_days_operation(const CalendarCalendarEngine *engine,
+                   const CalendarDate *date,
                    gint amount,
-                   CalendarPlusDate *result)
+                   CalendarDate *result)
 {
     (void)engine;
-    return calendar_plus_date_add_days(date, amount, result);
+    return calendar_date_add_days(date, amount, result);
 }
 
 static gboolean
-period_start_operation(const CalendarPlusCalendarEngine *engine,
-                       const CalendarPlusDate *date,
+period_start_operation(const CalendarCalendarEngine *engine,
+                       const CalendarDate *date,
                        gint amount,
-                       CalendarPlusDate *result)
+                       CalendarDate *result)
 {
     (void)amount;
-    return calendar_plus_calendar_engine_period_start(engine, date, result);
+    return calendar_calendar_engine_period_start(engine, date, result);
 }
 
 static GVariant *
-navigate_to_variant(CalendarPlusCalendarSystem *self,
+navigate_to_variant(CalendarCalendarSystem *self,
                     gint year,
                     gint month,
                     gint day,
                     gint amount,
                     DateOperation operation)
 {
-    const CalendarPlusDate input = { year, month, day };
-    CalendarPlusDate result;
-    CalendarPlusCalendarEngine *engine =
-        calendar_plus_calendar_system_get_engine(self);
+    const CalendarDate input = { year, month, day };
+    CalendarDate result;
+    CalendarCalendarEngine *engine =
+        calendar_calendar_system_get_engine(self);
 
     if (engine == NULL || !operation(engine, &input, amount, &result))
         return NULL;
@@ -62,8 +62,8 @@ navigate_to_variant(CalendarPlusCalendarSystem *self,
 }
 
 GVariant *
-calendar_plus_calendar_system_month_start_parts(
-    CalendarPlusCalendarSystem *self,
+calendar_calendar_system_month_start_parts(
+    CalendarCalendarSystem *self,
     gint gregorian_year,
     gint gregorian_month,
     gint gregorian_day)
@@ -77,8 +77,8 @@ calendar_plus_calendar_system_month_start_parts(
 }
 
 GVariant *
-calendar_plus_calendar_system_add_days_parts(
-    CalendarPlusCalendarSystem *self,
+calendar_calendar_system_add_days_parts(
+    CalendarCalendarSystem *self,
     gint gregorian_year,
     gint gregorian_month,
     gint gregorian_day,
@@ -93,8 +93,8 @@ calendar_plus_calendar_system_add_days_parts(
 }
 
 GVariant *
-calendar_plus_calendar_system_add_months_parts(
-    CalendarPlusCalendarSystem *self,
+calendar_calendar_system_add_months_parts(
+    CalendarCalendarSystem *self,
     gint gregorian_year,
     gint gregorian_month,
     gint gregorian_day,
@@ -105,12 +105,12 @@ calendar_plus_calendar_system_add_months_parts(
                                gregorian_month,
                                gregorian_day,
                                amount,
-                               calendar_plus_calendar_engine_add_periods);
+                               calendar_calendar_engine_add_periods);
 }
 
 GVariant *
-calendar_plus_calendar_system_add_years_parts(
-    CalendarPlusCalendarSystem *self,
+calendar_calendar_system_add_years_parts(
+    CalendarCalendarSystem *self,
     gint gregorian_year,
     gint gregorian_month,
     gint gregorian_day,
@@ -121,12 +121,12 @@ calendar_plus_calendar_system_add_years_parts(
                                gregorian_month,
                                gregorian_day,
                                amount,
-                               calendar_plus_calendar_engine_add_years);
+                               calendar_calendar_engine_add_years);
 }
 
 GVariant *
-calendar_plus_calendar_system_build_grid(
-    CalendarPlusCalendarSystem *self,
+calendar_calendar_system_build_grid(
+    CalendarCalendarSystem *self,
     gint selected_year,
     gint selected_month,
     gint selected_day,
@@ -135,16 +135,16 @@ calendar_plus_calendar_system_build_grid(
     gint today_day,
     gint week_start)
 {
-    const CalendarPlusDate selected = {
+    const CalendarDate selected = {
         selected_year, selected_month, selected_day
     };
-    const CalendarPlusDate today = { today_year, today_month, today_day };
-    CalendarPlusCalendarGrid grid;
+    const CalendarDate today = { today_year, today_month, today_day };
+    CalendarCalendarGrid grid;
     GVariantBuilder cells;
     guint index;
 
-    if (!calendar_plus_calendar_engine_build_grid(
-            calendar_plus_calendar_system_get_engine(self),
+    if (!calendar_calendar_engine_build_grid(
+            calendar_calendar_system_get_engine(self),
             &selected,
             &today,
             week_start,
@@ -155,9 +155,9 @@ calendar_plus_calendar_system_build_grid(
 
     g_variant_builder_init(&cells,
                            G_VARIANT_TYPE("a(siiiiiibbbbbb)"));
-    for (index = 0; index < CALENDAR_PLUS_CALENDAR_GRID_CELLS; index++)
+    for (index = 0; index < CALENDAR_CALENDAR_GRID_CELLS; index++)
     {
-        const CalendarPlusCalendarCell *cell = &grid.cells[index];
+        const CalendarCalendarCell *cell = &grid.cells[index];
 
         g_variant_builder_add(&cells,
                               "(siiiiiibbbbbb)",
@@ -176,6 +176,6 @@ calendar_plus_calendar_system_build_grid(
                               cell->is_left_edge);
     }
 
-    calendar_plus_calendar_grid_clear(&grid);
+    calendar_calendar_grid_clear(&grid);
     return g_variant_ref_sink(g_variant_builder_end(&cells));
 }

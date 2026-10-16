@@ -36,7 +36,7 @@ GITHUB_COMPARE_FILE_LIMIT = 300
 def api_json(url: str) -> object:
     headers = {
         "Accept": "application/vnd.github+json",
-        "User-Agent": "calendar-plus-upstream-drift",
+        "User-Agent": "calendar-upstream-drift",
         "X-GitHub-Api-Version": "2022-11-28",
     }
     token = os.environ.get("GITHUB_TOKEN", "").strip()

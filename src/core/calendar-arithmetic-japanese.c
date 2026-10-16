@@ -64,12 +64,12 @@ japanese_era_by_code(gint64 code)
 }
 
 gint64
-calendar_plus_arithmetic_japanese_signed_year_from_fields(const CalendarPlusCalendarFields *fields)
+calendar_arithmetic_japanese_signed_year_from_fields(const CalendarCalendarFields *fields)
 {
     const JapaneseEra *era;
 
     if (fields->auxiliary == 0)
-        return calendar_plus_i64_subtract_saturating(1, fields->year);
+        return calendar_i64_subtract_saturating(1, fields->year);
     if (fields->auxiliary == 1)
         return fields->year;
 
@@ -77,21 +77,21 @@ calendar_plus_arithmetic_japanese_signed_year_from_fields(const CalendarPlusCale
     if (era == NULL)
         return fields->year;
 
-    return calendar_plus_i64_add_saturating(
+    return calendar_i64_add_saturating(
         era->start_year,
-        calendar_plus_i64_subtract_saturating(fields->year, 1));
+        calendar_i64_subtract_saturating(fields->year, 1));
 }
 
 void
-calendar_plus_arithmetic_japanese_set_year_for_gregorian(gint64 gregorian_year,
-                                CalendarPlusCalendarFields *fields)
+calendar_arithmetic_japanese_set_year_for_gregorian(gint64 gregorian_year,
+                                CalendarCalendarFields *fields)
 {
     gsize index;
 
     if (gregorian_year < 1)
     {
         fields->year =
-            calendar_plus_i64_subtract_saturating(1, gregorian_year);
+            calendar_i64_subtract_saturating(1, gregorian_year);
         fields->auxiliary = 0;
         return;
     }
@@ -102,8 +102,8 @@ calendar_plus_arithmetic_japanese_set_year_for_gregorian(gint64 gregorian_year,
     {
         if (gregorian_year < japanese_eras[index].start_year)
             break;
-        fields->year = calendar_plus_i64_add_saturating(
-            calendar_plus_i64_subtract_saturating(
+        fields->year = calendar_i64_add_saturating(
+            calendar_i64_subtract_saturating(
                 gregorian_year, japanese_eras[index].start_year),
             1);
         fields->auxiliary = japanese_eras[index].code;
@@ -111,17 +111,17 @@ calendar_plus_arithmetic_japanese_set_year_for_gregorian(gint64 gregorian_year,
 }
 
 void
-calendar_plus_arithmetic_japanese_fields_from_jdn(gint64 jdn,
-                  CalendarPlusCalendarFields *fields)
+calendar_arithmetic_japanese_fields_from_jdn(gint64 jdn,
+                  CalendarCalendarFields *fields)
 {
     gint year;
     gint month;
     gint day;
     gsize index;
 
-    calendar_plus_jdn_to_gregorian(jdn, &year, &month, &day);
+    calendar_jdn_to_gregorian(jdn, &year, &month, &day);
     fields->year = year >= 1 ? year :
-        calendar_plus_i64_subtract_saturating(1, year);
+        calendar_i64_subtract_saturating(1, year);
     fields->month = month;
     fields->day = day;
     fields->auxiliary = year >= 1 ? 1 : 0;
@@ -134,8 +134,8 @@ calendar_plus_arithmetic_japanese_fields_from_jdn(gint64 jdn,
         if (!japanese_date_on_or_after(year, month, day, era))
             break;
 
-        fields->year = calendar_plus_i64_add_saturating(
-            calendar_plus_i64_subtract_saturating(year, era->start_year),
+        fields->year = calendar_i64_add_saturating(
+            calendar_i64_subtract_saturating(year, era->start_year),
             1);
         fields->auxiliary = era->code;
     }

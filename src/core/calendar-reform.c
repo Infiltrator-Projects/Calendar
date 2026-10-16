@@ -22,17 +22,17 @@
 
 #include <math.h>
 
-#define floor_divide calendar_plus_floor_divide
-#define positive_modulo calendar_plus_positive_modulo
-#define gregorian_is_leap calendar_plus_gregorian_is_leap
-#define gregorian_to_jdn calendar_plus_gregorian_to_jdn
-#define jdn_to_gregorian calendar_plus_jdn_to_gregorian
-#define gregorian_day_of_year calendar_plus_gregorian_day_of_year
+#define floor_divide calendar_floor_divide
+#define positive_modulo calendar_positive_modulo
+#define gregorian_is_leap calendar_gregorian_is_leap
+#define gregorian_to_jdn calendar_gregorian_to_jdn
+#define jdn_to_gregorian calendar_jdn_to_gregorian
+#define gregorian_day_of_year calendar_gregorian_day_of_year
 
 #define FRENCH_EPOCH_JDN ((gint64)2375840)
 
 gboolean
-calendar_plus_french_is_leap(gint64 year)
+calendar_french_is_leap(gint64 year)
 {
     /*
      * Calendar uses the Romme-style arithmetic continuation: apply the
@@ -40,7 +40,7 @@ calendar_plus_french_is_leap(gint64 year)
      * choice is deterministic for proleptic dates where historical practice
      * does not define a single answer.
      */
-    const gint64 following = calendar_plus_i64_add_saturating(year, 1);
+    const gint64 following = calendar_i64_add_saturating(year, 1);
 
     return positive_modulo(following, 4) == 0 &&
            (positive_modulo(following, 100) != 0 ||
@@ -51,13 +51,13 @@ static gint64
 french_leap_count(gint64 first_shifted_year,
                   gint64 last_shifted_year)
 {
-    return calendar_plus_count_multiples_inclusive(first_shifted_year,
+    return calendar_count_multiples_inclusive(first_shifted_year,
                                      last_shifted_year,
                                      4) -
-           calendar_plus_count_multiples_inclusive(first_shifted_year,
+           calendar_count_multiples_inclusive(first_shifted_year,
                                      last_shifted_year,
                                      100) +
-           calendar_plus_count_multiples_inclusive(first_shifted_year,
+           calendar_count_multiples_inclusive(first_shifted_year,
                                      last_shifted_year,
                                      400);
 }
@@ -68,36 +68,36 @@ french_year_start(gint64 year)
     if (year >= 1)
     {
         const gint64 elapsed_years =
-            calendar_plus_i64_subtract_saturating(year, 1);
+            calendar_i64_subtract_saturating(year, 1);
         const gint64 leap_days = french_leap_count(2, year);
-        const gint64 days = calendar_plus_i64_multiply_saturating(
+        const gint64 days = calendar_i64_multiply_saturating(
             elapsed_years, 365);
 
-        return calendar_plus_i64_add_saturating(
-            calendar_plus_i64_add_saturating(
+        return calendar_i64_add_saturating(
+            calendar_i64_add_saturating(
                 FRENCH_EPOCH_JDN, days),
             leap_days);
     }
 
     {
         const gint64 elapsed_years =
-            calendar_plus_i64_subtract_saturating(1, year);
-        const gint64 days = calendar_plus_i64_multiply_saturating(
+            calendar_i64_subtract_saturating(1, year);
+        const gint64 days = calendar_i64_multiply_saturating(
             elapsed_years, 365);
-        gint64 result = calendar_plus_i64_subtract_saturating(
+        gint64 result = calendar_i64_subtract_saturating(
             FRENCH_EPOCH_JDN, days);
 
-        return calendar_plus_i64_subtract_saturating(
+        return calendar_i64_subtract_saturating(
             result,
             french_leap_count(
-                calendar_plus_i64_add_saturating(year, 1), 1));
+                calendar_i64_add_saturating(year, 1), 1));
     }
 }
 
 void
-calendar_plus_french_fields_from_jdn(
+calendar_french_fields_from_jdn(
     gint64 jdn,
-    CalendarPlusCalendarFields *fields)
+    CalendarCalendarFields *fields)
 {
     /*
      * The tropical-year division is only an initial estimate. The two loops
@@ -112,9 +112,9 @@ calendar_plus_french_fields_from_jdn(
     g_return_if_fail(fields != NULL);
 
     while (jdn < french_year_start(year))
-        year = calendar_plus_i64_subtract_saturating(year, 1);
-    while (jdn >= french_year_start(calendar_plus_i64_add_saturating(year, 1)))
-        year = calendar_plus_i64_add_saturating(year, 1);
+        year = calendar_i64_subtract_saturating(year, 1);
+    while (jdn >= french_year_start(calendar_i64_add_saturating(year, 1)))
+        year = calendar_i64_add_saturating(year, 1);
 
     start = french_year_start(year);
     day_of_year = (gint)(jdn - start);
@@ -127,26 +127,26 @@ calendar_plus_french_fields_from_jdn(
 }
 
 gint64
-calendar_plus_french_fields_to_jdn(
-    const CalendarPlusCalendarFields *fields)
+calendar_french_fields_to_jdn(
+    const CalendarCalendarFields *fields)
 {
     g_return_val_if_fail(fields != NULL, FRENCH_EPOCH_JDN);
 
     gint64 result = french_year_start(fields->year);
 
-    result = calendar_plus_i64_add_saturating(
+    result = calendar_i64_add_saturating(
         result,
-        calendar_plus_i64_multiply_saturating(
+        calendar_i64_multiply_saturating(
             fields->month - 1, 30));
-    return calendar_plus_i64_add_saturating(
+    return calendar_i64_add_saturating(
         result, fields->day - 1);
 }
 
 gint
-calendar_plus_positivist_month_length(gint64 year,
+calendar_positivist_month_length(gint64 year,
                                       gint month)
 {
-    const gint64 gregorian_year = calendar_plus_i64_add_saturating(year, 1788);
+    const gint64 gregorian_year = calendar_i64_add_saturating(year, 1788);
 
     if (month == 13)
         return gregorian_is_leap(gregorian_year) ? 30 : 29;
@@ -154,9 +154,9 @@ calendar_plus_positivist_month_length(gint64 year,
 }
 
 void
-calendar_plus_positivist_fields_from_jdn(
+calendar_positivist_fields_from_jdn(
     gint64 jdn,
-    CalendarPlusCalendarFields *fields)
+    CalendarCalendarFields *fields)
 {
     gint year;
     gint gregorian_month;
@@ -171,7 +171,7 @@ calendar_plus_positivist_fields_from_jdn(
                                     gregorian_day);
 
     /* Comte's Great Crisis era: Gregorian 1789 is Positivist year 1. */
-    fields->year = calendar_plus_i64_subtract_saturating(year, 1788);
+    fields->year = calendar_i64_subtract_saturating(year, 1788);
     if (ordinal <= 364)
     {
         fields->month = (ordinal - 1) / 28 + 1;
@@ -188,14 +188,14 @@ calendar_plus_positivist_fields_from_jdn(
 }
 
 gint64
-calendar_plus_positivist_fields_to_jdn(
-    const CalendarPlusCalendarFields *fields)
+calendar_positivist_fields_to_jdn(
+    const CalendarCalendarFields *fields)
 {
     g_return_val_if_fail(fields != NULL,
                          gregorian_to_jdn(1970, 1, 1));
 
     const gint64 gregorian_year =
-        calendar_plus_i64_add_saturating(fields->year, 1788);
+        calendar_i64_add_saturating(fields->year, 1788);
 
     g_return_val_if_fail(gregorian_year >= G_MININT &&
                          gregorian_year <= G_MAXINT,

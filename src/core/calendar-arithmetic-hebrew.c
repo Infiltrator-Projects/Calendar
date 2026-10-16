@@ -49,47 +49,47 @@ static const gint hebrew_leap_month_start[14][3] = {
 static gboolean
 hebrew_is_leap(gint64 year)
 {
-    return calendar_plus_positive_modulo(
-        calendar_plus_i64_add_saturating(
-            calendar_plus_i64_multiply_saturating(year, 12), 17),
+    return calendar_positive_modulo(
+        calendar_i64_add_saturating(
+            calendar_i64_multiply_saturating(year, 12), 17),
         19) >= 12;
 }
 
 static gint64
 hebrew_start_of_year(gint64 year)
 {
-    const gint64 months = calendar_plus_floor_divide(
-        calendar_plus_i64_subtract_saturating(
-            calendar_plus_i64_multiply_saturating(235, year), 234),
+    const gint64 months = calendar_floor_divide(
+        calendar_i64_subtract_saturating(
+            calendar_i64_multiply_saturating(235, year), 234),
         19);
-    const gint64 total_fraction = calendar_plus_i64_add_saturating(
-        calendar_plus_i64_multiply_saturating(
+    const gint64 total_fraction = calendar_i64_add_saturating(
+        calendar_i64_multiply_saturating(
             months, HEBREW_MONTH_FRACT),
         HEBREW_BAHARAD);
-    const gint64 fraction_days = calendar_plus_floor_divide(
+    const gint64 fraction_days = calendar_floor_divide(
         total_fraction, HEBREW_DAY_PARTS);
-    gint64 day = calendar_plus_i64_add_saturating(
-        calendar_plus_i64_multiply_saturating(months, 29),
+    gint64 day = calendar_i64_add_saturating(
+        calendar_i64_multiply_saturating(months, 29),
         fraction_days);
-    const gint64 fraction = calendar_plus_i64_subtract_saturating(
+    const gint64 fraction = calendar_i64_subtract_saturating(
         total_fraction,
-        calendar_plus_i64_multiply_saturating(
+        calendar_i64_multiply_saturating(
             fraction_days, HEBREW_DAY_PARTS));
-    gint weekday = (gint)calendar_plus_positive_modulo(day, 7);
+    gint weekday = (gint)calendar_positive_modulo(day, 7);
 
     if (weekday == 2 || weekday == 4 || weekday == 6 ||
         (weekday == 0 &&
          fraction >= 21 * HEBREW_HOUR_PARTS + 589 &&
          hebrew_is_leap(
-             calendar_plus_i64_subtract_saturating(year, 1))))
+             calendar_i64_subtract_saturating(year, 1))))
     {
-        day = calendar_plus_i64_add_saturating(day, 1);
+        day = calendar_i64_add_saturating(day, 1);
     }
     else if (weekday == 1 &&
              fraction >= 15 * HEBREW_HOUR_PARTS + 204 &&
              !hebrew_is_leap(year))
     {
-        day = calendar_plus_i64_add_saturating(day, 2);
+        day = calendar_i64_add_saturating(day, 2);
     }
 
     return day;
@@ -98,13 +98,13 @@ hebrew_start_of_year(gint64 year)
 static gint
 hebrew_year_type(gint64 year)
 {
-    gint64 length = calendar_plus_i64_subtract_saturating(
+    gint64 length = calendar_i64_subtract_saturating(
         hebrew_start_of_year(
-            calendar_plus_i64_add_saturating(year, 1)),
+            calendar_i64_add_saturating(year, 1)),
         hebrew_start_of_year(year));
 
     if (length > 380)
-        length = calendar_plus_i64_subtract_saturating(length, 30);
+        length = calendar_i64_subtract_saturating(length, 30);
 
     if (length == 353)
         return 0;
@@ -148,33 +148,33 @@ hebrew_to_jdn(gint64 year,
               gint month,
               gint day)
 {
-    gint64 result = calendar_plus_i64_add_saturating(
+    gint64 result = calendar_i64_add_saturating(
         hebrew_start_of_year(year), HEBREW_EPOCH_OFFSET);
 
-    result = calendar_plus_i64_add_saturating(
+    result = calendar_i64_add_saturating(
         result, hebrew_month_start_offset(year, month));
-    return calendar_plus_i64_add_saturating(result, day - 1);
+    return calendar_i64_add_saturating(result, day - 1);
 }
 
 static void
 hebrew_from_jdn(gint64 jdn,
-                CalendarPlusCalendarFields *fields)
+                CalendarCalendarFields *fields)
 {
-    const gint64 d = calendar_plus_i64_subtract_saturating(
+    const gint64 d = calendar_i64_subtract_saturating(
         jdn, HEBREW_EPOCH_OFFSET - 1);
-    const gint64 approximate_months = calendar_plus_floor_divide(
-        calendar_plus_i64_multiply_saturating(
+    const gint64 approximate_months = calendar_floor_divide(
+        calendar_i64_multiply_saturating(
             d, HEBREW_DAY_PARTS),
         HEBREW_MONTH_PARTS);
-    gint64 year = calendar_plus_i64_add_saturating(
-        calendar_plus_floor_divide(
-            calendar_plus_i64_add_saturating(
-                calendar_plus_i64_multiply_saturating(
+    gint64 year = calendar_i64_add_saturating(
+        calendar_floor_divide(
+            calendar_i64_add_saturating(
+                calendar_i64_multiply_saturating(
                     19, approximate_months),
                 234),
             235),
         1);
-    gint64 day_of_year = calendar_plus_i64_subtract_saturating(
+    gint64 day_of_year = calendar_i64_subtract_saturating(
         d, hebrew_start_of_year(year));
     gint month_index = 0;
     gint type;
@@ -182,8 +182,8 @@ hebrew_from_jdn(gint64 jdn,
 
     while (day_of_year < 1)
     {
-        year = calendar_plus_i64_subtract_saturating(year, 1);
-        day_of_year = calendar_plus_i64_subtract_saturating(
+        year = calendar_i64_subtract_saturating(year, 1);
+        day_of_year = calendar_i64_subtract_saturating(
             d, hebrew_start_of_year(year));
     }
 
@@ -200,10 +200,10 @@ hebrew_from_jdn(gint64 jdn,
     if (month_index > 0)
         month_index--;
 
-    *fields = (CalendarPlusCalendarFields){
+    *fields = (CalendarCalendarFields){
         .year = year,
         .month = month_index + 1,
-        .day = (gint)calendar_plus_i64_subtract_saturating(
+        .day = (gint)calendar_i64_subtract_saturating(
             day_of_year,
             leap ?
                 hebrew_leap_month_start[month_index][type] :
@@ -214,7 +214,7 @@ hebrew_from_jdn(gint64 jdn,
 }
 
 static void
-hebrew_add_months_to_fields(CalendarPlusCalendarFields *fields,
+hebrew_add_months_to_fields(CalendarCalendarFields *fields,
                             gint amount)
 {
     gint64 year = fields->year;
@@ -225,8 +225,8 @@ hebrew_add_months_to_fields(CalendarPlusCalendarFields *fields,
     {
         const gint cycles = remaining / 235;
 
-        year = calendar_plus_i64_add_saturating(
-            year, calendar_plus_i64_multiply_saturating(cycles, 19));
+        year = calendar_i64_add_saturating(
+            year, calendar_i64_multiply_saturating(cycles, 19));
         remaining -= cycles * 235;
     }
 
@@ -236,7 +236,7 @@ hebrew_add_months_to_fields(CalendarPlusCalendarFields *fields,
         if (month > 12)
         {
             month = 0;
-            year = calendar_plus_i64_add_saturating(year, 1);
+            year = calendar_i64_add_saturating(year, 1);
         }
         if (month == 5 && !hebrew_is_leap(year))
             month++;
@@ -248,7 +248,7 @@ hebrew_add_months_to_fields(CalendarPlusCalendarFields *fields,
         month--;
         if (month < 0)
         {
-            year = calendar_plus_i64_subtract_saturating(year, 1);
+            year = calendar_i64_subtract_saturating(year, 1);
             month = 12;
         }
         if (month == 5 && !hebrew_is_leap(year))
@@ -263,20 +263,20 @@ hebrew_add_months_to_fields(CalendarPlusCalendarFields *fields,
 }
 
 gboolean
-calendar_plus_arithmetic_hebrew_is_leap(gint64 year)
+calendar_arithmetic_hebrew_is_leap(gint64 year)
 {
     return hebrew_is_leap(year);
 }
 
 gint
-calendar_plus_arithmetic_hebrew_month_length(gint64 year,
+calendar_arithmetic_hebrew_month_length(gint64 year,
                                               gint month)
 {
     return hebrew_month_length(year, month);
 }
 
 gint64
-calendar_plus_arithmetic_hebrew_fields_to_jdn(gint64 year,
+calendar_arithmetic_hebrew_fields_to_jdn(gint64 year,
                                                gint month,
                                                gint day)
 {
@@ -284,16 +284,16 @@ calendar_plus_arithmetic_hebrew_fields_to_jdn(gint64 year,
 }
 
 void
-calendar_plus_arithmetic_hebrew_fields_from_jdn(
+calendar_arithmetic_hebrew_fields_from_jdn(
     gint64 jdn,
-    CalendarPlusCalendarFields *fields)
+    CalendarCalendarFields *fields)
 {
     hebrew_from_jdn(jdn, fields);
 }
 
 void
-calendar_plus_arithmetic_hebrew_add_months_to_fields(
-    CalendarPlusCalendarFields *fields,
+calendar_arithmetic_hebrew_add_months_to_fields(
+    CalendarCalendarFields *fields,
     gint amount)
 {
     hebrew_add_months_to_fields(fields, amount);

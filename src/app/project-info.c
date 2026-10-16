@@ -5,30 +5,30 @@
 
 #define N_(text) text
 
-#ifndef CALENDAR_PLUS_VERSION
-#define CALENDAR_PLUS_VERSION "0.0.0-unknown"
+#ifndef CALENDAR_VERSION
+#define CALENDAR_VERSION "0.0.0-unknown"
 #endif
 
-#ifndef CALENDAR_PLUS_SOURCE_ID
-#define CALENDAR_PLUS_SOURCE_ID "calendar-plus-unknown"
+#ifndef CALENDAR_SOURCE_ID
+#define CALENDAR_SOURCE_ID "calendar-unknown"
 #endif
 
-#ifndef CALENDAR_PLUS_BUILD_PROFILE
-#define CALENDAR_PLUS_BUILD_PROFILE "unknown"
+#ifndef CALENDAR_BUILD_PROFILE
+#define CALENDAR_BUILD_PROFILE "unknown"
 #endif
 
 const InfiltratrProjectInfo *
-calendar_plus_project_info(void)
+calendar_project_info(void)
 {
     static const InfiltratrProjectInfo info = {
         .struct_size = sizeof(InfiltratrProjectInfo),
         .abi_version = INFILTRATR_PROJECT_INFO_ABI,
         .program_name = N_("Calendar"),
-        .executable_name = "calendar-plus",
-        .application_id = "calendar-plus@the-infiltratr",
-        .version = CALENDAR_PLUS_VERSION,
-        .source_id = CALENDAR_PLUS_SOURCE_ID,
-        .build_profile = CALENDAR_PLUS_BUILD_PROFILE,
+        .executable_name = "calendar",
+        .application_id = "calendar@the-infiltratr",
+        .version = CALENDAR_VERSION,
+        .source_id = CALENDAR_SOURCE_ID,
+        .build_profile = CALENDAR_BUILD_PROFILE,
         .author = "Shannon Smith",
         .website = "https://github.com/Infiltrator-Projects/Calendar",
         .license_id = "GPL-3.0-or-later",

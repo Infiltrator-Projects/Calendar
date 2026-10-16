@@ -35,26 +35,26 @@ done
 [ "$(dpkg-deb -f "$DEB" Version)" = "$VERSION" ]
 [ "$(dpkg-deb -f "$DEB" Architecture)" = "$ARCH" ]
 dpkg-deb -x "$DEB" "$TMP/generic"
-test -f "$TMP/generic/usr/lib/$MULTIARCH/libcalendar-plus.so.0.0.0"
+test -f "$TMP/generic/usr/lib/$MULTIARCH/libcalendar.so.0.0.0"
 test -f \
-    "$TMP/generic/usr/lib/$MULTIARCH/girepository-1.0/CalendarPlus-1.0.typelib"
+    "$TMP/generic/usr/lib/$MULTIARCH/girepository-1.0/Calendar-1.0.typelib"
 test -f \
-    "$TMP/generic/usr/share/cinnamon/applets/calendar-plus@the-infiltratr/applet.js"
+    "$TMP/generic/usr/share/cinnamon/applets/calendar@the-infiltratr/applet.js"
 test -f \
-    "$TMP/generic/usr/share/cinnamon/applets/calendar-plus@the-infiltratr/stylesheet.css"
+    "$TMP/generic/usr/share/cinnamon/applets/calendar@the-infiltratr/stylesheet.css"
 test -f \
-    "$TMP/generic/usr/share/cinnamon/applets/calendar-plus@the-infiltratr/icon.png"
+    "$TMP/generic/usr/share/cinnamon/applets/calendar@the-infiltratr/icon.png"
 test ! -e \
-    "$TMP/generic/usr/share/cinnamon/applets/calendar-plus@the-infiltratr/settings.py"
-test -x "$TMP/generic/usr/libexec/calendar-plus-about"
+    "$TMP/generic/usr/share/cinnamon/applets/calendar@the-infiltratr/settings.py"
+test -x "$TMP/generic/usr/libexec/calendar-about"
 test -f "$TMP/generic/usr/share/icons/hicolor/256x256/apps/infiltratr-calendar.png"
 test -f "$TMP/generic/usr/share/app-install/icons/calendar.png"
 test ! -e "$TMP/generic/usr/share/fonts/truetype/calendar"
 test -f \
-    "$TMP/generic/usr/share/locale/en_AU/LC_MESSAGES/calendar-plus@the-infiltratr.mo"
-"$TMP/generic/usr/libexec/calendar-plus-about" --print-metadata |
+    "$TMP/generic/usr/share/locale/en_AU/LC_MESSAGES/calendar@the-infiltratr.mo"
+"$TMP/generic/usr/libexec/calendar-about" --print-metadata |
     grep -qx "version=$VERSION"
-"$TMP/generic/usr/libexec/calendar-plus-about" --print-metadata |
+"$TMP/generic/usr/libexec/calendar-about" --print-metadata |
     grep -qx "build-profile=generic"
 grep -q '^Build mode: generic amd64-compatible (Debian/Mint ICU runtime bridge)$' \
     "$TMP/generic/usr/share/doc/calendar/BUILD-INFO"
@@ -65,7 +65,7 @@ if grep -q -- '-march=native' \
     echo "Generic package contains native CPU tuning" >&2
     exit 1
 fi
-RUNTIME_LIB="$TMP/generic/usr/lib/$MULTIARCH/libcalendar-plus.so.0.0.0"
+RUNTIME_LIB="$TMP/generic/usr/lib/$MULTIARCH/libcalendar.so.0.0.0"
 # Public releases must come from the ordinary monolithic source build. A
 # compatibility-assembled split library can work at runtime while silently
 # weakening the published link-time ABI, so reject that topology outright.
@@ -82,10 +82,10 @@ if readelf -d "$RUNTIME_LIB" 2>/dev/null | \
 fi
 python3 "$ROOT/tests/test-abi.py" --library "$RUNTIME_LIB"
 nm -D --defined-only --format=posix "$RUNTIME_LIB" | \
-    awk '$1 ~ /^calendar_plus_/ { sub(/@.*/, "", $1); print $1 }' | \
+    awk '$1 ~ /^calendar_/ { sub(/@.*/, "", $1); print $1 }' | \
     LC_ALL=C sort -u > "$TMP/generic-exports.actual"
-sed -n 's/^[[:space:]]*\(calendar_plus_[A-Za-z0-9_]*\);[[:space:]]*$/\1/p' \
-    "$ROOT/src/abi/calendar-plus.map" | LC_ALL=C sort -u > \
+sed -n 's/^[[:space:]]*\(calendar_[A-Za-z0-9_]*\);[[:space:]]*$/\1/p' \
+    "$ROOT/src/abi/calendar.map" | LC_ALL=C sort -u > \
     "$TMP/generic-exports.expected"
 diff -u "$TMP/generic-exports.expected" "$TMP/generic-exports.actual"
 

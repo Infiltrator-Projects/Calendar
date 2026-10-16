@@ -7,7 +7,7 @@
 #include <glib/gi18n-lib.h>
 
 gint64
-calendar_plus_count_multiples_inclusive(gint64 first,
+calendar_count_multiples_inclusive(gint64 first,
                                         gint64 last,
                                         gint64 divisor)
 {
@@ -30,17 +30,17 @@ calendar_plus_count_multiples_inclusive(gint64 first,
 
     first_multiple_index = first_remainder == 0 ?
         first_quotient :
-        calendar_plus_i64_add_saturating(first_quotient, 1);
+        calendar_i64_add_saturating(first_quotient, 1);
     distance = infiltratr_i64_subtract_saturating(
         last_quotient, first_multiple_index);
     return distance < 0 ? 0 :
-        calendar_plus_i64_add_saturating(distance, 1);
+        calendar_i64_add_saturating(distance, 1);
 }
 
 gchar *
-calendar_plus_format_named_date(
-    const CalendarPlusCalendarFields *fields,
-    CalendarPlusDatePart part,
+calendar_format_named_date(
+    const CalendarCalendarFields *fields,
+    CalendarDatePart part,
     const gchar *const *months,
     gsize month_count,
     const gchar *year_suffix)
@@ -53,11 +53,11 @@ calendar_plus_format_named_date(
     g_return_val_if_fail((gsize)fields->month < month_count, g_strdup(""));
 
     month_name = _(months[fields->month]);
-    if (part == CALENDAR_PLUS_DATE_PART_DAY)
+    if (part == CALENDAR_DATE_PART_DAY)
         return g_strdup_printf("%d", fields->day);
-    if (part == CALENDAR_PLUS_DATE_PART_MONTH)
+    if (part == CALENDAR_DATE_PART_MONTH)
         return g_strdup(month_name);
-    if (part == CALENDAR_PLUS_DATE_PART_YEAR)
+    if (part == CALENDAR_DATE_PART_YEAR)
     {
         return year_suffix != NULL ?
             g_strdup_printf("%" G_GINT64_FORMAT " %s",

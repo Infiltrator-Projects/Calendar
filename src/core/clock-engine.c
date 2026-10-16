@@ -15,65 +15,65 @@
 #include <infiltratr/core.h>
 #include <math.h>
 
-struct _CalendarPlusClockEngine
+struct _CalendarClockEngine
 {
-    CalendarPlusClockTimeSource time_source;
-    CalendarPlusClockScheduler scheduler;
-    CalendarPlusClockTickFunc tick;
+    CalendarClockTimeSource time_source;
+    CalendarClockScheduler scheduler;
+    CalendarClockTickFunc tick;
     gpointer tick_data;
-    CalendarPlusClockTimer timer;
+    CalendarClockTimer timer;
     gboolean running;
     gboolean dispatching;
     gboolean destroy_pending;
-    CalendarPlusClockConfig config;
+    CalendarClockConfig config;
 };
 
 gboolean
-calendar_plus_clock_interfaces_are_valid(
-    const CalendarPlusClockTimeSource *time_source,
-    const CalendarPlusClockScheduler *scheduler)
+calendar_clock_interfaces_are_valid(
+    const CalendarClockTimeSource *time_source,
+    const CalendarClockScheduler *scheduler)
 {
     return time_source != NULL && scheduler != NULL &&
            time_source->abi_version ==
-               CALENDAR_PLUS_CLOCK_TIME_SOURCE_ABI &&
-           scheduler->abi_version == CALENDAR_PLUS_CLOCK_SCHEDULER_ABI &&
+               CALENDAR_CLOCK_TIME_SOURCE_ABI &&
+           scheduler->abi_version == CALENDAR_CLOCK_SCHEDULER_ABI &&
            time_source->now != NULL && time_source->utc_offset != NULL &&
            scheduler->schedule_once != NULL && scheduler->cancel != NULL;
 }
 
-CalendarPlusClockEngine *
-calendar_plus_clock_engine_new(
-    const CalendarPlusClockTimeSource *time_source,
-    const CalendarPlusClockScheduler *scheduler,
-    CalendarPlusClockTickFunc tick,
+CalendarClockEngine *
+calendar_clock_engine_new(
+    const CalendarClockTimeSource *time_source,
+    const CalendarClockScheduler *scheduler,
+    CalendarClockTickFunc tick,
     gpointer tick_data)
 {
-    CalendarPlusClockEngine *engine;
+    CalendarClockEngine *engine;
 
-    if (!calendar_plus_clock_interfaces_are_valid(time_source, scheduler) ||
+    if (!calendar_clock_interfaces_are_valid(time_source, scheduler) ||
         tick == NULL)
     {
         return NULL;
     }
 
-    engine = g_new0(CalendarPlusClockEngine, 1);
+    engine = g_new0(CalendarClockEngine, 1);
     engine->time_source = *time_source;
     engine->scheduler = *scheduler;
     engine->tick = tick;
     engine->tick_data = tick_data;
-    engine->config.mode = CALENDAR_PLUS_TIME_MODE_INVALID;
+    engine->config.mode = CALENDAR_TIME_MODE_INVALID;
     return engine;
 }
 
 static guint
-current_delay(const CalendarPlusClockEngine *engine)
+current_delay(const CalendarClockEngine *engine)
 {
     const gint64 now =
         engine->time_source.now(engine->time_source.context);
     const gint offset = engine->time_source.utc_offset(
         engine->time_source.context, now);
 
-    return calendar_plus_time_delay_to_next_tick_at_location(
+    return calendar_time_delay_to_next_tick_at_location(
         engine->config.mode,
         now,
         offset,
@@ -82,15 +82,15 @@ current_delay(const CalendarPlusClockEngine *engine)
         engine->config.longitude);
 }
 
-static gboolean schedule_next_tick(CalendarPlusClockEngine *engine);
+static gboolean schedule_next_tick(CalendarClockEngine *engine);
 
 static void
 on_timer(gpointer user_data)
 {
-    CalendarPlusClockEngine *engine = user_data;
+    CalendarClockEngine *engine = user_data;
 
     /* The one-shot handle is no longer cancellable while it is dispatching. */
-    engine->timer = (CalendarPlusClockTimer)0;
+    engine->timer = (CalendarClockTimer)0;
     engine->dispatching = TRUE;
     engine->tick(engine->tick_data);
 
@@ -103,7 +103,7 @@ on_timer(gpointer user_data)
 
     engine->dispatching = FALSE;
     /* A callback may already have reconfigured and armed the next timer. */
-    if (engine->running && engine->timer == (CalendarPlusClockTimer)0 &&
+    if (engine->running && engine->timer == (CalendarClockTimer)0 &&
         !schedule_next_tick(engine))
     {
         engine->running = FALSE;
@@ -111,40 +111,40 @@ on_timer(gpointer user_data)
 }
 
 static gboolean
-schedule_next_tick(CalendarPlusClockEngine *engine)
+schedule_next_tick(CalendarClockEngine *engine)
 {
     g_return_val_if_fail(engine != NULL, FALSE);
     g_return_val_if_fail(engine->running, FALSE);
-    g_return_val_if_fail(engine->timer == (CalendarPlusClockTimer)0, FALSE);
+    g_return_val_if_fail(engine->timer == (CalendarClockTimer)0, FALSE);
 
     engine->timer = engine->scheduler.schedule_once(
         engine->scheduler.context,
         current_delay(engine),
         on_timer,
         engine);
-    return engine->timer != (CalendarPlusClockTimer)0;
+    return engine->timer != (CalendarClockTimer)0;
 }
 
 gboolean
-calendar_plus_clock_engine_start(CalendarPlusClockEngine *engine,
-                                 const CalendarPlusClockConfig *config)
+calendar_clock_engine_start(CalendarClockEngine *engine,
+                                 const CalendarClockConfig *config)
 {
-    CalendarPlusClockConfig safe;
+    CalendarClockConfig safe;
     gboolean changed;
 
     if (engine == NULL)
         return FALSE;
     if (config == NULL ||
-        config->mode == CALENDAR_PLUS_TIME_MODE_INVALID ||
-        calendar_plus_time_mode_get_id(config->mode) == NULL ||
-        (calendar_plus_time_mode_requires_latitude(config->mode) &&
+        config->mode == CALENDAR_TIME_MODE_INVALID ||
+        calendar_time_mode_get_id(config->mode) == NULL ||
+        (calendar_time_mode_requires_latitude(config->mode) &&
          (!isfinite(config->latitude) ||
           config->latitude < -90.0 || config->latitude > 90.0)) ||
-        (calendar_plus_time_mode_requires_longitude(config->mode) &&
+        (calendar_time_mode_requires_longitude(config->mode) &&
          (!isfinite(config->longitude) ||
           config->longitude < -180.0 || config->longitude > 180.0)))
     {
-        calendar_plus_clock_engine_stop(engine);
+        calendar_clock_engine_stop(engine);
         return FALSE;
     }
 
@@ -162,7 +162,7 @@ calendar_plus_clock_engine_start(CalendarPlusClockEngine *engine,
     if (engine->running && !changed)
         return TRUE;
 
-    calendar_plus_clock_engine_stop(engine);
+    calendar_clock_engine_stop(engine);
     engine->config = safe;
     engine->running = TRUE;
     if (!schedule_next_tick(engine))
@@ -174,27 +174,27 @@ calendar_plus_clock_engine_start(CalendarPlusClockEngine *engine,
 }
 
 void
-calendar_plus_clock_engine_stop(CalendarPlusClockEngine *engine)
+calendar_clock_engine_stop(CalendarClockEngine *engine)
 {
     if (engine == NULL)
         return;
 
     engine->running = FALSE;
-    if (engine->timer != (CalendarPlusClockTimer)0)
+    if (engine->timer != (CalendarClockTimer)0)
     {
         engine->scheduler.cancel(engine->scheduler.context, engine->timer);
-        engine->timer = (CalendarPlusClockTimer)0;
+        engine->timer = (CalendarClockTimer)0;
     }
 }
 
 gboolean
-calendar_plus_clock_engine_is_running(const CalendarPlusClockEngine *engine)
+calendar_clock_engine_is_running(const CalendarClockEngine *engine)
 {
     return engine != NULL && engine->running;
 }
 
 gchar *
-calendar_plus_clock_engine_format(const CalendarPlusClockEngine *engine)
+calendar_clock_engine_format(const CalendarClockEngine *engine)
 {
     gint64 now;
     gint offset;
@@ -204,7 +204,7 @@ calendar_plus_clock_engine_format(const CalendarPlusClockEngine *engine)
 
     now = engine->time_source.now(engine->time_source.context);
     offset = engine->time_source.utc_offset(engine->time_source.context, now);
-    return calendar_plus_format_time_at_location(
+    return calendar_format_time_at_location(
         engine->config.mode,
         now,
         offset,
@@ -215,12 +215,12 @@ calendar_plus_clock_engine_format(const CalendarPlusClockEngine *engine)
 }
 
 void
-calendar_plus_clock_engine_free(CalendarPlusClockEngine *engine)
+calendar_clock_engine_free(CalendarClockEngine *engine)
 {
     if (engine == NULL)
         return;
 
-    calendar_plus_clock_engine_stop(engine);
+    calendar_clock_engine_stop(engine);
     if (engine->dispatching)
     {
         engine->destroy_pending = TRUE;

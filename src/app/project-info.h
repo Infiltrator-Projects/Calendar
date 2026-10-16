@@ -1,11 +1,11 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 // Copyright (C) 1993-2026 Shannon Smith
 
-#ifndef CALENDAR_PLUS_PROJECT_INFO_H
-#define CALENDAR_PLUS_PROJECT_INFO_H
+#ifndef CALENDAR_PROJECT_INFO_H
+#define CALENDAR_PROJECT_INFO_H
 
 #include <infiltratr/core.h>
 
-const InfiltratrProjectInfo *calendar_plus_project_info(void);
+const InfiltratrProjectInfo *calendar_project_info(void);
 
 #endif

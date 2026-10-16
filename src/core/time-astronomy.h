@@ -5,25 +5,25 @@
  * Private astronomical time primitives shared by clock providers.
  */
 
-#ifndef CALENDAR_PLUS_TIME_ASTRONOMY_H
-#define CALENDAR_PLUS_TIME_ASTRONOMY_H
+#ifndef CALENDAR_TIME_ASTRONOMY_H
+#define CALENDAR_TIME_ASTRONOMY_H
 
 #include <glib.h>
 
 G_BEGIN_DECLS
 
-#define CALENDAR_PLUS_SIDEREAL_RATE 1.002737909350795L
+#define CALENDAR_SIDEREAL_RATE 1.002737909350795L
 
 /* Astronomical Julian Date; its integer-day boundary is noon UTC. */
-long double calendar_plus_julian_date(gint64 unix_microseconds);
+long double calendar_julian_date(gint64 unix_microseconds);
 /* Seconds in [0, 86400); longitude is degrees east of Greenwich. */
-long double calendar_plus_local_sidereal_seconds(gint64 unix_microseconds,
+long double calendar_local_sidereal_seconds(gint64 unix_microseconds,
                                                   gdouble longitude);
 /* Local mean solar seconds in [0, 86400); longitude is east-positive. */
-long double calendar_plus_mean_solar_seconds(gint64 unix_microseconds,
+long double calendar_mean_solar_seconds(gint64 unix_microseconds,
                                               gdouble longitude);
 /* Apparent solar seconds in [0, 86400); longitude is east-positive. */
-long double calendar_plus_apparent_solar_seconds(gint64 unix_microseconds,
+long double calendar_apparent_solar_seconds(gint64 unix_microseconds,
                                                   gdouble longitude);
 /*
  * Returns apparent-solar dawn/dusk boundaries for the current solar date.
@@ -32,7 +32,7 @@ long double calendar_plus_apparent_solar_seconds(gint64 unix_microseconds,
  * standard refraction and the solar radius; larger values model twilight.
  * FALSE means that the requested boundary does not occur at this latitude.
  */
-gboolean calendar_plus_solar_day_boundaries(
+gboolean calendar_solar_day_boundaries(
     gint64 unix_microseconds,
     gdouble latitude,
     gdouble solar_depression_degrees,
@@ -41,11 +41,11 @@ gboolean calendar_plus_solar_day_boundaries(
 /*
  * UTC instants for sunrise/sunset associated with the UTC civil date
  * containing @unix_microseconds. Longitude is east-positive. This companion
- * to calendar_plus_solar_day_boundaries() is used by equal-hour systems whose
+ * to calendar_solar_day_boundaries() is used by equal-hour systems whose
  * clocks reset at a physical sunrise or sunset rather than stretching a
  * daylight span into seasonal hours.
  */
-gboolean calendar_plus_solar_boundary_instants(
+gboolean calendar_solar_boundary_instants(
     gint64 unix_microseconds,
     gdouble latitude,
     gdouble longitude,

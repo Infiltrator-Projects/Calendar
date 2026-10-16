@@ -1,14 +1,14 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 // Copyright (C) 1993-2026 Shannon Smith
 
-#ifndef CALENDAR_PLUS_INTEGER_MATH_H
-#define CALENDAR_PLUS_INTEGER_MATH_H
+#ifndef CALENDAR_INTEGER_MATH_H
+#define CALENDAR_INTEGER_MATH_H
 
 #include <infiltratr/arithmetic.h>
 #include <stdint.h>
 
 static inline int64_t
-calendar_plus_floor_divide(int64_t value,
+calendar_floor_divide(int64_t value,
                            int64_t divisor)
 {
     int64_t quotient = 0;
@@ -18,7 +18,7 @@ calendar_plus_floor_divide(int64_t value,
 }
 
 static inline int64_t
-calendar_plus_positive_modulo(int64_t value,
+calendar_positive_modulo(int64_t value,
                               int64_t modulus)
 {
     int64_t remainder = 0;
@@ -32,8 +32,8 @@ calendar_plus_positive_modulo(int64_t value,
  * Calendar-specific policy. Alias them directly to Common so there is one
  * implementation and one overflow contract.
  */
-#define calendar_plus_i64_add_saturating infiltratr_i64_add_saturating
-#define calendar_plus_i64_subtract_saturating infiltratr_i64_subtract_saturating
-#define calendar_plus_i64_multiply_saturating infiltratr_i64_multiply_saturating
+#define calendar_i64_add_saturating infiltratr_i64_add_saturating
+#define calendar_i64_subtract_saturating infiltratr_i64_subtract_saturating
+#define calendar_i64_multiply_saturating infiltratr_i64_multiply_saturating
 
 #endif

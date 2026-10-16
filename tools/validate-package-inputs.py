@@ -176,20 +176,20 @@ def validate_no_workspace_paths() -> None:
 
 
 def validate_abi_manifest() -> None:
-    version_map = (ROOT / "src/abi/calendar-plus.map").read_text(encoding="utf-8")
-    mapped = set(re.findall(r"\b(calendar_plus_[a-z0-9_]+);", version_map))
+    version_map = (ROOT / "src/abi/calendar.map").read_text(encoding="utf-8")
+    mapped = set(re.findall(r"\b(calendar_[a-z0-9_]+);", version_map))
 
     assert mapped, "linker version map exports no Calendar symbols"
-    assert "CALENDAR_PLUS_1.0" in version_map
-    assert "CALENDAR_PLUS_1.1" in version_map
-    assert "CALENDAR_PLUS_1.2" in version_map
+    assert "CALENDAR_1.0" in version_map
+    assert "CALENDAR_1.1" in version_map
+    assert "CALENDAR_1.2" in version_map
     assert re.search(
-        r"CALENDAR_PLUS_1\.1\s*\{.*?\}\s*CALENDAR_PLUS_1\.0;",
+        r"CALENDAR_1\.1\s*\{.*?\}\s*CALENDAR_1\.0;",
         version_map,
         re.DOTALL,
     ), "native ABI 1.1 must inherit the 1.0 symbol set"
     assert re.search(
-        r"CALENDAR_PLUS_1\.2\s*\{.*?\}\s*CALENDAR_PLUS_1\.1;",
+        r"CALENDAR_1\.2\s*\{.*?\}\s*CALENDAR_1\.1;",
         version_map,
         re.DOTALL,
     ), "native ABI 1.2 must inherit the 1.1 symbol set"
@@ -228,7 +228,7 @@ def validate_version() -> None:
     assert "VERSION := $(strip $(file <VERSION))" in makefile, (
         "Makefile must consume the repository VERSION authority"
     )
-    build_mode = os.environ.get("CALENDAR_PLUS_BUILD_MODE", "generic")
+    build_mode = os.environ.get("CALENDAR_BUILD_MODE", "generic")
     changelog_version_match = re.match(
         r"^calendar \(([^)]+)\) ", changelog
     )
@@ -237,8 +237,6 @@ def validate_version() -> None:
     control = (ROOT / "debian/control").read_text(encoding="utf-8")
     assert re.search(r"^Source: calendar$", control, re.MULTILINE)
     assert re.search(r"^Package: calendar$", control, re.MULTILINE)
-    assert "infiltrator-calendar (<< ${binary:Version}), calendar-plus, cinnamon-calendar" in control
-    assert "Provides: infiltrator-calendar (= ${binary:Version})" in control
     if build_mode == "generic":
         assert changelog_version == version, (
             "generic Debian package and source versions differ"

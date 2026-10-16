@@ -49,11 +49,11 @@ var PanelClockView = class PanelClockView {
             throw new Error("Calendar panel actor is required");
         }
         if (typeof appletActor.add_style_class_name === "function") {
-            appletActor.add_style_class_name("calendar-plus-applet");
+            appletActor.add_style_class_name("calendar-applet");
         }
 
         this.label = new St.Label({
-            style_class: "applet-label calendar-plus-panel-clock",
+            style_class: "applet-label calendar-panel-clock",
         });
         this.label.reactive = true;
         this.label.track_hover = true;

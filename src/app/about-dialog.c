@@ -20,7 +20,7 @@ int
 main(int argc,
      char **argv)
 {
-    const InfiltratrProjectInfo *info = calendar_plus_project_info();
+    const InfiltratrProjectInfo *info = calendar_project_info();
     g_autofree char *author = NULL;
     g_autofree char *comments = NULL;
     const char *authors[2];

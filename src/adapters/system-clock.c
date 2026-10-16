@@ -4,9 +4,9 @@
 /*
  * GObject/GJS facade over the injected platform-neutral clock engine.
  *
- * Clock scheduling and formatting stay in CalendarPlusClockEngine. Effective
+ * Clock scheduling and formatting stay in CalendarClockEngine. Effective
  * temporal-policy discovery, persistence fallback and filesystem/settings
- * monitoring live in CalendarPlusTemporalPolicySource, compiled as its own
+ * monitoring live in CalendarTemporalPolicySource, compiled as its own
  * adapter translation unit. This facade composes the two responsibilities and
  * publishes their signals to GJS without owning either implementation.
  */
@@ -19,11 +19,11 @@
 
 #include <infiltratr/temporal.h>
 
-struct _CalendarPlusSystemClock
+struct _CalendarSystemClock
 {
     GObject parent_instance;
-    CalendarPlusClockEngine *engine;
-    CalendarPlusTemporalPolicySource *policy_source;
+    CalendarClockEngine *engine;
+    CalendarTemporalPolicySource *policy_source;
 };
 
 enum
@@ -37,14 +37,14 @@ static guint signals[SIGNAL_COUNT];
 
 /* GLib's type-registration macro contains an intentional pointer probe. */
 // NOLINTNEXTLINE(performance-no-int-to-ptr)
-G_DEFINE_TYPE(CalendarPlusSystemClock,
-              calendar_plus_system_clock,
+G_DEFINE_TYPE(CalendarSystemClock,
+              calendar_system_clock,
               G_TYPE_OBJECT)
 
 static void
 on_engine_tick(gpointer user_data)
 {
-    CalendarPlusSystemClock *self = CALENDAR_PLUS_SYSTEM_CLOCK(user_data);
+    CalendarSystemClock *self = CALENDAR_SYSTEM_CLOCK(user_data);
 
     g_signal_emit(self, signals[SIGNAL_TICK], 0);
 }
@@ -52,37 +52,37 @@ on_engine_tick(gpointer user_data)
 static void
 on_policy_changed(gpointer user_data)
 {
-    CalendarPlusSystemClock *self = CALENDAR_PLUS_SYSTEM_CLOCK(user_data);
+    CalendarSystemClock *self = CALENDAR_SYSTEM_CLOCK(user_data);
 
     g_signal_emit(self, signals[SIGNAL_POLICY_CHANGED], 0);
 }
 
 static const InfiltratrTemporalPolicyV3 *
-effective_policy(CalendarPlusSystemClock *self)
+effective_policy(CalendarSystemClock *self)
 {
     return self != NULL
-        ? calendar_plus_temporal_policy_source_get_policy(self->policy_source)
+        ? calendar_temporal_policy_source_get_policy(self->policy_source)
         : NULL;
 }
 
 static void
-calendar_plus_system_clock_dispose(GObject *object)
+calendar_system_clock_dispose(GObject *object)
 {
-    CalendarPlusSystemClock *self = CALENDAR_PLUS_SYSTEM_CLOCK(object);
+    CalendarSystemClock *self = CALENDAR_SYSTEM_CLOCK(object);
 
-    calendar_plus_temporal_policy_source_free(self->policy_source);
+    calendar_temporal_policy_source_free(self->policy_source);
     self->policy_source = NULL;
-    calendar_plus_clock_engine_free(self->engine);
+    calendar_clock_engine_free(self->engine);
     self->engine = NULL;
-    G_OBJECT_CLASS(calendar_plus_system_clock_parent_class)->dispose(object); // NOLINT(bugprone-casting-through-void)
+    G_OBJECT_CLASS(calendar_system_clock_parent_class)->dispose(object); // NOLINT(bugprone-casting-through-void)
 }
 
 static void
-calendar_plus_system_clock_class_init(CalendarPlusSystemClockClass *klass)
+calendar_system_clock_class_init(CalendarSystemClockClass *klass)
 {
     GObjectClass *object_class = G_OBJECT_CLASS(klass); // NOLINT(bugprone-casting-through-void)
 
-    object_class->dispose = calendar_plus_system_clock_dispose;
+    object_class->dispose = calendar_system_clock_dispose;
     signals[SIGNAL_TICK] =
         g_signal_new("tick",
                      G_TYPE_FROM_CLASS(klass),
@@ -106,97 +106,97 @@ calendar_plus_system_clock_class_init(CalendarPlusSystemClockClass *klass)
 }
 
 static void
-calendar_plus_system_clock_init(CalendarPlusSystemClock *self)
+calendar_system_clock_init(CalendarSystemClock *self)
 {
-    CalendarPlusClockTimeSource time_source;
-    CalendarPlusClockScheduler scheduler;
+    CalendarClockTimeSource time_source;
+    CalendarClockScheduler scheduler;
 
-    calendar_plus_clock_glib_interfaces(&time_source, &scheduler);
-    self->engine = calendar_plus_clock_engine_new(&time_source,
+    calendar_clock_glib_interfaces(&time_source, &scheduler);
+    self->engine = calendar_clock_engine_new(&time_source,
                                                   &scheduler,
                                                   on_engine_tick,
                                                   self);
-    self->policy_source = calendar_plus_temporal_policy_source_new(
+    self->policy_source = calendar_temporal_policy_source_new(
         on_policy_changed, self);
 }
 
-CalendarPlusSystemClock *
-calendar_plus_system_clock_new(void)
+CalendarSystemClock *
+calendar_system_clock_new(void)
 {
-    return g_object_new(CALENDAR_PLUS_TYPE_SYSTEM_CLOCK, NULL);
+    return g_object_new(CALENDAR_TYPE_SYSTEM_CLOCK, NULL);
 }
 
 void
-calendar_plus_system_clock_start_at_location(CalendarPlusSystemClock *self,
+calendar_system_clock_start_at_location(CalendarSystemClock *self,
                                              const gchar *mode,
                                              gboolean show_seconds,
                                              gboolean vertical,
                                              gdouble latitude,
                                              gdouble longitude)
 {
-    const CalendarPlusClockConfig config = {
-        .mode = calendar_plus_time_mode_from_string(mode),
+    const CalendarClockConfig config = {
+        .mode = calendar_time_mode_from_string(mode),
         .show_seconds = show_seconds,
         .vertical = vertical,
         .latitude = latitude,
         .longitude = longitude
     };
 
-    g_return_if_fail(CALENDAR_PLUS_IS_SYSTEM_CLOCK(self));
-    if (config.mode == CALENDAR_PLUS_TIME_MODE_INVALID ||
-        !calendar_plus_clock_engine_start(self->engine, &config))
+    g_return_if_fail(CALENDAR_IS_SYSTEM_CLOCK(self));
+    if (config.mode == CALENDAR_TIME_MODE_INVALID ||
+        !calendar_clock_engine_start(self->engine, &config))
     {
-        calendar_plus_clock_engine_stop(self->engine);
+        calendar_clock_engine_stop(self->engine);
     }
 }
 
 void
-calendar_plus_system_clock_start(CalendarPlusSystemClock *self,
+calendar_system_clock_start(CalendarSystemClock *self,
                                  const gchar *mode,
                                  gboolean show_seconds,
                                  gboolean vertical,
                                  gdouble longitude)
 {
-    calendar_plus_system_clock_start_at_location(
+    calendar_system_clock_start_at_location(
         self, mode, show_seconds, vertical, 0.0, longitude);
 }
 
 void
-calendar_plus_system_clock_stop(CalendarPlusSystemClock *self)
+calendar_system_clock_stop(CalendarSystemClock *self)
 {
-    g_return_if_fail(CALENDAR_PLUS_IS_SYSTEM_CLOCK(self));
-    calendar_plus_clock_engine_stop(self->engine);
+    g_return_if_fail(CALENDAR_IS_SYSTEM_CLOCK(self));
+    calendar_clock_engine_stop(self->engine);
 }
 
 gchar *
-calendar_plus_system_clock_get_time(CalendarPlusSystemClock *self)
+calendar_system_clock_get_time(CalendarSystemClock *self)
 {
-    g_return_val_if_fail(CALENDAR_PLUS_IS_SYSTEM_CLOCK(self),
+    g_return_val_if_fail(CALENDAR_IS_SYSTEM_CLOCK(self),
                          g_strdup(""));
-    return calendar_plus_clock_engine_format(self->engine);
+    return calendar_clock_engine_format(self->engine);
 }
 
 gboolean
-calendar_plus_system_clock_is_running(CalendarPlusSystemClock *self)
+calendar_system_clock_is_running(CalendarSystemClock *self)
 {
-    g_return_val_if_fail(CALENDAR_PLUS_IS_SYSTEM_CLOCK(self), FALSE);
-    return calendar_plus_clock_engine_is_running(self->engine);
+    g_return_val_if_fail(CALENDAR_IS_SYSTEM_CLOCK(self), FALSE);
+    return calendar_clock_engine_is_running(self->engine);
 }
 
 GVariant *
-calendar_plus_system_clock_get_system_policy(CalendarPlusSystemClock *self)
+calendar_system_clock_get_system_policy(CalendarSystemClock *self)
 {
     const InfiltratrTemporalPolicyV3 *policy;
     const gchar *authority;
 
-    g_return_val_if_fail(CALENDAR_PLUS_IS_SYSTEM_CLOCK(self), NULL);
+    g_return_val_if_fail(CALENDAR_IS_SYSTEM_CLOCK(self), NULL);
     policy = effective_policy(self);
     if (policy == NULL)
         return NULL;
 
-    authority = calendar_plus_temporal_policy_source_get_infiltrator_authority(
+    authority = calendar_temporal_policy_source_get_infiltrator_authority(
         self->policy_source)
-        ? "infiltrator-system-settings"
+        ? "system-settings"
         : "mint-cinnamon";
 
     return g_variant_ref_sink(g_variant_new(
@@ -208,72 +208,72 @@ calendar_plus_system_clock_get_system_policy(CalendarPlusSystemClock *self)
         policy->latitude,
         policy->longitude,
         authority,
-        calendar_plus_temporal_policy_source_get_provider_available(
+        calendar_temporal_policy_source_get_provider_available(
             self->policy_source)));
 }
 
 gchar *
-calendar_plus_system_clock_get_system_mode(CalendarPlusSystemClock *self)
+calendar_system_clock_get_system_mode(CalendarSystemClock *self)
 {
     const InfiltratrTemporalPolicyV3 *policy;
 
-    g_return_val_if_fail(CALENDAR_PLUS_IS_SYSTEM_CLOCK(self),
+    g_return_val_if_fail(CALENDAR_IS_SYSTEM_CLOCK(self),
                          g_strdup("standard"));
     policy = effective_policy(self);
     return g_strdup(policy != NULL ? policy->clock_mode : "standard");
 }
 
 gchar *
-calendar_plus_system_clock_get_system_calendar(CalendarPlusSystemClock *self)
+calendar_system_clock_get_system_calendar(CalendarSystemClock *self)
 {
     const InfiltratrTemporalPolicyV3 *policy;
 
-    g_return_val_if_fail(CALENDAR_PLUS_IS_SYSTEM_CLOCK(self),
+    g_return_val_if_fail(CALENDAR_IS_SYSTEM_CLOCK(self),
                          g_strdup("gregorian"));
     policy = effective_policy(self);
     return g_strdup(policy != NULL ? policy->calendar : "gregorian");
 }
 
 gboolean
-calendar_plus_system_clock_get_system_show_seconds(
-    CalendarPlusSystemClock *self)
+calendar_system_clock_get_system_show_seconds(
+    CalendarSystemClock *self)
 {
     const InfiltratrTemporalPolicyV3 *policy;
 
-    g_return_val_if_fail(CALENDAR_PLUS_IS_SYSTEM_CLOCK(self), FALSE);
+    g_return_val_if_fail(CALENDAR_IS_SYSTEM_CLOCK(self), FALSE);
     policy = effective_policy(self);
     return policy != NULL && policy->show_seconds;
 }
 
 gboolean
-calendar_plus_system_clock_get_system_location_configured(
-    CalendarPlusSystemClock *self)
+calendar_system_clock_get_system_location_configured(
+    CalendarSystemClock *self)
 {
     const InfiltratrTemporalPolicyV3 *policy;
 
-    g_return_val_if_fail(CALENDAR_PLUS_IS_SYSTEM_CLOCK(self), FALSE);
+    g_return_val_if_fail(CALENDAR_IS_SYSTEM_CLOCK(self), FALSE);
     policy = effective_policy(self);
     return policy != NULL && policy->location_configured;
 }
 
 gdouble
-calendar_plus_system_clock_get_system_latitude(
-    CalendarPlusSystemClock *self)
+calendar_system_clock_get_system_latitude(
+    CalendarSystemClock *self)
 {
     const InfiltratrTemporalPolicyV3 *policy;
 
-    g_return_val_if_fail(CALENDAR_PLUS_IS_SYSTEM_CLOCK(self), 0.0);
+    g_return_val_if_fail(CALENDAR_IS_SYSTEM_CLOCK(self), 0.0);
     policy = effective_policy(self);
     return policy != NULL ? policy->latitude : 0.0;
 }
 
 gdouble
-calendar_plus_system_clock_get_system_longitude(
-    CalendarPlusSystemClock *self)
+calendar_system_clock_get_system_longitude(
+    CalendarSystemClock *self)
 {
     const InfiltratrTemporalPolicyV3 *policy;
 
-    g_return_val_if_fail(CALENDAR_PLUS_IS_SYSTEM_CLOCK(self), 0.0);
+    g_return_val_if_fail(CALENDAR_IS_SYSTEM_CLOCK(self), 0.0);
     policy = effective_policy(self);
     return policy != NULL ? policy->longitude : 0.0;
 }

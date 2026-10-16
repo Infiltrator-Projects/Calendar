@@ -99,33 +99,33 @@ test_calendar_reference_vectors(void)
     gsize index;
 
     g_assert_cmpuint(G_N_ELEMENTS(vectors), ==,
-                     calendar_plus_calendar_provider_get_count());
-    g_assert_cmpuint(calendar_plus_calendar_provider_get_count(), ==,
+                     calendar_calendar_provider_get_count());
+    g_assert_cmpuint(calendar_calendar_provider_get_count(), ==,
                      infiltratr_temporal_calendar_count());
 
-    for (index = 0; index < calendar_plus_calendar_provider_get_count(); index++)
+    for (index = 0; index < calendar_calendar_provider_get_count(); index++)
     {
-        const CalendarPlusCalendarProvider *provider =
-            calendar_plus_calendar_provider_at(index);
+        const CalendarCalendarProvider *provider =
+            calendar_calendar_provider_at(index);
         const InfiltratrTemporalCalendarInfo *info =
             infiltratr_temporal_calendar_at(index);
 
         g_assert_nonnull(provider);
         g_assert_nonnull(info);
         g_assert_cmpuint(provider->common_index, ==, index);
-        g_assert_true(calendar_plus_calendar_provider_info(provider) == info);
+        g_assert_true(calendar_calendar_provider_info(provider) == info);
     }
 
     for (index = 0; index < G_N_ELEMENTS(vectors); index++)
     {
         const CalendarReferenceVector *vector = &vectors[index];
-        const CalendarPlusCalendarProvider *provider =
-            calendar_plus_calendar_provider_from_id(vector->id);
-        const gint64 jdn = calendar_plus_gregorian_to_jdn(
+        const CalendarCalendarProvider *provider =
+            calendar_calendar_provider_from_id(vector->id);
+        const gint64 jdn = calendar_gregorian_to_jdn(
             vector->gregorian_year,
             vector->gregorian_month,
             vector->gregorian_day);
-        CalendarPlusCalendarFields fields = { 0 };
+        CalendarCalendarFields fields = { 0 };
 
         g_assert_nonnull(provider);
         g_assert_true(provider->fields_from_jdn(provider, jdn, &fields));
@@ -141,27 +141,27 @@ static void
 test_ui_language_calendar_presentation(void)
 {
     g_autofree gchar *saved_language = g_strdup(g_getenv("LANGUAGE"));
-    CalendarPlusCalendarEngine *engine = calendar_plus_calendar_engine_new("chinese");
-    const CalendarPlusDate date = { 2026, 10, 10 };
+    CalendarCalendarEngine *engine = calendar_calendar_engine_new("chinese");
+    const CalendarDate date = { 2026, 10, 10 };
     char bridge_text[512];
 
     g_assert_nonnull(engine);
     g_assert_true(g_setenv("LANGUAGE", "en_AU", TRUE));
-    g_autofree gchar *english = calendar_plus_calendar_engine_format_date(
-        engine, &date, CALENDAR_PLUS_DATE_PART_SHORT);
+    g_autofree gchar *english = calendar_calendar_engine_format_date(
+        engine, &date, CALENDAR_DATE_PART_SHORT);
     g_assert_cmpstr(english, ==, "1 Ninth Month bing-wu");
-    g_assert_true(calendar_plus_format_date_v1("chinese", 2026, 10, 10,
+    g_assert_true(calendar_format_date_v1("chinese", 2026, 10, 10,
         "short", bridge_text, sizeof(bridge_text), NULL));
     g_assert_cmpstr(bridge_text, ==, english);
 
     g_assert_true(g_setenv("LANGUAGE", "zh_TW", TRUE));
-    g_autofree gchar *chinese = calendar_plus_calendar_engine_format_date(
-        engine, &date, CALENDAR_PLUS_DATE_PART_SHORT);
+    g_autofree gchar *chinese = calendar_calendar_engine_format_date(
+        engine, &date, CALENDAR_DATE_PART_SHORT);
     g_assert_nonnull(strstr(chinese, "九月"));
     g_assert_nonnull(strstr(chinese, "丙午"));
     g_assert_null(strstr(chinese, "2026"));
     g_assert_null(strstr(chinese, "Ninth"));
-    g_assert_true(calendar_plus_format_date_v1("chinese", 2026, 10, 10,
+    g_assert_true(calendar_format_date_v1("chinese", 2026, 10, 10,
         "short", bridge_text, sizeof(bridge_text), NULL));
     g_assert_cmpstr(bridge_text, ==, chinese);
 
@@ -169,7 +169,7 @@ test_ui_language_calendar_presentation(void)
         g_assert_true(g_setenv("LANGUAGE", saved_language, TRUE));
     else
         g_unsetenv("LANGUAGE");
-    calendar_plus_calendar_engine_free(engine);
+    calendar_calendar_engine_free(engine);
 }
 
 static void
@@ -177,50 +177,50 @@ test_native_cyclic_year_presentation(void)
 {
     g_autofree gchar *saved_language = g_strdup(g_getenv("LANGUAGE"));
     const gchar *calendars[] = { "chinese", "dangi" };
-    const CalendarPlusDate before_new_year = { 2026, 1, 1 };
-    const CalendarPlusDate new_year = { 2026, 2, 17 };
-    const CalendarPlusDate date = { 2026, 10, 10 };
-    const CalendarPlusDatePart parts[] = {
-        CALENDAR_PLUS_DATE_PART_SHORT,
-        CALENDAR_PLUS_DATE_PART_FULL,
-        CALENDAR_PLUS_DATE_PART_YEAR
+    const CalendarDate before_new_year = { 2026, 1, 1 };
+    const CalendarDate new_year = { 2026, 2, 17 };
+    const CalendarDate date = { 2026, 10, 10 };
+    const CalendarDatePart parts[] = {
+        CALENDAR_DATE_PART_SHORT,
+        CALENDAR_DATE_PART_FULL,
+        CALENDAR_DATE_PART_YEAR
     };
     char bridge[512];
 
     for (gsize i = 0; i < G_N_ELEMENTS(calendars); i++)
     {
-        CalendarPlusCalendarEngine *engine =
-            calendar_plus_calendar_engine_new(calendars[i]);
+        CalendarCalendarEngine *engine =
+            calendar_calendar_engine_new(calendars[i]);
         g_assert_nonnull(engine);
         g_assert_true(g_setenv("LANGUAGE", "en_AU", TRUE));
         for (gsize p = 0; p < G_N_ELEMENTS(parts); p++)
         {
-            g_autofree gchar *text = calendar_plus_calendar_engine_format_date(
+            g_autofree gchar *text = calendar_calendar_engine_format_date(
                 engine, &date, parts[p]);
             g_assert_nonnull(strstr(text, "bing-wu"));
             g_assert_null(strstr(text, "2026"));
             g_assert_null(strstr(text, "43"));
         }
-        g_autofree gchar *before = calendar_plus_calendar_engine_format_date(
-            engine, &before_new_year, CALENDAR_PLUS_DATE_PART_YEAR);
-        g_autofree gchar *after = calendar_plus_calendar_engine_format_date(
-            engine, &new_year, CALENDAR_PLUS_DATE_PART_YEAR);
+        g_autofree gchar *before = calendar_calendar_engine_format_date(
+            engine, &before_new_year, CALENDAR_DATE_PART_YEAR);
+        g_autofree gchar *after = calendar_calendar_engine_format_date(
+            engine, &new_year, CALENDAR_DATE_PART_YEAR);
         g_assert_cmpstr(before, ==, "yi-si");
         g_assert_cmpstr(after, ==, "bing-wu");
-        g_assert_true(calendar_plus_format_date_v1(calendars[i], 2026, 10, 10,
+        g_assert_true(calendar_format_date_v1(calendars[i], 2026, 10, 10,
             "full", bridge, sizeof(bridge), NULL));
         g_assert_nonnull(strstr(bridge, "bing-wu"));
         g_assert_null(strstr(bridge, "2026"));
 
         g_assert_true(g_setenv("LANGUAGE", "zh_TW", TRUE));
-        g_autofree gchar *chinese = calendar_plus_calendar_engine_format_date(
-            engine, &date, CALENDAR_PLUS_DATE_PART_YEAR);
+        g_autofree gchar *chinese = calendar_calendar_engine_format_date(
+            engine, &date, CALENDAR_DATE_PART_YEAR);
         g_assert_cmpstr(chinese, ==, "丙午");
         g_assert_true(g_setenv("LANGUAGE", "ko_KR", TRUE));
-        g_autofree gchar *korean = calendar_plus_calendar_engine_format_date(
-            engine, &date, CALENDAR_PLUS_DATE_PART_YEAR);
+        g_autofree gchar *korean = calendar_calendar_engine_format_date(
+            engine, &date, CALENDAR_DATE_PART_YEAR);
         g_assert_cmpstr(korean, ==, "병오");
-        calendar_plus_calendar_engine_free(engine);
+        calendar_calendar_engine_free(engine);
     }
     if (saved_language != NULL)
         g_assert_true(g_setenv("LANGUAGE", saved_language, TRUE));
@@ -231,13 +231,13 @@ test_native_cyclic_year_presentation(void)
 static void
 test_historical_calendar_edge_vectors(void)
 {
-    const CalendarPlusCalendarProvider *roman =
-        calendar_plus_calendar_provider_from_id("roman");
-    const CalendarPlusCalendarProvider *french =
-        calendar_plus_calendar_provider_from_id("french-republican");
-    const CalendarPlusCalendarProvider *byzantine =
-        calendar_plus_calendar_provider_from_id("byzantine");
-    CalendarPlusCalendarFields fields = { 0 };
+    const CalendarCalendarProvider *roman =
+        calendar_calendar_provider_from_id("roman");
+    const CalendarCalendarProvider *french =
+        calendar_calendar_provider_from_id("french-republican");
+    const CalendarCalendarProvider *byzantine =
+        calendar_calendar_provider_from_id("byzantine");
+    CalendarCalendarFields fields = { 0 };
     g_autofree gchar *text = NULL;
     gint64 jdn;
 
@@ -245,33 +245,33 @@ test_historical_calendar_edge_vectors(void)
     g_assert_nonnull(french);
     g_assert_nonnull(byzantine);
 
-    jdn = calendar_plus_julian_to_jdn(2024, 2, 24);
+    jdn = calendar_julian_to_jdn(2024, 2, 24);
     g_assert_true(roman->fields_from_jdn(roman, jdn, &fields));
-    text = roman->format(roman, jdn, CALENDAR_PLUS_DATE_PART_FULL);
+    text = roman->format(roman, jdn, CALENDAR_DATE_PART_FULL);
     g_assert_nonnull(text);
     g_assert_nonnull(strstr(text, "bis VI Kal. Mar"));
     g_clear_pointer(&text, g_free);
 
-    jdn = calendar_plus_gregorian_to_jdn(1795, 9, 22);
+    jdn = calendar_gregorian_to_jdn(1795, 9, 22);
     g_assert_true(french->fields_from_jdn(french, jdn, &fields));
     g_assert_cmpint(fields.year, ==, 3);
     g_assert_cmpint(fields.month, ==, 13);
     g_assert_cmpint(fields.day, ==, 6);
-    jdn = calendar_plus_gregorian_to_jdn(1799, 9, 22);
+    jdn = calendar_gregorian_to_jdn(1799, 9, 22);
     g_assert_true(french->fields_from_jdn(french, jdn, &fields));
     g_assert_cmpint(fields.year, ==, 7);
     g_assert_cmpint(fields.month, ==, 13);
     g_assert_cmpint(fields.day, ==, 6);
-    jdn = calendar_plus_gregorian_to_jdn(1803, 9, 23);
+    jdn = calendar_gregorian_to_jdn(1803, 9, 23);
     g_assert_true(french->fields_from_jdn(french, jdn, &fields));
     g_assert_cmpint(fields.year, ==, 11);
     g_assert_cmpint(fields.month, ==, 13);
     g_assert_cmpint(fields.day, ==, 6);
 
-    jdn = calendar_plus_julian_to_jdn(2026, 8, 31);
+    jdn = calendar_julian_to_jdn(2026, 8, 31);
     g_assert_true(byzantine->fields_from_jdn(byzantine, jdn, &fields));
     g_assert_cmpint(fields.year, ==, 7534);
-    jdn = calendar_plus_julian_to_jdn(2026, 9, 1);
+    jdn = calendar_julian_to_jdn(2026, 9, 1);
     g_assert_true(byzantine->fields_from_jdn(byzantine, jdn, &fields));
     g_assert_cmpint(fields.year, ==, 7535);
 }
@@ -285,14 +285,14 @@ test_gregorian_proleptic_cutover(void)
         { "gregorian", 1582, 10, 10, 1582, 10, 10 },
         { "gregorian", 1582, 10, 15, 1582, 10, 15 }
     };
-    const CalendarPlusCalendarProvider *provider =
-        calendar_plus_calendar_provider_from_id("gregorian");
-    CalendarPlusCalendarEngine *engine =
-        calendar_plus_calendar_engine_new("gregorian");
-    const CalendarPlusDate selected = { 1582, 10, 10 };
-    const CalendarPlusDate today = { 2026, 9, 19 };
-    CalendarPlusDate navigated = { 0 };
-    CalendarPlusCalendarGrid grid = { 0 };
+    const CalendarCalendarProvider *provider =
+        calendar_calendar_provider_from_id("gregorian");
+    CalendarCalendarEngine *engine =
+        calendar_calendar_engine_new("gregorian");
+    const CalendarDate selected = { 1582, 10, 10 };
+    const CalendarDate today = { 2026, 9, 19 };
+    CalendarDate navigated = { 0 };
+    CalendarCalendarGrid grid = { 0 };
     gsize index;
     gboolean found_selected = FALSE;
 
@@ -302,11 +302,11 @@ test_gregorian_proleptic_cutover(void)
     for (index = 0; index < G_N_ELEMENTS(vectors); index++)
     {
         const CalendarReferenceVector *vector = &vectors[index];
-        const gint64 jdn = calendar_plus_gregorian_to_jdn(
+        const gint64 jdn = calendar_gregorian_to_jdn(
             vector->gregorian_year,
             vector->gregorian_month,
             vector->gregorian_day);
-        CalendarPlusCalendarFields fields = { 0 };
+        CalendarCalendarFields fields = { 0 };
 
         g_assert_true(provider->fields_from_jdn(provider, jdn, &fields));
         g_assert_cmpint(fields.year, ==, vector->year);
@@ -314,61 +314,61 @@ test_gregorian_proleptic_cutover(void)
         g_assert_cmpint(fields.day, ==, vector->day);
     }
 
-    g_assert_true(calendar_plus_calendar_engine_period_start(
+    g_assert_true(calendar_calendar_engine_period_start(
         engine, &selected, &navigated));
-    g_assert_true(calendar_plus_date_same(
+    g_assert_true(calendar_date_same(
         navigated.year, navigated.month, navigated.day,
         1582, 10, 1));
 
-    g_assert_true(calendar_plus_calendar_engine_add_periods(
+    g_assert_true(calendar_calendar_engine_add_periods(
         engine, &selected, 1, &navigated));
-    g_assert_true(calendar_plus_date_same(
+    g_assert_true(calendar_date_same(
         navigated.year, navigated.month, navigated.day,
         1582, 11, 10));
 
-    g_assert_true(calendar_plus_calendar_engine_add_years(
+    g_assert_true(calendar_calendar_engine_add_years(
         engine, &selected, -82, &navigated));
-    g_assert_true(calendar_plus_date_same(
+    g_assert_true(calendar_date_same(
         navigated.year, navigated.month, navigated.day,
         1500, 10, 10));
 
-    g_assert_true(calendar_plus_calendar_engine_build_grid(
+    g_assert_true(calendar_calendar_engine_build_grid(
         engine, &selected, &today, 0, &grid));
     for (index = 0;
-         index < CALENDAR_PLUS_CALENDAR_GRID_CELLS;
+         index < CALENDAR_CALENDAR_GRID_CELLS;
          index++)
     {
-        const CalendarPlusCalendarCell *cell = &grid.cells[index];
+        const CalendarCalendarCell *cell = &grid.cells[index];
 
         if (!cell->is_selected)
             continue;
 
         found_selected = TRUE;
-        g_assert_true(calendar_plus_date_same(
+        g_assert_true(calendar_date_same(
             cell->date.year, cell->date.month, cell->date.day,
             1582, 10, 10));
         g_assert_cmpstr(cell->day_label, ==, "10");
         break;
     }
     g_assert_true(found_selected);
-    calendar_plus_calendar_grid_clear(&grid);
-    calendar_plus_calendar_engine_free(engine);
+    calendar_calendar_grid_clear(&grid);
+    calendar_calendar_engine_free(engine);
 }
 
 typedef struct
 {
     gint64 now;
     gint utc_offset;
-    CalendarPlusClockTimer next_timer;
-    CalendarPlusClockTimerFunc callback;
+    CalendarClockTimer next_timer;
+    CalendarClockTimerFunc callback;
     gpointer callback_data;
     guint last_delay;
     guint schedules;
     guint cancellations;
     guint ticks;
-    CalendarPlusClockEngine *engine;
+    CalendarClockEngine *engine;
     gboolean reconfigure_on_tick;
-    CalendarPlusClockConfig next_config;
+    CalendarClockConfig next_config;
 } FakeClock;
 
 static gint64
@@ -385,10 +385,10 @@ fake_utc_offset(gpointer context,
     return ((FakeClock *)context)->utc_offset;
 }
 
-static CalendarPlusClockTimer
+static CalendarClockTimer
 fake_schedule(gpointer context,
               guint delay,
-              CalendarPlusClockTimerFunc callback,
+              CalendarClockTimerFunc callback,
               gpointer callback_data)
 {
     FakeClock *clock = context;
@@ -398,14 +398,14 @@ fake_schedule(gpointer context,
     clock->callback_data = callback_data;
     clock->schedules++;
     clock->next_timer++;
-    if (clock->next_timer == (CalendarPlusClockTimer)0)
+    if (clock->next_timer == (CalendarClockTimer)0)
         clock->next_timer++;
     return clock->next_timer;
 }
 
 static void
 fake_cancel(gpointer context,
-            CalendarPlusClockTimer timer)
+            CalendarClockTimer timer)
 {
     FakeClock *clock = context;
 
@@ -424,7 +424,7 @@ fake_tick(gpointer context)
     if (clock->reconfigure_on_tick)
     {
         clock->reconfigure_on_tick = FALSE;
-        g_assert_true(calendar_plus_clock_engine_start(clock->engine,
+        g_assert_true(calendar_clock_engine_start(clock->engine,
                                                        &clock->next_config));
     }
 }
@@ -432,7 +432,7 @@ fake_tick(gpointer context)
 static void
 fake_fire(FakeClock *clock)
 {
-    CalendarPlusClockTimerFunc callback = clock->callback;
+    CalendarClockTimerFunc callback = clock->callback;
     gpointer callback_data = clock->callback_data;
 
     g_assert_nonnull(callback);
@@ -444,24 +444,24 @@ fake_fire(FakeClock *clock)
 static void
 test_bounded_calendar_navigation_failure(void)
 {
-    CalendarPlusCalendarEngine *engine =
-        calendar_plus_calendar_engine_new("islamic-umalqura");
-    const CalendarPlusDate first_supported = { 1882, 11, 12 };
-    const CalendarPlusDate outside_supported = { 1800, 1, 1 };
-    CalendarPlusDate result = { 123, 4, 5 };
+    CalendarCalendarEngine *engine =
+        calendar_calendar_engine_new("islamic-umalqura");
+    const CalendarDate first_supported = { 1882, 11, 12 };
+    const CalendarDate outside_supported = { 1800, 1, 1 };
+    CalendarDate result = { 123, 4, 5 };
 
     g_assert_nonnull(engine);
-    g_assert_false(calendar_plus_calendar_engine_add_periods(
+    g_assert_false(calendar_calendar_engine_add_periods(
         engine, &first_supported, -1, &result));
     g_assert_cmpint(result.year, ==, 123);
     g_assert_cmpint(result.month, ==, 4);
     g_assert_cmpint(result.day, ==, 5);
-    g_assert_false(calendar_plus_calendar_engine_add_years(
+    g_assert_false(calendar_calendar_engine_add_years(
         engine, &first_supported, -1, &result));
-    g_assert_false(calendar_plus_calendar_engine_period_start(
+    g_assert_false(calendar_calendar_engine_period_start(
         engine, &outside_supported, &result));
 
-    calendar_plus_calendar_engine_free(engine);
+    calendar_calendar_engine_free(engine);
 }
 
 static void
@@ -470,27 +470,27 @@ test_clock_interfaces(void)
     FakeClock clock = {
         .now = 12 * (gint64)G_USEC_PER_SEC * 60 * 60
     };
-    const CalendarPlusClockTimeSource time_source = {
-        CALENDAR_PLUS_CLOCK_TIME_SOURCE_ABI,
+    const CalendarClockTimeSource time_source = {
+        CALENDAR_CLOCK_TIME_SOURCE_ABI,
         &clock,
         fake_now,
         fake_utc_offset
     };
-    const CalendarPlusClockScheduler scheduler = {
-        CALENDAR_PLUS_CLOCK_SCHEDULER_ABI,
+    const CalendarClockScheduler scheduler = {
+        CALENDAR_CLOCK_SCHEDULER_ABI,
         &clock,
         fake_schedule,
         fake_cancel
     };
-    CalendarPlusClockConfig config = {
-        .mode = CALENDAR_PLUS_TIME_MODE_DECIMAL,
+    CalendarClockConfig config = {
+        .mode = CALENDAR_TIME_MODE_DECIMAL,
         .show_seconds = FALSE,
         .vertical = FALSE,
         .latitude = 0.0,
         .longitude = 0.0
     };
-    CalendarPlusClockEngine *engine =
-        calendar_plus_clock_engine_new(&time_source,
+    CalendarClockEngine *engine =
+        calendar_clock_engine_new(&time_source,
                                        &scheduler,
                                        fake_tick,
                                        &clock);
@@ -498,11 +498,11 @@ test_clock_interfaces(void)
 
     g_assert_nonnull(engine);
     clock.engine = engine;
-    g_assert_true(calendar_plus_clock_engine_start(engine, &config));
-    g_assert_true(calendar_plus_clock_engine_is_running(engine));
+    g_assert_true(calendar_clock_engine_start(engine, &config));
+    g_assert_true(calendar_clock_engine_is_running(engine));
     g_assert_cmpuint(clock.schedules, ==, 1);
     g_assert_cmpuint(clock.last_delay, >, 0);
-    formatted = calendar_plus_clock_engine_format(engine);
+    formatted = calendar_clock_engine_format(engine);
     g_assert_cmpstr(formatted, ==, "5:00");
 
     clock.next_config = config;
@@ -514,40 +514,40 @@ test_clock_interfaces(void)
     g_assert_cmpuint(clock.cancellations, ==, 0);
 
     config = clock.next_config;
-    g_assert_true(calendar_plus_clock_engine_start(engine, &config));
+    g_assert_true(calendar_clock_engine_start(engine, &config));
     g_assert_cmpuint(clock.schedules, ==, 2);
     config.vertical = TRUE;
-    g_assert_true(calendar_plus_clock_engine_start(engine, &config));
+    g_assert_true(calendar_clock_engine_start(engine, &config));
     g_assert_cmpuint(clock.cancellations, ==, 1);
     g_assert_cmpuint(clock.schedules, ==, 3);
 
-    calendar_plus_clock_engine_stop(engine);
-    g_assert_false(calendar_plus_clock_engine_is_running(engine));
+    calendar_clock_engine_stop(engine);
+    g_assert_false(calendar_clock_engine_is_running(engine));
     g_assert_cmpuint(clock.cancellations, ==, 2);
 
-    config.mode = CALENDAR_PLUS_TIME_MODE_NUREMBERG_SOLAR;
+    config.mode = CALENDAR_TIME_MODE_NUREMBERG_SOLAR;
     config.latitude = NAN;
     config.longitude = 11.0767;
-    g_assert_false(calendar_plus_clock_engine_start(engine, &config));
-    g_assert_false(calendar_plus_clock_engine_is_running(engine));
+    g_assert_false(calendar_clock_engine_start(engine, &config));
+    g_assert_false(calendar_clock_engine_is_running(engine));
     g_assert_cmpuint(clock.schedules, ==, 3);
 
-    config.mode = CALENDAR_PLUS_TIME_MODE_ROMAN_TEMPORAL;
+    config.mode = CALENDAR_TIME_MODE_ROMAN_TEMPORAL;
     config.latitude = 91.0;
     config.longitude = 11.0767;
-    g_assert_false(calendar_plus_clock_engine_start(engine, &config));
+    g_assert_false(calendar_clock_engine_start(engine, &config));
     config.latitude = 49.4521;
     config.longitude = 181.0;
-    g_assert_false(calendar_plus_clock_engine_start(engine, &config));
-    g_assert_false(calendar_plus_clock_engine_is_running(engine));
+    g_assert_false(calendar_clock_engine_start(engine, &config));
+    g_assert_false(calendar_clock_engine_is_running(engine));
     g_assert_cmpuint(clock.schedules, ==, 3);
 
-    calendar_plus_clock_engine_free(engine);
+    calendar_clock_engine_free(engine);
 }
 
 typedef struct
 {
-    CalendarPlusClockEngine *engine;
+    CalendarClockEngine *engine;
     guint ticks;
 } DestroyingTick;
 
@@ -557,7 +557,7 @@ destroying_tick(gpointer context)
     DestroyingTick *state = context;
 
     state->ticks++;
-    calendar_plus_clock_engine_free(state->engine);
+    calendar_clock_engine_free(state->engine);
     state->engine = NULL;
 }
 
@@ -565,20 +565,20 @@ static void
 test_clock_destroy_during_tick(void)
 {
     FakeClock clock = { .now = (gint64)G_USEC_PER_SEC };
-    const CalendarPlusClockTimeSource time_source = {
-        CALENDAR_PLUS_CLOCK_TIME_SOURCE_ABI,
+    const CalendarClockTimeSource time_source = {
+        CALENDAR_CLOCK_TIME_SOURCE_ABI,
         &clock,
         fake_now,
         fake_utc_offset
     };
-    const CalendarPlusClockScheduler scheduler = {
-        CALENDAR_PLUS_CLOCK_SCHEDULER_ABI,
+    const CalendarClockScheduler scheduler = {
+        CALENDAR_CLOCK_SCHEDULER_ABI,
         &clock,
         fake_schedule,
         fake_cancel
     };
-    const CalendarPlusClockConfig config = {
-        .mode = CALENDAR_PLUS_TIME_MODE_UNIX,
+    const CalendarClockConfig config = {
+        .mode = CALENDAR_TIME_MODE_UNIX,
         .show_seconds = FALSE,
         .vertical = FALSE,
         .latitude = 0.0,
@@ -586,12 +586,12 @@ test_clock_destroy_during_tick(void)
     };
     DestroyingTick state = { NULL, 0 };
 
-    state.engine = calendar_plus_clock_engine_new(&time_source,
+    state.engine = calendar_clock_engine_new(&time_source,
                                                   &scheduler,
                                                   destroying_tick,
                                                   &state);
     g_assert_nonnull(state.engine);
-    g_assert_true(calendar_plus_clock_engine_start(state.engine, &config));
+    g_assert_true(calendar_clock_engine_start(state.engine, &config));
     fake_fire(&clock);
     g_assert_null(state.engine);
     g_assert_cmpuint(state.ticks, ==, 1);
@@ -601,43 +601,43 @@ test_clock_destroy_during_tick(void)
 static void
 test_calendar_records(void)
 {
-    CalendarPlusCalendarEngine *engine;
-    const CalendarPlusDate selected = { 2026, 7, 29 };
-    const CalendarPlusDate today = { 2026, 7, 29 };
-    CalendarPlusDate start = { 0 };
-    CalendarPlusCalendarGrid grid = { 0 };
-    CalendarPlusCalendarDescriptor descriptor = { 0 };
+    CalendarCalendarEngine *engine;
+    const CalendarDate selected = { 2026, 7, 29 };
+    const CalendarDate today = { 2026, 7, 29 };
+    CalendarDate start = { 0 };
+    CalendarCalendarGrid grid = { 0 };
+    CalendarCalendarDescriptor descriptor = { 0 };
     guint selected_count = 0;
     guint item;
 
-    g_assert_cmpuint(calendar_plus_calendar_catalogue_get_count(), ==, 30);
-    for (item = 0; item < calendar_plus_calendar_catalogue_get_count(); item++)
+    g_assert_cmpuint(calendar_calendar_catalogue_get_count(), ==, 30);
+    for (item = 0; item < calendar_calendar_catalogue_get_count(); item++)
     {
-        g_assert_true(calendar_plus_calendar_catalogue_get(item, &descriptor));
+        g_assert_true(calendar_calendar_catalogue_get(item, &descriptor));
         g_assert_nonnull(descriptor.id);
         g_assert_nonnull(descriptor.name);
         g_assert_cmpstr(descriptor.id, !=, "");
         g_assert_cmpstr(descriptor.name, !=, "");
     }
-    g_assert_false(calendar_plus_calendar_catalogue_get(
-        calendar_plus_calendar_catalogue_get_count(), &descriptor));
+    g_assert_false(calendar_calendar_catalogue_get(
+        calendar_calendar_catalogue_get_count(), &descriptor));
 
-    engine = calendar_plus_calendar_engine_new("gregorian");
+    engine = calendar_calendar_engine_new("gregorian");
     g_assert_nonnull(engine);
-    g_assert_true(calendar_plus_calendar_engine_period_start(engine,
+    g_assert_true(calendar_calendar_engine_period_start(engine,
                                                              &selected,
                                                              &start));
     g_assert_cmpint(start.year, ==, 2026);
     g_assert_cmpint(start.month, ==, 7);
     g_assert_cmpint(start.day, ==, 1);
-    g_assert_true(calendar_plus_calendar_engine_build_grid(engine,
+    g_assert_true(calendar_calendar_engine_build_grid(engine,
                                                            &selected,
                                                            &today,
                                                            0,
                                                            &grid));
-    for (item = 0; item < CALENDAR_PLUS_CALENDAR_GRID_CELLS; item++)
+    for (item = 0; item < CALENDAR_CALENDAR_GRID_CELLS; item++)
     {
-        const CalendarPlusCalendarCell *cell = &grid.cells[item];
+        const CalendarCalendarCell *cell = &grid.cells[item];
 
         g_assert_nonnull(cell->day_label);
         g_assert_cmpint(cell->row, ==, 2 + (gint)(item / 7));
@@ -646,25 +646,25 @@ test_calendar_records(void)
             selected_count++;
     }
     g_assert_cmpuint(selected_count, ==, 1);
-    calendar_plus_calendar_grid_clear(&grid);
-    calendar_plus_calendar_engine_free(engine);
+    calendar_calendar_grid_clear(&grid);
+    calendar_calendar_engine_free(engine);
 }
 
 typedef struct
 {
-    CalendarPlusEventSink sink;
+    CalendarEventSink sink;
     gboolean started;
     gboolean stopped;
 } FakeEventSource;
 
 static gboolean
 fake_source_start(gpointer context,
-                  const CalendarPlusEventSink *sink)
+                  const CalendarEventSink *sink)
 {
     FakeEventSource *source = context;
 
     g_assert_nonnull(sink);
-    g_assert_cmpuint(sink->abi_version, ==, CALENDAR_PLUS_EVENT_SINK_ABI);
+    g_assert_cmpuint(sink->abi_version, ==, CALENDAR_EVENT_SINK_ABI);
     source->sink = *sink;
     source->started = TRUE;
     return TRUE;
@@ -682,7 +682,7 @@ fake_source_range(gpointer context,
                   gint64 end_unix)
 {
     FakeEventSource *source = context;
-    const CalendarPlusEventInput input = {
+    const CalendarEventInput input = {
         "portable-event",
         "#123456",
         "Portable source",
@@ -709,10 +709,10 @@ test_event_source_and_snapshot(void)
 {
     const gint64 day = 1785283200;
     FakeEventSource state = { { 0 }, FALSE, FALSE };
-    CalendarPlusEventIndex *index = calendar_plus_event_index_new();
-    CalendarPlusEventSink sink;
-    CalendarPlusEventSource source = {
-        CALENDAR_PLUS_EVENT_SOURCE_ABI,
+    CalendarEventIndex *index = calendar_event_index_new();
+    CalendarEventSink sink;
+    CalendarEventSource source = {
+        CALENDAR_EVENT_SOURCE_ABI,
         "test-source",
         &state,
         fake_source_start,
@@ -720,28 +720,28 @@ test_event_source_and_snapshot(void)
         fake_source_range,
         fake_source_open
     };
-    CalendarPlusEventSnapshot *snapshot;
+    CalendarEventSnapshot *snapshot;
 
     g_assert_nonnull(index);
-    calendar_plus_event_index_make_sink(index, &sink);
-    g_assert_true(calendar_plus_event_source_is_valid(&source));
+    calendar_event_index_make_sink(index, &sink);
+    g_assert_true(calendar_event_source_is_valid(&source));
     g_assert_true(source.start(source.context, &sink));
     g_assert_true(source.request_range(source.context, day, day + 86400));
     g_assert_true(source.open_event(source.context, "portable-event"));
 
-    snapshot = calendar_plus_event_index_snapshot(index,
+    snapshot = calendar_event_index_snapshot(index,
                                                   day,
                                                   day + 43200);
     g_assert_nonnull(snapshot);
     g_assert_cmpuint(snapshot->length, ==, 1);
     g_assert_cmpstr(snapshot->events[0].id, ==, "portable-event");
     g_assert_cmpstr(snapshot->events[0].summary, ==, "Portable source");
-    calendar_plus_event_snapshot_free(snapshot);
+    calendar_event_snapshot_free(snapshot);
 
     source.stop(source.context);
     g_assert_true(state.started);
     g_assert_true(state.stopped);
-    calendar_plus_event_index_free(index);
+    calendar_event_index_free(index);
 }
 
 static void
@@ -750,8 +750,8 @@ test_event_index_scale(void)
     enum { EVENT_COUNT = 10000 };
     g_autoptr(GDateTime) midday =
         g_date_time_new_local(2026, 9, 20, 12, 0, 0.0);
-    CalendarPlusEventIndex *index = calendar_plus_event_index_new();
-    CalendarPlusEventSnapshot *snapshot;
+    CalendarEventIndex *index = calendar_event_index_new();
+    CalendarEventSnapshot *snapshot;
     const gint64 day = g_date_time_to_unix(midday);
     gdouble elapsed;
     guint item;
@@ -763,7 +763,7 @@ test_event_index_scale(void)
     for (item = 0; item < EVENT_COUNT; item++)
     {
         gchar id[48];
-        CalendarPlusEventInput input = {
+        CalendarEventInput input = {
             id,
             "#00ADEF",
             "Scale event",
@@ -775,10 +775,10 @@ test_event_index_scale(void)
         };
 
         g_snprintf(id, sizeof(id), "scale-%u", item);
-        g_assert_true(calendar_plus_event_index_upsert(index, &input));
+        g_assert_true(calendar_event_index_upsert(index, &input));
     }
 
-    snapshot = calendar_plus_event_index_snapshot(index, day, day);
+    snapshot = calendar_event_index_snapshot(index, day, day);
     g_assert_nonnull(snapshot);
     g_assert_cmpuint(snapshot->length, ==, EVENT_COUNT);
     elapsed = g_test_timer_elapsed();
@@ -791,28 +791,28 @@ test_event_index_scale(void)
      */
     g_assert_cmpfloat(elapsed, <, 5.0);
 
-    calendar_plus_event_snapshot_free(snapshot);
-    calendar_plus_event_index_free(index);
+    calendar_event_snapshot_free(snapshot);
+    calendar_event_index_free(index);
 }
 
 static void
 test_shared_calendar_helpers(void)
 {
-    g_assert_cmpint(calendar_plus_gregorian_month_length(2000, 2), ==, 29);
-    g_assert_cmpint(calendar_plus_gregorian_month_length(1900, 2), ==, 28);
-    g_assert_cmpint(calendar_plus_julian_month_length(1900, 2), ==, 29);
-    g_assert_cmpint(calendar_plus_julian_month_length(1901, 2), ==, 28);
+    g_assert_cmpint(calendar_gregorian_month_length(2000, 2), ==, 29);
+    g_assert_cmpint(calendar_gregorian_month_length(1900, 2), ==, 28);
+    g_assert_cmpint(calendar_julian_month_length(1900, 2), ==, 29);
+    g_assert_cmpint(calendar_julian_month_length(1901, 2), ==, 28);
 
-    g_assert_cmpint(calendar_plus_count_multiples_inclusive(1, 12, 4), ==, 3);
-    g_assert_cmpint(calendar_plus_count_multiples_inclusive(-12, -1, 4), ==, 3);
-    g_assert_cmpint(calendar_plus_count_multiples_inclusive(-4, 4, 4), ==, 3);
-    g_assert_cmpint(calendar_plus_count_multiples_inclusive(5, 4, 4), ==, 0);
+    g_assert_cmpint(calendar_count_multiples_inclusive(1, 12, 4), ==, 3);
+    g_assert_cmpint(calendar_count_multiples_inclusive(-12, -1, 4), ==, 3);
+    g_assert_cmpint(calendar_count_multiples_inclusive(-4, 4, 4), ==, 3);
+    g_assert_cmpint(calendar_count_multiples_inclusive(5, 4, 4), ==, 0);
 
     /* Extreme public inputs must remain defined under ASan/UBSan. */
-    (void)calendar_plus_gregorian_to_jdn(G_MININT64, 1, 1);
-    (void)calendar_plus_gregorian_to_jdn(G_MAXINT64, 12, 31);
-    (void)calendar_plus_julian_to_jdn(G_MININT64, 1, 1);
-    (void)calendar_plus_julian_to_jdn(G_MAXINT64, 12, 31);
+    (void)calendar_gregorian_to_jdn(G_MININT64, 1, 1);
+    (void)calendar_gregorian_to_jdn(G_MAXINT64, 12, 31);
+    (void)calendar_julian_to_jdn(G_MININT64, 1, 1);
+    (void)calendar_julian_to_jdn(G_MAXINT64, 12, 31);
 }
 
 static void
@@ -820,7 +820,7 @@ test_arithmetic_calendar_engines(void)
 {
     typedef struct
     {
-        CalendarPlusCalendarMode mode;
+        CalendarCalendarMode mode;
         gint64 jdn;
         gint64 year;
         gint month;
@@ -830,63 +830,63 @@ test_arithmetic_calendar_engines(void)
 
     static const ArithmeticVector vectors[] = {
         {
-            CALENDAR_PLUS_CALENDAR_MODE_GREGORIAN,
+            CALENDAR_CALENDAR_MODE_GREGORIAN,
             1721060, 1, 1, 1, 0
         },
         {
-            CALENDAR_PLUS_CALENDAR_MODE_ISLAMIC_CIVIL,
+            CALENDAR_CALENDAR_MODE_ISLAMIC_CIVIL,
             1948440, 1, 1, 1, 0
         },
         {
-            CALENDAR_PLUS_CALENDAR_MODE_ISLAMIC_UMM_AL_QURA,
+            CALENDAR_CALENDAR_MODE_ISLAMIC_UMM_AL_QURA,
             2408762, 1300, 1, 1, 0
         },
         {
-            CALENDAR_PLUS_CALENDAR_MODE_ISLAMIC_TBLA,
+            CALENDAR_CALENDAR_MODE_ISLAMIC_TBLA,
             1948439, 1, 1, 1, 0
         },
         {
-            CALENDAR_PLUS_CALENDAR_MODE_COPTIC,
+            CALENDAR_CALENDAR_MODE_COPTIC,
             1825030, 1, 1, 1, 1
         },
         {
-            CALENDAR_PLUS_CALENDAR_MODE_COPTIC,
+            CALENDAR_CALENDAR_MODE_COPTIC,
             1825029, 1, 13, 5, 0
         },
         {
-            CALENDAR_PLUS_CALENDAR_MODE_ETHIOPIAN,
+            CALENDAR_CALENDAR_MODE_ETHIOPIAN,
             1724221, 1, 1, 1, 1
         },
         {
-            CALENDAR_PLUS_CALENDAR_MODE_ETHIOPIAN,
+            CALENDAR_CALENDAR_MODE_ETHIOPIAN,
             1724220, 5500, 13, 5, 0
         },
         {
-            CALENDAR_PLUS_CALENDAR_MODE_ETHIOPIC_AMETE_ALEM,
+            CALENDAR_CALENDAR_MODE_ETHIOPIC_AMETE_ALEM,
             1724221, 5501, 1, 1, 0
         },
         {
-            CALENDAR_PLUS_CALENDAR_MODE_INDIAN,
+            CALENDAR_CALENDAR_MODE_INDIAN,
             2461122, 1948, 1, 1, 0
         },
         {
-            CALENDAR_PLUS_CALENDAR_MODE_BUDDHIST,
+            CALENDAR_CALENDAR_MODE_BUDDHIST,
             2461042, 2569, 1, 1, 0
         },
         {
-            CALENDAR_PLUS_CALENDAR_MODE_MINGUO,
+            CALENDAR_CALENDAR_MODE_MINGUO,
             2419403, 1, 1, 1, 1
         },
         {
-            CALENDAR_PLUS_CALENDAR_MODE_PERSIAN,
+            CALENDAR_CALENDAR_MODE_PERSIAN,
             2461121, 1405, 1, 1, 0
         },
         {
-            CALENDAR_PLUS_CALENDAR_MODE_HEBREW,
+            CALENDAR_CALENDAR_MODE_HEBREW,
             2461296, 5787, 1, 1, 0
         },
         {
-            CALENDAR_PLUS_CALENDAR_MODE_JAPANESE,
+            CALENDAR_CALENDAR_MODE_JAPANESE,
             2458605, 1, 5, 1, 236
         }
     };
@@ -894,9 +894,9 @@ test_arithmetic_calendar_engines(void)
 
     for (index = 0; index < G_N_ELEMENTS(vectors); index++)
     {
-        CalendarPlusCalendarFields fields = { 0 };
+        CalendarCalendarFields fields = { 0 };
 
-        g_assert_true(calendar_plus_arithmetic_fields_from_jdn(
+        g_assert_true(calendar_arithmetic_fields_from_jdn(
             vectors[index].mode, vectors[index].jdn, &fields));
         g_assert_cmpint(fields.year, ==, vectors[index].year);
         g_assert_cmpint(fields.month, ==, vectors[index].month);
@@ -907,23 +907,23 @@ test_arithmetic_calendar_engines(void)
 
     {
         const gint64 leap_day =
-            calendar_plus_gregorian_to_jdn(2024, 2, 29);
-        const gint64 next_year = calendar_plus_arithmetic_add_years(
-            CALENDAR_PLUS_CALENDAR_MODE_GREGORIAN, leap_day, 1);
+            calendar_gregorian_to_jdn(2024, 2, 29);
+        const gint64 next_year = calendar_arithmetic_add_years(
+            CALENDAR_CALENDAR_MODE_GREGORIAN, leap_day, 1);
 
         g_assert_cmpint(
             next_year,
             ==,
-            calendar_plus_gregorian_to_jdn(2025, 2, 28));
+            calendar_gregorian_to_jdn(2025, 2, 28));
     }
 
     {
-        CalendarPlusCalendarFields fields = { 0 };
-        const gint64 next_month = calendar_plus_arithmetic_add_months(
-            CALENDAR_PLUS_CALENDAR_MODE_ISLAMIC_CIVIL, 1948440, 1);
+        CalendarCalendarFields fields = { 0 };
+        const gint64 next_month = calendar_arithmetic_add_months(
+            CALENDAR_CALENDAR_MODE_ISLAMIC_CIVIL, 1948440, 1);
 
-        g_assert_true(calendar_plus_arithmetic_fields_from_jdn(
-            CALENDAR_PLUS_CALENDAR_MODE_ISLAMIC_CIVIL,
+        g_assert_true(calendar_arithmetic_fields_from_jdn(
+            CALENDAR_CALENDAR_MODE_ISLAMIC_CIVIL,
             next_month,
             &fields));
         g_assert_cmpint(fields.year, ==, 1);
@@ -932,13 +932,13 @@ test_arithmetic_calendar_engines(void)
     }
 
     {
-        CalendarPlusCalendarFields fields = { 0 };
-        const gint64 date = calendar_plus_gregorian_to_jdn(2026, 9, 20);
-        const gint64 month_start = calendar_plus_arithmetic_month_start(
-            CALENDAR_PLUS_CALENDAR_MODE_ETHIOPIAN, date);
+        CalendarCalendarFields fields = { 0 };
+        const gint64 date = calendar_gregorian_to_jdn(2026, 9, 20);
+        const gint64 month_start = calendar_arithmetic_month_start(
+            CALENDAR_CALENDAR_MODE_ETHIOPIAN, date);
 
-        g_assert_true(calendar_plus_arithmetic_fields_from_jdn(
-            CALENDAR_PLUS_CALENDAR_MODE_ETHIOPIAN,
+        g_assert_true(calendar_arithmetic_fields_from_jdn(
+            CALENDAR_CALENDAR_MODE_ETHIOPIAN,
             month_start,
             &fields));
         g_assert_cmpint(fields.year, ==, 2019);
@@ -947,24 +947,24 @@ test_arithmetic_calendar_engines(void)
     }
 
     {
-        CalendarPlusCalendarFields fields = { 0 };
+        CalendarCalendarFields fields = { 0 };
         const gint64 first = G_GINT64_CONSTANT(2408762);
         const gint64 last_boundary =
-            calendar_plus_i64_add_saturating(first, 106665);
-        const gint64 last_year = calendar_plus_i64_add_saturating(
+            calendar_i64_add_saturating(first, 106665);
+        const gint64 last_year = calendar_i64_add_saturating(
             first, 106311);
 
-        g_assert_false(calendar_plus_arithmetic_fields_from_jdn(
-            CALENDAR_PLUS_CALENDAR_MODE_ISLAMIC_UMM_AL_QURA,
+        g_assert_false(calendar_arithmetic_fields_from_jdn(
+            CALENDAR_CALENDAR_MODE_ISLAMIC_UMM_AL_QURA,
             first - 1,
             &fields));
-        g_assert_false(calendar_plus_arithmetic_fields_from_jdn(
-            CALENDAR_PLUS_CALENDAR_MODE_ISLAMIC_UMM_AL_QURA,
+        g_assert_false(calendar_arithmetic_fields_from_jdn(
+            CALENDAR_CALENDAR_MODE_ISLAMIC_UMM_AL_QURA,
             last_boundary,
             &fields));
 
-        g_assert_true(calendar_plus_arithmetic_fields_from_jdn(
-            CALENDAR_PLUS_CALENDAR_MODE_ISLAMIC_UMM_AL_QURA,
+        g_assert_true(calendar_arithmetic_fields_from_jdn(
+            CALENDAR_CALENDAR_MODE_ISLAMIC_UMM_AL_QURA,
             last_year,
             &fields));
         g_assert_cmpint(fields.year, ==, 1600);
@@ -972,8 +972,8 @@ test_arithmetic_calendar_engines(void)
         g_assert_cmpint(fields.day, ==, 1);
 
         g_assert_cmpint(
-            calendar_plus_arithmetic_add_years(
-                CALENDAR_PLUS_CALENDAR_MODE_ISLAMIC_UMM_AL_QURA,
+            calendar_arithmetic_add_years(
+                CALENDAR_CALENDAR_MODE_ISLAMIC_UMM_AL_QURA,
                 last_year,
                 1),
             ==,
@@ -984,128 +984,128 @@ test_arithmetic_calendar_engines(void)
 static void
 test_swedish_historical_boundaries(void)
 {
-    CalendarPlusCalendarFields fields = { 0 };
-    CalendarPlusCalendarFields date;
+    CalendarCalendarFields fields = { 0 };
+    CalendarCalendarFields date;
     gint64 jdn;
     g_autofree gchar *formatted = NULL;
 
     /* Julian before the failed gradual reform. */
-    jdn = calendar_plus_julian_to_jdn(1699, 12, 31);
-    calendar_plus_swedish_fields_from_jdn(jdn, &fields);
+    jdn = calendar_julian_to_jdn(1699, 12, 31);
+    calendar_swedish_fields_from_jdn(jdn, &fields);
     g_assert_cmpint(fields.year, ==, 1699);
     g_assert_cmpint(fields.month, ==, 12);
     g_assert_cmpint(fields.day, ==, 31);
     g_assert_false(fields.special);
 
     /* Swedish style: one displayed civil day ahead of Julian. */
-    jdn = calendar_plus_gregorian_to_jdn(1700, 3, 11);
-    calendar_plus_swedish_fields_from_jdn(jdn, &fields);
+    jdn = calendar_gregorian_to_jdn(1700, 3, 11);
+    calendar_swedish_fields_from_jdn(jdn, &fields);
     g_assert_cmpint(fields.year, ==, 1700);
     g_assert_cmpint(fields.month, ==, 3);
     g_assert_cmpint(fields.day, ==, 1);
 
     /* The unique restoration day must round-trip exactly. */
-    jdn = calendar_plus_julian_to_jdn(1712, 2, 29);
-    calendar_plus_swedish_fields_from_jdn(jdn, &fields);
+    jdn = calendar_julian_to_jdn(1712, 2, 29);
+    calendar_swedish_fields_from_jdn(jdn, &fields);
     g_assert_cmpint(fields.year, ==, 1712);
     g_assert_cmpint(fields.month, ==, 2);
     g_assert_cmpint(fields.day, ==, 30);
     g_assert_true(fields.special);
-    g_assert_cmpint(calendar_plus_swedish_fields_to_jdn(&fields), ==, jdn);
+    g_assert_cmpint(calendar_swedish_fields_to_jdn(&fields), ==, jdn);
 
     /* After 30 February Sweden returned to ordinary Julian dating. */
-    jdn = calendar_plus_julian_to_jdn(1712, 3, 1);
-    calendar_plus_swedish_fields_from_jdn(jdn, &fields);
+    jdn = calendar_julian_to_jdn(1712, 3, 1);
+    calendar_swedish_fields_from_jdn(jdn, &fields);
     g_assert_cmpint(fields.year, ==, 1712);
     g_assert_cmpint(fields.month, ==, 3);
     g_assert_cmpint(fields.day, ==, 1);
 
     /* Gregorian adoption skipped directly from 17 February to 1 March. */
-    jdn = calendar_plus_gregorian_to_jdn(1753, 3, 1);
-    calendar_plus_swedish_fields_from_jdn(jdn, &fields);
+    jdn = calendar_gregorian_to_jdn(1753, 3, 1);
+    calendar_swedish_fields_from_jdn(jdn, &fields);
     g_assert_cmpint(fields.year, ==, 1753);
     g_assert_cmpint(fields.month, ==, 3);
     g_assert_cmpint(fields.day, ==, 1);
 
-    date = (CalendarPlusCalendarFields){ .year = 1700, .month = 2, .day = 1 };
-    g_assert_cmpint(calendar_plus_swedish_month_length(&date), ==, 28);
-    date = (CalendarPlusCalendarFields){ .year = 1712, .month = 2, .day = 1 };
-    g_assert_cmpint(calendar_plus_swedish_month_length(&date), ==, 30);
-    date = (CalendarPlusCalendarFields){ .year = 1753, .month = 2, .day = 1 };
-    g_assert_cmpint(calendar_plus_swedish_month_length(&date), ==, 17);
-    date = (CalendarPlusCalendarFields){ .year = 1704, .month = 2, .day = 1 };
-    g_assert_cmpint(calendar_plus_swedish_month_length(&date), ==, 29);
-    date = (CalendarPlusCalendarFields){ .year = 1800, .month = 2, .day = 1 };
-    g_assert_cmpint(calendar_plus_swedish_month_length(&date), ==, 28);
-    date = (CalendarPlusCalendarFields){ .year = 1804, .month = 2, .day = 1 };
-    g_assert_cmpint(calendar_plus_swedish_month_length(&date), ==, 29);
-    date = (CalendarPlusCalendarFields){ .year = 1804, .month = 4, .day = 1 };
-    g_assert_cmpint(calendar_plus_swedish_month_length(&date), ==, 30);
-    date = (CalendarPlusCalendarFields){ .year = 1804, .month = 1, .day = 1 };
-    g_assert_cmpint(calendar_plus_swedish_month_length(&date), ==, 31);
+    date = (CalendarCalendarFields){ .year = 1700, .month = 2, .day = 1 };
+    g_assert_cmpint(calendar_swedish_month_length(&date), ==, 28);
+    date = (CalendarCalendarFields){ .year = 1712, .month = 2, .day = 1 };
+    g_assert_cmpint(calendar_swedish_month_length(&date), ==, 30);
+    date = (CalendarCalendarFields){ .year = 1753, .month = 2, .day = 1 };
+    g_assert_cmpint(calendar_swedish_month_length(&date), ==, 17);
+    date = (CalendarCalendarFields){ .year = 1704, .month = 2, .day = 1 };
+    g_assert_cmpint(calendar_swedish_month_length(&date), ==, 29);
+    date = (CalendarCalendarFields){ .year = 1800, .month = 2, .day = 1 };
+    g_assert_cmpint(calendar_swedish_month_length(&date), ==, 28);
+    date = (CalendarCalendarFields){ .year = 1804, .month = 2, .day = 1 };
+    g_assert_cmpint(calendar_swedish_month_length(&date), ==, 29);
+    date = (CalendarCalendarFields){ .year = 1804, .month = 4, .day = 1 };
+    g_assert_cmpint(calendar_swedish_month_length(&date), ==, 30);
+    date = (CalendarCalendarFields){ .year = 1804, .month = 1, .day = 1 };
+    g_assert_cmpint(calendar_swedish_month_length(&date), ==, 31);
 
-    date = (CalendarPlusCalendarFields){ .year = 1712, .month = 2, .day = 30,
+    date = (CalendarCalendarFields){ .year = 1712, .month = 2, .day = 30,
                                          .special = TRUE };
-    formatted = calendar_plus_swedish_format(&date, CALENDAR_PLUS_DATE_PART_SHORT);
+    formatted = calendar_swedish_format(&date, CALENDAR_DATE_PART_SHORT);
     g_assert_cmpstr(formatted, ==, "30 February 1712");
     g_clear_pointer(&formatted, g_free);
-    formatted = calendar_plus_swedish_format(&date, CALENDAR_PLUS_DATE_PART_DAY);
+    formatted = calendar_swedish_format(&date, CALENDAR_DATE_PART_DAY);
     g_assert_cmpstr(formatted, ==, "30");
     g_clear_pointer(&formatted, g_free);
-    formatted = calendar_plus_swedish_format(&date, CALENDAR_PLUS_DATE_PART_MONTH);
+    formatted = calendar_swedish_format(&date, CALENDAR_DATE_PART_MONTH);
     g_assert_cmpstr(formatted, ==, "February");
     g_clear_pointer(&formatted, g_free);
-    formatted = calendar_plus_swedish_format(&date, CALENDAR_PLUS_DATE_PART_YEAR);
+    formatted = calendar_swedish_format(&date, CALENDAR_DATE_PART_YEAR);
     g_assert_cmpstr(formatted, ==, "1712");
 
-    date = (CalendarPlusCalendarFields){ .year = 1712, .month = 1, .day = 30 };
-    jdn = calendar_plus_swedish_fields_to_jdn(&date);
-    calendar_plus_swedish_fields_from_jdn(
-        calendar_plus_swedish_add_months(jdn, 1), &fields);
+    date = (CalendarCalendarFields){ .year = 1712, .month = 1, .day = 30 };
+    jdn = calendar_swedish_fields_to_jdn(&date);
+    calendar_swedish_fields_from_jdn(
+        calendar_swedish_add_months(jdn, 1), &fields);
     g_assert_cmpint(fields.month, ==, 2);
     g_assert_cmpint(fields.day, ==, 30);
     g_assert_true(fields.special);
 
-    date = (CalendarPlusCalendarFields){ .year = 1753, .month = 1, .day = 31 };
-    jdn = calendar_plus_swedish_fields_to_jdn(&date);
-    calendar_plus_swedish_fields_from_jdn(
-        calendar_plus_swedish_add_months(jdn, 1), &fields);
+    date = (CalendarCalendarFields){ .year = 1753, .month = 1, .day = 31 };
+    jdn = calendar_swedish_fields_to_jdn(&date);
+    calendar_swedish_fields_from_jdn(
+        calendar_swedish_add_months(jdn, 1), &fields);
     g_assert_cmpint(fields.month, ==, 2);
     g_assert_cmpint(fields.day, ==, 17);
 
-    date = (CalendarPlusCalendarFields){ .year = 1712, .month = 2, .day = 30,
+    date = (CalendarCalendarFields){ .year = 1712, .month = 2, .day = 30,
                                          .special = TRUE };
-    jdn = calendar_plus_swedish_fields_to_jdn(&date);
-    calendar_plus_swedish_fields_from_jdn(
-        calendar_plus_swedish_add_years(jdn, 1), &fields);
+    jdn = calendar_swedish_fields_to_jdn(&date);
+    calendar_swedish_fields_from_jdn(
+        calendar_swedish_add_years(jdn, 1), &fields);
     g_assert_cmpint(fields.year, ==, 1713);
     g_assert_cmpint(fields.month, ==, 2);
     g_assert_cmpint(fields.day, ==, 28);
 
-    date = (CalendarPlusCalendarFields){ .year = 1753, .month = 2, .day = 17 };
-    jdn = calendar_plus_swedish_fields_to_jdn(&date);
-    g_assert_cmpint(calendar_plus_swedish_month_start(jdn), ==,
-                    calendar_plus_swedish_fields_to_jdn(
-                        &(CalendarPlusCalendarFields){
+    date = (CalendarCalendarFields){ .year = 1753, .month = 2, .day = 17 };
+    jdn = calendar_swedish_fields_to_jdn(&date);
+    g_assert_cmpint(calendar_swedish_month_start(jdn), ==,
+                    calendar_swedish_fields_to_jdn(
+                        &(CalendarCalendarFields){
                             .year = 1753, .month = 2, .day = 1 }));
 }
 
 static void
 test_nuremberg_clock_boundaries(void)
 {
-    const CalendarPlusTimeMode historical =
-        calendar_plus_time_mode_from_string("nuremberg-hours");
-    const CalendarPlusTimeMode local =
-        calendar_plus_time_mode_from_string("nuremberg-solar");
-    const CalendarPlusTimeMode ancient =
-        calendar_plus_time_mode_from_string("babylonian-ancient");
+    const CalendarTimeMode historical =
+        calendar_time_mode_from_string("nuremberg-hours");
+    const CalendarTimeMode local =
+        calendar_time_mode_from_string("nuremberg-solar");
+    const CalendarTimeMode ancient =
+        calendar_time_mode_from_string("babylonian-ancient");
     const gint64 sample = G_GINT64_CONSTANT(1782043200000000);
     g_autofree gchar *text = NULL;
 
-    g_assert_cmpint(historical, ==, CALENDAR_PLUS_TIME_MODE_NUREMBERG_HOURS);
-    g_assert_false(calendar_plus_time_mode_requires_latitude(historical));
-    g_assert_false(calendar_plus_time_mode_requires_longitude(historical));
-    text = calendar_plus_format_time_at_location(
+    g_assert_cmpint(historical, ==, CALENDAR_TIME_MODE_NUREMBERG_HOURS);
+    g_assert_false(calendar_time_mode_requires_latitude(historical));
+    g_assert_false(calendar_time_mode_requires_longitude(historical));
+    text = calendar_format_time_at_location(
         historical, sample, 7200, FALSE, FALSE, NAN, NAN);
     g_assert_true(strstr(text, "NUR-D") != NULL || strstr(text, "NUR-N") != NULL);
     g_clear_pointer(&text, g_free);
@@ -1117,24 +1117,24 @@ test_nuremberg_clock_boundaries(void)
 
         g_assert_nonnull(before_wendetag);
         near_midnight =
-            calendar_plus_i64_add_saturating(
-                calendar_plus_i64_multiply_saturating(
+            calendar_i64_add_saturating(
+                calendar_i64_multiply_saturating(
                     g_date_time_to_unix(before_wendetag), G_USEC_PER_SEC),
                 900000);
-        delay = calendar_plus_time_delay_to_next_tick_at_location(
+        delay = calendar_time_delay_to_next_tick_at_location(
             historical, near_midnight, 0, FALSE, NAN, NAN);
         g_assert_cmpuint(delay, <=, 100U);
     }
 
-    g_assert_cmpint(local, ==, CALENDAR_PLUS_TIME_MODE_NUREMBERG_SOLAR);
-    g_assert_true(calendar_plus_time_mode_requires_latitude(local));
-    text = calendar_plus_format_time_at_location(
+    g_assert_cmpint(local, ==, CALENDAR_TIME_MODE_NUREMBERG_SOLAR);
+    g_assert_true(calendar_time_mode_requires_latitude(local));
+    text = calendar_format_time_at_location(
         local, sample, 7200, FALSE, FALSE, 49.4521, 11.0767);
     g_assert_nonnull(strstr(text, "NUR-L"));
     g_clear_pointer(&text, g_free);
 
-    g_assert_cmpint(ancient, ==, CALENDAR_PLUS_TIME_MODE_BABYLONIAN_ANCIENT);
-    text = calendar_plus_format_time_at_location(
+    g_assert_cmpint(ancient, ==, CALENDAR_TIME_MODE_BABYLONIAN_ANCIENT);
+    text = calendar_format_time_at_location(
         ancient, sample, 7200, FALSE, FALSE, 49.4521, 11.0767);
     g_assert_nonnull(strstr(text, "bēru"));
     g_assert_nonnull(strstr(text, "UŠ"));
@@ -1146,39 +1146,39 @@ test_time_catalogue(void)
     gsize item;
 
     g_assert_cmpuint(infiltratr_temporal_clock_mode_count(), >=, 3);
-    g_assert_cmpuint(calendar_plus_time_mode_get_count(), ==,
+    g_assert_cmpuint(calendar_time_mode_get_count(), ==,
                      infiltratr_temporal_clock_mode_count() - 3U);
 
-    g_assert_cmpint(calendar_plus_time_mode_from_string("standard"), ==,
-                    CALENDAR_PLUS_TIME_MODE_INVALID);
-    g_assert_cmpint(calendar_plus_time_mode_from_string("standard-24"), ==,
-                    CALENDAR_PLUS_TIME_MODE_INVALID);
-    g_assert_cmpint(calendar_plus_time_mode_from_string("standard-12"), ==,
-                    CALENDAR_PLUS_TIME_MODE_INVALID);
+    g_assert_cmpint(calendar_time_mode_from_string("standard"), ==,
+                    CALENDAR_TIME_MODE_INVALID);
+    g_assert_cmpint(calendar_time_mode_from_string("standard-24"), ==,
+                    CALENDAR_TIME_MODE_INVALID);
+    g_assert_cmpint(calendar_time_mode_from_string("standard-12"), ==,
+                    CALENDAR_TIME_MODE_INVALID);
 
-    for (item = 0; item < calendar_plus_time_mode_get_count(); item++)
+    for (item = 0; item < calendar_time_mode_get_count(); item++)
     {
-        const CalendarPlusTimeMode mode =
-            calendar_plus_time_mode_get_at(item);
-        const gchar *id = calendar_plus_time_mode_get_id(mode);
+        const CalendarTimeMode mode =
+            calendar_time_mode_get_at(item);
+        const gchar *id = calendar_time_mode_get_id(mode);
         const InfiltratrTemporalClockModeInfo *info;
 
-        g_assert_cmpint(mode, !=, CALENDAR_PLUS_TIME_MODE_INVALID);
+        g_assert_cmpint(mode, !=, CALENDAR_TIME_MODE_INVALID);
         g_assert_nonnull(id);
         info = infiltratr_temporal_clock_mode_find(id);
         g_assert_nonnull(info);
-        g_assert_cmpstr(calendar_plus_time_mode_get_name(mode), ==, info->name);
-        g_assert_cmpint(calendar_plus_time_mode_supports_seconds(mode), ==,
+        g_assert_cmpstr(calendar_time_mode_get_name(mode), ==, info->name);
+        g_assert_cmpint(calendar_time_mode_supports_seconds(mode), ==,
                         info->supports_seconds);
-        g_assert_cmpint(calendar_plus_time_mode_requires_latitude(mode), ==,
+        g_assert_cmpint(calendar_time_mode_requires_latitude(mode), ==,
                         info->requires_latitude);
-        g_assert_cmpint(calendar_plus_time_mode_requires_longitude(mode), ==,
+        g_assert_cmpint(calendar_time_mode_requires_longitude(mode), ==,
                         info->requires_longitude);
     }
 
-    g_assert_cmpint(calendar_plus_time_mode_get_at(
-                        calendar_plus_time_mode_get_count()), ==,
-                    CALENDAR_PLUS_TIME_MODE_INVALID);
+    g_assert_cmpint(calendar_time_mode_get_at(
+                        calendar_time_mode_get_count()), ==,
+                    CALENDAR_TIME_MODE_INVALID);
 }
 
 int

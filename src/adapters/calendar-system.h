@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 // Copyright (C) 1993-2026 Shannon Smith
 
-#ifndef CALENDAR_PLUS_CALENDAR_SYSTEM_H
-#define CALENDAR_PLUS_CALENDAR_SYSTEM_H
+#ifndef CALENDAR_CALENDAR_SYSTEM_H
+#define CALENDAR_CALENDAR_SYSTEM_H
 
 #include "calendar-types.h"
 
@@ -10,12 +10,12 @@
 
 G_BEGIN_DECLS
 
-#define CALENDAR_PLUS_TYPE_CALENDAR_SYSTEM \
-    (calendar_plus_calendar_system_get_type())
+#define CALENDAR_TYPE_CALENDAR_SYSTEM \
+    (calendar_calendar_system_get_type())
 
 
 /**
- * calendar_plus_date_same:
+ * calendar_date_same:
  * @year_a: first proleptic Gregorian year
  * @month_a: first Gregorian month
  * @day_a: first Gregorian day
@@ -25,7 +25,7 @@ G_BEGIN_DECLS
  *
  * Returns: %TRUE when both valid Gregorian inputs name the same civil date
  */
-gboolean calendar_plus_date_same(gint year_a,
+gboolean calendar_date_same(gint year_a,
                                  gint month_a,
                                  gint day_a,
                                  gint year_b,
@@ -33,17 +33,17 @@ gboolean calendar_plus_date_same(gint year_a,
                                  gint day_b);
 
 /**
- * calendar_plus_date_weekday:
+ * calendar_date_weekday:
  * @year: proleptic Gregorian year
  * @month: Gregorian month
  * @day: Gregorian day
  *
  * Returns: Sunday=0 through Saturday=6, or -1 for invalid input
  */
-gint calendar_plus_date_weekday(gint year, gint month, gint day);
+gint calendar_date_weekday(gint year, gint month, gint day);
 
 /**
- * calendar_plus_date_is_work_day:
+ * calendar_date_is_work_day:
  * @year: proleptic Gregorian year
  * @month: Gregorian month
  * @day: Gregorian day
@@ -55,18 +55,18 @@ gint calendar_plus_date_weekday(gint year, gint month, gint day);
  *
  * Returns: %TRUE when the civil date is a work day under that policy
  */
-gboolean calendar_plus_date_is_work_day(gint year,
+gboolean calendar_date_is_work_day(gint year,
                                         gint month,
                                         gint day);
 
-G_DECLARE_FINAL_TYPE(CalendarPlusCalendarSystem,
-                     calendar_plus_calendar_system,
-                     CALENDAR_PLUS,
+G_DECLARE_FINAL_TYPE(CalendarCalendarSystem,
+                     calendar_calendar_system,
+                     CALENDAR,
                      CALENDAR_SYSTEM,
                      GObject)
 
 /**
- * calendar_plus_calendar_system_new:
+ * calendar_calendar_system_new:
  * @calendar_id: a stable Calendar calendar setting value
  *
  * Creates a date-only calendar converter. The object is deliberately
@@ -76,29 +76,29 @@ G_DECLARE_FINAL_TYPE(CalendarPlusCalendarSystem,
  * Returns: (transfer full) (nullable): a calendar converter, or %NULL when
  *   @calendar_id is unknown
  */
-CalendarPlusCalendarSystem *calendar_plus_calendar_system_new(
+CalendarCalendarSystem *calendar_calendar_system_new(
     const gchar *calendar_id);
 
 /**
- * calendar_plus_calendar_system_get_id:
+ * calendar_calendar_system_get_id:
  * @self: a calendar converter
  *
  * Returns: (transfer none): the stable settings identifier
  */
-const gchar *calendar_plus_calendar_system_get_id(
-    CalendarPlusCalendarSystem *self);
+const gchar *calendar_calendar_system_get_id(
+    CalendarCalendarSystem *self);
 
 /**
- * calendar_plus_calendar_system_get_name:
+ * calendar_calendar_system_get_name:
  * @self: a calendar converter
  *
  * Returns: (transfer none): the human-readable calendar name
  */
-const gchar *calendar_plus_calendar_system_get_name(
-    CalendarPlusCalendarSystem *self);
+const gchar *calendar_calendar_system_get_name(
+    CalendarCalendarSystem *self);
 
 /**
- * calendar_plus_calendar_system_format_date:
+ * calendar_calendar_system_format_date:
  * @self: a calendar converter
  * @gregorian_year: proleptic Gregorian year
  * @gregorian_month: Gregorian month from 1 through 12
@@ -109,15 +109,15 @@ const gchar *calendar_plus_calendar_system_get_name(
  *
  * Returns: (transfer full): a newly allocated UTF-8 string
  */
-gchar *calendar_plus_calendar_system_format_date(
-    CalendarPlusCalendarSystem *self,
+gchar *calendar_calendar_system_format_date(
+    CalendarCalendarSystem *self,
     gint gregorian_year,
     gint gregorian_month,
     gint gregorian_day,
     const gchar *part);
 
 /**
- * calendar_plus_calendar_system_format_date_part:
+ * calendar_calendar_system_format_date_part:
  * @self: a calendar converter
  * @gregorian_year: proleptic Gregorian year
  * @gregorian_month: Gregorian month from 1 through 12
@@ -131,15 +131,15 @@ gchar *calendar_plus_calendar_system_format_date(
  * Returns: (transfer full): a newly allocated UTF-8 string, or an empty string
  *   when the date or selector is invalid
  */
-gchar *calendar_plus_calendar_system_format_date_part(
-    CalendarPlusCalendarSystem *self,
+gchar *calendar_calendar_system_format_date_part(
+    CalendarCalendarSystem *self,
     gint gregorian_year,
     gint gregorian_month,
     gint gregorian_day,
-    CalendarPlusDatePart part);
+    CalendarDatePart part);
 
 /**
- * calendar_plus_calendar_system_month_start:
+ * calendar_calendar_system_month_start:
  * @self: a calendar converter
  * @gregorian_year: proleptic Gregorian year
  * @gregorian_month: Gregorian month from 1 through 12
@@ -151,14 +151,14 @@ gchar *calendar_plus_calendar_system_format_date_part(
  *
  * Returns: (transfer full): an ISO `YYYY-MM-DD` date
  */
-gchar *calendar_plus_calendar_system_month_start(
-    CalendarPlusCalendarSystem *self,
+gchar *calendar_calendar_system_month_start(
+    CalendarCalendarSystem *self,
     gint gregorian_year,
     gint gregorian_month,
     gint gregorian_day);
 
 /**
- * calendar_plus_calendar_system_add_months:
+ * calendar_calendar_system_add_months:
  * @self: a calendar converter
  * @gregorian_year: proleptic Gregorian year
  * @gregorian_month: Gregorian month from 1 through 12
@@ -170,15 +170,15 @@ gchar *calendar_plus_calendar_system_month_start(
  *
  * Returns: (transfer full): an ISO `YYYY-MM-DD` date
  */
-gchar *calendar_plus_calendar_system_add_months(
-    CalendarPlusCalendarSystem *self,
+gchar *calendar_calendar_system_add_months(
+    CalendarCalendarSystem *self,
     gint gregorian_year,
     gint gregorian_month,
     gint gregorian_day,
     gint amount);
 
 /**
- * calendar_plus_calendar_system_add_years:
+ * calendar_calendar_system_add_years:
  * @self: a calendar converter
  * @gregorian_year: proleptic Gregorian year
  * @gregorian_month: Gregorian month from 1 through 12
@@ -190,8 +190,8 @@ gchar *calendar_plus_calendar_system_add_months(
  *
  * Returns: (transfer full): an ISO `YYYY-MM-DD` date
  */
-gchar *calendar_plus_calendar_system_add_years(
-    CalendarPlusCalendarSystem *self,
+gchar *calendar_calendar_system_add_years(
+    CalendarCalendarSystem *self,
     gint gregorian_year,
     gint gregorian_month,
     gint gregorian_day,
@@ -199,7 +199,7 @@ gchar *calendar_plus_calendar_system_add_years(
 
 
 /**
- * calendar_plus_calendar_system_month_start_parts:
+ * calendar_calendar_system_month_start_parts:
  * @self: a calendar converter
  * @gregorian_year: proleptic Gregorian year
  * @gregorian_month: Gregorian month from 1 through 12
@@ -210,14 +210,14 @@ gchar *calendar_plus_calendar_system_add_years(
  *
  * Returns: (transfer full) (nullable): an `(iii)` Gregorian year/month/day
  */
-GVariant *calendar_plus_calendar_system_month_start_parts(
-    CalendarPlusCalendarSystem *self,
+GVariant *calendar_calendar_system_month_start_parts(
+    CalendarCalendarSystem *self,
     gint gregorian_year,
     gint gregorian_month,
     gint gregorian_day);
 
 /**
- * calendar_plus_calendar_system_add_days_parts:
+ * calendar_calendar_system_add_days_parts:
  * @self: a calendar converter
  * @gregorian_year: proleptic Gregorian year
  * @gregorian_month: Gregorian month from 1 through 12
@@ -226,15 +226,15 @@ GVariant *calendar_plus_calendar_system_month_start_parts(
  *
  * Returns: (transfer full) (nullable): an `(iii)` Gregorian year/month/day
  */
-GVariant *calendar_plus_calendar_system_add_days_parts(
-    CalendarPlusCalendarSystem *self,
+GVariant *calendar_calendar_system_add_days_parts(
+    CalendarCalendarSystem *self,
     gint gregorian_year,
     gint gregorian_month,
     gint gregorian_day,
     gint amount);
 
 /**
- * calendar_plus_calendar_system_add_months_parts:
+ * calendar_calendar_system_add_months_parts:
  * @self: a calendar converter
  * @gregorian_year: proleptic Gregorian year
  * @gregorian_month: Gregorian month from 1 through 12
@@ -243,15 +243,15 @@ GVariant *calendar_plus_calendar_system_add_days_parts(
  *
  * Returns: (transfer full) (nullable): an `(iii)` Gregorian year/month/day
  */
-GVariant *calendar_plus_calendar_system_add_months_parts(
-    CalendarPlusCalendarSystem *self,
+GVariant *calendar_calendar_system_add_months_parts(
+    CalendarCalendarSystem *self,
     gint gregorian_year,
     gint gregorian_month,
     gint gregorian_day,
     gint amount);
 
 /**
- * calendar_plus_calendar_system_add_years_parts:
+ * calendar_calendar_system_add_years_parts:
  * @self: a calendar converter
  * @gregorian_year: proleptic Gregorian year
  * @gregorian_month: Gregorian month from 1 through 12
@@ -260,15 +260,15 @@ GVariant *calendar_plus_calendar_system_add_months_parts(
  *
  * Returns: (transfer full) (nullable): an `(iii)` Gregorian year/month/day
  */
-GVariant *calendar_plus_calendar_system_add_years_parts(
-    CalendarPlusCalendarSystem *self,
+GVariant *calendar_calendar_system_add_years_parts(
+    CalendarCalendarSystem *self,
     gint gregorian_year,
     gint gregorian_month,
     gint gregorian_day,
     gint amount);
 
 /**
- * calendar_plus_calendar_system_month_key:
+ * calendar_calendar_system_month_key:
  * @self: a calendar converter
  * @gregorian_year: proleptic Gregorian year
  * @gregorian_month: Gregorian month from 1 through 12
@@ -279,14 +279,14 @@ GVariant *calendar_plus_calendar_system_add_years_parts(
  *
  * Returns: (transfer full): a newly allocated period key
  */
-gchar *calendar_plus_calendar_system_month_key(
-    CalendarPlusCalendarSystem *self,
+gchar *calendar_calendar_system_month_key(
+    CalendarCalendarSystem *self,
     gint gregorian_year,
     gint gregorian_month,
     gint gregorian_day);
 
 /**
- * calendar_plus_calendar_system_build_grid:
+ * calendar_calendar_system_build_grid:
  * @self: a calendar converter
  * @selected_year: selected proleptic Gregorian year
  * @selected_month: selected Gregorian month from 1 through 12
@@ -307,8 +307,8 @@ gchar *calendar_plus_calendar_system_month_key(
  *
  * Returns: (transfer full): an `a(siiiiiibbbbbb)` grid variant
  */
-GVariant *calendar_plus_calendar_system_build_grid(
-    CalendarPlusCalendarSystem *self,
+GVariant *calendar_calendar_system_build_grid(
+    CalendarCalendarSystem *self,
     gint selected_year,
     gint selected_month,
     gint selected_day,

@@ -16,107 +16,107 @@
 #include <glib/gi18n-lib.h>
 #include <infiltratr/core.h>
 
-struct _CalendarPlusCalendarSystem
+struct _CalendarCalendarSystem
 {
     GObject parent_instance;
 
-    CalendarPlusCalendarEngine *engine;
+    CalendarCalendarEngine *engine;
 };
 
 /* GLib's type-registration macro contains an intentional pointer probe. */
 // NOLINTNEXTLINE(performance-no-int-to-ptr)
-G_DEFINE_TYPE(CalendarPlusCalendarSystem,
-              calendar_plus_calendar_system,
+G_DEFINE_TYPE(CalendarCalendarSystem,
+              calendar_calendar_system,
               G_TYPE_OBJECT)
 
 static void
-calendar_plus_calendar_system_dispose(GObject *object)
+calendar_calendar_system_dispose(GObject *object)
 {
-    CalendarPlusCalendarSystem *self =
-        CALENDAR_PLUS_CALENDAR_SYSTEM(object);
+    CalendarCalendarSystem *self =
+        CALENDAR_CALENDAR_SYSTEM(object);
 
-    calendar_plus_calendar_engine_free(self->engine);
+    calendar_calendar_engine_free(self->engine);
     self->engine = NULL;
-    G_OBJECT_CLASS(calendar_plus_calendar_system_parent_class)->dispose(object); // NOLINT(bugprone-casting-through-void)
+    G_OBJECT_CLASS(calendar_calendar_system_parent_class)->dispose(object); // NOLINT(bugprone-casting-through-void)
 }
 
 static void
-calendar_plus_calendar_system_class_init(
-    CalendarPlusCalendarSystemClass *klass)
+calendar_calendar_system_class_init(
+    CalendarCalendarSystemClass *klass)
 {
     GObjectClass *object_class = G_OBJECT_CLASS(klass); // NOLINT(bugprone-casting-through-void)
 
-    object_class->dispose = calendar_plus_calendar_system_dispose;
+    object_class->dispose = calendar_calendar_system_dispose;
 }
 
 static void
-calendar_plus_calendar_system_init(CalendarPlusCalendarSystem *self)
+calendar_calendar_system_init(CalendarCalendarSystem *self)
 {
-    self->engine = calendar_plus_calendar_engine_new("gregorian");
+    self->engine = calendar_calendar_engine_new("gregorian");
 }
 
-CalendarPlusCalendarSystem *
-calendar_plus_calendar_system_new(const gchar *calendar_id)
+CalendarCalendarSystem *
+calendar_calendar_system_new(const gchar *calendar_id)
 {
-    CalendarPlusCalendarEngine *engine =
-        calendar_plus_calendar_engine_new(calendar_id);
-    CalendarPlusCalendarSystem *self;
+    CalendarCalendarEngine *engine =
+        calendar_calendar_engine_new(calendar_id);
+    CalendarCalendarSystem *self;
 
     if (engine == NULL)
         return NULL;
 
-    self = g_object_new(CALENDAR_PLUS_TYPE_CALENDAR_SYSTEM, NULL);
-    calendar_plus_calendar_engine_free(self->engine);
+    self = g_object_new(CALENDAR_TYPE_CALENDAR_SYSTEM, NULL);
+    calendar_calendar_engine_free(self->engine);
     self->engine = engine;
     return self;
 }
 
-CalendarPlusCalendarEngine *
-calendar_plus_calendar_system_get_engine(CalendarPlusCalendarSystem *self)
+CalendarCalendarEngine *
+calendar_calendar_system_get_engine(CalendarCalendarSystem *self)
 {
-    g_return_val_if_fail(CALENDAR_PLUS_IS_CALENDAR_SYSTEM(self), NULL);
+    g_return_val_if_fail(CALENDAR_IS_CALENDAR_SYSTEM(self), NULL);
     return self->engine;
 }
 
 const gchar *
-calendar_plus_calendar_system_get_id(CalendarPlusCalendarSystem *self)
+calendar_calendar_system_get_id(CalendarCalendarSystem *self)
 {
-    g_return_val_if_fail(CALENDAR_PLUS_IS_CALENDAR_SYSTEM(self), "");
-    return calendar_plus_calendar_engine_get_id(self->engine);
+    g_return_val_if_fail(CALENDAR_IS_CALENDAR_SYSTEM(self), "");
+    return calendar_calendar_engine_get_id(self->engine);
 }
 
 const gchar *
-calendar_plus_calendar_system_get_name(CalendarPlusCalendarSystem *self)
+calendar_calendar_system_get_name(CalendarCalendarSystem *self)
 {
-    g_return_val_if_fail(CALENDAR_PLUS_IS_CALENDAR_SYSTEM(self), "");
-    return _(calendar_plus_calendar_engine_get_name(self->engine));
+    g_return_val_if_fail(CALENDAR_IS_CALENDAR_SYSTEM(self), "");
+    return _(calendar_calendar_engine_get_name(self->engine));
 }
 
-static CalendarPlusDatePart
+static CalendarDatePart
 date_part_from_string(const gchar *part)
 {
     if (infiltratr_string_equal(part, "day"))
-        return CALENDAR_PLUS_DATE_PART_DAY;
+        return CALENDAR_DATE_PART_DAY;
     if (infiltratr_string_equal(part, "month"))
-        return CALENDAR_PLUS_DATE_PART_MONTH;
+        return CALENDAR_DATE_PART_MONTH;
     if (infiltratr_string_equal(part, "year"))
-        return CALENDAR_PLUS_DATE_PART_YEAR;
+        return CALENDAR_DATE_PART_YEAR;
     if (infiltratr_string_equal(part, "short"))
-        return CALENDAR_PLUS_DATE_PART_SHORT;
+        return CALENDAR_DATE_PART_SHORT;
     if (infiltratr_string_equal(part, "full"))
-        return CALENDAR_PLUS_DATE_PART_FULL;
-    return CALENDAR_PLUS_DATE_PART_INVALID;
+        return CALENDAR_DATE_PART_FULL;
+    return CALENDAR_DATE_PART_INVALID;
 }
 
 gchar *
-calendar_plus_calendar_system_format_date(
-    CalendarPlusCalendarSystem *self,
+calendar_calendar_system_format_date(
+    CalendarCalendarSystem *self,
     gint gregorian_year,
     gint gregorian_month,
     gint gregorian_day,
     const gchar *part)
 {
-    return calendar_plus_calendar_system_format_date_part(
+    return calendar_calendar_system_format_date_part(
         self,
         gregorian_year,
         gregorian_month,
@@ -125,64 +125,64 @@ calendar_plus_calendar_system_format_date(
 }
 
 gchar *
-calendar_plus_calendar_system_format_date_part(
-    CalendarPlusCalendarSystem *self,
+calendar_calendar_system_format_date_part(
+    CalendarCalendarSystem *self,
     gint gregorian_year,
     gint gregorian_month,
     gint gregorian_day,
-    CalendarPlusDatePart part)
+    CalendarDatePart part)
 {
-    const CalendarPlusDate date = {
+    const CalendarDate date = {
         gregorian_year, gregorian_month, gregorian_day
     };
 
-    g_return_val_if_fail(CALENDAR_PLUS_IS_CALENDAR_SYSTEM(self),
+    g_return_val_if_fail(CALENDAR_IS_CALENDAR_SYSTEM(self),
                          g_strdup(""));
-    return calendar_plus_calendar_engine_format_date(self->engine,
+    return calendar_calendar_engine_format_date(self->engine,
                                                      &date,
                                                      part);
 }
 
-typedef gboolean (*DateOperation)(const CalendarPlusCalendarEngine *engine,
-                                  const CalendarPlusDate *date,
+typedef gboolean (*DateOperation)(const CalendarCalendarEngine *engine,
+                                  const CalendarDate *date,
                                   gint amount,
-                                  CalendarPlusDate *result);
+                                  CalendarDate *result);
 
 static gboolean
-period_start_operation(const CalendarPlusCalendarEngine *engine,
-                       const CalendarPlusDate *date,
+period_start_operation(const CalendarCalendarEngine *engine,
+                       const CalendarDate *date,
                        gint amount,
-                       CalendarPlusDate *result)
+                       CalendarDate *result)
 {
     (void)amount;
-    return calendar_plus_calendar_engine_period_start(engine, date, result);
+    return calendar_calendar_engine_period_start(engine, date, result);
 }
 
 static gchar *
-navigate_as_iso(CalendarPlusCalendarSystem *self,
+navigate_as_iso(CalendarCalendarSystem *self,
                 gint year,
                 gint month,
                 gint day,
                 gint amount,
                 DateOperation operation)
 {
-    const CalendarPlusDate input = { year, month, day };
-    CalendarPlusDate result;
+    const CalendarDate input = { year, month, day };
+    CalendarDate result;
 
-    g_return_val_if_fail(CALENDAR_PLUS_IS_CALENDAR_SYSTEM(self),
+    g_return_val_if_fail(CALENDAR_IS_CALENDAR_SYSTEM(self),
                          g_strdup(""));
     if (!operation(self->engine, &input, amount, &result))
         return g_strdup("");
 
-    return calendar_plus_format_iso_date(
-        calendar_plus_gregorian_to_jdn(result.year,
+    return calendar_format_iso_date(
+        calendar_gregorian_to_jdn(result.year,
                                        result.month,
                                        result.day));
 }
 
 gchar *
-calendar_plus_calendar_system_month_start(
-    CalendarPlusCalendarSystem *self,
+calendar_calendar_system_month_start(
+    CalendarCalendarSystem *self,
     gint gregorian_year,
     gint gregorian_month,
     gint gregorian_day)
@@ -196,8 +196,8 @@ calendar_plus_calendar_system_month_start(
 }
 
 gchar *
-calendar_plus_calendar_system_add_months(
-    CalendarPlusCalendarSystem *self,
+calendar_calendar_system_add_months(
+    CalendarCalendarSystem *self,
     gint gregorian_year,
     gint gregorian_month,
     gint gregorian_day,
@@ -208,12 +208,12 @@ calendar_plus_calendar_system_add_months(
                            gregorian_month,
                            gregorian_day,
                            amount,
-                           calendar_plus_calendar_engine_add_periods);
+                           calendar_calendar_engine_add_periods);
 }
 
 gchar *
-calendar_plus_calendar_system_add_years(
-    CalendarPlusCalendarSystem *self,
+calendar_calendar_system_add_years(
+    CalendarCalendarSystem *self,
     gint gregorian_year,
     gint gregorian_month,
     gint gregorian_day,
@@ -224,21 +224,21 @@ calendar_plus_calendar_system_add_years(
                            gregorian_month,
                            gregorian_day,
                            amount,
-                           calendar_plus_calendar_engine_add_years);
+                           calendar_calendar_engine_add_years);
 }
 
 gchar *
-calendar_plus_calendar_system_month_key(
-    CalendarPlusCalendarSystem *self,
+calendar_calendar_system_month_key(
+    CalendarCalendarSystem *self,
     gint gregorian_year,
     gint gregorian_month,
     gint gregorian_day)
 {
-    const CalendarPlusDate date = {
+    const CalendarDate date = {
         gregorian_year, gregorian_month, gregorian_day
     };
 
-    g_return_val_if_fail(CALENDAR_PLUS_IS_CALENDAR_SYSTEM(self),
+    g_return_val_if_fail(CALENDAR_IS_CALENDAR_SYSTEM(self),
                          g_strdup(""));
-    return calendar_plus_calendar_engine_period_key(self->engine, &date);
+    return calendar_calendar_engine_period_key(self->engine, &date);
 }

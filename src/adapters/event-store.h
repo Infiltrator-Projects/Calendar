@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 // Copyright (C) 1993-2026 Shannon Smith
 
-#ifndef CALENDAR_PLUS_EVENT_STORE_H
-#define CALENDAR_PLUS_EVENT_STORE_H
+#ifndef CALENDAR_EVENT_STORE_H
+#define CALENDAR_EVENT_STORE_H
 
 #include "event-types.h"
 
@@ -10,36 +10,36 @@
 
 G_BEGIN_DECLS
 
-#define CALENDAR_PLUS_TYPE_EVENT_STORE \
-    (calendar_plus_event_store_get_type())
+#define CALENDAR_TYPE_EVENT_STORE \
+    (calendar_event_store_get_type())
 
 
 /**
- * calendar_plus_event_day_relation:
+ * calendar_event_day_relation:
  * @start_day_unix: event start local-midnight Unix timestamp
  * @end_day_unix: event end local-midnight Unix timestamp
  * @comparison_unix: any instant on the local day being compared
  *
- * Returns: bitwise-or of #CalendarPlusEventDayRelation values
+ * Returns: bitwise-or of #CalendarEventDayRelation values
  */
-guint calendar_plus_event_day_relation(gint64 start_day_unix,
+guint calendar_event_day_relation(gint64 start_day_unix,
                                         gint64 end_day_unix,
                                         gint64 comparison_unix);
 
 /**
- * calendar_plus_event_state:
+ * calendar_event_state:
  * @start_unix: inclusive event start instant
  * @end_unix: inclusive event end instant
  * @now_unix: current instant
  *
  * Returns: the native temporal state of the event
  */
-CalendarPlusEventState calendar_plus_event_state(gint64 start_unix,
+CalendarEventState calendar_event_state(gint64 start_unix,
                                                   gint64 end_unix,
                                                   gint64 now_unix);
 
 /**
- * calendar_plus_event_timing:
+ * calendar_event_timing:
  * @start_unix: inclusive event start instant
  * @end_unix: inclusive event end instant
  * @now_unix: current instant
@@ -50,27 +50,27 @@ CalendarPlusEventState calendar_plus_event_state(gint64 start_unix,
  * Returns: (transfer full): an `(ixx)` tuple of state, seconds-to-start and
  *   seconds-to-finish
  */
-GVariant *calendar_plus_event_timing(gint64 start_unix,
+GVariant *calendar_event_timing(gint64 start_unix,
                                      gint64 end_unix,
                                      gint64 now_unix);
 
-G_DECLARE_FINAL_TYPE(CalendarPlusEventStore,
-                     calendar_plus_event_store,
-                     CALENDAR_PLUS,
+G_DECLARE_FINAL_TYPE(CalendarEventStore,
+                     calendar_event_store,
+                     CALENDAR,
                      EVENT_STORE,
                      GObject)
 
 /**
- * calendar_plus_event_store_new:
+ * calendar_event_store_new:
  *
  * Creates the in-process event index used by Cinnamon's agenda renderer.
  *
  * Returns: (transfer full): a new empty event store
  */
-CalendarPlusEventStore *calendar_plus_event_store_new(void);
+CalendarEventStore *calendar_event_store_new(void);
 
 /**
- * calendar_plus_event_store_add_or_update:
+ * calendar_event_store_add_or_update:
  * @self: an event store
  * @event_data: a Cinnamon CalendarServer event tuple
  * @update_timestamp: monotonic timestamp for the current server refresh
@@ -82,13 +82,13 @@ CalendarPlusEventStore *calendar_plus_event_store_new(void);
  *
  * Returns: %TRUE when visible event data changed
  */
-gboolean calendar_plus_event_store_add_or_update(
-    CalendarPlusEventStore *self,
+gboolean calendar_event_store_add_or_update(
+    CalendarEventStore *self,
     GVariant *event_data,
     gint64 update_timestamp);
 
 /**
- * calendar_plus_event_store_add_or_update_in_range:
+ * calendar_event_store_add_or_update_in_range:
  * @self: an event store
  * @event_data: a Cinnamon CalendarServer event tuple
  * @update_timestamp: monotonic timestamp for the current server refresh
@@ -97,22 +97,22 @@ gboolean calendar_plus_event_store_add_or_update(
  *
  * Parses the external CalendarServer tuple once in the native transport
  * adapter, rejects rows that cannot overlap the newest requested range and
- * then applies the same normalisation as calendar_plus_event_store_add_or_update().
+ * then applies the same normalisation as calendar_event_store_add_or_update().
  * JavaScript therefore never depends on CalendarServer tuple positions.
  * All-day CalendarServer end points remain exclusive; timed end points are
  * inclusive.
  *
  * Returns: %TRUE when an admitted row changed visible event data
  */
-gboolean calendar_plus_event_store_add_or_update_in_range(
-    CalendarPlusEventStore *self,
+gboolean calendar_event_store_add_or_update_in_range(
+    CalendarEventStore *self,
     GVariant *event_data,
     gint64 update_timestamp,
     gint64 range_start_unix,
     gint64 range_end_unix);
 
 /**
- * calendar_plus_event_store_remove:
+ * calendar_event_store_remove:
  * @self: an event store
  * @serialized_ids: UTF-8 event identifiers separated by `::`
  *
@@ -123,12 +123,12 @@ gboolean calendar_plus_event_store_add_or_update_in_range(
  *
  * Returns: %TRUE when at least one indexed event was removed
  */
-gboolean calendar_plus_event_store_remove(
-    CalendarPlusEventStore *self,
+gboolean calendar_event_store_remove(
+    CalendarEventStore *self,
     const gchar *serialized_ids);
 
 /**
- * calendar_plus_event_store_cull:
+ * calendar_event_store_cull:
  * @self: an event store
  * @minimum_update_timestamp: oldest accepted server refresh timestamp
  *
@@ -136,20 +136,20 @@ gboolean calendar_plus_event_store_remove(
  *
  * Returns: %TRUE when at least one indexed event was removed
  */
-gboolean calendar_plus_event_store_cull(
-    CalendarPlusEventStore *self,
+gboolean calendar_event_store_cull(
+    CalendarEventStore *self,
     gint64 minimum_update_timestamp);
 
 /**
- * calendar_plus_event_store_clear:
+ * calendar_event_store_clear:
  * @self: an event store
  *
  * Removes all indexed events.
  */
-void calendar_plus_event_store_clear(CalendarPlusEventStore *self);
+void calendar_event_store_clear(CalendarEventStore *self);
 
 /**
- * calendar_plus_event_store_refresh_timezone:
+ * calendar_event_store_refresh_timezone:
  * @self: an event store
  *
  * Recalculates cached local-day boundaries after the system timezone changes.
@@ -157,11 +157,11 @@ void calendar_plus_event_store_clear(CalendarPlusEventStore *self);
  *
  * Returns: %TRUE when at least one cached boundary changed
  */
-gboolean calendar_plus_event_store_refresh_timezone(
-    CalendarPlusEventStore *self);
+gboolean calendar_event_store_refresh_timezone(
+    CalendarEventStore *self);
 
 /**
- * calendar_plus_event_store_get_snapshot:
+ * calendar_event_store_get_snapshot:
  * @self: an event store
  * @local_day_unix: Unix timestamp at local midnight for the requested day
  * @now_unix: current Unix timestamp, used to group today's ended timed events
@@ -174,13 +174,13 @@ gboolean calendar_plus_event_store_refresh_timezone(
  *
  * Returns: (transfer full): a `(xa(sssbbxxxxx))` snapshot variant
  */
-GVariant *calendar_plus_event_store_get_snapshot(
-    CalendarPlusEventStore *self,
+GVariant *calendar_event_store_get_snapshot(
+    CalendarEventStore *self,
     gint64 local_day_unix,
     gint64 now_unix);
 
 /**
- * calendar_plus_event_store_get_colors:
+ * calendar_event_store_get_colors:
  * @self: an event store
  * @local_day_unix: Unix timestamp at local midnight for the requested day
  * @now_unix: current Unix timestamp
@@ -188,14 +188,14 @@ GVariant *calendar_plus_event_store_get_snapshot(
  * Returns: (transfer full) (array zero-terminated=1): event colours in the
  *   same order as the native agenda snapshot
  */
-gchar **calendar_plus_event_store_get_colors(
-    CalendarPlusEventStore *self,
+gchar **calendar_event_store_get_colors(
+    CalendarEventStore *self,
     gint64 local_day_unix,
     gint64 now_unix);
 
 
 /**
- * calendar_plus_event_store_get_color_range:
+ * calendar_event_store_get_color_range:
  * @self: an event store
  * @first_local_day_unix: Unix timestamp on the first requested local day
  * @day_count: number of consecutive local civil days
@@ -209,8 +209,8 @@ gchar **calendar_plus_event_store_get_colors(
  * Returns: (transfer full): an array-of-string-arrays variant aligned with the
  * requested days
  */
-GVariant *calendar_plus_event_store_get_color_range(
-    CalendarPlusEventStore *self,
+GVariant *calendar_event_store_get_color_range(
+    CalendarEventStore *self,
     gint64 first_local_day_unix,
     guint day_count,
     gint64 now_unix,

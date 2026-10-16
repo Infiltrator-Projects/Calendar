@@ -53,7 +53,7 @@ jobs:
           fi
       - name: Reopen native About dialog twice under Xvfb
         if: matrix.compiler == 'gcc'
-        run: xvfb-run -a tools/about-dialog-smoke.sh ./build/calendar-plus-about
+        run: xvfb-run -a tools/about-dialog-smoke.sh ./build/calendar-about
       - name: Probe exact-version live Cinnamon qualification
         if: matrix.compiler == 'gcc'
         id: live-cinnamon
@@ -63,7 +63,7 @@ jobs:
           matrix.compiler == 'gcc' &&
           steps.live-cinnamon.outputs.ready == 'true'
         env:
-          CALENDAR_PLUS_LIVE_MODE: ${{ steps.live-cinnamon.outputs.mode }}
+          CALENDAR_LIVE_MODE: ${{ steps.live-cinnamon.outputs.mode }}
           DEB_BUILD_OPTIONS: nocheck
         run: tools/live-cinnamon-ci-smoke.sh
 
@@ -291,9 +291,9 @@ jobs:
           test -s "$RELEASE_DEB"
           apt-get install -y --no-install-recommends "./$RELEASE_DEB"
           test "$(dpkg-query -W -f='${Status}' calendar)" = "install ok installed"
-          /usr/libexec/calendar-plus-about --print-metadata | grep -qx "version=$RELEASE_VERSION"
-          /usr/libexec/calendar-plus-about --print-metadata | grep -qx "build-profile=generic"
-          CALENDAR_PLUS_EXPECTED_VERSION="$RELEASE_VERSION" gjs tests/smoke-typelib.js >/dev/null
+          /usr/libexec/calendar-about --print-metadata | grep -qx "version=$RELEASE_VERSION"
+          /usr/libexec/calendar-about --print-metadata | grep -qx "build-profile=generic"
+          CALENDAR_EXPECTED_VERSION="$RELEASE_VERSION" gjs tests/smoke-typelib.js >/dev/null
           apt-get purge -y calendar
           ! dpkg-query -W calendar >/dev/null 2>&1
           apt-get check
@@ -320,12 +320,12 @@ jobs:
               "Description: synthetic retired Calendar package for upgrade testing" \
               >"$root/DEBIAN/control"
             printf 'legacy-owned-path\n' > \
-              "$root/usr/lib/x86_64-linux-gnu/libcalendar-plus.so.0.0.0"
+              "$root/usr/lib/x86_64-linux-gnu/libcalendar.so.0.0.0"
             dpkg-deb --build "$root" "$temp/${name}_${legacy_version}_amd64.deb" \
               >/dev/null
           }
 
-          for legacy in "calendar-plus 3.6.0" "cinnamon-calendar 1.0.16"; do
+          for legacy in "calendar 3.6.0" "cinnamon-calendar 1.0.16"; do
             set -- $legacy
             name="$1"
             legacy_version="$2"

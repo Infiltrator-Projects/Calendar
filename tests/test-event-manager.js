@@ -238,7 +238,7 @@ const context = {
                 SOURCE_REMOVE: false,
                 get_monotonic_time() { return 123456; },
             },
-            CalendarPlus: {
+            Calendar: {
                 event_day_relation() { return 0; },
                 event_timing() {
                     return { deep_unpack() { return [0, 0, 0]; } };

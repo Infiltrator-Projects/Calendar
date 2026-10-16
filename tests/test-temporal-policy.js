@@ -30,7 +30,7 @@ const context = {
     imports: {
         ui: {},
         gi: {
-            CalendarPlus: {
+            Calendar: {
                 CalendarSystem: {
                     new(id) { return ["gregorian", "chinese"].includes(id) ? {} : null; },
                 },
@@ -50,7 +50,7 @@ vm.runInContext(
 const Resolver = context.__TemporalPolicyResolver;
 let reads = 0;
 let row = ["standard-24", "chinese", true, true, -36.3, 145.4,
-    "infiltrator-system-settings", true];
+    "system-settings", true];
 const clock = { get_system_policy() { reads += 1; return { deep_unpack: () => row }; } };
 const resolver = new Resolver(clock, (mode) => mode === "roman");
 let policy = resolver.get();
@@ -65,12 +65,12 @@ assert.equal(config.primaryCalendar, "chinese");
 assert.equal(config.vertical, true);
 resolver.invalidate();
 row = ["roman", "gregorian", false, true, -36.3, 145.4,
-    "infiltrator-system-settings", true];
+    "system-settings", true];
 policy = resolver.get();
 assert.equal(policy.mode, "roman", "native clock modes use the injected catalogue predicate");
 resolver.invalidate();
 row = ["standard", "gregorian", false, true, 999, 145.4,
-    "infiltrator-system-settings", true];
+    "system-settings", true];
 policy = resolver.get();
 assert.equal(policy.mode, "standard");
 assert.equal(policy.calendar, "gregorian");

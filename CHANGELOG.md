@@ -1,3 +1,7 @@
+## 1.0.105 - 2026-10-17
+
+- Use canonical alpha product and package identities without migration aliases.
+
 # Changelog
 
 Calendar maintains one release-history authority: [`debian/changelog`](debian/changelog).

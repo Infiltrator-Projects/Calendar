@@ -4,10 +4,10 @@
 
 "use strict";
 
-imports.gi.versions.CalendarPlus = "1.0";
-const CalendarPlus = imports.gi.CalendarPlus;
+imports.gi.versions.Calendar = "1.0";
+const Calendar = imports.gi.Calendar;
 const GLib = imports.gi.GLib;
-const expectedVersion = GLib.getenv("CALENDAR_PLUS_EXPECTED_VERSION");
+const expectedVersion = GLib.getenv("CALENDAR_EXPECTED_VERSION");
 
 function requireCondition(condition, message) {
     if (!condition) {
@@ -16,15 +16,15 @@ function requireCondition(condition, message) {
 }
 
 requireCondition(
-    expectedVersion !== null && CalendarPlus.get_version() === expectedVersion,
-    `native version mismatch: ${CalendarPlus.get_version()}`
+    expectedVersion !== null && Calendar.get_version() === expectedVersion,
+    `native version mismatch: ${Calendar.get_version()}`
 );
 requireCondition(
-    CalendarPlus.get_source_id() === `calendar-plus-${expectedVersion}`,
-    `unexpected native source id: ${CalendarPlus.get_source_id()}`
+    Calendar.get_source_id() === `calendar-${expectedVersion}`,
+    `unexpected native source id: ${Calendar.get_source_id()}`
 );
-const buildProfile = CalendarPlus.get_build_profile();
-const buildLabel = CalendarPlus.get_build_profile_label();
+const buildProfile = Calendar.get_build_profile();
+const buildLabel = Calendar.get_build_profile_label();
 requireCondition(
     buildProfile === "generic" || buildProfile === "native",
     `unexpected build profile: ${buildProfile}`
@@ -45,7 +45,7 @@ const calendarIds = [
     "swedish-historical", "international-fixed", "world", "positivist",
 ];
 for (const id of calendarIds) {
-    const provider = CalendarPlus.CalendarSystem.new(id);
+    const provider = Calendar.CalendarSystem.new(id);
     requireCondition(provider !== null, `calendar provider unavailable: ${id}`);
     requireCondition(provider.get_id() === id, `calendar provider id mismatch: ${id}`);
     requireCondition(
@@ -64,12 +64,12 @@ const timeModeIds = [
 ];
 for (const id of timeModeIds) {
     requireCondition(
-        CalendarPlus.time_mode_from_string(id) !== CalendarPlus.TimeMode.INVALID,
+        Calendar.time_mode_from_string(id) !== Calendar.TimeMode.INVALID,
         `time provider unavailable: ${id}`
     );
 }
 
-const historicalClock = CalendarPlus.SystemClock.new();
+const historicalClock = Calendar.SystemClock.new();
 historicalClock.start_at_location(
     "roman-temporal", false, false, 0.0, 0.0
 );
@@ -107,11 +107,11 @@ requireCondition(
 );
 requireCondition(
     effectiveAuthority === "mint-cinnamon" ||
-        effectiveAuthority === "infiltrator-system-settings",
+        effectiveAuthority === "system-settings",
     "effective temporal authority identifier is invalid"
 );
 requireCondition(
-    effectiveAuthority !== "infiltrator-system-settings" || providerAvailable,
+    effectiveAuthority !== "system-settings" || providerAvailable,
     "Infiltrator authority cannot be active without its provider"
 );
 if (!providerAvailable) {
@@ -143,19 +143,19 @@ requireCondition(
     "system-coordinate compatibility getters disagree with policy snapshot"
 );
 
-const calendar = CalendarPlus.CalendarSystem.new("gregorian");
+const calendar = Calendar.CalendarSystem.new("gregorian");
 requireCondition(calendar !== null, "Gregorian CalendarSystem unavailable");
 requireCondition(calendar.get_id() === "gregorian", "wrong calendar id");
 requireCondition(
-    CalendarPlus.date_same(2026, 8, 8, 2026, 8, 8),
+    Calendar.date_same(2026, 8, 8, 2026, 8, 8),
     "native date equality failed"
 );
 requireCondition(
-    !CalendarPlus.date_is_work_day(2026, 8, 8),
+    !Calendar.date_is_work_day(2026, 8, 8),
     "Saturday was classified as a work day"
 );
 requireCondition(
-    CalendarPlus.date_weekday(2026, 8, 8) === 6,
+    Calendar.date_weekday(2026, 8, 8) === 6,
     "native weekday projection failed"
 );
 const [nextDayYear, nextDayMonth, nextDay] = calendar
@@ -202,18 +202,18 @@ requireCondition(
 );
 
 requireCondition(
-    CalendarPlus.event_state(100, 200, 150) ===
-        CalendarPlus.EventState.PRESENT,
+    Calendar.event_state(100, 200, 150) ===
+        Calendar.EventState.PRESENT,
     "event state contract failed"
 );
 const [state, secondsToStart, secondsToFinish] =
-    CalendarPlus.event_timing(100, 200, 150).deep_unpack();
-requireCondition(state === CalendarPlus.EventState.PRESENT,
+    Calendar.event_timing(100, 200, 150).deep_unpack();
+requireCondition(state === Calendar.EventState.PRESENT,
                  "event timing state failed");
 requireCondition(secondsToStart === -50 && secondsToFinish === 50,
                  "event timing offsets failed");
 
-const removalStore = CalendarPlus.EventStore.new();
+const removalStore = Calendar.EventStore.new();
 const retainedEvent = new GLib.Variant(
     "(sssbxxx)",
     ["keep", "#112233", "Keep", false, 100, 200, 1]

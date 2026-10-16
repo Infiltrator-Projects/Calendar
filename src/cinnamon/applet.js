@@ -11,14 +11,14 @@
  */
 
 const Applet = imports.ui.applet;
-const CalendarPlus = imports.gi.CalendarPlus;
+const Calendar = imports.gi.Calendar;
 const Cinnamon = imports.gi.Cinnamon;
 const CinnamonDesktop = imports.gi.CinnamonDesktop;
 const St = imports.gi.St;
 const PopupMenu = imports.ui.popupMenu;
 const Settings = imports.ui.settings;
 
-const UUID = "calendar-plus@the-infiltratr";
+const UUID = "calendar@the-infiltratr";
 
 function _loadRuntimeSupport() {
     try {
@@ -45,7 +45,7 @@ const EventManager = RuntimeSupport.loadLocalModule("eventManager");
 const PanelClock = RuntimeSupport.loadLocalModule("panelClock");
 const PopupShell = RuntimeSupport.loadLocalModule("popupShell");
 
-class CalendarPlusApplet extends Applet.Applet {
+class CalendarApplet extends Applet.Applet {
     constructor(orientation, panel_height, instance_id, expectedVersion) {
         super(orientation, panel_height, instance_id);
 
@@ -85,7 +85,7 @@ class CalendarPlusApplet extends Applet.Applet {
         this._signals = new SignalBag();
         this._eventSignals = new SignalBag();
 
-        const nativeVersion = CalendarPlus.get_version();
+        const nativeVersion = Calendar.get_version();
         if (typeof expectedVersion !== "string" || expectedVersion.length === 0) {
             throw new Error(`${UUID}: Cinnamon did not provide an applet version.`);
         }
@@ -96,7 +96,7 @@ class CalendarPlusApplet extends Applet.Applet {
             );
         }
 
-        this._calendar_system = CalendarPlus.CalendarSystem.new("gregorian");
+        this._calendar_system = Calendar.CalendarSystem.new("gregorian");
         if (this._calendar_system === null) {
             throw new Error(`${UUID}: native Gregorian calendar unavailable`);
         }
@@ -106,7 +106,7 @@ class CalendarPlusApplet extends Applet.Applet {
         this._panelView = new PopupShell.PanelClockView(this.actor);
         this.menuManager = new PopupMenu.PopupMenuManager(this);
         this.menu = new PopupShell.CalendarPopupMenu(this, this.orientation);
-        this.menu.setCustomStyleClass("calendar-plus-popup");
+        this.menu.setCustomStyleClass("calendar-popup");
         this.menuManager.addMenu(this.menu);
 
         this.settings = new Settings.AppletSettings(this, UUID, this.instance_id);
@@ -125,7 +125,7 @@ class CalendarPlusApplet extends Applet.Applet {
         this._desktopIntegration.start();
 
         this.clock = new CinnamonDesktop.WallClock();
-        this.system_clock = CalendarPlus.SystemClock.new();
+        this.system_clock = Calendar.SystemClock.new();
         this._temporalPolicy = new TemporalPolicy.TemporalPolicyResolver(
             this.system_clock,
             PanelClock.isNativeClockMode
@@ -352,14 +352,14 @@ class CalendarPlusApplet extends Applet.Applet {
         }
         if (effectiveTheme === "system") {
             if (this._systemUsesHighContrast()) {
-                this.menu.setCustomStyleClass("calendar-plus-popup");
+                this.menu.setCustomStyleClass("calendar-popup");
                 return;
             }
             effectiveTheme = this._systemPrefersDark() ? "night" : "day";
         }
 
         this.menu.setCustomStyleClass(
-            `calendar-plus-popup calendar-plus-theme-${effectiveTheme}`
+            `calendar-popup calendar-theme-${effectiveTheme}`
         );
     }
 
@@ -381,7 +381,7 @@ class CalendarPlusApplet extends Applet.Applet {
         const temporal = this._temporalPolicy.get();
         if (!this._calendar_system ||
             this._calendar_system.get_id() !== temporal.calendar) {
-            const candidate = CalendarPlus.CalendarSystem.new(temporal.calendar);
+            const candidate = Calendar.CalendarSystem.new(temporal.calendar);
             if (candidate) {
                 this._calendar_system = candidate;
                 this._calendar.setCalendarSystem(temporal.calendar);
@@ -666,7 +666,7 @@ class CalendarPlusApplet extends Applet.Applet {
 }
 
 function main(metadata, orientation, panel_height, instance_id) {
-    return new CalendarPlusApplet(
+    return new CalendarApplet(
         orientation,
         panel_height,
         instance_id,

@@ -10,7 +10,7 @@
  */
 
 const Atk = imports.gi.Atk;
-const CalendarPlus = imports.gi.CalendarPlus;
+const Calendar = imports.gi.Calendar;
 const CinnamonDesktop = imports.gi.CinnamonDesktop;
 const Clutter = imports.gi.Clutter;
 const GLib = imports.gi.GLib;
@@ -23,13 +23,13 @@ const Separator = imports.ui.separator;
 const Util = imports.misc.util;
 const Gettext = imports.gettext;
 
-const APPLET_UUID = "calendar-plus@the-infiltratr";
-const CALENDAR_PLUS_GETTEXT_DOMAIN = APPLET_UUID;
-Gettext.bindtextdomain(CALENDAR_PLUS_GETTEXT_DOMAIN, "/usr/share/locale");
-const CalendarPlusGettext = Gettext.domain(CALENDAR_PLUS_GETTEXT_DOMAIN);
+const APPLET_UUID = "calendar@the-infiltratr";
+const CALENDAR_GETTEXT_DOMAIN = APPLET_UUID;
+Gettext.bindtextdomain(CALENDAR_GETTEXT_DOMAIN, "/usr/share/locale");
+const CalendarGettext = Gettext.domain(CALENDAR_GETTEXT_DOMAIN);
 
 function CP_(text) {
-    return CalendarPlusGettext.gettext(text);
+    return CalendarGettext.gettext(text);
 }
 
 function _loadRuntimeSupport() {
@@ -550,12 +550,12 @@ class EventRow {
         this._resetStateStyles();
         const startsToday = _relationHas(
             todayRelation,
-            CalendarPlus.EventDayRelation.STARTS_ON_DAY
+            Calendar.EventDayRelation.STARTS_ON_DAY
         );
 
-        if (state === CalendarPlus.EventState.PAST) {
+        if (state === Calendar.EventState.PAST) {
             this.event_time.set_style_class_name("calendar-event-time-past");
-        } else if (state === CalendarPlus.EventState.FUTURE) {
+        } else if (state === Calendar.EventState.FUTURE) {
             this.event_time.set_style_class_name("calendar-event-time-future");
             if (startsToday) {
                 const [pseudoClass, text] = _countdown(secondsUntilStart);
@@ -607,7 +607,7 @@ class EventRow {
 
         if (!this.event.multi_day && _relationHas(
             selectedRelation,
-            CalendarPlus.EventDayRelation.STARTS_ON_DAY
+            Calendar.EventDayRelation.STARTS_ON_DAY
         )) {
             if (this.event.all_day) {
                 return _("All day");
@@ -626,8 +626,8 @@ class EventRow {
         const endpointDay = isStart ? this.event.start_date : this.event.end_date;
         const selectedRelation = this.event.relation_to_day(selected);
         const boundaryFlag = isStart
-            ? CalendarPlus.EventDayRelation.STARTS_ON_DAY
-            : CalendarPlus.EventDayRelation.ENDS_ON_DAY;
+            ? Calendar.EventDayRelation.STARTS_ON_DAY
+            : Calendar.EventDayRelation.ENDS_ON_DAY;
 
         if (_relationHas(selectedRelation, boundaryFlag)) {
             if (!this.event.all_day) {

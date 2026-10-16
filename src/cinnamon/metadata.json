@@ -1,5 +1,5 @@
 {
-    "uuid": "calendar-plus@the-infiltratr",
+    "uuid": "calendar@the-infiltratr",
     "name": "Calendar",
     "description": "The Cinnamon clock and calendar with multiple time and calendar systems",
     "author": "Shannon Smith",
@@ -10,8 +10,8 @@
         "6.6",
         "6.7"
     ],
-    "version": "1.0.104",
-    "gettext-domain": "calendar-plus@the-infiltratr",
+    "version": "1.0.105",
+    "gettext-domain": "calendar@the-infiltratr",
     "website": "https://github.com/Infiltrator-Projects/Calendar",
     "license": "GPL-3.0-or-later"
 }

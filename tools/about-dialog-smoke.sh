@@ -4,7 +4,7 @@
 
 set -eu
 
-ABOUT=${1:-./build/calendar-plus-about}
+ABOUT=${1:-./build/calendar-about}
 
 [ -x "$ABOUT" ] || {
     echo "Calendar About helper is not executable: $ABOUT" >&2

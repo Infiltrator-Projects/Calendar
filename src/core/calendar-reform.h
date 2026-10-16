@@ -5,27 +5,27 @@
  * Private French Republican and Positivist calendar helpers.
  */
 
-#ifndef CALENDAR_PLUS_CALENDAR_REFORM_H
-#define CALENDAR_PLUS_CALENDAR_REFORM_H
+#ifndef CALENDAR_CALENDAR_REFORM_H
+#define CALENDAR_CALENDAR_REFORM_H
 
 #include "calendar-internal.h"
 
 G_BEGIN_DECLS
 
-gboolean calendar_plus_french_is_leap(gint64 year);
-void calendar_plus_french_fields_from_jdn(
+gboolean calendar_french_is_leap(gint64 year);
+void calendar_french_fields_from_jdn(
     gint64 jdn,
-    CalendarPlusCalendarFields *fields);
-gint64 calendar_plus_french_fields_to_jdn(
-    const CalendarPlusCalendarFields *fields);
+    CalendarCalendarFields *fields);
+gint64 calendar_french_fields_to_jdn(
+    const CalendarCalendarFields *fields);
 
-gint calendar_plus_positivist_month_length(gint64 year,
+gint calendar_positivist_month_length(gint64 year,
                                            gint month);
-void calendar_plus_positivist_fields_from_jdn(
+void calendar_positivist_fields_from_jdn(
     gint64 jdn,
-    CalendarPlusCalendarFields *fields);
-gint64 calendar_plus_positivist_fields_to_jdn(
-    const CalendarPlusCalendarFields *fields);
+    CalendarCalendarFields *fields);
+gint64 calendar_positivist_fields_to_jdn(
+    const CalendarCalendarFields *fields);
 
 G_END_DECLS
 

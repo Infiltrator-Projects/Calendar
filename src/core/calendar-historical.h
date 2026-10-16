@@ -5,59 +5,59 @@
  * Private deterministic algorithms for additional historical calendars.
  */
 
-#ifndef CALENDAR_PLUS_CALENDAR_HISTORICAL_H
-#define CALENDAR_PLUS_CALENDAR_HISTORICAL_H
+#ifndef CALENDAR_CALENDAR_HISTORICAL_H
+#define CALENDAR_CALENDAR_HISTORICAL_H
 
 #include "calendar-internal.h"
 #include "calendar-types.h"
 
 G_BEGIN_DECLS
 
-void calendar_plus_revised_julian_fields_from_jdn(
+void calendar_revised_julian_fields_from_jdn(
     gint64 jdn,
-    CalendarPlusCalendarFields *fields);
-gint64 calendar_plus_revised_julian_fields_to_jdn(
-    const CalendarPlusCalendarFields *fields);
-gint calendar_plus_revised_julian_month_length(
-    const CalendarPlusCalendarFields *fields);
-gchar *calendar_plus_revised_julian_format(
-    const CalendarPlusCalendarFields *fields,
-    CalendarPlusDatePart part);
+    CalendarCalendarFields *fields);
+gint64 calendar_revised_julian_fields_to_jdn(
+    const CalendarCalendarFields *fields);
+gint calendar_revised_julian_month_length(
+    const CalendarCalendarFields *fields);
+gchar *calendar_revised_julian_format(
+    const CalendarCalendarFields *fields,
+    CalendarDatePart part);
 
-void calendar_plus_byzantine_fields_from_jdn(
+void calendar_byzantine_fields_from_jdn(
     gint64 jdn,
-    CalendarPlusCalendarFields *fields);
-gint64 calendar_plus_byzantine_fields_to_jdn(
-    const CalendarPlusCalendarFields *fields);
-gint calendar_plus_byzantine_month_length(
-    const CalendarPlusCalendarFields *fields);
-gint calendar_plus_byzantine_period_index(gint month);
-gint calendar_plus_byzantine_month_from_period(gint period);
-gchar *calendar_plus_byzantine_format(
-    const CalendarPlusCalendarFields *fields,
-    CalendarPlusDatePart part);
+    CalendarCalendarFields *fields);
+gint64 calendar_byzantine_fields_to_jdn(
+    const CalendarCalendarFields *fields);
+gint calendar_byzantine_month_length(
+    const CalendarCalendarFields *fields);
+gint calendar_byzantine_period_index(gint month);
+gint calendar_byzantine_month_from_period(gint period);
+gchar *calendar_byzantine_format(
+    const CalendarCalendarFields *fields,
+    CalendarDatePart part);
 
-void calendar_plus_egyptian_fields_from_jdn(
+void calendar_egyptian_fields_from_jdn(
     gint64 jdn,
-    CalendarPlusCalendarFields *fields);
-gint64 calendar_plus_egyptian_fields_to_jdn(
-    const CalendarPlusCalendarFields *fields);
-gint calendar_plus_egyptian_month_length(
-    const CalendarPlusCalendarFields *fields);
-gchar *calendar_plus_egyptian_format(
-    const CalendarPlusCalendarFields *fields,
-    CalendarPlusDatePart part);
+    CalendarCalendarFields *fields);
+gint64 calendar_egyptian_fields_to_jdn(
+    const CalendarCalendarFields *fields);
+gint calendar_egyptian_month_length(
+    const CalendarCalendarFields *fields);
+gchar *calendar_egyptian_format(
+    const CalendarCalendarFields *fields,
+    CalendarDatePart part);
 
-void calendar_plus_armenian_fields_from_jdn(
+void calendar_armenian_fields_from_jdn(
     gint64 jdn,
-    CalendarPlusCalendarFields *fields);
-gint64 calendar_plus_armenian_fields_to_jdn(
-    const CalendarPlusCalendarFields *fields);
-gint calendar_plus_armenian_month_length(
-    const CalendarPlusCalendarFields *fields);
-gchar *calendar_plus_armenian_format(
-    const CalendarPlusCalendarFields *fields,
-    CalendarPlusDatePart part);
+    CalendarCalendarFields *fields);
+gint64 calendar_armenian_fields_to_jdn(
+    const CalendarCalendarFields *fields);
+gint calendar_armenian_month_length(
+    const CalendarCalendarFields *fields);
+gchar *calendar_armenian_format(
+    const CalendarCalendarFields *fields,
+    CalendarDatePart part);
 
 G_END_DECLS
 

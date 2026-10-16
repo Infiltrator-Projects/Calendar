@@ -10,7 +10,7 @@ PREFIX ?= /usr
 DESTDIR ?=
 
 VERSION := $(strip $(file <VERSION))
-UUID := calendar-plus@the-infiltratr
+UUID := calendar@the-infiltratr
 APPLET_SRC_DIR := src/cinnamon
 ICON_NAME := infiltratr-calendar
 ICON_SRC := src/assets/$(ICON_NAME).png
@@ -22,15 +22,15 @@ DIST_DIR := dist
 # authoritative when the preferred MB Corpo families are unavailable.
 INFILTRATR_COMMON_DIR := src/vendor/infiltratr-common
 INFILTRATR_COMMON_URL := https://github.com/Infiltrator-Projects/Libraries.git
-INFILTRATR_COMMON_COMMIT := 086b79504e3480167a23fe620820f074002413a7
-INFILTRATR_COMMON_VERSION := 1.19.42
-LIB_BASENAME := calendar-plus
+INFILTRATR_COMMON_COMMIT := fc2c72cb038a8e4c1e0bc62145adf533fbfd7923
+INFILTRATR_COMMON_VERSION := 1.19.46
+LIB_BASENAME := calendar
 LIB_SONAME := lib$(LIB_BASENAME).so.0
 LIB_REALNAME := lib$(LIB_BASENAME).so.0.0.0
-ABOUT_BINARY := calendar-plus-about
+ABOUT_BINARY := calendar-about
 ABOUT_DESKTOP_TEMPLATE := src/app/calendar-about.desktop.in
 ABOUT_DESKTOP := $(BUILD_DIR)/calendar-about.desktop
-GIR := CalendarPlus-1.0
+GIR := Calendar-1.0
 CORE_SOURCES := \
 	src/core/clock-engine.c \
 	src/core/time-formats.c \
@@ -132,14 +132,14 @@ INFILTRATR_COMMON_ARCHIVE := $(BUILD_DIR)/infiltratr-common/libinfiltratr-common
 INFILTRATR_COMMON_CPPFLAGS := -Iinclude
 OBJECTS := $(patsubst src/%.c,$(BUILD_DIR)/%.o,$(SOURCES))
 CORE_OBJECTS := $(patsubst src/%.c,$(BUILD_DIR)/%.o,$(CORE_SOURCES))
-CORE_ARCHIVE := $(BUILD_DIR)/libcalendar-plus-core.a
+CORE_ARCHIVE := $(BUILD_DIR)/libcalendar-core.a
 MULTIARCH ?= $(shell $(CC) -dumpmachine)
 LIBDIR ?= $(PREFIX)/lib/$(MULTIARCH)
 
 CPPFLAGS += -Isrc/app -Isrc/core -Isrc/adapters -I$(INFILTRATR_COMMON_DIR)/include \
-	-DCALENDAR_PLUS_VERSION=\"$(VERSION)\" \
-	-DCALENDAR_PLUS_SOURCE_ID=\"calendar-plus-$(VERSION)\" \
-	-DCALENDAR_PLUS_BUILD_PROFILE=\"$(BUILD_MODE)\" \
+	-DCALENDAR_VERSION=\"$(VERSION)\" \
+	-DCALENDAR_SOURCE_ID=\"calendar-$(VERSION)\" \
+	-DCALENDAR_BUILD_PROFILE=\"$(BUILD_MODE)\" \
 	-DGETTEXT_PACKAGE=\"$(UUID)\" \
 	-DU_DISABLE_RENAMING=1
 BUILD_MODE ?= generic
@@ -199,9 +199,9 @@ else
 $(error Unsupported BUILD_MODE '$(BUILD_MODE)'; use generic or native)
 endif
 
-REPRO_SEED_PREFIX ?= calendar-plus-$(VERSION)
+REPRO_SEED_PREFIX ?= calendar-$(VERSION)
 LDFLAGS += -Wl,-z,relro,-z,now -Wl,--as-needed
-SHARED_LDFLAGS = $(LDFLAGS) -Wl,--version-script=src/abi/calendar-plus.map
+SHARED_LDFLAGS = $(LDFLAGS) -Wl,--version-script=src/abi/calendar.map
 GLIB_CFLAGS = $(shell $(PKG_CONFIG) --cflags gio-2.0 gobject-2.0 icu-i18n)
 GLIB_LIBS = $(shell $(PKG_CONFIG) --libs gio-2.0 gobject-2.0)
 GTK_CFLAGS = $(shell $(PKG_CONFIG) --cflags gtk+-3.0)
@@ -345,7 +345,7 @@ $(CORE_ARCHIVE): $(CORE_OBJECTS)
 	$(AR) rcsD "$@" $(CORE_OBJECTS)
 
 $(BUILD_DIR)/$(LIB_REALNAME): $(OBJECTS) $(INFILTRATR_COMMON_ARCHIVE) \
-		src/abi/calendar-plus.map
+		src/abi/calendar.map
 	$(CC) -shared $(SHARED_LDFLAGS) -frandom-seed=$(REPRO_SEED_PREFIX)-link -Wl,-soname,$(LIB_SONAME) -o $@ \
 		$(OBJECTS) $(INFILTRATR_COMMON_ARCHIVE) $(GLIB_LIBS) \
 		$(ICU_BRIDGE_LIBS) $(MATH_LIBS)
@@ -419,10 +419,10 @@ $(BUILD_DIR)/$(GIR).gir: \
 		--quiet \
 		--warn-all \
 		--no-libtool \
-		--namespace=CalendarPlus \
+		--namespace=Calendar \
 		--nsversion=1.0 \
-		--identifier-prefix=CalendarPlus \
-		--symbol-prefix=calendar_plus \
+		--identifier-prefix=Calendar \
+		--symbol-prefix=calendar \
 		--add-include-path="$(GIR_INCLUDE_PATH)" \
 		--add-include-path="$(GIR_SHARE_INCLUDE_PATH)" \
 		--include=GLib-2.0 \
@@ -520,10 +520,10 @@ validate-exports: $(BUILD_DIR)/$(LIB_REALNAME)
 	@command -v nm >/dev/null || { \
 		echo "Missing validation dependency: nm" >&2; exit 1; }
 	@nm -D --defined-only --format=posix "$(BUILD_DIR)/$(LIB_REALNAME)" | \
-		awk '$$1 ~ /^calendar_plus_/ { sub(/@.*/, "", $$1); print $$1 }' | LC_ALL=C sort -u > \
+		awk '$$1 ~ /^calendar_/ { sub(/@.*/, "", $$1); print $$1 }' | LC_ALL=C sort -u > \
 		"$(BUILD_DIR)/exported-symbols.actual"
-	@sed -n 's/^[[:space:]]*\(calendar_plus_[A-Za-z0-9_]*\);[[:space:]]*$$/\1/p' \
-		src/abi/calendar-plus.map | LC_ALL=C sort -u > \
+	@sed -n 's/^[[:space:]]*\(calendar_[A-Za-z0-9_]*\);[[:space:]]*$$/\1/p' \
+		src/abi/calendar.map | LC_ALL=C sort -u > \
 		"$(BUILD_DIR)/exported-symbols.expected"
 	diff -u "$(BUILD_DIR)/exported-symbols.expected" \
 		"$(BUILD_DIR)/exported-symbols.actual"
@@ -547,7 +547,7 @@ validate-runtime-deps: $(BUILD_DIR)/$(LIB_REALNAME)
 smoke-gjs: $(BUILD_DIR)/$(GIR).typelib
 	LD_LIBRARY_PATH="$(abspath $(BUILD_DIR))$${LD_LIBRARY_PATH:+:$$LD_LIBRARY_PATH}" \
 	GI_TYPELIB_PATH="$(abspath $(BUILD_DIR))$${GI_TYPELIB_PATH:+:$$GI_TYPELIB_PATH}" \
-	CALENDAR_PLUS_EXPECTED_VERSION="$(VERSION)" \
+	CALENDAR_EXPECTED_VERSION="$(VERSION)" \
 		gjs tests/smoke-typelib.js
 
 update-runtime-hashes:
@@ -687,10 +687,7 @@ package-source: common-check validate-settings-generated
 		"$(BUILD_DIR)/source-stage/Calendar-$(VERSION)/debian/.debhelper" \
 		"$(BUILD_DIR)/source-stage/Calendar-$(VERSION)/debian/calendar" \
 		"$(BUILD_DIR)/source-stage/Calendar-$(VERSION)/debian/calendar-dbgsym" \
-		"$(BUILD_DIR)/source-stage/Calendar-$(VERSION)/debian/cinnamon-calendar" \
-		"$(BUILD_DIR)/source-stage/Calendar-$(VERSION)/debian/cinnamon-calendar-dbgsym" \
-		"$(BUILD_DIR)/source-stage/Calendar-$(VERSION)/debian/calendar-plus" \
-		"$(BUILD_DIR)/source-stage/Calendar-$(VERSION)/debian/calendar-plus-dbgsym"
+		"$(BUILD_DIR)/source-stage/Calendar-$(VERSION)/debian/calendar-dbgsym"
 	@rm -f \
 		"$(BUILD_DIR)/source-stage/Calendar-$(VERSION)/debian/files" \
 		"$(BUILD_DIR)/source-stage/Calendar-$(VERSION)/debian/"*.substvars \

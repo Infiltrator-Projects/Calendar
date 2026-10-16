@@ -26,7 +26,7 @@ guint delay_japanese_temporal_early_provider(gint64, gint, gboolean, gdouble, gd
 typedef struct
 {
     guint abi_version;
-    CalendarPlusTimeMode mode;
+    CalendarTimeMode mode;
     /*
      * Stable binding key into Common's authoritative temporal catalogue.
      * Common renders the clock; Calendar owns only next-boundary scheduling.
@@ -35,10 +35,10 @@ typedef struct
     TimeDelayFunc next_tick;
 } TimeProvider;
 
-enum { CALENDAR_PLUS_TIME_PROVIDER_ABI = 1 };
+enum { CALENDAR_TIME_PROVIDER_ABI = 1 };
 
 guint
-calendar_plus_time_fractional_day_tick(gint64 microseconds_of_day, guint ticks_per_day)
+calendar_time_fractional_day_tick(gint64 microseconds_of_day, guint ticks_per_day)
 {
     uint64_t tick = 0;
     g_return_val_if_fail(microseconds_of_day >= 0, 0);
@@ -61,7 +61,7 @@ delay_seconds_to_milliseconds(long double seconds)
 }
 
 guint
-calendar_plus_time_delay_continuous_microseconds_to_milliseconds(long double microseconds)
+calendar_time_delay_continuous_microseconds_to_milliseconds(long double microseconds)
 {
     return delay_seconds_to_milliseconds(microseconds / (long double)G_USEC_PER_SEC);
 }
@@ -76,7 +76,7 @@ delay_exact_microseconds_to_milliseconds(uint64_t microseconds)
 }
 
 guint
-calendar_plus_time_delay_for_integer_period(gint64 position_microseconds, gint64 period_microseconds)
+calendar_time_delay_for_integer_period(gint64 position_microseconds, gint64 period_microseconds)
 {
     uint64_t remaining = 0;
     if (!infiltratr_i64_period_remaining(position_microseconds, period_microseconds, &remaining))
@@ -85,7 +85,7 @@ calendar_plus_time_delay_for_integer_period(gint64 position_microseconds, gint64
 }
 
 guint
-calendar_plus_time_delay_for_day_ticks(gint64 microseconds_of_day, guint ticks_per_day)
+calendar_time_delay_for_day_ticks(gint64 microseconds_of_day, guint ticks_per_day)
 {
     uint64_t remaining = 0;
     if (microseconds_of_day < 0 || ticks_per_day == 0 ||
@@ -97,7 +97,7 @@ calendar_plus_time_delay_for_day_ticks(gint64 microseconds_of_day, guint ticks_p
 }
 
 guint
-calendar_plus_time_delay_for_clock_seconds(long double clock_seconds,
+calendar_time_delay_for_clock_seconds(long double clock_seconds,
                                            long double clock_rate,
                                            gboolean show_seconds)
 {
@@ -110,8 +110,8 @@ calendar_plus_time_delay_for_clock_seconds(long double clock_seconds,
 }
 
 #define TIME_PROVIDER(mode_, token_, id_) \
-    [CALENDAR_PLUS_TIME_MODE_##mode_] = { CALENDAR_PLUS_TIME_PROVIDER_ABI, \
-        CALENDAR_PLUS_TIME_MODE_##mode_, id_, delay_##token_##_provider }
+    [CALENDAR_TIME_MODE_##mode_] = { CALENDAR_TIME_PROVIDER_ABI, \
+        CALENDAR_TIME_MODE_##mode_, id_, delay_##token_##_provider }
 
 static const TimeProvider time_providers[] = {
     TIME_PROVIDER(DECIMAL, decimal, "decimal"),
@@ -137,7 +137,7 @@ static const TimeProvider time_providers[] = {
     TIME_PROVIDER(JAPANESE_TEMPORAL_EARLY, japanese_temporal_early, "japanese-temporal-early")
 };
 
-G_STATIC_ASSERT(G_N_ELEMENTS(time_providers) == CALENDAR_PLUS_TIME_MODE_JAPANESE_TEMPORAL_EARLY + 1);
+G_STATIC_ASSERT(G_N_ELEMENTS(time_providers) == CALENDAR_TIME_MODE_JAPANESE_TEMPORAL_EARLY + 1);
 
 static const InfiltratrTemporalClockModeInfo *
 common_mode_info_for_provider(const TimeProvider *provider)
@@ -148,82 +148,82 @@ common_mode_info_for_provider(const TimeProvider *provider)
 }
 
 static const TimeProvider *
-time_provider_for_mode(CalendarPlusTimeMode mode)
+time_provider_for_mode(CalendarTimeMode mode)
 {
     const TimeProvider *provider;
 
-    if (mode < CALENDAR_PLUS_TIME_MODE_DECIMAL ||
-        mode > CALENDAR_PLUS_TIME_MODE_JAPANESE_TEMPORAL_EARLY)
+    if (mode < CALENDAR_TIME_MODE_DECIMAL ||
+        mode > CALENDAR_TIME_MODE_JAPANESE_TEMPORAL_EARLY)
         return NULL;
 
     provider = &time_providers[mode];
-    return provider->abi_version == CALENDAR_PLUS_TIME_PROVIDER_ABI &&
+    return provider->abi_version == CALENDAR_TIME_PROVIDER_ABI &&
            common_mode_info_for_provider(provider) != NULL
         ? provider : NULL;
 }
 
-CalendarPlusTimeMode
-calendar_plus_time_mode_from_string(const gchar *mode)
+CalendarTimeMode
+calendar_time_mode_from_string(const gchar *mode)
 {
     const InfiltratrTemporalClockModeInfo *info;
     gsize index;
 
     if (mode == NULL)
-        return CALENDAR_PLUS_TIME_MODE_INVALID;
+        return CALENDAR_TIME_MODE_INVALID;
 
     info = infiltratr_temporal_clock_mode_find(mode);
     if (info == NULL)
-        return CALENDAR_PLUS_TIME_MODE_INVALID;
+        return CALENDAR_TIME_MODE_INVALID;
 
     for (index = 1; index < G_N_ELEMENTS(time_providers); index++)
         if (time_providers[index].common_id != NULL &&
             infiltratr_string_equal(info->id, time_providers[index].common_id))
             return time_providers[index].mode;
 
-    return CALENDAR_PLUS_TIME_MODE_INVALID;
+    return CALENDAR_TIME_MODE_INVALID;
 }
 
-const gchar *calendar_plus_time_mode_get_id(CalendarPlusTimeMode mode)
+const gchar *calendar_time_mode_get_id(CalendarTimeMode mode)
 {
     const InfiltratrTemporalClockModeInfo *info =
         common_mode_info_for_provider(time_provider_for_mode(mode));
     return info != NULL ? info->id : NULL;
 }
 
-gsize calendar_plus_time_mode_get_count(void)
+gsize calendar_time_mode_get_count(void)
 {
     return G_N_ELEMENTS(time_providers) - 1;
 }
 
-CalendarPlusTimeMode calendar_plus_time_mode_get_at(gsize index)
+CalendarTimeMode calendar_time_mode_get_at(gsize index)
 {
-    return index < calendar_plus_time_mode_get_count()
+    return index < calendar_time_mode_get_count()
         ? time_providers[index + 1].mode
-        : CALENDAR_PLUS_TIME_MODE_INVALID;
+        : CALENDAR_TIME_MODE_INVALID;
 }
 
-const gchar *calendar_plus_time_mode_get_name(CalendarPlusTimeMode mode)
+const gchar *calendar_time_mode_get_name(CalendarTimeMode mode)
 {
     const InfiltratrTemporalClockModeInfo *info =
         common_mode_info_for_provider(time_provider_for_mode(mode));
     return info != NULL ? info->name : NULL;
 }
 
-gboolean calendar_plus_time_mode_supports_seconds(CalendarPlusTimeMode mode)
+gboolean calendar_time_mode_supports_seconds(CalendarTimeMode mode)
 {
     const InfiltratrTemporalClockModeInfo *info =
         common_mode_info_for_provider(time_provider_for_mode(mode));
     return info != NULL && info->supports_seconds;
 }
 
-gboolean calendar_plus_time_mode_requires_longitude(CalendarPlusTimeMode mode)
+gboolean calendar_time_mode_requires_longitude(CalendarTimeMode mode)
 {
     const InfiltratrTemporalClockModeInfo *info =
         common_mode_info_for_provider(time_provider_for_mode(mode));
     return info != NULL && info->requires_longitude;
 }
 
-gboolean calendar_plus_time_mode_requires_latitude(CalendarPlusTimeMode mode)
+gboolean calendar_time_mode_requires_latitude(CalendarTimeMode mode)
 {
     const InfiltratrTemporalClockModeInfo *info =
         common_mode_info_for_provider(time_provider_for_mode(mode));
@@ -247,7 +247,7 @@ location_is_valid_for_provider(const TimeProvider *provider,
 }
 
 gchar *
-calendar_plus_format_time_at_location(CalendarPlusTimeMode mode, gint64 unix_microseconds,
+calendar_format_time_at_location(CalendarTimeMode mode, gint64 unix_microseconds,
                                       gint utc_offset_seconds, gboolean show_seconds,
                                       gboolean vertical, gdouble latitude, gdouble longitude)
 {
@@ -277,16 +277,16 @@ calendar_plus_format_time_at_location(CalendarPlusTimeMode mode, gint64 unix_mic
 }
 
 gchar *
-calendar_plus_format_time(CalendarPlusTimeMode mode, gint64 unix_microseconds,
+calendar_format_time(CalendarTimeMode mode, gint64 unix_microseconds,
                           gint utc_offset_seconds, gboolean show_seconds,
                           gboolean vertical, gdouble longitude)
 {
-    return calendar_plus_format_time_at_location(mode, unix_microseconds,
+    return calendar_format_time_at_location(mode, unix_microseconds,
         utc_offset_seconds, show_seconds, vertical, 0.0, longitude);
 }
 
 guint
-calendar_plus_time_delay_to_next_tick_at_location(CalendarPlusTimeMode mode,
+calendar_time_delay_to_next_tick_at_location(CalendarTimeMode mode,
     gint64 unix_microseconds, gint utc_offset_seconds, gboolean show_seconds,
     gdouble latitude, gdouble longitude)
 {
@@ -302,16 +302,16 @@ calendar_plus_time_delay_to_next_tick_at_location(CalendarPlusTimeMode mode,
 }
 
 guint
-calendar_plus_time_delay_to_next_tick(CalendarPlusTimeMode mode, gint64 unix_microseconds,
+calendar_time_delay_to_next_tick(CalendarTimeMode mode, gint64 unix_microseconds,
                                       gint utc_offset_seconds, gboolean show_seconds,
                                       gdouble longitude)
 {
-    return calendar_plus_time_delay_to_next_tick_at_location(mode, unix_microseconds,
+    return calendar_time_delay_to_next_tick_at_location(mode, unix_microseconds,
         utc_offset_seconds, show_seconds, 0.0, longitude);
 }
 
 gchar *
-calendar_plus_replace_time(const gchar *label, const gchar *conventional_time,
+calendar_replace_time(const gchar *label, const gchar *conventional_time,
                            const gchar *replacement_time)
 {
     const gchar *match;

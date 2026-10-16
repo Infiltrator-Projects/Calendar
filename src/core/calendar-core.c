@@ -23,13 +23,13 @@
 #include <infiltratr/temporal.h>
 #include <string.h>
 
-struct _CalendarPlusCalendarEngine
+struct _CalendarCalendarEngine
 {
-    const CalendarPlusCalendarProvider *provider;
+    const CalendarCalendarProvider *provider;
 };
 
 bool
-calendar_plus_format_date_v1(const char *calendar_id,
+calendar_format_date_v1(const char *calendar_id,
                             int32_t gregorian_year,
                             int32_t gregorian_month,
                             int32_t gregorian_day,
@@ -38,29 +38,29 @@ calendar_plus_format_date_v1(const char *calendar_id,
                             size_t capacity,
                             size_t *length)
 {
-    const CalendarPlusDate date = {
+    const CalendarDate date = {
         gregorian_year, gregorian_month, gregorian_day
     };
-    CalendarPlusDatePart date_part;
-    CalendarPlusCalendarEngine *engine;
+    CalendarDatePart date_part;
+    CalendarCalendarEngine *engine;
     gchar *text;
     size_t size;
 
     if (buffer == NULL || capacity == 0 || part == NULL ||
-        !calendar_plus_date_is_valid(&date))
+        !calendar_date_is_valid(&date))
         return false;
     if (strcmp(part, "short") == 0)
-        date_part = CALENDAR_PLUS_DATE_PART_SHORT;
+        date_part = CALENDAR_DATE_PART_SHORT;
     else if (strcmp(part, "full") == 0)
-        date_part = CALENDAR_PLUS_DATE_PART_FULL;
+        date_part = CALENDAR_DATE_PART_FULL;
     else
         return false;
 
-    engine = calendar_plus_calendar_engine_new(calendar_id);
+    engine = calendar_calendar_engine_new(calendar_id);
     if (engine == NULL)
         return false;
-    text = calendar_plus_calendar_engine_format_date(engine, &date, date_part);
-    calendar_plus_calendar_engine_free(engine);
+    text = calendar_calendar_engine_format_date(engine, &date, date_part);
+    calendar_calendar_engine_free(engine);
     if (text == NULL || text[0] == '\0')
     {
         g_free(text);
@@ -80,13 +80,13 @@ calendar_plus_format_date_v1(const char *calendar_id,
 }
 
 static gboolean
-date_to_jdn(const CalendarPlusDate *date,
+date_to_jdn(const CalendarDate *date,
             gint64 *jdn)
 {
-    if (!calendar_plus_date_is_valid(date) || jdn == NULL)
+    if (!calendar_date_is_valid(date) || jdn == NULL)
         return FALSE;
 
-    *jdn = calendar_plus_gregorian_to_jdn(date->year,
+    *jdn = calendar_gregorian_to_jdn(date->year,
                                           date->month,
                                           date->day);
     return TRUE;
@@ -94,66 +94,66 @@ date_to_jdn(const CalendarPlusDate *date,
 
 static gboolean
 date_from_jdn(gint64 jdn,
-              CalendarPlusDate *date)
+              CalendarDate *date)
 {
     const gint64 minimum =
-        calendar_plus_gregorian_to_jdn(G_MININT, 1, 1);
+        calendar_gregorian_to_jdn(G_MININT, 1, 1);
     const gint64 maximum =
-        calendar_plus_gregorian_to_jdn(G_MAXINT, 12, 31);
+        calendar_gregorian_to_jdn(G_MAXINT, 12, 31);
 
     if (date == NULL || jdn < minimum || jdn > maximum)
         return FALSE;
 
-    calendar_plus_jdn_to_gregorian(jdn,
+    calendar_jdn_to_gregorian(jdn,
                                    &date->year,
                                    &date->month,
                                    &date->day);
-    return calendar_plus_date_is_valid(date);
+    return calendar_date_is_valid(date);
 }
 
 gboolean
-calendar_plus_date_is_valid(const CalendarPlusDate *date)
+calendar_date_is_valid(const CalendarDate *date)
 {
     return date != NULL &&
-           calendar_plus_gregorian_date_is_valid(date->year,
+           calendar_gregorian_date_is_valid(date->year,
                                                   date->month,
                                                   date->day);
 }
 
 gboolean
-calendar_plus_date_same(gint year_a,
+calendar_date_same(gint year_a,
                         gint month_a,
                         gint day_a,
                         gint year_b,
                         gint month_b,
                         gint day_b)
 {
-    const CalendarPlusDate left = { year_a, month_a, day_a };
-    const CalendarPlusDate right = { year_b, month_b, day_b };
+    const CalendarDate left = { year_a, month_a, day_a };
+    const CalendarDate right = { year_b, month_b, day_b };
 
-    return calendar_plus_date_is_valid(&left) &&
-           calendar_plus_date_is_valid(&right) &&
+    return calendar_date_is_valid(&left) &&
+           calendar_date_is_valid(&right) &&
            year_a == year_b && month_a == month_b && day_a == day_b;
 }
 
 gint
-calendar_plus_date_weekday(gint year,
+calendar_date_weekday(gint year,
                            gint month,
                            gint day)
 {
-    const CalendarPlusDate date = { year, month, day };
+    const CalendarDate date = { year, month, day };
 
-    if (!calendar_plus_date_is_valid(&date))
+    if (!calendar_date_is_valid(&date))
         return -1;
 
-    return calendar_plus_iso_weekday(
-        calendar_plus_gregorian_to_jdn(year, month, day)) % 7;
+    return calendar_iso_weekday(
+        calendar_gregorian_to_jdn(year, month, day)) % 7;
 }
 
 gboolean
-calendar_plus_date_add_days(const CalendarPlusDate *date,
+calendar_date_add_days(const CalendarDate *date,
                             gint amount,
-                            CalendarPlusDate *result)
+                            CalendarDate *result)
 {
     gint64 jdn;
     gint64 shifted;
@@ -170,7 +170,7 @@ iso_weekday_is_work_day_for_locale(gint iso_weekday,
 {
     gboolean locale_known = FALSE;
     const gboolean locale_workday =
-        calendar_plus_locale_is_work_day(locale,
+        calendar_locale_is_work_day(locale,
                                          iso_weekday,
                                          &locale_known);
 
@@ -189,46 +189,46 @@ iso_weekday_is_work_day(gint iso_weekday)
 }
 
 gboolean
-calendar_plus_date_is_work_day(gint year,
+calendar_date_is_work_day(gint year,
                                gint month,
                                gint day)
 {
-    const CalendarPlusDate date = { year, month, day };
+    const CalendarDate date = { year, month, day };
 
-    if (!calendar_plus_date_is_valid(&date))
+    if (!calendar_date_is_valid(&date))
         return FALSE;
 
-    return iso_weekday_is_work_day(calendar_plus_iso_weekday(
-        calendar_plus_gregorian_to_jdn(year, month, day)));
+    return iso_weekday_is_work_day(calendar_iso_weekday(
+        calendar_gregorian_to_jdn(year, month, day)));
 }
 
-CalendarPlusCalendarEngine *
-calendar_plus_calendar_engine_new(const gchar *calendar_id)
+CalendarCalendarEngine *
+calendar_calendar_engine_new(const gchar *calendar_id)
 {
-    const CalendarPlusCalendarProvider *provider =
-        calendar_plus_calendar_provider_from_id(calendar_id);
-    CalendarPlusCalendarEngine *engine;
+    const CalendarCalendarProvider *provider =
+        calendar_calendar_provider_from_id(calendar_id);
+    CalendarCalendarEngine *engine;
 
     if (provider == NULL ||
-        provider->abi_version != CALENDAR_PLUS_CALENDAR_PROVIDER_ABI)
+        provider->abi_version != CALENDAR_CALENDAR_PROVIDER_ABI)
     {
         return NULL;
     }
 
-    engine = g_new0(CalendarPlusCalendarEngine, 1);
+    engine = g_new0(CalendarCalendarEngine, 1);
     engine->provider = provider;
     return engine;
 }
 
 void
-calendar_plus_calendar_engine_free(CalendarPlusCalendarEngine *engine)
+calendar_calendar_engine_free(CalendarCalendarEngine *engine)
 {
     g_free(engine);
 }
 
 const gchar *
-calendar_plus_calendar_engine_get_id(
-    const CalendarPlusCalendarEngine *engine)
+calendar_calendar_engine_get_id(
+    const CalendarCalendarEngine *engine)
 {
     return engine != NULL && engine->provider != NULL &&
            engine->provider->calendar_id != NULL ?
@@ -236,31 +236,31 @@ calendar_plus_calendar_engine_get_id(
 }
 
 const gchar *
-calendar_plus_calendar_engine_get_name(
-    const CalendarPlusCalendarEngine *engine)
+calendar_calendar_engine_get_name(
+    const CalendarCalendarEngine *engine)
 {
     const InfiltratrTemporalCalendarInfo *info =
         engine != NULL ?
-        calendar_plus_calendar_provider_info(engine->provider) : NULL;
+        calendar_calendar_provider_info(engine->provider) : NULL;
 
     if (info != NULL && info->name != NULL && info->name[0] != '\0')
         return info->name;
-    return calendar_plus_calendar_engine_get_id(engine);
+    return calendar_calendar_engine_get_id(engine);
 }
 
 gchar *
-calendar_plus_calendar_engine_format_date(
-    const CalendarPlusCalendarEngine *engine,
-    const CalendarPlusDate *date,
-    CalendarPlusDatePart part)
+calendar_calendar_engine_format_date(
+    const CalendarCalendarEngine *engine,
+    const CalendarDate *date,
+    CalendarDatePart part)
 {
-    CalendarPlusCalendarFields fields;
+    CalendarCalendarFields fields;
     gint64 jdn;
 
     if (engine == NULL || engine->provider == NULL ||
         !date_to_jdn(date, &jdn) ||
-        part <= CALENDAR_PLUS_DATE_PART_INVALID ||
-        part > CALENDAR_PLUS_DATE_PART_FULL ||
+        part <= CALENDAR_DATE_PART_INVALID ||
+        part > CALENDAR_DATE_PART_FULL ||
         !engine->provider->fields_from_jdn(engine->provider, jdn, &fields))
     {
         return g_strdup("");
@@ -275,16 +275,16 @@ calendar_plus_calendar_engine_format_date(
     return engine->provider->format(engine->provider, jdn, part);
 }
 
-typedef gint64 (*NavigateFunc)(const CalendarPlusCalendarProvider *provider,
+typedef gint64 (*NavigateFunc)(const CalendarCalendarProvider *provider,
                                gint64 jdn,
                                gint amount);
 
 static gboolean
-navigate(const CalendarPlusCalendarEngine *engine,
-         const CalendarPlusDate *date,
+navigate(const CalendarCalendarEngine *engine,
+         const CalendarDate *date,
          gint amount,
          NavigateFunc operation,
-         CalendarPlusDate *result)
+         CalendarDate *result)
 {
     gint64 jdn;
 
@@ -303,7 +303,7 @@ navigate(const CalendarPlusCalendarEngine *engine,
 }
 
 static gint64
-period_start_adapter(const CalendarPlusCalendarProvider *provider,
+period_start_adapter(const CalendarCalendarProvider *provider,
                      gint64 jdn,
                      gint amount)
 {
@@ -312,20 +312,20 @@ period_start_adapter(const CalendarPlusCalendarProvider *provider,
 }
 
 gboolean
-calendar_plus_calendar_engine_period_start(
-    const CalendarPlusCalendarEngine *engine,
-    const CalendarPlusDate *date,
-    CalendarPlusDate *result)
+calendar_calendar_engine_period_start(
+    const CalendarCalendarEngine *engine,
+    const CalendarDate *date,
+    CalendarDate *result)
 {
     return navigate(engine, date, 0, period_start_adapter, result);
 }
 
 gboolean
-calendar_plus_calendar_engine_add_periods(
-    const CalendarPlusCalendarEngine *engine,
-    const CalendarPlusDate *date,
+calendar_calendar_engine_add_periods(
+    const CalendarCalendarEngine *engine,
+    const CalendarDate *date,
     gint amount,
-    CalendarPlusDate *result)
+    CalendarDate *result)
 {
     return navigate(engine, date, amount,
                     engine != NULL && engine->provider != NULL ?
@@ -334,11 +334,11 @@ calendar_plus_calendar_engine_add_periods(
 }
 
 gboolean
-calendar_plus_calendar_engine_add_years(
-    const CalendarPlusCalendarEngine *engine,
-    const CalendarPlusDate *date,
+calendar_calendar_engine_add_years(
+    const CalendarCalendarEngine *engine,
+    const CalendarDate *date,
     gint amount,
-    CalendarPlusDate *result)
+    CalendarDate *result)
 {
     return navigate(engine, date, amount,
                     engine != NULL && engine->provider != NULL ?
@@ -347,11 +347,11 @@ calendar_plus_calendar_engine_add_years(
 }
 
 gchar *
-calendar_plus_calendar_engine_period_key(
-    const CalendarPlusCalendarEngine *engine,
-    const CalendarPlusDate *date)
+calendar_calendar_engine_period_key(
+    const CalendarCalendarEngine *engine,
+    const CalendarDate *date)
 {
-    CalendarPlusCalendarFields fields;
+    CalendarCalendarFields fields;
     gint64 jdn;
 
     if (engine == NULL || engine->provider == NULL ||
@@ -369,8 +369,8 @@ calendar_plus_calendar_engine_period_key(
 }
 
 static gboolean
-fields_share_period(const CalendarPlusCalendarFields *left,
-                    const CalendarPlusCalendarFields *right)
+fields_share_period(const CalendarCalendarFields *left,
+                    const CalendarCalendarFields *right)
 {
     return left->auxiliary == right->auxiliary &&
            left->year == right->year &&
@@ -379,28 +379,28 @@ fields_share_period(const CalendarPlusCalendarFields *left,
 }
 
 void
-calendar_plus_calendar_grid_clear(CalendarPlusCalendarGrid *grid)
+calendar_calendar_grid_clear(CalendarCalendarGrid *grid)
 {
     guint index;
 
     if (grid == NULL)
         return;
 
-    for (index = 0; index < CALENDAR_PLUS_CALENDAR_GRID_CELLS; index++)
+    for (index = 0; index < CALENDAR_CALENDAR_GRID_CELLS; index++)
         g_clear_pointer(&grid->cells[index].day_label, g_free);
-    *grid = (CalendarPlusCalendarGrid){ 0 };
+    *grid = (CalendarCalendarGrid){ 0 };
 }
 
 gboolean
-calendar_plus_calendar_engine_build_grid_for_locale(
-    const CalendarPlusCalendarEngine *engine,
-    const CalendarPlusDate *selected,
-    const CalendarPlusDate *today,
+calendar_calendar_engine_build_grid_for_locale(
+    const CalendarCalendarEngine *engine,
+    const CalendarDate *selected,
+    const CalendarDate *today,
     gint week_start,
     const gchar *locale,
-    CalendarPlusCalendarGrid *grid)
+    CalendarCalendarGrid *grid)
 {
-    CalendarPlusCalendarFields selected_fields;
+    CalendarCalendarFields selected_fields;
     gint64 selected_jdn;
     gint64 today_jdn;
     gint64 period_start;
@@ -410,10 +410,10 @@ calendar_plus_calendar_engine_build_grid_for_locale(
 
     if (grid == NULL)
         return FALSE;
-    *grid = (CalendarPlusCalendarGrid){ 0 };
+    *grid = (CalendarCalendarGrid){ 0 };
 
     if (engine == NULL || engine->provider == NULL ||
-        week_start < 0 || week_start >= CALENDAR_PLUS_DAYS_PER_WEEK ||
+        week_start < 0 || week_start >= CALENDAR_DAYS_PER_WEEK ||
         !date_to_jdn(selected, &selected_jdn) ||
         !date_to_jdn(today, &today_jdn) ||
         !engine->provider->fields_from_jdn(engine->provider,
@@ -425,47 +425,47 @@ calendar_plus_calendar_engine_build_grid_for_locale(
 
     period_start = engine->provider->period_start(engine->provider,
                                                    selected_jdn);
-    start_weekday = calendar_plus_iso_weekday(period_start) %
-                    CALENDAR_PLUS_DAYS_PER_WEEK;
-    first_cell = period_start - calendar_plus_positive_modulo(
-        start_weekday - week_start, CALENDAR_PLUS_DAYS_PER_WEEK);
+    start_weekday = calendar_iso_weekday(period_start) %
+                    CALENDAR_DAYS_PER_WEEK;
+    first_cell = period_start - calendar_positive_modulo(
+        start_weekday - week_start, CALENDAR_DAYS_PER_WEEK);
 
-    for (index = 0; index < CALENDAR_PLUS_CALENDAR_GRID_CELLS; index++)
+    for (index = 0; index < CALENDAR_CALENDAR_GRID_CELLS; index++)
     {
-        CalendarPlusCalendarCell *cell = &grid->cells[index];
+        CalendarCalendarCell *cell = &grid->cells[index];
         const gint64 cell_jdn = first_cell + (gint64)index;
-        const gint iso_weekday = calendar_plus_iso_weekday(cell_jdn);
-        const gint weekday = iso_weekday % CALENDAR_PLUS_DAYS_PER_WEEK;
-        CalendarPlusCalendarFields fields;
+        const gint iso_weekday = calendar_iso_weekday(cell_jdn);
+        const gint weekday = iso_weekday % CALENDAR_DAYS_PER_WEEK;
+        CalendarCalendarFields fields;
 
         if (!date_from_jdn(cell_jdn, &cell->date) ||
             !engine->provider->fields_from_jdn(engine->provider,
                                                cell_jdn,
                                                &fields))
         {
-            calendar_plus_calendar_grid_clear(grid);
+            calendar_calendar_grid_clear(grid);
             return FALSE;
         }
 
         cell->day_label = engine->provider->format(
-            engine->provider, cell_jdn, CALENDAR_PLUS_DATE_PART_DAY);
+            engine->provider, cell_jdn, CALENDAR_DATE_PART_DAY);
         if (cell->day_label == NULL)
         {
-            calendar_plus_calendar_grid_clear(grid);
+            calendar_calendar_grid_clear(grid);
             return FALSE;
         }
 
-        cell->row = 2 + (gint)(index / CALENDAR_PLUS_DAYS_PER_WEEK);
-        cell->column = (gint)(index % CALENDAR_PLUS_DAYS_PER_WEEK);
+        cell->row = 2 + (gint)(index / CALENDAR_DAYS_PER_WEEK);
+        cell->column = (gint)(index % CALENDAR_DAYS_PER_WEEK);
         cell->week_number = weekday == 4 ?
-            calendar_plus_custom_iso_week_number(cell_jdn) : 0;
+            calendar_custom_iso_week_number(cell_jdn) : 0;
         cell->is_work_day =
             iso_weekday_is_work_day_for_locale(iso_weekday, locale);
         cell->is_today = cell_jdn == today_jdn;
         cell->is_selected = cell_jdn == selected_jdn;
         cell->is_current_period = fields_share_period(&selected_fields,
                                                       &fields);
-        cell->is_top_row = index < CALENDAR_PLUS_DAYS_PER_WEEK;
+        cell->is_top_row = index < CALENDAR_DAYS_PER_WEEK;
         cell->is_left_edge = weekday == week_start;
     }
 
@@ -473,39 +473,39 @@ calendar_plus_calendar_engine_build_grid_for_locale(
 }
 
 gboolean
-calendar_plus_calendar_engine_build_grid(
-    const CalendarPlusCalendarEngine *engine,
-    const CalendarPlusDate *selected,
-    const CalendarPlusDate *today,
+calendar_calendar_engine_build_grid(
+    const CalendarCalendarEngine *engine,
+    const CalendarDate *selected,
+    const CalendarDate *today,
     gint week_start,
-    CalendarPlusCalendarGrid *grid)
+    CalendarCalendarGrid *grid)
 {
-    return calendar_plus_calendar_engine_build_grid_for_locale(
+    return calendar_calendar_engine_build_grid_for_locale(
         engine, selected, today, week_start, NULL, grid);
 }
 
 gsize
-calendar_plus_calendar_catalogue_get_count(void)
+calendar_calendar_catalogue_get_count(void)
 {
-    return calendar_plus_calendar_provider_get_count();
+    return calendar_calendar_provider_get_count();
 }
 
 gboolean
-calendar_plus_calendar_catalogue_get(
+calendar_calendar_catalogue_get(
     gsize index,
-    CalendarPlusCalendarDescriptor *descriptor)
+    CalendarCalendarDescriptor *descriptor)
 {
-    const CalendarPlusCalendarProvider *provider;
+    const CalendarCalendarProvider *provider;
     const InfiltratrTemporalCalendarInfo *info;
 
     if (descriptor == NULL)
         return FALSE;
 
-    provider = calendar_plus_calendar_provider_at(index);
+    provider = calendar_calendar_provider_at(index);
     if (provider == NULL || provider->calendar_id == NULL)
         return FALSE;
 
-    info = calendar_plus_calendar_provider_info(provider);
+    info = calendar_calendar_provider_info(provider);
     descriptor->id = provider->calendar_id;
     descriptor->name = info != NULL && info->name != NULL && info->name[0] != '\0'
         ? info->name

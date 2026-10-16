@@ -5,74 +5,74 @@
  * Transport-neutral event-source boundary.
  */
 
-#ifndef CALENDAR_PLUS_EVENT_SOURCE_H
-#define CALENDAR_PLUS_EVENT_SOURCE_H
+#ifndef CALENDAR_EVENT_SOURCE_H
+#define CALENDAR_EVENT_SOURCE_H
 
 #include "event-core.h"
 
 G_BEGIN_DECLS
 
-typedef struct _CalendarPlusEventSink CalendarPlusEventSink;
-typedef struct _CalendarPlusEventSource CalendarPlusEventSource;
+typedef struct _CalendarEventSink CalendarEventSink;
+typedef struct _CalendarEventSource CalendarEventSource;
 
-typedef gboolean (*CalendarPlusEventSinkUpsertFunc)(
+typedef gboolean (*CalendarEventSinkUpsertFunc)(
     gpointer context,
-    const CalendarPlusEventInput *input);
-typedef gboolean (*CalendarPlusEventSinkRemoveFunc)(gpointer context,
+    const CalendarEventInput *input);
+typedef gboolean (*CalendarEventSinkRemoveFunc)(gpointer context,
                                                     const gchar *id);
-typedef gboolean (*CalendarPlusEventSinkCullFunc)(gpointer context,
+typedef gboolean (*CalendarEventSinkCullFunc)(gpointer context,
                                                   gint64 refresh_timestamp);
-typedef void (*CalendarPlusEventSinkClearFunc)(gpointer context);
+typedef void (*CalendarEventSinkClearFunc)(gpointer context);
 
-struct _CalendarPlusEventSink
+struct _CalendarEventSink
 {
     guint abi_version;
     gpointer context;
-    CalendarPlusEventSinkUpsertFunc upsert;
-    CalendarPlusEventSinkRemoveFunc remove;
-    CalendarPlusEventSinkCullFunc cull;
-    CalendarPlusEventSinkClearFunc clear;
+    CalendarEventSinkUpsertFunc upsert;
+    CalendarEventSinkRemoveFunc remove;
+    CalendarEventSinkCullFunc cull;
+    CalendarEventSinkClearFunc clear;
 };
 
-typedef gboolean (*CalendarPlusEventSourceStartFunc)(
+typedef gboolean (*CalendarEventSourceStartFunc)(
     gpointer context,
-    const CalendarPlusEventSink *sink);
-typedef void (*CalendarPlusEventSourceStopFunc)(gpointer context);
-typedef gboolean (*CalendarPlusEventSourceRangeFunc)(gpointer context,
+    const CalendarEventSink *sink);
+typedef void (*CalendarEventSourceStopFunc)(gpointer context);
+typedef gboolean (*CalendarEventSourceRangeFunc)(gpointer context,
                                                      gint64 start_unix,
                                                      gint64 end_unix);
-typedef gboolean (*CalendarPlusEventSourceOpenFunc)(gpointer context,
+typedef gboolean (*CalendarEventSourceOpenFunc)(gpointer context,
                                                     const gchar *event_id);
 
-struct _CalendarPlusEventSource
+struct _CalendarEventSource
 {
     guint abi_version;
     const gchar *id;
     gpointer context;
-    CalendarPlusEventSourceStartFunc start;
-    CalendarPlusEventSourceStopFunc stop;
-    CalendarPlusEventSourceRangeFunc request_range;
-    CalendarPlusEventSourceOpenFunc open_event;
+    CalendarEventSourceStartFunc start;
+    CalendarEventSourceStopFunc stop;
+    CalendarEventSourceRangeFunc request_range;
+    CalendarEventSourceOpenFunc open_event;
 };
 
 enum
 {
-    CALENDAR_PLUS_EVENT_SINK_ABI = 1,
-    CALENDAR_PLUS_EVENT_SOURCE_ABI = 1
+    CALENDAR_EVENT_SINK_ABI = 1,
+    CALENDAR_EVENT_SOURCE_ABI = 1
 };
 
 /**
- * calendar_plus_event_index_make_sink:
+ * calendar_event_index_make_sink:
  * @index: event index that must outlive the source connection
  * @sink: (out): same-thread callback table borrowing @index
  *
  * Sources should copy the table during start(); callbacks remain valid only
  * while @index lives.
  */
-void calendar_plus_event_index_make_sink(CalendarPlusEventIndex *index,
-                                         CalendarPlusEventSink *sink);
+void calendar_event_index_make_sink(CalendarEventIndex *index,
+                                         CalendarEventSink *sink);
 /**
- * calendar_plus_event_source_is_valid:
+ * calendar_event_source_is_valid:
  * @source: transport-neutral source interface
  *
  * Validates ABI and callbacks required for lifecycle/range requests.
@@ -81,8 +81,8 @@ void calendar_plus_event_index_make_sink(CalendarPlusEventIndex *index,
  *
  * Returns: whether the source table is safe to call.
  */
-gboolean calendar_plus_event_source_is_valid(
-    const CalendarPlusEventSource *source);
+gboolean calendar_event_source_is_valid(
+    const CalendarEventSource *source);
 
 G_END_DECLS
 

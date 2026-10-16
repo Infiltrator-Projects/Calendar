@@ -5,26 +5,26 @@
 #include "project-info.h"
 
 const gchar *
-calendar_plus_get_version(void)
+calendar_get_version(void)
 {
-    return calendar_plus_project_info()->version;
+    return calendar_project_info()->version;
 }
 
 const gchar *
-calendar_plus_get_source_id(void)
+calendar_get_source_id(void)
 {
-    return calendar_plus_project_info()->source_id;
+    return calendar_project_info()->source_id;
 }
 
 const gchar *
-calendar_plus_get_build_profile(void)
+calendar_get_build_profile(void)
 {
-    return calendar_plus_project_info()->build_profile;
+    return calendar_project_info()->build_profile;
 }
 
 const gchar *
-calendar_plus_get_build_profile_label(void)
+calendar_get_build_profile_label(void)
 {
     return infiltratr_build_profile_label(
-        calendar_plus_project_info()->build_profile);
+        calendar_project_info()->build_profile);
 }

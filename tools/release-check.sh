@@ -47,7 +47,7 @@ if [ ! -s "$DSC" ]; then
     exit 1
 fi
 
-CALENDAR_PLUS_BUILD_MODE=generic dpkg-buildpackage -us -uc -b
+CALENDAR_BUILD_MODE=generic dpkg-buildpackage -us -uc -b
 
 DEB="../calendar_${VERSION}_${ARCH}.deb"
 if [ ! -s "$DEB" ]; then
