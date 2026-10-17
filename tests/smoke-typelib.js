@@ -8,7 +8,12 @@ imports.gi.versions.Calendar = "1.0";
 const Calendar = imports.gi.Calendar;
 const GLib = imports.gi.GLib;
 const expectedVersion = GLib.getenv("CALENDAR_EXPECTED_VERSION");
-const nativeHebrewResource = "/System/Resources/Calendars/hebrew.so";
+const nativeCalendarResources = new Map([
+    ["hebrew", "/System/Resources/Calendars/hebrew.so"],
+    ["gregorian", "/System/Resources/Calendars/gregorian.so"],
+    ["persian", "/System/Resources/Calendars/persian.so"],
+    ["coptic", "/System/Resources/Calendars/coptic.so"],
+]);
 
 function requireCondition(condition, message) {
     if (!condition) {
@@ -36,13 +41,13 @@ requireCondition(
 );
 
 const calendarIds = [
-    "gregorian", "iso-week", "julian", "revised-julian",
+    "iso-week", "julian", "revised-julian",
     "islamic-umalqura", "islamic-civil", "islamic-tbla", "islamic",
-    "persian", "bahai", "buddhist", "coptic", "ethiopian",
-    "ethiopic-amete-alem", "chinese", "dangi", "indian", "japanese",
-    "minguo", "roman", "byzantine", "egyptian-nabonassar",
-    "armenian-traditional", "mayan", "french-republican",
-    "swedish-historical", "international-fixed", "world", "positivist",
+    "bahai", "buddhist", "ethiopian", "ethiopic-amete-alem", "chinese",
+    "dangi", "indian", "japanese", "minguo", "roman", "byzantine",
+    "egyptian-nabonassar", "armenian-traditional", "mayan",
+    "french-republican", "swedish-historical", "international-fixed",
+    "world", "positivist",
 ];
 for (const id of calendarIds) {
     const provider = Calendar.CalendarSystem.new(id);
@@ -55,28 +60,32 @@ for (const id of calendarIds) {
 }
 
 /*
- * Hebrew is the first calendar deliberately removed from the compiled provider
- * set. The canonical native resource path is therefore the authority for this
- * integration smoke: installed packages must load it successfully, while a
- * build-tree test on a machine without that resource must observe no fallback.
+ * Every migrated chronology is resource-only. Installed packages must load the
+ * canonical module, while a build-tree smoke on a host without that file must
+ * observe no compiled fallback for the same stable ID.
  */
-const hebrewInstalled = GLib.file_test(
-    nativeHebrewResource,
-    GLib.FileTest.EXISTS
-);
-const hebrew = Calendar.CalendarSystem.new("hebrew");
-if (hebrewInstalled) {
-    requireCondition(hebrew !== null, "installed Hebrew calendar resource is unavailable");
-    requireCondition(hebrew.get_id() === "hebrew", "Hebrew calendar provider id mismatch");
-    requireCondition(
-        hebrew.format_date(2026, 9, 12, "short").length > 0,
-        "Hebrew calendar resource failed to format"
-    );
-} else {
-    requireCondition(
-        hebrew === null,
-        "Hebrew calendar remained available without its native resource"
-    );
+for (const [id, resourcePath] of nativeCalendarResources) {
+    const installed = GLib.file_test(resourcePath, GLib.FileTest.EXISTS);
+    const provider = Calendar.CalendarSystem.new(id);
+    if (installed) {
+        requireCondition(
+            provider !== null,
+            `installed ${id} calendar resource is unavailable`
+        );
+        requireCondition(
+            provider.get_id() === id,
+            `${id} calendar provider id mismatch`
+        );
+        requireCondition(
+            provider.format_date(2026, 9, 12, "short").length > 0,
+            `${id} calendar resource failed to format`
+        );
+    } else {
+        requireCondition(
+            provider === null,
+            `${id} calendar remained available without its native resource`
+        );
+    }
 }
 
 const timeModeIds = [
@@ -168,9 +177,6 @@ requireCondition(
     "system-coordinate compatibility getters disagree with policy snapshot"
 );
 
-const calendar = Calendar.CalendarSystem.new("gregorian");
-requireCondition(calendar !== null, "Gregorian CalendarSystem unavailable");
-requireCondition(calendar.get_id() === "gregorian", "wrong calendar id");
 requireCondition(
     Calendar.date_same(2026, 8, 8, 2026, 8, 8),
     "native date equality failed"
@@ -183,48 +189,61 @@ requireCondition(
     Calendar.date_weekday(2026, 8, 8) === 6,
     "native weekday projection failed"
 );
-const [nextDayYear, nextDayMonth, nextDay] = calendar
-    .add_days_parts(2026, 8, 8, 1)
-    .deep_unpack();
-requireCondition(
-    nextDayYear === 2026 && nextDayMonth === 8 && nextDay === 9,
-    "native civil-day navigation failed"
-);
-requireCondition(
-    calendar.add_days_parts(2147483647, 12, 31, 1) === null,
-    "native civil-day navigation crossed the gint year boundary"
-);
 
-const [year, month, day] = calendar
-    .add_months_parts(2026, 8, 8, 1)
-    .deep_unpack();
-requireCondition(
-    year === 2026 && month === 9 && day === 8,
-    "typed calendar navigation failed"
+const calendar = Calendar.CalendarSystem.new("gregorian");
+const gregorianInstalled = GLib.file_test(
+    nativeCalendarResources.get("gregorian"),
+    GLib.FileTest.EXISTS
 );
-const [startYear, startMonth, startDay] = calendar
-    .month_start_parts(2026, 8, 8)
-    .deep_unpack();
 requireCondition(
-    startYear === 2026 && startMonth === 8 && startDay === 1,
-    "typed calendar period-start navigation failed"
+    (calendar !== null) === gregorianInstalled,
+    "Gregorian availability does not match its installed resource"
 );
-const [nextYear, nextYearMonth, nextYearDay] = calendar
-    .add_years_parts(2026, 8, 8, 1)
-    .deep_unpack();
-requireCondition(
-    nextYear === 2027 && nextYearMonth === 8 && nextYearDay === 8,
-    "typed calendar year navigation failed"
-);
+if (calendar !== null) {
+    requireCondition(calendar.get_id() === "gregorian", "wrong calendar id");
+    const [nextDayYear, nextDayMonth, nextDay] = calendar
+        .add_days_parts(2026, 8, 8, 1)
+        .deep_unpack();
+    requireCondition(
+        nextDayYear === 2026 && nextDayMonth === 8 && nextDay === 9,
+        "native civil-day navigation failed"
+    );
+    requireCondition(
+        calendar.add_days_parts(2147483647, 12, 31, 1) === null,
+        "native civil-day navigation crossed the gint year boundary"
+    );
 
-const grid = calendar
-    .build_grid(2026, 8, 8, 2026, 8, 8, 1)
-    .deep_unpack();
-requireCondition(grid.length === 42, "calendar grid is not 42 cells");
-requireCondition(
-    grid.filter((cell) => cell[9]).length === 1,
-    "calendar grid does not contain exactly one selected cell"
-);
+    const [year, month, day] = calendar
+        .add_months_parts(2026, 8, 8, 1)
+        .deep_unpack();
+    requireCondition(
+        year === 2026 && month === 9 && day === 8,
+        "typed calendar navigation failed"
+    );
+    const [startYear, startMonth, startDay] = calendar
+        .month_start_parts(2026, 8, 8)
+        .deep_unpack();
+    requireCondition(
+        startYear === 2026 && startMonth === 8 && startDay === 1,
+        "typed calendar period-start navigation failed"
+    );
+    const [nextYear, nextYearMonth, nextYearDay] = calendar
+        .add_years_parts(2026, 8, 8, 1)
+        .deep_unpack();
+    requireCondition(
+        nextYear === 2027 && nextYearMonth === 8 && nextYearDay === 8,
+        "typed calendar year navigation failed"
+    );
+
+    const grid = calendar
+        .build_grid(2026, 8, 8, 2026, 8, 8, 1)
+        .deep_unpack();
+    requireCondition(grid.length === 42, "calendar grid is not 42 cells");
+    requireCondition(
+        grid.filter((cell) => cell[9]).length === 1,
+        "calendar grid does not contain exactly one selected cell"
+    );
+}
 
 requireCondition(
     Calendar.event_state(100, 200, 150) ===
