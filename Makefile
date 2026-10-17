@@ -22,8 +22,8 @@ DIST_DIR := dist
 # authoritative when the preferred MB Corpo families are unavailable.
 INFILTRATR_COMMON_DIR := src/vendor/infiltratr-common
 INFILTRATR_COMMON_URL := https://github.com/Infiltrator-Projects/Libraries.git
-INFILTRATR_COMMON_COMMIT := a9bfa89cc9b07f37324bb928691cf9e008e5c3a8
-INFILTRATR_COMMON_VERSION := 1.19.52
+INFILTRATR_COMMON_COMMIT := 10e5fcc2b3b78375352778144a04f30ea2e9de8a
+INFILTRATR_COMMON_VERSION := 1.19.53
 LIB_BASENAME := calendar
 LIB_SONAME := lib$(LIB_BASENAME).so.0
 LIB_REALNAME := lib$(LIB_BASENAME).so.0.0.0
@@ -122,6 +122,7 @@ INFILTRATR_COMMON_HEADERS := \
 	$(INFILTRATR_COMMON_DIR)/include/infiltratr/temporal_posix.h \
 	$(INFILTRATR_COMMON_DIR)/include/infiltratr/temporal_runtime.h \
 	$(INFILTRATR_COMMON_DIR)/include/infiltratr/temporal_calendar.h \
+	$(INFILTRATR_COMMON_DIR)/include/infiltratr/temporal_clock_resource.h \
 	$(INFILTRATR_COMMON_DIR)/include/infiltratr/dynlib.h \
 	$(INFILTRATR_COMMON_DIR)/include/infiltratr/design.h \
 	$(INFILTRATR_COMMON_DIR)/include/infiltratr/utf8.h
@@ -151,6 +152,13 @@ PERSIAN_RESOURCE := $(CALENDAR_RESOURCE_BUILD_DIR)/persian.so
 COPTIC_RESOURCE := $(CALENDAR_RESOURCE_BUILD_DIR)/coptic.so
 CALENDAR_RESOURCES := $(HEBREW_RESOURCE) $(GREGORIAN_RESOURCE) \
 	$(PERSIAN_RESOURCE) $(COPTIC_RESOURCE)
+CLOCK_RESOURCE_BUILD_DIR := $(BUILD_DIR)/clock-resources
+CLOCK_RESOURCE_SOURCE := src/resources/clocks/fixed-clock.c
+CLOCK_RESOURCE_MAP := src/resources/clocks/clock-resource.map
+CLOCK_RESOURCE_NAMES := decimal internet unix hexadecimal binary
+CLOCK_RESOURCES := $(addprefix $(CLOCK_RESOURCE_BUILD_DIR)/,$(addsuffix .so,$(CLOCK_RESOURCE_NAMES)))
+TEST_CLOCK_RESOURCE_CPPFLAG := \
+	-DCALENDAR_NATIVE_CLOCK_RESOURCE_DIRECTORY=\"$(abspath $(CLOCK_RESOURCE_BUILD_DIR))\"
 TEST_CALENDAR_RESOURCE_CPPFLAG := \
 	-DCALENDAR_NATIVE_CALENDAR_RESOURCE_DIRECTORY=\"$(abspath $(CALENDAR_RESOURCE_BUILD_DIR))\"
 RUNTIME_CALENDAR_FIXTURE_DIR := $(BUILD_DIR)/calendar-resource-fixture
@@ -267,7 +275,7 @@ DIST_FILES := \
 all: common-check check-deps \
 	$(INFILTRATR_COMMON_ARCHIVE) \
 	$(CORE_ARCHIVE) \
-	$(CALENDAR_RESOURCES) \
+ 	$(CALENDAR_RESOURCES) $(CLOCK_RESOURCES) \
 	$(BUILD_DIR)/$(LIB_REALNAME) \
 	$(BUILD_DIR)/$(GIR).typelib \
 	$(BUILD_DIR)/$(ABOUT_BINARY) \
@@ -418,6 +426,18 @@ $(COPTIC_RESOURCE): $(COPTIC_RESOURCE_SOURCE) $(CALENDAR_RESOURCE_MAP) \
 		-Wl,--version-script=$(CALENDAR_RESOURCE_MAP) \
 		-o $@ $(LDFLAGS) $(CORE_LIBS) $(ICU_BRIDGE_LIBS) $(MATH_LIBS)
 
+$(CLOCK_RESOURCE_BUILD_DIR)/%.so: $(CLOCK_RESOURCE_SOURCE) $(CLOCK_RESOURCE_MAP) $(INFILTRATR_COMMON_HEADERS)
+	@mkdir -p "$(CLOCK_RESOURCE_BUILD_DIR)"
+	@case "$*" in decimal) kind=1; seconds=true ;; internet) kind=2; seconds=true ;; \
+		unix) kind=3; seconds=false ;; hexadecimal) kind=4; seconds=false ;; \
+		binary) kind=5; seconds=true ;; *) exit 1 ;; esac; \
+	$(CC) $(CPPFLAGS) $(CFLAGS) -fvisibility=hidden \
+		-frandom-seed=$(REPRO_SEED_PREFIX)-$*-clock-resource \
+		-DCLOCK_RESOURCE_KIND=$kind -DCLOCK_RESOURCE_ID=\"$*\" \
+		-DCLOCK_RESOURCE_NAME=\"$*\" -DCLOCK_RESOURCE_SECONDS=$seconds \
+		-shared $(CLOCK_RESOURCE_SOURCE) \
+		-Wl,--version-script=$(CLOCK_RESOURCE_MAP) -o $@ $(LDFLAGS)
+
 $(BUILD_DIR)/$(LIB_REALNAME): $(OBJECTS) $(INFILTRATR_COMMON_ARCHIVE) \
 		src/abi/calendar.map
 	$(CC) -shared $(SHARED_LDFLAGS) -frandom-seed=$(REPRO_SEED_PREFIX)-link -Wl,-soname,$(LIB_SONAME) -o $@ \
@@ -516,48 +536,48 @@ $(BUILD_DIR)/$(GIR).typelib: $(BUILD_DIR)/$(GIR).gir
 
 $(BUILD_DIR)/test-time-formats: \
 		tests/test-time-formats.c \
-		$(CALENDAR_RESOURCES) \
+		$(CALENDAR_RESOURCES) $(CLOCK_RESOURCES) \
 		$(SOURCES) \
 		$(HEADERS) \
 		$(INFILTRATR_COMMON_ARCHIVE)
 	@mkdir -p "$(BUILD_DIR)"
-	$(CC) $(CPPFLAGS) $(TEST_CALENDAR_RESOURCE_CPPFLAG) $(CFLAGS) -frandom-seed=$(REPRO_SEED_PREFIX)-test-time-formats $(GLIB_CFLAGS) \
+	$(CC) $(CPPFLAGS) $(TEST_CALENDAR_RESOURCE_CPPFLAG) $(TEST_CLOCK_RESOURCE_CPPFLAG) $(CFLAGS) -frandom-seed=$(REPRO_SEED_PREFIX)-test-time-formats $(GLIB_CFLAGS) \
 		tests/test-time-formats.c $(SOURCES) \
 		$(INFILTRATR_COMMON_ARCHIVE) -o $@ $(LDFLAGS) $(GLIB_LIBS) \
 		$(ICU_BRIDGE_LIBS) $(MATH_LIBS)
 
 $(BUILD_DIR)/test-properties: \
 		tests/test-properties.c \
-		$(CALENDAR_RESOURCES) \
+		$(CALENDAR_RESOURCES) $(CLOCK_RESOURCES) \
 		$(SOURCES) \
 		$(HEADERS) \
 		$(INFILTRATR_COMMON_ARCHIVE)
 	@mkdir -p "$(BUILD_DIR)"
-	$(CC) $(CPPFLAGS) $(TEST_CALENDAR_RESOURCE_CPPFLAG) $(CFLAGS) -frandom-seed=$(REPRO_SEED_PREFIX)-test-properties $(GLIB_CFLAGS) \
+	$(CC) $(CPPFLAGS) $(TEST_CALENDAR_RESOURCE_CPPFLAG) $(TEST_CLOCK_RESOURCE_CPPFLAG) $(CFLAGS) -frandom-seed=$(REPRO_SEED_PREFIX)-test-properties $(GLIB_CFLAGS) \
 		tests/test-properties.c $(SOURCES) \
 		$(INFILTRATR_COMMON_ARCHIVE) -o $@ $(LDFLAGS) $(GLIB_LIBS) \
 		$(ICU_BRIDGE_LIBS) $(MATH_LIBS)
 
 $(BUILD_DIR)/test-portable-core: \
 		tests/test-portable-core.c \
-		$(CALENDAR_RESOURCES) \
+		$(CALENDAR_RESOURCES) $(CLOCK_RESOURCES) \
 		$(CORE_SOURCES) \
 		$(CORE_HEADERS) \
 		$(INFILTRATR_COMMON_ARCHIVE)
 	@mkdir -p "$(BUILD_DIR)"
-	$(CC) $(CPPFLAGS) $(TEST_CALENDAR_RESOURCE_CPPFLAG) $(CFLAGS) -frandom-seed=$(REPRO_SEED_PREFIX)-test-portable-core $(CORE_CFLAGS) \
+	$(CC) $(CPPFLAGS) $(TEST_CALENDAR_RESOURCE_CPPFLAG) $(TEST_CLOCK_RESOURCE_CPPFLAG) $(CFLAGS) -frandom-seed=$(REPRO_SEED_PREFIX)-test-portable-core $(CORE_CFLAGS) \
 		tests/test-portable-core.c $(CORE_SOURCES) \
 		$(INFILTRATR_COMMON_ARCHIVE) -o $@ $(LDFLAGS) $(CORE_LIBS) \
 		$(ICU_BRIDGE_LIBS) $(MATH_LIBS)
 
 $(BUILD_DIR)/test-exact-clock-boundaries: \
 		tests/test-exact-clock-boundaries.c \
-		$(CALENDAR_RESOURCES) \
+		$(CALENDAR_RESOURCES) $(CLOCK_RESOURCES) \
 		$(CORE_SOURCES) \
 		$(CORE_HEADERS) \
 		$(INFILTRATR_COMMON_ARCHIVE)
 	@mkdir -p "$(BUILD_DIR)"
-	$(CC) $(CPPFLAGS) $(TEST_CALENDAR_RESOURCE_CPPFLAG) $(CFLAGS) -frandom-seed=$(REPRO_SEED_PREFIX)-test-exact-clock-boundaries $(CORE_CFLAGS) \
+	$(CC) $(CPPFLAGS) $(TEST_CALENDAR_RESOURCE_CPPFLAG) $(TEST_CLOCK_RESOURCE_CPPFLAG) $(CFLAGS) -frandom-seed=$(REPRO_SEED_PREFIX)-test-exact-clock-boundaries $(CORE_CFLAGS) \
 		tests/test-exact-clock-boundaries.c $(CORE_SOURCES) \
 		$(INFILTRATR_COMMON_ARCHIVE) -o $@ $(LDFLAGS) $(CORE_LIBS) \
 		$(ICU_BRIDGE_LIBS) $(MATH_LIBS)
@@ -762,6 +782,10 @@ install: all
 	@for resource in $(CALENDAR_RESOURCES); do \
 		install -Dm755 "$$resource" \
 			"$(DESTDIR)/System/Resources/Calendars/$$(basename "$$resource")"; \
+	done
+	@for resource in $(CLOCK_RESOURCES); do \
+		install -Dm755 "$resource" \
+			"$(DESTDIR)/System/Resources/Clocks/$(basename "$resource")"; \
 	done
 	install -Dm644 "$(BUILD_DIR)/$(GIR).typelib" \
 		"$(DESTDIR)$(LIBDIR)/girepository-1.0/$(GIR).typelib"
