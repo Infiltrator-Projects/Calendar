@@ -8,6 +8,7 @@ imports.gi.versions.Calendar = "1.0";
 const Calendar = imports.gi.Calendar;
 const GLib = imports.gi.GLib;
 const expectedVersion = GLib.getenv("CALENDAR_EXPECTED_VERSION");
+const nativeHebrewResource = "/System/Resources/Calendars/hebrew.so";
 
 function requireCondition(condition, message) {
     if (!condition) {
@@ -34,9 +35,8 @@ requireCondition(
     "canonical build-profile label is empty"
 );
 
-
 const calendarIds = [
-    "gregorian", "iso-week", "julian", "revised-julian", "hebrew",
+    "gregorian", "iso-week", "julian", "revised-julian",
     "islamic-umalqura", "islamic-civil", "islamic-tbla", "islamic",
     "persian", "bahai", "buddhist", "coptic", "ethiopian",
     "ethiopic-amete-alem", "chinese", "dangi", "indian", "japanese",
@@ -54,6 +54,31 @@ for (const id of calendarIds) {
     );
 }
 
+/*
+ * Hebrew is the first calendar deliberately removed from the compiled provider
+ * set.  The canonical native resource path is therefore the authority for this
+ * integration smoke: installed packages must load it successfully, while a
+ * build-tree test on a machine without that resource must observe no fallback.
+ */
+const hebrewInstalled = GLib.file_test(
+    nativeHebrewResource,
+    GLib.FileTest.EXISTS
+);
+const hebrew = Calendar.CalendarSystem.new("hebrew");
+if (hebrewInstalled) {
+    requireCondition(hebrew !== null, "installed Hebrew calendar resource is unavailable");
+    requireCondition(hebrew.get_id() === "hebrew", "Hebrew calendar provider id mismatch");
+    requireCondition(
+        hebrew.format_date(2026, 9, 12, "short").length > 0,
+        "Hebrew calendar resource failed to format"
+    );
+} else {
+    requireCondition(
+        hebrew === null,
+        "Hebrew calendar remained available without its native resource"
+    );
+}
+
 const timeModeIds = [
     "decimal", "internet", "unix", "hexadecimal",
     "binary", "sidereal", "solar", "julian", "mean-solar",
@@ -61,6 +86,7 @@ const timeModeIds = [
     "japanese-temporal", "italian-hours", "babylonian-hours",
     "indian-ghati", "chinese-ke", "nuremberg-hours",
     "babylonian-ancient", "nuremberg-solar",
+    "japanese-temporal-early",
 ];
 for (const id of timeModeIds) {
     requireCondition(
