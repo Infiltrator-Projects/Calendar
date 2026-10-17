@@ -1,84 +1,103 @@
 <!-- SPDX-License-Identifier: GPL-3.0-or-later -->
 
-# Ancient Egyptian chronology, calendars and timekeeping
+# Native Ancient Egyptian chronology and timekeeping
 
 ## Status and ownership
 
-This document is Calendar's specialist historical authority for Egyptian date- and time-reckoning. It catalogues the principal systems attested or seriously reconstructed for ancient Egypt, identifies disagreements in modern scholarship, and states what Calendar may and may not claim when admitting a future provider.
+This document is Calendar's specialist historical authority for **native ancient Egyptian** date- and time-reckoning. Its scope is intentionally narrow: it records the Egyptian systems themselves, not every calendar or clock that later existed in Egypt under Greek, Roman, Christian or other traditions.
 
-It is deliberately broader than a specification for one clock. Ancient Egypt did not possess one timeless, universal "Egyptian calendar" paired with one timeless, universal "Egyptian clock". The evidence spans more than three millennia, multiple political regimes, temple and administrative practices, observational astronomy, mechanical timekeeping, and later Greek and Roman systems used inside Egypt.
+`MODELS.md` remains authoritative for Calendar's general evidence hierarchy, failure semantics and model-admission rules. This document owns the Egyptian historical detail.
 
-`MODELS.md` remains authoritative for Calendar's general evidence hierarchy, failure semantics and admission rules. This document owns the Egyptian historical detail.
+Documentation is not implementation. A system listed here is not selectable until its arithmetic or astronomy, shared registry identity, formatter/converter, scheduling where required, tests and presentation contracts have been implemented and validated.
 
-Documentation is not implementation. A system described here is not selectable until its arithmetic/astronomy, shared registry identity, formatter, scheduling, tests and presentation contracts have been implemented and released.
+## Scope: the ten Egyptian families
+
+For project purposes, the native Egyptian historical catalogue is organised into **five date systems/families** and **five time systems/families**.
+
+### Native Egyptian date systems
+
+1. **Early Egyptian lunar / lunistellar reckoning**
+2. **Egyptian civil calendar**
+3. **Egyptian regnal dating**
+4. **Egyptian lunar date-keeping and festival reckoning**
+5. **Late Egyptian schematic 25-year lunar cycle (Papyrus Carlsberg 9 tradition)**
+
+### Native Egyptian time systems
+
+1. **Decanal / stellar night timekeeping**
+2. **Seasonal daylight hours (shadow-clock / sundial tradition)**
+3. **Seasonal night hours (outflow water-clock tradition)**
+4. **Ramesside stellar timekeeping**
+5. **Merkhet / meridian-transit stellar timekeeping**
+
+These are historical **families**, not a promise of ten independent selector entries. Some may ultimately share implementation machinery or prove better represented as variants of one provider. In particular, Ramesside stellar reckoning and merkhet/meridian observation are genuinely Egyptian practices but may prove to be methods or variants rather than fully independent clock systems. The historical catalogue keeps them distinct until the evidence and implementation model justify collapsing them.
+
+## Explicitly outside this Egyptian catalogue
+
+The following are deliberately **not** counted here merely because they were used in Egypt, descended from an Egyptian system, or used Egyptian month structure:
+
+- Coptic calendar;
+- Macedonian/Ptolemaic calendar;
+- Julian or Roman calendars;
+- Jewish, Babylonian, Aramaic or other imported calendars;
+- Greek/Roman equal or equinoctial-hour systems;
+- Alexandrian/Augustan reform as a separate later civil calendar;
+- Nabonassar-era astronomical year numbering as though it were normal pharaonic year reckoning.
+
+Those systems may exist elsewhere in Calendar under their own historically correct identities. They must not be duplicated or relabelled as generic "Ancient Egyptian" modes.
+
+The existing `egyptian-nabonassar` provider remains a valid deterministic representation of the wandering Egyptian civil **month/day structure** with Nabonassar-era astronomical year numbering. It is not counted among the five native date systems above because that continuous era is not the ordinary pharaonic Egyptian year-label system.
 
 ## Evidence labels
 
-Every historical claim or eventual implementation rule must be classifiable as one of these categories.
+Every rule eventually implemented from this document must be classified as one of the following.
 
 ### Attested
 
-Directly supported by surviving Egyptian documents, instruments, inscriptions or other primary evidence, normally interpreted through established specialist scholarship.
+Directly supported by surviving Egyptian documents, instruments, inscriptions or astronomical material, interpreted through established specialist scholarship.
 
 ### Strong reconstruction
 
-Not preserved as a complete algorithm or notation, but supported well enough by multiple sources that a deterministic computational model can be defended. The UI must still identify it as a reconstruction where that fact matters.
+The historical evidence is incomplete, but the surviving material supports a reproducible computational reconstruction strongly enough to implement it if the reconstruction is identified as such.
 
 ### Contested reconstruction
 
-A serious scholarly proposal for which competing interpretations remain active. Calendar must not silently promote one interpretation to "the Egyptian system".
-
-### Foreign system used in Egypt
-
-A non-Egyptian calendar or clock convention demonstrably used by communities, administrations, rulers, astronomers or institutions in Egypt. Such a system belongs in the historical catalogue but must not be relabelled as an indigenous Egyptian invention.
+A serious scholarly interpretation exists, but important alternatives remain. Calendar must not silently promote one interpretation to "the Egyptian system".
 
 ### Modern precision extension
 
-A modern representation used to preserve or expose the precision of a canonical timestamp when the historical notation is coarser. It must never be assigned a fabricated ancient unit name.
+A modern representation used only to preserve or expose the precision of a canonical timestamp where historical notation is coarser. A modern extension must never be given a fabricated Egyptian unit name.
 
-## Catalogue at a glance
+# Part I — Native Egyptian date systems
 
-### Date and year systems
+## 1. Early Egyptian lunar / lunistellar reckoning
 
-| System | Approximate historical scope | Evidence state | Calendar treatment |
-| --- | --- | --- | --- |
-| Early lunar/lunistellar reckoning | Predynastic/Protodynastic is likely; exact regulation disputed | Contested reconstruction built on strong evidence for early lunar reckoning | Document only until a defensible algorithm and intercalation rule can be stated |
-| Egyptian civil calendar | At least Old Kingdom; probably earlier; continues through antiquity | Attested | Structure is deterministic: 365-day wandering year, 12 × 30 days + 5 epagomenal days |
-| Early event-named regnal years | Dynasty 1 into Old Kingdom | Attested | Historical year-label layer, not a free-running era |
-| Census/count year naming | Late Dynasty 2 through Old Kingdom | Attested, count frequency debated | Historical year-label layer; no simple arithmetic conversion without a ruler-specific chronology |
-| Numbered regnal years | First Intermediate Period/Middle Kingdom onward, with period-specific year-boundary rules | Attested | Requires ruler/accession/coregency data; not interchangeable with a continuous era |
-| Lunar date-keeping and lunar festivals within civil dates | Attested from the third millennium BCE onward | Attested; existence of an independent parallel lunar calendar after the civil calendar is disputed | Lunar phase/day model is admissible only with an explicit era and observational/schematic policy |
-| Papyrus Carlsberg 9 lunar scheme | Ptolemaic/Roman evidence, cycles cited from 19–144 CE | Attested schematic cycle | Possible separate late-period computational provider; not to be projected backwards |
-| Ptolemaic Macedonian calendar and double dating | Ptolemaic Egypt | Foreign system used in Egypt | Historical foreign calendar; must remain labelled Macedonian/Ptolemaic |
-| Canopus leap-year reform | Decreed 238 BCE | Attested decree; extent/duration of actual adoption uncertain | Do not treat as universally implemented Egyptian civil time without a bounded historical rule |
-| Nabonassar astronomical era using 365-day Egyptian years | Hellenistic astronomical chronology, especially Ptolemaic scholarship | Attested as astronomical chronological convention | Existing `egyptian-nabonassar` provider; not the normal pharaonic regnal-year system |
-| Alexandrian/Augustan reformed Egyptian calendar | Introduced under Augustus, c. 26 BCE | Attested | 365 days with a sixth epagomenal day every fourth year; ancestor of the Coptic calendar |
-| Coptic/Anno Martyrum calendar | Late antique and later Christian Egypt | Attested continuation | Already represented separately by Calendar's Coptic provider; year era is not pharaonic |
-| Babylonian/Aramaic, Jewish-adapted, Julian/Roman and other imported calendars | Different foreign-rule and community contexts | Foreign systems used in Egypt | Catalogue for provenance; never generic "Egyptian" modes |
+### Historical character
 
-### Time-of-day systems and instruments
+Some form of lunar reckoning almost certainly predates or accompanies the development of the fixed civil calendar. The exact early system is not recoverable as one complete algorithm from surviving evidence.
 
-| System / method | Approximate historical scope | Evidence state | Calendar treatment |
-| --- | --- | --- | --- |
-| Twelve night divisions in early religious/stellar material | Old/Middle Kingdom roots | Attested in broad structure; detailed computational interpretation varies | Historical background, not by itself a complete clock algorithm |
-| Middle Kingdom diagonal star tables | Principally early Middle Kingdom | Attested tables; their exact use as "clocks" is reconstructed and terminology is debated | Do not implement a generic decanal clock merely from the table layout |
-| Solar shadow clocks | New Kingdom evidence and later examples | Attested | Candidate evidence for seasonal daylight-hour reconstruction |
-| Sundials, including later sloping/concave forms | New Kingdom onward, especially later periods | Attested | Instrument family; the hour convention must be identified per source/period |
-| Outflow water clocks | New Kingdom onward | Attested | Strong basis for a New Kingdom seasonal night-hour reconstruction |
-| Stellar/decanal night reckoning | Middle/New Kingdom evidence | Attested in broad form; detailed boundary and observation rules vary | Separate future model from water-clock civil night |
-| Ramesside star tables | Ramesside period | Attested tables; interpretation as hour clocks remains contested | Research-only until an admission-grade model exists |
-| Merkhet / meridian-transit observations | Later pharaonic evidence; use continues into later periods | Attested instrument and astronomical practice | Instrument/method, not automatically a distinct public clock mode |
-| Seasonal day/night hours in Ptolemaic and Roman Egypt | Hellenistic/Roman period | Attested | Preserve as seasonal-hour practice; distinguish Egyptian ancestry from Greek formalisation |
-| Equinoctial/equal hours in astronomical/scientific use | Hellenistic/Roman Egypt | Attested in Greek scientific tradition | Foreign/Greco-Egyptian scientific convention, not an indigenous pharaonic minute/second system |
-| Hellenistic mechanical/inflow water clocks | Ptolemaic/Roman Egypt | Attested Greco-Egyptian technology | Historical late-period technology; do not project into New Kingdom reconstruction |
+Older reconstructions, especially that associated with Richard A. Parker, proposed an "old" lunistellar calendar whose year was regulated relative to Sirius/Sopdet and the lunar cycle. More recent scholarship has challenged treating that reconstruction as settled history. The existence of early lunar reckoning is much firmer than the exact intercalation and New-Year algorithm.
 
-## 1. The Egyptian civil calendar
+### Project classification
 
-### 1.1 Structure
+**Contested reconstruction.**
 
-The pharaonic civil calendar is the clearest deterministic Egyptian calendar system.
+Calendar must not expose a generic deterministic "Old Egyptian lunar calendar" until an implementation can name its chosen scholarly reconstruction, period, month-start rule, intercalation rule and validation evidence.
 
-A normal civil year contains exactly 365 days:
+### What is safe to claim
+
+- lunar observation was important very early in Egyptian chronology;
+- lunar months naturally contained 29 or 30 days;
+- later evidence shows Egyptian lunar days and lunar festivals remained culturally important;
+- a precise universal early lunistellar algorithm is not securely attested.
+
+## 2. Egyptian civil calendar
+
+### Historical character
+
+This is the clearest and most computationally deterministic indigenous Egyptian calendar.
+
+The year contains:
 
 ```text
 3 seasons
@@ -89,386 +108,235 @@ A normal civil year contains exactly 365 days:
 = 365 days
 ```
 
-The seasons are conventionally transliterated:
+The three seasons are conventionally transliterated:
 
 - `Ꜣḫt` / Akhet — inundation;
 - `Prt` / Peret — emergence/growing season;
 - `Šmw` / Shemu — harvest/dry season.
 
-Each season contains four numbered 30-day months. Official dates can therefore be expressed as, for example, "day 15, month 3 of Akhet". The five epagomenal days stand outside the twelve regular months.
+Each season contains four 30-day months. The five epagomenal days stand outside the twelve regular months.
 
-The civil year has no ordinary leap-day rule. Relative to the tropical/Julian year it therefore drifts by roughly one day every four years. The familiar approximately 1,460-Julian-year Sothic recurrence follows from this wandering structure; it must not be mistaken for proof that Egyptians maintained a separate universally operative "Sothic calendar".
+The pharaonic civil calendar has no ordinary leap-day rule, so it wanders through the solar seasons relative to the tropical year.
 
-### 1.2 Ten-day groups
+### Ten-day groupings
 
-The 30-day civil month was organised into three groups of ten days. Modern scholarship often calls these "decads" or ten-day weeks. Calendar may expose that structure as calendrical metadata, but should not automatically equate it with a modern seven-day week contract such as weekday/weekend semantics.
+The 30-day month was structured into three ten-day groups. These can be exposed as historically meaningful calendrical metadata, but they must not be made equivalent to the modern seven-day weekday/weekend cycle.
 
-### 1.3 Day boundary
+### Date form
 
-Most modern Egyptological summaries place the beginning of the Egyptian civil day at dawn, before sunrise. That is also compatible with the lunar rule in which a new lunar day could begin at dawn after the moon's morning invisibility had been established.
+For early and pharaonic presentation, **season + month number + day** is safer than pretending one immutable list of later month names applied throughout Egyptian history.
 
-Calendar must distinguish "day begins at dawn" from the separate question of exactly which solar altitude or observational criterion should be used in software. An astronomical altitude chosen for determinism is a reconstruction unless a specific historical source defines it.
-
-### 1.4 Month numbering and names
-
-The historically safest canonical civil coordinate is **season + month number + day**, because named months vary by period and their interpretation is itself part of an Egyptological debate.
-
-Later Egyptian, Greek and Coptic traditions preserve names associated with the twelve month positions. Representative correspondences include the following; spellings vary across transliteration systems and periods.
-
-| Civil position | Representative Egyptian name/form | Later Greek/Coptic form |
-| --- | --- | --- |
-| I Akhet | Djehuty / related forms | Thoth / Thout |
-| II Akhet | Pa-en-Ipet / related forms | Phaophi / Paope |
-| III Akhet | Hathor | Athyr / Hathor |
-| IV Akhet | Ka-her-ka / related forms | Choiak / Koiak |
-| I Peret | Ta-abet / related forms | Tybi / Tobi |
-| II Peret | Pa-en-Mekher / related forms | Mechir / Meshir |
-| III Peret | Pa-en-Amenhotep / related forms | Phamenoth / Paremhotep |
-| IV Peret | Pa-en-Renenutet / related forms | Pharmouthi / Parmouti |
-| I Shemu | Pa-en-Khonsu / related forms | Pachon / Pashons |
-| II Shemu | Pa-en-Int / related forms | Payni / Paoni |
-| III Shemu | Ipip / related forms | Epiphi / Epip |
-| IV Shemu | Mesut-Ra / related forms | Mesore / Mesori |
-
-These names must not be presented as a single immutable pharaonic list. The Ebers calendar, Senenmut material, Deir el-Medina sources, Ramesseum, Edfu and later Greek forms preserve related but non-identical name sets. Scholars disagree about whether some earlier name sets are specifically lunar-month names or changing civil-month names.
-
-### 1.5 What the current `egyptian-nabonassar` provider actually means
-
-Calendar's existing `egyptian-nabonassar` provider uses the **Egyptian civil month/day structure** but supplies a continuous year era anchored to the Nabonassar epoch:
+A historically conservative display may therefore resemble:
 
 ```text
-1 Thoth, year 1 = JDN 1448638
-                    ≈ 26 February 747 BCE (proleptic Julian convention)
+III Akhet, day 15
 ```
 
-That makes conversion deterministic, but the year number is an **astronomical/chronological era**, not the normal way a pharaonic Egyptian official dated a document in, for example, the reign of Hatshepsut or Ramesses II.
+with the year supplied by the selected Egyptian year-reckoning model, most authentically regnal dating when the historical context requires it.
 
-The provider label and documentation must continue to expose the Nabonassar-era qualification. A generic label such as "Ancient Egyptian calendar" would hide a material historical choice.
+### Day boundary
 
-## 2. Regnal dating and year labels
+Egyptological summaries commonly associate the Egyptian civil day with dawn. Software must distinguish that historical statement from a precise modern solar-altitude rule. Any exact astronomical threshold chosen to compute "dawn" is a reconstruction unless tied to a specific historical source.
 
-Egyptian civil month/day coordinates do not by themselves define the historical year label. For much of pharaonic history, years were tied to the reigning king.
+### Project classification
 
-### 2.1 Dynasty 1 and early event-named years
+**Attested core, deterministic arithmetic.**
 
-Early records can identify years by important events, such as cultic, building or ceremonial occurrences. This is closer to a named-year chronicle than to a continuously numbered era.
+This is the primary native Egyptian calendar structure.
 
-### 2.2 Count years in the Old Kingdom
+## 3. Egyptian regnal dating
 
-By late Dynasty 2 and into the Old Kingdom, years could be identified by a national count/census, with expressions equivalent to "year of the Nth count" and "year after the Nth count".
+### Historical character
 
-The old assumption that the count was mechanically biennial in every reign is no longer safe. Proposed patterns include changing frequency, annualisation and other administrative triggers. Calendar must therefore not derive absolute regnal years simply by doubling a count number.
+For much of pharaonic history Egyptians did not identify years using one indefinitely increasing national era. Dates were associated with the reigning king.
 
-### 2.3 Numbered regnal years
+Regnal dating changed over Egyptian history and therefore represents a family of year-label conventions layered on Egyptian civil month/day coordinates.
 
-From the First Intermediate Period/Middle Kingdom onward, numbered regnal years become normal, but even here the year boundary is period-sensitive.
+### Early event-named years
 
-Modern summaries indicate:
+In the earliest dynastic material, years could be distinguished by important events rather than by a simple continuously numbered regnal count.
 
-- in the Middle Kingdom, regnal years were associated with the civil New Year boundary, with accession-year handling not completely certain in all cases;
-- in the New Kingdom, the regnal count could run from accession/coronation anniversary to the next anniversary, still using civil-calendar months and days within the regnal year.
+### Census/count years
 
-A historically meaningful regnal formatter therefore needs ruler identity, accession chronology, coregency policy and period-specific year-boundary rules. It is not a trivial alternative year number on the existing Nabonassar provider.
+Old Kingdom material uses labels associated with royal counts or censuses, including "year of the Nth count" and "year after the Nth count". The older assumption that every count was rigidly biennial is not safe enough for a general conversion algorithm.
 
-### 2.4 Historical notation
+### Numbered regnal years
 
-A date such as the Akhenaten boundary-stela example can be represented structurally as:
+Later periods increasingly use numbered years of a ruler. The precise year boundary and accession treatment are period-sensitive, and coregencies create further chronological complications.
+
+A meaningful computational regnal formatter therefore requires at least:
+
+- ruler identity;
+- a chosen accession chronology;
+- accession/coregency policy;
+- period-specific year-boundary rules;
+- an explicit statement of uncertainty where absolute chronology is disputed.
+
+### Project classification
+
+**Attested historical notation; computational conversion is chronology-dependent.**
+
+A future `egyptian-regnal` mode must never pretend that all pharaonic regnal dates possess one undisputed BCE/Gregorian equivalent.
+
+## 4. Egyptian lunar date-keeping and festival reckoning
+
+### Historical character
+
+Lunar observation remained important after the civil calendar existed, especially in ritual and festival contexts. The strongest modern caution is terminological: surviving evidence does not always require a wholly independent parallel "lunar calendar" with its own autonomous year count. In many cases, lunar days and feasts can be understood as lunar reckoning operating **within or alongside civil dates**.
+
+Accordingly, Calendar uses the neutral term **lunar date-keeping** unless a particular provider implements a specifically defined independent lunar-calendar reconstruction.
+
+### Lunar month boundary
+
+Later Egyptian evidence supports a month beginning when the old waning crescent was no longer visible in the morning sky before sunrise. This differs from traditions that begin a month with first evening visibility of the waxing crescent.
+
+A lunation may therefore contain 29 or 30 days.
+
+### Lunar-day names
+
+Egyptian lunar days possessed names, but the surviving vocabulary varies by period and source. Complete late lists must not be projected unchanged into much earlier periods.
+
+### Project classification
+
+**Attested lunar practice; exact provider semantics must be period-specific.**
+
+An observational provider must state its visibility model and locality assumptions. A schematic provider must identify the historical scheme it follows.
+
+## 5. Late Egyptian schematic 25-year lunar cycle
+
+### Historical character
+
+Papyrus Carlsberg 9 preserves a late Egyptian schematic relation between lunar months and the 365-day Egyptian civil calendar.
+
+The arithmetic basis is:
 
 ```text
-Regnal year 6, IV Peret, day 13
+25 Egyptian civil years = 9,125 days
+309 mean lunations       ≈ 9,124.95 days
 ```
 
-The ruler is part of the date's historical context. Converting that to an absolute proleptic Gregorian/Julian date requires a chosen modern chronology, and early Egyptian absolute chronology remains uncertain at many points.
+The preserved scheme includes nine "great" years containing thirteen lunar months within a 25-year cycle. Its purpose is computational predictability, and it knowingly tolerates divergence from actual lunar visibility over time.
 
-For that reason, a future `egyptian-regnal` presentation should expose chronology provenance rather than pretending every pharaonic regnal date maps to one undisputed BCE day.
+This is historically important precisely because it is **schematic**, not because it proves that earlier Egyptian lunar practice used the same cycle.
 
-## 3. Lunar and lunistellar date-keeping
+### Project classification
 
-### 3.1 Early lunar reckoning
+**Attested late Egyptian schematic lunar system.**
 
-Recent specialist surveys agree that some form of lunar or lunistellar reckoning probably predates the civil calendar, but the exact early algorithm is not known.
+If implemented, it must be labelled by period/source and must not be projected backward as the universal Egyptian lunar calendar.
 
-A major historical proposal, associated especially with Richard Parker, reconstructed an "old" lunistellar calendar in which the new year was related to the new moon following the heliacal rising of Sirius/Sopdet. More recent scholarship has challenged whether such a sophisticated Sirius-regulated system existed that early, proposing simpler lunar counting associated with the inundation instead.
+# Part II — Native Egyptian time systems
 
-Calendar must therefore record the existence of the debate rather than encode Parker's model as settled fact.
+## Shared temporal principle: twelve day-hours and twelve night-hours
 
-### 3.2 Lunar date-keeping after the civil calendar
+Egyptian timekeeping developed around a twelvefold division of the day and a twelvefold division of the night. These were not simply twenty-four fixed modern SI hours.
 
-Lunar practice unquestionably remained important in cult and festival life after the civil calendar existed. What is disputed is whether this should always be called a **separate parallel lunar calendar**.
+In seasonal/temporal practice, daylight was divided into twelve parts and night into twelve parts. Their physical duration therefore changed with season and locality.
 
-Recent scholarship emphasises that many lunar feasts were recorded as lunar days falling within civil-calendar dates. This can be understood as lunar date-keeping operating alongside the civil calendar without requiring a wholly independent year/month numbering system.
+The Egyptian term `wnwt` is conventionally translated as "hour". It should not be silently equated with exactly 3,600 SI seconds.
 
-The project should therefore use the neutral phrase **lunar date-keeping** unless a particular provider explicitly implements a scholarly model of an independent lunar calendar.
+There is no evidence for a native Egyptian formal system equivalent to modern minutes and seconds. Calendar must never invent "Egyptian minutes" or "Egyptian seconds".
 
-### 3.3 Lunar month and day boundary
+## 1. Decanal / stellar night timekeeping
 
-The Egyptian lunar month was observational. A lunation could contain 29 or 30 days.
+### Historical character
 
-The best-supported later rule is that lunar day 1 begins when the old waning crescent is no longer visible in the morning sky before sunrise. If the crescent is still visible on lunar day 29, the current month continues to a 30th day; if it is no longer visible, the new lunation begins with the new day at dawn.
+Egyptian night-time reckoning used stars and star groups, especially the objects modern Egyptology calls **decans**. Diagonal star tables preserve ordered stellar material associated with the Egyptian calendar and twelve night divisions.
 
-This is not the same rule as a calendar that begins the month with the first evening visibility of the waxing crescent.
+The term **diagonal star table** is preferred over "diagonal star clock" because calling every surviving table a clock assumes a specific function that remains under scholarly reconstruction.
 
-### 3.4 Named lunar days
+### What is attested
 
-Individual lunar days had names, some tied to lunar phases, some ordinal/numerical and some cultic. Complete surviving lists of all 30 lunar-day names belong to the Ptolemaic/Roman evidence, notably Edfu; earlier periods attest only subsets and variants.
+- ordered decanal/star material;
+- twelve-row structures in the diagonal tables;
+- association with ten-day divisions of the Egyptian civil year;
+- a long Egyptian tradition of using stellar phenomena to reckon the night.
 
-A future lunar provider should therefore version its vocabulary by evidence period. It must not back-project a late Edfu list unchanged into the Old or Middle Kingdom.
+### What is reconstructed
 
-### 3.5 The 25-year Papyrus Carlsberg 9 scheme
+The exact mapping from every surviving table to a continuously running modern-style timestamp is not directly preserved. A provider must therefore reconstruct observation rules explicitly rather than simply reading table cells as modern hours.
 
-Papyrus Carlsberg 9 preserves a late schematic relation between the Egyptian 365-day civil calendar and lunar months. Twenty-five Egyptian civil years contain 9,125 days, very close to 309 mean lunations. The preserved scheme includes nine "great" years with thirteen lunar months within a 25-year cycle.
+### Project classification
 
-The scheme is valuable because it is deterministic and historically attested, but its predictive convenience deliberately tolerates drift from actual lunar visibility. It belongs to Ptolemaic/Roman calendrical practice and must not be presented as the universal mechanism behind earlier Egyptian lunar observance.
+**Attested stellar tradition; exact clock algorithm is reconstruction-dependent.**
 
-## 4. Reform attempts and late Egyptian calendars
+A future stellar/decanal provider must be separate from the water-clock civil-night provider.
 
-### 4.1 Canopus Decree, 238 BCE
+## 2. Seasonal daylight hours — shadow-clock and sundial tradition
 
-Ptolemy III's Canopus Decree ordered an additional epagomenal day every fourth year, which would have arrested the civil calendar's seasonal drift.
+### Historical character
 
-The decree is attested; universal implementation is not. Scholarship has proposed limited or short-lived use, including possible adoption in Alexandria, but the traditional 365-day civil calendar continued.
+Egyptians used the Sun's shadow to reckon daytime hours. Surviving shadow clocks and sundials demonstrate a native daylight timekeeping tradition in which the twelve daylight hours were seasonal rather than permanently equal SI durations.
 
-Calendar should therefore model the Canopus reform only if a bounded provider can state where and when it applies. It must not rewrite the ordinary pharaonic civil provider as though the reform had universally succeeded.
+Shadow clocks and sundials are **instruments**, not automatically separate time systems. For Calendar they belong to one major historical family unless a particular instrument is shown to encode materially different hour semantics.
 
-### 4.2 Alexandrian/Augustan calendar
+### Computational reconstruction
 
-Under Augustus, Egypt received a successful four-year intercalation rule: three 365-day years followed by a year with a sixth epagomenal day. This produced the Alexandrian calendar, structurally close to the later Coptic calendar.
+For a deterministic modern implementation, Calendar may divide an explicitly chosen solar daylight interval into twelve equal temporal hours. The exact boundaries — for example computed sunrise and sunset — must be named as a **reconstruction**, not asserted as the universal definition encoded by every Egyptian instrument.
 
-This is a distinct historical calendar and is suitable for a future provider if the project needs Roman-Egyptian civil dating separate from Coptic Anno Martyrum year numbering.
+### Project classification
 
-### 4.3 Coptic continuity
+**Attested seasonal daylight-hour system; exact astronomical boundary convention reconstructed.**
 
-The Coptic calendar preserves the Alexandrian 12 × 30-day structure plus 5/6 epagomenal days, but its Christian era and later liturgical identity make it a separate calendar, not merely a UI alias for pharaonic Egypt.
+## 3. Seasonal night hours — outflow water-clock tradition
 
-Calendar already has a Coptic provider and should keep these identities distinct.
+### Historical character
 
-## 5. Foreign calendars actually used in Egypt
+Surviving Egyptian outflow water clocks provide exceptionally strong physical evidence for seasonal night-hour measurement.
 
-Ancient Egypt was repeatedly part of larger political and cultural systems. A complete historical catalogue must therefore record calendars used **in Egypt** without pretending they were all indigenous Egyptian calendars.
+The Karnak water clock associated with Amenhotep III has twelve interior columns of hour marks associated with the twelve civil months. The changing calibration reflects changing night length through the year.
 
-### 5.1 Babylonian/Aramaic calendar at Elephantine
+Water drained continuously between hour marks. This matters for modern presentation: the instrument gives physical evidence of continuous progress through an hour even though the Egyptians did not have an attested minute/second notation.
 
-Aramaic papyri from Persian-period Elephantine use a Babylonian calendar alongside Egyptian civil dating. This is important evidence for double calendation in Egypt, but it is not a native Egyptian calendar provider.
+### Civil-night reconstruction
 
-### 5.2 Macedonian calendar in Ptolemaic Egypt
+Modern scholarship distinguishes stellar/decanal astronomical night from the civil-night interpretation of New Kingdom water clocks. A practical provider may model the civil night from computed sunset to following sunrise and divide it into twelve temporal hours, but that must be labelled a **New Kingdom civil/water-clock reconstruction**, not a simulation of every stellar system.
 
-Ptolemaic administration used Macedonian calendrical forms, and double-dated documents correlate Macedonian and Egyptian dates. The Macedonian system changed and interacted with Egyptian practice over time.
+### Project classification
 
-If Calendar eventually supports a historical Ptolemaic Macedonian provider, it should be named as such and not hidden under "Egyptian".
+**Attested instrument and seasonal-hour principle; exact software boundaries reconstructed.**
 
-### 5.3 Julian/Roman and later provincial practice
+This remains the strongest candidate for the first production Egyptian night clock.
 
-Roman rule introduced or strengthened Julian calendrical use alongside the Alexandrian reformed Egyptian calendar. Late antique documents may therefore require explicit calendar provenance rather than one generic "Roman Egypt date".
+## 4. Ramesside stellar timekeeping
 
-## 6. Time of day: the attested Egyptian core
+### Historical character
 
-### 6.1 Twelve hours of day and twelve hours of night
+Ramesside astronomical material represents a later stellar timekeeping tradition distinct in form from the earlier Middle Kingdom diagonal star tables. Surviving star tables describe observations of stars relative to the human body or a sighting framework and are important evidence for night-time reckoning.
 
-Egyptian timekeeping developed separate twelvefold divisions of daylight and night. By the New Kingdom, the term `wnwt` is conventionally translated as "hour".
+### Caution
 
-These are **seasonal/temporal hours**, not automatically equal SI hours. Daytime hours become longer when the daylight interval becomes longer; night hours change in the opposite direction.
+It is unsafe to treat a Ramesside star table as a ready-made digital clock algorithm. The surviving texts/tables require interpretation, and not every scholarly reconstruction agrees on their practical use or precision.
 
-The historical day and night systems should not be flattened into a modern 00–23 sequence unless a particular late scientific source explicitly uses such a convention.
+### Project classification
 
-### 6.2 No attested Egyptian minutes or seconds
+**Attested source family; computational clock semantics remain research-dependent.**
 
-There is no evidence for a formal pharaonic system equivalent to modern minutes and seconds. General words for shorter intervals or moments do not establish a numbered sexagesimal or decimal subdivision of the `wnwt`.
+Calendar should preserve this as a distinct historical family until research shows whether it deserves a separate provider or should become a variant of a broader Egyptian stellar clock.
 
-Calendar must never invent "Egyptian minutes" or "Egyptian seconds".
+## 5. Merkhet / meridian-transit stellar timekeeping
 
-### 6.3 Continuous measurement is not the same as named subdivisions
+### Historical character
 
-A shadow moves continuously and water drains continuously. Egyptian instruments could therefore expose progress between hour boundaries without requiring a named minute unit.
+Egyptian astronomers used sighting/alignment methods associated with the **merkhet** and stellar meridian observations. Such methods could establish north-south alignment and support night-time reckoning from stellar transits.
 
-This distinction is the basis for Calendar's allowed modern precision extension: an exact phase through a historical hour may be computed for file/event timestamps, but that phase must be visibly modern interpolation.
+The instrument and observational practice are genuinely Egyptian. That does not automatically mean "merkhet time" was a separately named public time scale analogous to a modern clock mode.
 
-## 7. Stellar and decanal timekeeping
+### Project classification
 
-### 7.1 Decans
+**Attested instrument/observational practice; provider status undecided.**
 
-Decans are stars or asterisms used in Egyptian astronomical lists and tables. The familiar 36-decan organisation is related to ten-day divisions of the civil year and to stellar phenomena across the year.
+Calendar should keep this family documented separately while determining whether its computational semantics are sufficiently distinct from broader stellar/decanal timekeeping to justify a separate selector entry.
 
-The connection between decans and night-hour reckoning is historically important, but the surviving evidence does not give one universal star-clock algorithm valid across all periods.
+# Precision and modern software
 
-### 7.2 Middle Kingdom diagonal star tables
+## Preserve the canonical instant
 
-Painted diagonal star tables survive primarily on Middle Kingdom coffins. Older literature commonly calls them "diagonal star clocks" or "diagonal star calendars". The Ancient Egyptian Astronomy Database deliberately prefers **diagonal star tables** because "clock" and "calendar" pre-judge their function.
+Historical presentation must never destroy timestamp precision.
 
-Any Calendar implementation must respect that scholarly caution. The presence of a tabular 36-decan structure and twelve deep-night divisions is not, by itself, sufficient to reconstruct a single exact timestamp algorithm.
+A filesystem timestamp, event instant or database value remains canonical. Egyptian presentation is derived from it.
 
-### 7.3 Astronomical night versus civil night
-
-Decanal/star-based schemes may concern astronomical darkness, while surviving Eighteenth-Dynasty water-clock evidence has been interpreted as timing civil night from sunset to sunrise.
-
-Those are materially different boundary models. Calendar must never silently use one as a substitute for the other.
-
-### 7.4 Ramesside star tables
-
-Ramesside star tables constitute a separate body of evidence. Their exact observational method and even their interpretation as hour clocks have been disputed. Serious proposals include stellar transit/timekeeping interpretations and non-clock cosmological or lunar-house interpretations.
-
-Therefore a public `egyptian-ramesside-star` clock is **not admission-ready**. It would require an explicit scholarly model, source corpus, epoch handling and validation against the tables themselves.
-
-## 8. Solar timekeeping
-
-### 8.1 Shadow clocks
-
-New Kingdom shadow clocks use the Sun's shadow to indicate parts of the daylight period. Surviving designs and reconstructions differ; some depend on shadow length, others on orientation and instrument geometry.
-
-They support the historical reality of seasonal daytime reckoning but do not prove that every Egyptian day-hour was generated by one universal sunrise/sunset formula.
-
-### 8.2 Sundials
-
-Later Egyptian sundials include horizontal, sloping, concave and portable forms. Some surviving examples include seasonal adjustments or day curves.
-
-A sundial is an instrument family, not automatically a separate clock system. A provider must identify the exact hour convention encoded by the chosen class of dial.
-
-### 8.3 Obelisks
-
-Large monuments can cast useful shadows, but Calendar should avoid the popular oversimplification that every obelisk was primarily a public clock. Monument function must be established source by source.
-
-## 9. Water clocks
-
-### 9.1 New Kingdom evidence
-
-The earliest preserved Egyptian water clocks belong to the New Kingdom. An inscription of the official Amenemhet under the early Eighteenth Dynasty describes a water-clock instrument; the best-known surviving example comes from the reign of Amenhotep III at Karnak.
-
-### 9.2 Seasonal calibration
-
-The Karnak outflow clock contains month-dependent scales. Water drains continuously and the falling level crosses hour marks. The differing scales are evidence that night-hour duration was adjusted seasonally.
-
-### 9.3 Civil-night reconstruction
-
-Cotterell, Dickson and Kamminga's reanalysis argues that New Kingdom outflow water clocks may have timed **civil night from sunset to sunrise**, in contrast to decanal astronomical-night schemes.
-
-This makes a water-clock-centred New Kingdom civil temporal model one of the strongest candidates for a deterministic Egyptian clock provider, provided the UI says explicitly that it is a reconstruction.
-
-### 9.4 Accuracy
-
-A reconstructed clock may mathematically calculate exact boundaries to microsecond precision, but that is not historical instrument accuracy. Estimates that a surviving design could potentially achieve accuracy on the order of modern minutes must not be converted into claims of second-level pharaonic observation.
-
-Canonical computer timestamps and reconstructed historical measurement accuracy are separate concepts.
-
-## 10. Merkhets, transits and observing practice
-
-The merkhet is an attested Egyptian astronomical/surveying instrument involving a plumb line and sighting/alignment. In later evidence it could be used with selected stars and a north-south meridian to establish night-time positions/hours.
-
-Calendar should classify a merkhet as an **observational method/instrument**, not automatically as another time scale. If future scholarship justifies a specific meridian-transit clock convention, that convention may become a provider; the instrument name alone is not enough.
-
-## 11. Ptolemaic and Roman Egypt: seasonal and equal hours
-
-By the Hellenistic and Roman periods, Egypt contains both inherited Egyptian practice and Greek/Roman scientific conventions.
-
-### 11.1 Seasonal hours
-
-Greek practice in Ptolemaic Egypt clearly uses numbered seasonal hours of day and night. The conceptual ancestry is Egyptian, but Greek mathematical astronomy formalised seasonal hours geometrically.
-
-This should be described as Greco-Egyptian/Hellenistic practice where appropriate, not projected unchanged into the Old Kingdom.
-
-### 11.2 Equinoctial/equal hours
-
-Greek astronomical and scientific work also used equal/equinoctial hours: 24 equal divisions of the full day. Such hours are important for scientific observations and later exact astronomy, but they do not establish Egyptian pharaonic minutes and seconds.
-
-A future provider should identify whether it is presenting seasonal civil hours or equinoctial astronomical hours.
-
-### 11.3 Mechanical clocks
-
-Hellenistic Alexandria contributed substantially to more sophisticated water-clock technology, including inflow/mechanical designs associated with Greek engineering. These belong to the history of timekeeping **in Egypt**, but must remain historically distinct from New Kingdom pharaonic outflow clocks.
-
-## 12. Dawn, sunrise, sunset and twilight
-
-Boundary choice is one of the most sensitive modelling questions.
-
-General Egyptological summaries often say the Egyptian day began at dawn. Specialist work on stellar and shadow-clock practice, however, allows transitional intervals around sunrise and sunset in which the relevant observation method changes or no numbered hour is straightforwardly assigned. Water-clock scholarship can instead support a sunset-to-sunrise civil night.
-
-There is therefore no defensible universal formula such as:
-
-```text
-all Egyptian day-hours = sunrise-to-sunset / 12
-all Egyptian night-hours = sunset-to-sunrise / 12
-```
-
-for every period and instrument.
-
-A deterministic provider must state its boundary convention as part of its identity.
-
-## 13. Proposed provider taxonomy
-
-### 13.1 Currently implemented
-
-#### `egyptian-nabonassar`
-
-Status: **implemented**.
-
-Meaning: wandering 365-day Egyptian civil structure with continuous Nabonassar-era year numbering. Useful and deterministic, but not generic pharaonic regnal dating.
-
-### 13.2 Strong candidates for future implementation
-
-#### New Kingdom civil temporal time
-
-Possible stable identity after implementation review:
-
-```text
-egyptian-temporal-new-kingdom
-```
-
-Model: twelve seasonal day-hours plus twelve seasonal night-hours, with explicitly documented solar/day and water-clock/civil-night reconstruction boundaries.
-
-This is the most defensible first Egyptian clock provider because the physical instrument evidence is comparatively strong.
-
-#### Alexandrian reformed Egyptian calendar
-
-Possible identity:
-
-```text
-egyptian-alexandrian
-```
-
-Model: Egyptian month structure with a sixth epagomenal day every fourth year under the Augustan reform. Year-numbering policy must be specified separately from Coptic Anno Martyrum.
-
-### 13.3 Research-blocked candidates
-
-#### Early lunar/lunistellar calendar
-
-Blocked by disagreement over the existence and regulation of an independent parallel lunar calendar after the civil calendar, and by uncertainty over early intercalation/Sirius rules.
-
-#### Late lunar schematic calendar
-
-A bounded Ptolemaic/Roman provider based on Papyrus Carlsberg 9 may be possible, but it must be labelled as that late schematic cycle, not "the Egyptian lunar calendar".
-
-#### Regnal dating
-
-Requires a ruler chronology database, accession dates, coregencies, period-specific regnal-year boundary rules and explicit modern chronology provenance.
-
-#### Decanal/diagonal-star time
-
-Requires a source-period-specific stellar model and a defensible interpretation of table function. Not ready as a generic clock.
-
-#### Ramesside stellar time
-
-Blocked by competing interpretations of the surviving tables.
-
-### 13.4 Not separate providers by themselves
-
-The following are instruments or techniques, not automatically independent time scales:
-
-- shadow clock;
-- sundial;
-- water clock;
-- merkhet;
-- obelisk shadow;
-- a named astronomical table without an admitted interpretation.
-
-Calendar modes represent **time coordinate systems**, not museum object categories.
-
-## 14. Precision without invented historical units
-
-### 14.1 Canonical timestamp remains authoritative
-
-A filesystem timestamp, event time or stored instant remains in its canonical representation. Historical rendering never rewrites the underlying value and never controls sorting or comparison.
-
-### 14.2 Exact phase through a reconstructed hour
-
-For a canonical instant `T` inside a reconstructed temporal hour bounded by exact computational instants `A` and `B`, Calendar may calculate:
+For an instant `T` inside a reconstructed Egyptian temporal hour bounded by `A` and `B`, Calendar may compute:
 
 ```text
 phase = (T - A) / (B - A)
@@ -476,118 +344,97 @@ phase = (T - A) / (B - A)
 
 with `0 <= phase < 1`.
 
-The fraction is a **modern precision extension**. It corresponds conceptually to continuous progress of a shadow or water level, but it is not an Egyptian minute or second.
+The phase can retain the precision supplied by the source timestamp.
 
-### 14.3 Presentation contexts
+## Do not invent historical subdivisions
 
-Ordinary historical display should prefer native granularity:
+The phase is a **modern precision extension**, not an Egyptian minute or second.
+
+A historically conservative ordinary display may say:
 
 ```text
 5th hour of the night
 ```
 
-Precision-sensitive display may append a clearly modern interpolation:
+A precision-sensitive human display may say:
 
 ```text
 5th hour of the night · 63.7% elapsed
 ```
 
-A detailed or forensic surface should retain access to the exact canonical/conventional timestamp.
+provided the UI clearly identifies the fractional component as modern interpolation.
 
-### 14.4 Egyptian fractions
+A graphical indicator is also acceptable where it represents continuous shadow or water-level progress without inventing an ancient unit name.
 
-Egyptian mathematics used unit fractions extensively. That does **not** establish an attested timestamp notation such as "1/2 + 1/8 of the fifth hour". Such a display may only be added as an explicitly modern stylistic reconstruction after a separate evidence review.
+Egyptian unit fractions are historically authentic mathematics, but there is currently insufficient evidence that Egyptians routinely wrote clock timestamps as fractional `wnwt`. Calendar must therefore not present an Egyptian-fraction timestamp as attested notation unless specific evidence is established later.
 
-## 15. Naming and UI rules
+# Relationship among the ten families
 
-Selector labels must expose the historical model rather than use broad names that imply universal coverage.
+The five date families and five time families are **independent historical models**. They did not all coexist unchanged, and the project must not fabricate one master "Egyptian date/time standard" spanning three millennia.
 
-Good examples:
+Examples:
 
-```text
-Egyptian civil — Nabonassar astronomical era
-Ancient Egyptian temporal time — New Kingdom civil reconstruction
-Egyptian Alexandrian calendar — Augustan reform
-Egyptian lunar scheme — Papyrus Carlsberg 9 (late-period reconstruction)
-```
+- civil dates can be paired historically with regnal year labels;
+- lunar festival reckoning can coexist with civil dates without implying a completely separate civil administration calendar;
+- Middle Kingdom diagonal star material must not automatically be paired with a New Kingdom water-clock model and described as one contemporary system;
+- a modern user may intentionally combine independently selectable Egyptian date and time modes, but the UI must not claim that every combination is historically attested.
 
-Bad examples when more precision is known:
+# Implementation admission order
 
-```text
-Ancient Egyptian calendar
-Egyptian time
-Pharaoh clock
-```
+Historical importance alone does not make a provider ready. The recommended admission order is based on evidential and computational strength.
 
-The selected date system and selected clock system remain independent. A user may deliberately combine models from different periods, but System Settings must not describe the resulting pair as one historically attested timestamp standard.
+### Date systems
 
-## 16. Validation requirements
+1. **Egyptian civil calendar** — strongest deterministic arithmetic foundation.
+2. **Egyptian regnal dating** — after a defensible ruler/accession chronology data model exists.
+3. **Late Egyptian 25-year schematic lunar cycle** — deterministic once the source cycle is fully encoded and validated.
+4. **Egyptian lunar date-keeping** — after observational/schematic variants and period vocabulary are defined.
+5. **Early lunar/lunistellar reckoning** — remain research-blocked while the governing reconstruction is contested.
 
-Any Egyptian provider must prove at least:
+### Time systems
 
-- its exact historical scope and evidence class;
-- epoch, year-label and day-boundary rules where relevant;
-- locality/astronomical dependencies;
-- explicit distinction between attested rule and project reconstruction;
-- no silent projection of late names/rules into earlier periods;
-- no invented minutes, seconds, leap rules or year eras;
-- exact canonical timestamp preservation;
-- unavailable/ambiguous states rather than plausible fabrication;
-- cross-checks against independent scholarly calculations or surviving source examples;
-- help/provenance that lets a specialist identify which historical model is being computed.
+1. **Seasonal night hours / outflow water-clock reconstruction** — strongest surviving instrument basis.
+2. **Seasonal daylight hours / shadow-clock-sundial reconstruction** — strong instrument basis with explicit solar-boundary reconstruction.
+3. **Decanal / stellar night timekeeping** — after an admission-grade stellar observation model exists.
+4. **Ramesside stellar timekeeping** — after source-specific observation semantics are validated.
+5. **Merkhet / meridian-transit timekeeping** — expose separately only if research establishes a distinct reproducible clock contract.
 
-A provider is not admitted merely because it produces aesthetically convincing output.
+This ordering is not a claim of historical chronology. It is an engineering admission order based on how strongly a deterministic model can presently be defended.
 
-## 17. Open research questions that must remain open in the UI
+# Validation requirements
 
-The project currently treats the following as unresolved rather than choosing silently:
+Any Egyptian provider must test the claims specific to its historical model. As applicable, validation must include:
 
-- how the earliest Predynastic/Protodynastic lunar year was regulated;
-- whether Parker's Sirius-regulated "old lunar calendar" existed in the proposed form;
-- whether a fully independent lunar calendar continued in parallel with the civil calendar throughout pharaonic history, versus lunar date-keeping embedded in civil dates;
-- the historical status and interpretation of the Ebers calendar;
-- the exact original operational interpretation of Middle Kingdom diagonal star tables;
-- the detailed observational algorithm behind Ramesside star tables;
-- whether particular twilight intervals should be numbered, transitional or unavailable in a strict stellar/shadow reconstruction;
-- the frequency of Old Kingdom census/count years in individual reigns;
-- precise regnal-year allocation around accessions and coregencies for many rulers;
-- the extent and duration of practical adoption of the Canopus reform.
+- attested calendar structure and exceptional days;
+- 29/30-day lunar behaviour where relevant;
+- exact schematic-cycle arithmetic where relevant;
+- ruler/accession/coregency data provenance for regnal dating;
+- twelve day-hours and/or twelve night-hours where required;
+- seasonal change in temporal-hour SI duration;
+- astronomical boundary transitions;
+- location requirements and invalid/missing coordinates;
+- separation of stellar and water-clock night models;
+- exact monotonic within-hour phase for modern precision contexts;
+- canonical timestamp preservation;
+- absence of invented minute/second terminology;
+- period-appropriate labels and vocabulary;
+- explicit unavailable state where the evidence or physical event cannot establish a value.
 
-A future discovery or stronger scholarly consensus may change these classifications. The documentation should be updated before the implementation is broadened.
+A plausible-looking value is not a substitute for an evidence-backed model.
 
-## 18. Evidence and references
+# Principal references
 
-The project uses references for specific claims rather than treating any single work as universal authority.
+These sources support different parts of the catalogue; none is treated as blanket authority for every reconstruction.
 
-### General Egyptian chronology and timekeeping
+- Janice Kamrin, **"Telling Time in Ancient Egypt"**, The Metropolitan Museum of Art, 2017. Overview of the civil calendar, regnal dating, lunar practice, twelve day/night hours, decans, shadow clocks, sundials and water clocks; explicitly notes the absence of tracked minutes/seconds. <https://www.metmuseum.org/essays/telling-time-in-ancient-egypt>
+- Rita Gautschy, **"Lunar Calendar"**, UCLA Encyclopedia of Egyptology, 2024. Current survey of Egyptian lunar reckoning, the debate over independent lunar calendars, lunar-day rules and the Papyrus Carlsberg 9 25-year scheme. <https://escholarship.org/content/qt4zq1z7q1/qt4zq1z7q1.pdf>
+- Ancient Egyptian Astronomy Database, McMaster University. Scholarly catalogue of decans, diagonal star tables, sundials, water clocks and astronomical representations. The project explicitly prefers **diagonal star table** over terms that assume a clock/calendar function. <https://aea.mcmaster.ca/>
+- Sarah Symons, **"Ancient Egyptian astronomy: timekeeping and cosmography in the New Kingdom"**, doctoral thesis, University of Leicester. Detailed study of stellar timekeeping, shadow clocks, sundials and New Kingdom astronomical practice. <https://figshare.le.ac.uk/articles/thesis/Ancient_Egyptian_astronomy_timekeeping_and_cosmography_in_the_new_kingdom/10097984>
+- B. Cotterell, F. P. Dickson and J. Kamminga, **"Ancient Egyptian water-clocks: A reappraisal"**, *Journal of Archaeological Science* 13(1), 1986, 31–50, DOI 10.1016/0305-4403(86)90025-7. Analysis of seasonal night-hour calibration and the distinction between astronomical and civil night.
+- Richard A. Parker, **The Calendars of Ancient Egypt**, Studies in Ancient Oriental Civilization 26, University of Chicago Press / Oriental Institute, 1950. Foundational study; still important but superseded or disputed on several lunar-calendar questions by later scholarship. <https://isac.uchicago.edu/sites/default/files/uploads/shared/docs/saoc26.pdf>
 
-- Janice Kamrin, **"Telling Time in Ancient Egypt"**, The Metropolitan Museum of Art, 2017. Civil calendar structure, ten-day groups, dawn day boundary, lunar practice, regnal dating overview, 12 day/night hours and lack of attested minutes/seconds. <https://www.metmuseum.org/essays/telling-time-in-ancient-egypt>
-- UCL Digital Egypt, **"Calendar"**. Egyptian/Alexandrian/Coptic month structure and later month-name correspondences. <https://www.ucl.ac.uk/museums-static/digitalegypt/chronology/calendar.html>
-- UCL Digital Egypt, **"Measuring time in Egypt"**. Water clocks, sundials and shadow clocks. <https://www.ucl.ac.uk/museums-static/digitalegypt/astro/clocks.html>
-- Sacha Stern, **Calendars in Antiquity: Empires, States, and Societies**, Oxford University Press, 2012, chapter "The Egyptian Calendar". Civil, lunar, Sothic/reform and Ptolemaic calendar problems.
-- Marshall Clagett, **Ancient Egyptian Science, Volume II: Calendars, Clocks, and Astronomy**, American Philosophical Society, 1995. Major source collection and historical discussion.
-- Juan Antonio Belmonte and José Lull, **Astronomy of Ancient Egypt: A Cultural Perspective**, Springer, 2023. Recent comprehensive treatment; important for disputed lunar/calendar interpretations.
+# Governing rule
 
-### Lunar date-keeping
+The project documents and implements **the Egyptian systems themselves**, not every later or imported system that happened to be used in Egypt.
 
-- Rita Gautschy, **"Lunar Calendar"**, UCLA Encyclopedia of Egyptology, 2024, DOI 10.5070/G9.3898. Current specialist survey of early lunar reckoning, the debate over later independent lunar calendars, lunar-day observation, month names and Papyrus Carlsberg 9. <https://escholarship.org/uc/item/4zq1z7q1>
-- Leo Depuydt, **Civil Calendar and Lunar Calendar in Ancient Egypt**, Peeters, 1997. Major argument for a continuing lunar calendar; used with later critiques.
-- Richard A. Parker, **The Calendars of Ancient Egypt**, SAOC 26, Oriental Institute, 1950. Foundational reconstruction and source collection; historically indispensable but several conclusions are now disputed or superseded. <https://isac.uchicago.edu/sites/default/files/uploads/shared/docs/saoc26.pdf>
-
-### Stellar astronomy and clock evidence
-
-- Sarah Symons, **"Ancient Egyptian astronomy: timekeeping and cosmography in the New Kingdom"**, doctoral thesis, University of Leicester. Detailed treatment of diagonal star tables/clocks, Ramesside tables, shadow clocks and sundials. <https://figshare.le.ac.uk/articles/thesis/Ancient_Egyptian_astronomy_timekeeping_and_cosmography_in_the_new_kingdom/10097984>
-- Ancient Egyptian Astronomy Database, McMaster University. Current scholarly catalogue of decans, diagonal star tables, astronomical representations, sundials and water clocks; notably prefers the neutral term "diagonal star tables". <https://aea.mcmaster.ca/>
-- B. Cotterell, F. P. Dickson and J. Kamminga, **"Ancient Egyptian water-clocks: A reappraisal"**, *Journal of Archaeological Science* 13(1), 1986, 31–50, DOI 10.1016/0305-4403(86)90025-7. Seasonal night-hours and civil-night versus astronomical-night distinction.
-
-### Hellenistic/Roman Egypt
-
-- Kassandra J. Miller, **Time and Ancient Medicine: How Sundials and Water Clocks Changed Medical Science**, Oxford University Press, 2023. Seasonal and equinoctial hours in Greco-Roman practice.
-- Institute for the Study of the Ancient World, **Time and Cosmos in Greco-Roman Antiquity** materials. Greek adoption/formalisation of seasonal hours and later instrument culture. <https://isaw.nyu.edu/exhibitions/time-cosmos/>
-- Oxford Handbook material on calendrical time and Egyptian calendars, including the civil calendar, lunar/cultic practice, Canopus reform and Augustan Alexandrian reform.
-
-## Admission rule
-
-The correct goal is not to make Egypt look neat. The correct goal is to make every displayed date or time traceable to a specific historical convention, source class and reconstruction policy.
-
-When the evidence supports several systems, Calendar should expose several clearly named systems. When the evidence is contested, the disagreement belongs in the contract. When no deterministic interpretation can yet be defended, unsupported is more accurate than plausible-looking output.
+Where the evidence gives a deterministic system, implement it faithfully. Where it gives several plausible reconstructions, name the reconstruction. Where it gives an instrument but not a distinct time scale, do not manufacture one. Where the evidence is insufficient, unsupported is more historically accurate than a convenient invention.
