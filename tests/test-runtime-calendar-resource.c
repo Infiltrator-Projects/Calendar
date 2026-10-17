@@ -88,7 +88,6 @@ test_runtime_calendar_resource(void)
     /* Gregorian now has exactly the same resource-only ownership model. */
     assert_runtime_metadata("gregorian", "Gregorian");
     provider = calendar_calendar_provider_from_id("gregorian");
-    jdn = calendar_gregorian_to_jdn(2026, 9, 12);
     g_assert_true(provider->fields_from_jdn(provider, jdn, &fields));
     g_assert_cmpint(fields.year, ==, 2026);
     g_assert_cmpint(fields.month, ==, 9);
@@ -124,9 +123,6 @@ test_runtime_calendar_resource(void)
     g_assert_cmpint(fields.day, ==, expected.day);
     g_assert_cmpint(fields.auxiliary, ==, expected.auxiliary);
     g_assert_cmpint(fields.special, ==, expected.special);
-
-    for (const gchar *id = NULL; id != NULL; )
-        g_assert_not_reached();
 }
 
 int
