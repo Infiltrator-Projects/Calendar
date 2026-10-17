@@ -104,9 +104,10 @@ def release_notes() -> str:
     return "\n".join(notes) + "\n"
 
 
-def expected_assets(version: str) -> tuple[str, str]:
+def expected_assets(version: str) -> tuple[str, str, str]:
     return (
         f"calendar_{version}_amd64.deb",
+        f"infiltrator-calendar-resources_{version}_amd64.deb",
         f"calendar-{version}-local-folder.run",
     )
 
@@ -117,9 +118,8 @@ def create_handoff(dist: Path, source_sha: str) -> None:
         fail(f"invalid source SHA: {source_sha!r}")
     dist.mkdir(parents=True, exist_ok=True)
 
-    deb_name, installer_name = expected_assets(version)
     assets = []
-    for name in (deb_name, installer_name):
+    for name in expected_assets(version):
         path = dist / name
         if not path.is_file() or path.stat().st_size <= 0:
             fail(f"qualified release asset is missing or empty: {path}")
@@ -177,8 +177,8 @@ def verify_handoff(dist: Path, expected_sha: str, github_env: Path | None) -> No
         )
     if tag != f"v{version}":
         fail(f"release manifest tag does not match version {version}")
-    if not isinstance(assets, list) or len(assets) != 2:
-        fail("release manifest must describe exactly two assets")
+    if not isinstance(assets, list) or len(assets) != 3:
+        fail("release manifest must describe exactly three assets")
 
     expected_names = set(expected_assets(version))
     seen: dict[str, dict[str, object]] = {}
@@ -214,8 +214,9 @@ def verify_handoff(dist: Path, expected_sha: str, github_env: Path | None) -> No
     if github_env is None:
         return
 
-    deb_name, installer_name = expected_assets(version)
+    deb_name, resources_name, installer_name = expected_assets(version)
     deb = seen[deb_name]
+    resources = seen[resources_name]
     installer = seen[installer_name]
     values = {
         "RELEASE_VERSION": version,
@@ -225,6 +226,10 @@ def verify_handoff(dist: Path, expected_sha: str, github_env: Path | None) -> No
         "RELEASE_DEB_NAME": deb_name,
         "RELEASE_DEB_SHA256": str(deb["sha256"]),
         "RELEASE_DEB_SIZE": str(deb["size"]),
+        "RELEASE_RESOURCES_DEB": str(dist / resources_name),
+        "RELEASE_RESOURCES_DEB_NAME": resources_name,
+        "RELEASE_RESOURCES_DEB_SHA256": str(resources["sha256"]),
+        "RELEASE_RESOURCES_DEB_SIZE": str(resources["size"]),
         "RELEASE_INSTALLER": str(dist / installer_name),
         "RELEASE_INSTALLER_NAME": installer_name,
         "RELEASE_INSTALLER_SHA256": str(installer["sha256"]),
