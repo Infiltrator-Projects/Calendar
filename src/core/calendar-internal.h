@@ -22,15 +22,15 @@ G_BEGIN_DECLS
 typedef enum
 {
     /*
-     * Local implementation slots only. Persisted identity and Common metadata
-     * are joined by stable calendar ID in calendar-registry.c; these numeric
-     * values must never be treated as Common catalogue positions.
+     * Local compiled implementation slots only. Persisted identity and Common
+     * metadata are joined by stable calendar ID in calendar-registry.c; these
+     * numeric values must never be treated as Common catalogue positions.
+     * Native filesystem resources have no slot in this enum.
      */
     CALENDAR_CALENDAR_MODE_GREGORIAN,
     CALENDAR_CALENDAR_MODE_ISO_WEEK,
     CALENDAR_CALENDAR_MODE_JULIAN,
     CALENDAR_CALENDAR_MODE_REVISED_JULIAN,
-    CALENDAR_CALENDAR_MODE_HEBREW,
     CALENDAR_CALENDAR_MODE_ISLAMIC_UMM_AL_QURA,
     CALENDAR_CALENDAR_MODE_ISLAMIC_CIVIL,
     CALENDAR_CALENDAR_MODE_ISLAMIC_TBLA,
