@@ -30,7 +30,7 @@ The same principle applies across the wider software family: study what is known
 
 ## System temporal authority
 
-Calendar does not own temporal presentation preferences. When System Settings is installed, its valid shared policy is the richer authority for clock system, calendar system, seconds and geographic location, and Calendar watches that pinned Common policy for live changes. When System Settings is not installed, Calendar deliberately ignores any stale policy file left in the user's profile and behaves as a native Mint replacement: Cinnamon/locale settings remain authoritative for conventional 12/24-hour time, date visibility and presentation, seconds, first day of week and timezone; the stock Gregorian month view is used and no geographic extension is assumed. Calendar's own settings contain only Calendar-specific behaviour such as appearance, events, week numbers and keyboard shortcuts.
+Calendar does not own temporal presentation preferences. System Settings is the writer/UI for the richer temporal-v3 policy covering clock system, calendar system, seconds and geographic location. Once a valid shared policy has been written, that persisted system policy remains authoritative even if the System Settings package is later removed; removing the settings UI must not silently discard the user's selected system behaviour. If no valid temporal-v3 policy exists, Calendar behaves as a native Mint replacement: Cinnamon/locale settings remain authoritative for conventional 12/24-hour time, date visibility and presentation, seconds, first day of week and timezone; the stock Gregorian month view is used and no geographic extension is assumed. Calendar's own settings contain only Calendar-specific behaviour such as appearance, events, week numbers and keyboard shortcuts.
 
 ## Capabilities
 
@@ -38,11 +38,11 @@ Clock modes include normal 12/24-hour time, French Republican decimal time, Inte
 
 Calendar systems available through System Settings include Gregorian, Julian, ISO week, Hebrew, four Islamic variants, Persian, Chinese, Dangi, Indian National, Coptic, Ethiopic Amete Mihret and Amete Alem, Buddhist, Japanese, Minguo, French Republican, Roman, Mayan Long Count with Tzolk’in/Haab Calendar Round, Badíʿ, International Fixed, World, Positivist, Revised Julian, Byzantine Anno Mundi, Egyptian civil (Nabonassar era), traditional Armenian, and Sweden's historical 1700–1753 civil calendar including 30 February 1712.
 
-The applet can coexist with Cinnamon's stock Calendar applet and installs no project-owned daemon, polling service or autostart entry. System Settings is optional at runtime. Common's installed `temporal-v3` provider marker identifies whether the richer authority exists, while one cached effective snapshot keeps all temporal fields coherent. Without both the provider and a valid saved policy Calendar follows Mint/Cinnamon; with both, Calendar gains the extended clock, calendar, seconds and location presentation selected there. Calendar monitors both authority boundaries live and needs no background daemon.
+The applet can coexist with Cinnamon's stock Calendar applet and installs no project-owned daemon, polling service or autostart entry. System Settings is optional at runtime. Common's installed `temporal-v3` provider marker advertises that the writer/UI is currently installed, while the validated persisted policy is the durable system authority and survives writer removal. With neither a valid saved policy nor an installed richer authority, Calendar follows Mint/Cinnamon. Calendar monitors both the policy document and writer-marker boundary live and needs no background daemon.
 
 Calendar prefers the MB Corpo family names defined by the pinned Common typography contract when those typefaces are already available on the system, but it does not redistribute proprietary MB Corpo font binaries. Cinnamon's normal font fallback is therefore a required runtime path, not an error condition. Generated Cinnamon CSS remains regression-checked against Common's typography roles. Configuration stays in Cinnamon's xlet-settings renderer; About is a package-owned native GTK 3 helper launched out-of-process from Cinnamon. GTK is therefore confined to that presentation edge, while Calendar carries no project-owned Python settings host.
 
-Location-dependent clocks do not silently assume Greenwich. They show `N/A LOC` until geographic location is configured in **System Settings → Date & Time**. On a Mint-only installation those extended clock modes are not selected, so Calendar remains on Cinnamon's conventional clock path.
+Location-dependent clocks do not silently assume Greenwich. They show `N/A LOC` until geographic location is configured in **System Settings → Date & Time**. On a Mint-only installation with no persisted Infiltrator temporal policy those extended clock modes are not selected, so Calendar remains on Cinnamon's conventional clock path.
 
 Calendar workday styling follows ICU/CLDR weekend data for the active locale, including regions whose weekend is not Saturday/Sunday. If locale weekend data is unavailable, Calendar falls back to Monday-Friday workdays.
 
@@ -139,17 +139,19 @@ A scheduled upstream-drift workflow watches the reviewed Cinnamon calendar/Calen
 
 ## Install and releases
 
-Numbered releases publish two project-owned artifacts:
+Numbered releases publish three project-owned binary/install artifacts:
 
 | File | Purpose |
 | --- | --- |
-| `calendar_<version>_amd64.deb` | Generic amd64 Debian package; package identity is `calendar` |
+| `calendar_<version>_amd64.deb` | Generic amd64 Debian application package; package identity is `calendar` |
+| `infiltrator-calendar-resources_<version>_amd64.deb` | Independent system Calendar Resources package; remains installed when the Calendar app is removed |
 | `calendar-<version>-local-folder.run` | Verified local hardware-native PGO builder (`-O3 -march=native -mtune=native`, LTO, representative profile training, profile-use rebuild) |
 
-Install the generic package with:
+Install the generic packages with:
 
 ```bash
-sudo apt install ./calendar_<version>_amd64.deb
+sudo apt install ./calendar_<version>_amd64.deb \
+    ./infiltrator-calendar-resources_<version>_amd64.deb
 ```
 
 Or use the native PGO builder:
