@@ -209,6 +209,7 @@ jobs:
           name: calendar-release-${{ github.sha }}
           path: |
             dist/calendar_*_amd64.deb
+            dist/infiltrator-calendar-resources_*_amd64.deb
             dist/calendar-*-local-folder.run
             dist/release-manifest.json
             dist/release-notes.md
@@ -284,18 +285,27 @@ jobs:
           --dist qualified-release
           --expected-sha "$GITHUB_SHA"
           --github-env "$GITHUB_ENV"
-      - name: Install, execute and purge exact qualified package
+      - name: Install app and resources, then purge only the app
         shell: bash
         run: |
           set -euo pipefail
           test -s "$RELEASE_DEB"
-          apt-get install -y --no-install-recommends "./$RELEASE_DEB"
+          test -s "$RELEASE_RESOURCES_DEB"
+          apt-get install -y --no-install-recommends \
+            "./$RELEASE_RESOURCES_DEB" "./$RELEASE_DEB"
           test "$(dpkg-query -W -f='${Status}' calendar)" = "install ok installed"
+          test "$(dpkg-query -W -f='${Status}' infiltrator-calendar-resources)" = "install ok installed"
+          test -f /System/Resources/Calendars/hebrew.so
           /usr/libexec/calendar-about --print-metadata | grep -qx "version=$RELEASE_VERSION"
           /usr/libexec/calendar-about --print-metadata | grep -qx "build-profile=generic"
           CALENDAR_EXPECTED_VERSION="$RELEASE_VERSION" gjs tests/smoke-typelib.js >/dev/null
           apt-get purge -y calendar
-          ! dpkg-query -W calendar >/dev/null 2>&1
+          ! dpkg-query -W -f='${Status}' calendar 2>/dev/null | grep -qx "install ok installed"
+          test "$(dpkg-query -W -f='${Status}' infiltrator-calendar-resources)" = "install ok installed"
+          test -f /System/Resources/Calendars/hebrew.so
+          apt-get check
+          apt-get purge -y infiltrator-calendar-resources
+          ! test -e /System/Resources/Calendars/hebrew.so
           apt-get check
       - name: Reinstall and remove the canonical alpha package
         shell: bash
