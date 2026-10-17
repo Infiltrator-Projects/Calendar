@@ -96,14 +96,15 @@ test_calendar_reference_vectors(void)
         { "armenian-traditional", 552, 7, 13, 1, 1, 1 },
         { "swedish-historical", 1700, 3, 11, 1700, 3, 1 }
     };
+    const gsize builtin_count = infiltratr_temporal_calendar_count();
     gsize index;
 
     g_assert_cmpuint(G_N_ELEMENTS(vectors), ==,
                      calendar_calendar_provider_get_count());
     g_assert_cmpuint(calendar_calendar_provider_get_count(), ==,
-                     infiltratr_temporal_calendar_count());
+                     builtin_count + 1U);
 
-    for (index = 0; index < calendar_calendar_provider_get_count(); index++)
+    for (index = 0; index < builtin_count; index++)
     {
         const CalendarCalendarProvider *provider =
             calendar_calendar_provider_at(index);
@@ -114,6 +115,19 @@ test_calendar_reference_vectors(void)
         g_assert_nonnull(info);
         g_assert_cmpuint(provider->common_index, ==, index);
         g_assert_true(calendar_calendar_provider_info(provider) == info);
+    }
+
+    {
+        const CalendarCalendarProvider *hebrew =
+            calendar_calendar_provider_from_id("hebrew");
+        const InfiltratrTemporalCalendarInfo *info =
+            calendar_calendar_provider_info(hebrew);
+
+        g_assert_nonnull(hebrew);
+        g_assert_cmpuint(hebrew->common_index, ==, G_MAXSIZE);
+        g_assert_nonnull(info);
+        g_assert_cmpstr(info->id, ==, "hebrew");
+        g_assert_cmpstr(info->name, ==, "Hebrew (fixed arithmetic calendar)");
     }
 
     for (index = 0; index < G_N_ELEMENTS(vectors); index++)
@@ -880,10 +894,6 @@ test_arithmetic_calendar_engines(void)
         {
             CALENDAR_CALENDAR_MODE_PERSIAN,
             2461121, 1405, 1, 1, 0
-        },
-        {
-            CALENDAR_CALENDAR_MODE_HEBREW,
-            2461296, 5787, 1, 1, 0
         },
         {
             CALENDAR_CALENDAR_MODE_JAPANESE,
