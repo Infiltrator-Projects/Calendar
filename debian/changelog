@@ -1,3 +1,15 @@
+calendar (1.0.107) unstable; urgency=medium
+
+  * Move the executable calendar-resource contract into Libraries/Common so
+    installed calendars are system capabilities rather than Calendar-private
+    plugin implementations.
+  * Convert Hebrew and the resource fixture to Common calendar-provider ABI v1;
+    Calendar now adapts validated Common modules into its internal dispatch.
+  * Advance Libraries to 1.19.52 while retaining
+    /System/Resources/Calendars as the canonical installed calendar catalogue.
+
+ -- Shannon Smith <infiltratr@yandex.com>  Sat, 17 Oct 2026 21:45:00 +1100
+
 calendar (1.0.106) unstable; urgency=medium
 
   * Add the validated dual-source calendar runtime: preserve every compiled
