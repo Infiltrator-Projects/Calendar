@@ -534,6 +534,12 @@ $(BUILD_DIR)/$(GIR).typelib: $(BUILD_DIR)/$(GIR).gir
 		$< \
 		--output=$@
 
+$(BUILD_DIR)/test-native-clock-resources: tests/test-native-clock-resources.c $(CLOCK_RESOURCES) $(INFILTRATR_COMMON_ARCHIVE)
+	@mkdir -p "$(BUILD_DIR)"
+	$(CC) $(CPPFLAGS) $(CFLAGS) -DTEST_CLOCK_RESOURCE_DIRECTORY=\"$(abspath $(CLOCK_RESOURCE_BUILD_DIR))\" $(GLIB_CFLAGS) \
+		tests/test-native-clock-resources.c $(INFILTRATR_COMMON_ARCHIVE) \
+		-o $@ $(LDFLAGS) $(GLIB_LIBS) $(MATH_LIBS)
+
 $(BUILD_DIR)/test-time-formats: \
 		tests/test-time-formats.c \
 		$(CALENDAR_RESOURCES) $(CLOCK_RESOURCES) \
@@ -609,12 +615,13 @@ $(BUILD_DIR)/test-runtime-calendar-resource: \
 		$(INFILTRATR_COMMON_ARCHIVE) -o $@ $(LDFLAGS) $(CORE_LIBS) \
 		$(ICU_BRIDGE_LIBS) $(MATH_LIBS)
 
-test: $(BUILD_DIR)/test-time-formats $(BUILD_DIR)/test-properties \
+test: $(BUILD_DIR)/test-native-clock-resources $(BUILD_DIR)/test-time-formats $(BUILD_DIR)/test-properties \
 	$(BUILD_DIR)/test-portable-core \
 	$(BUILD_DIR)/test-exact-clock-boundaries \
 	$(BUILD_DIR)/test-runtime-calendar-resource \
 	common-test \
 	$(BUILD_DIR)/$(ABOUT_BINARY)
+	./$(BUILD_DIR)/test-native-clock-resources
 	./$(BUILD_DIR)/test-time-formats
 	./$(BUILD_DIR)/test-properties
 	./$(BUILD_DIR)/test-portable-core
