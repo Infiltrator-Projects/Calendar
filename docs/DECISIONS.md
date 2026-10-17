@@ -8,7 +8,7 @@ This file records durable architectural decisions for Calendar. It complements `
 
 **Why.** Chronology must be deterministic and testable without a running desktop, while Cinnamon-specific APIs change independently.
 
-**Consequence.** New calendar systems and clock calculations belong in portable temporal providers or Calendar core infrastructure below the JavaScript/native presentation boundary; UI code must not become a second implementation.
+**Consequence.** New calendar systems and clock calculations belong in portable temporal resources or Calendar core infrastructure below the JavaScript/native presentation boundary; UI code must not become a second implementation.
 
 ## ADR-002 — Existing desktop behaviour is evidence, not the specification
 
@@ -28,11 +28,11 @@ This file records durable architectural decisions for Calendar. It complements `
 
 ## ADR-004 — Common owns only genuinely generic mechanics
 
-**Decision.** Calendar consumes Common for shared arithmetic, formatting, timing, loading and other neutral primitives. Provider-specific chronology remains owned by the provider that implements it; Calendar-specific application behaviour remains local.
+**Decision.** Calendar consumes Common for shared arithmetic, formatting, timing, loading and other neutral primitives. Resource-specific chronology remains owned by the resource that implements it; Calendar-specific application behaviour remains local.
 
 **Why.** Sharing should reduce duplication without weakening the strongest domain implementation.
 
-**Consequence.** If Calendar has a superior generic helper, Common is improved first; Calendar does not keep a private fork indefinitely. Temporal-provider discovery and ABI mechanics may live in Common without transferring historical chronology policy into Common.
+**Consequence.** If Calendar has a superior generic helper, Common is improved first; Calendar does not keep a private fork indefinitely. Generic temporal-resource discovery may live in Common without transferring historical chronology policy into Common.
 
 ## ADR-005 — Runtime compatibility identifiers survive user-facing renames
 
@@ -56,12 +56,12 @@ This file records durable architectural decisions for Calendar. It complements `
 
 **Why.** Parallel date arithmetic creates silent divergence at calendar boundaries, skipped local dates and large year ranges, while the native implementation is already the tested chronology authority.
 
-**Consequence.** New civil-date arithmetic belongs below the JavaScript/native boundary. Cinnamon may coordinate navigation and presentation, but it delegates chronology semantics to Calendar/provider code.
+**Consequence.** New civil-date arithmetic belongs below the JavaScript/native boundary. Cinnamon may coordinate navigation and presentation, but it delegates chronology semantics to Calendar/resource code.
 
-## ADR-008 — Calendar and clock capabilities are runtime-discovered providers
+## ADR-008 — Calendar and clock capabilities move toward filesystem-discovered resources
 
-**Decision.** The long-term extension model for calendars and clocks is the Common temporal-provider architecture defined by `Libraries/docs/TEMPORAL_PROVIDERS.md`. Available systems are discovered at runtime through stable provider IDs and a versioned C ABI rather than requiring additions to a central compiled capability catalogue.
+**Decision.** The long-term extension direction is the filesystem-discovered temporal-resource concept defined by `Libraries/docs/TEMPORAL_PROVIDERS.md`: installed calendar/clock resources are discovered from recognised directories rather than added to a central compiled capability list.
 
-**Why.** A temporal system should be a cohesive unit containing its own implementation, tests, metadata and historical/technical specification. Adding one should not require coordinated edits to Calendar's registry, Common's catalogue and System Settings merely to make the capability visible.
+**Why.** Adding a temporal system should eventually be an installation operation, not coordinated edits to Calendar, Common and System Settings merely to make the system visible.
 
-**Consequence.** Existing grouped translation units and compiled registries remain valid transitional code but are migration debt, not the target extension boundary. New work should prove the provider pattern, beginning with the first Egyptian calendar/time pair where practical. Calendar consumes the runtime registry and keeps application-specific navigation/event integration separate from provider-specific chronology. Provider failure or absence must remain local and explicit rather than silently substituting a different calendar or clock.
+**Consequence.** Existing grouped translation units and compiled registries remain valid and unchanged during migration. The physical resource representation is deliberately not fixed yet; the first real Egyptian calendar/time pair should help determine whether compiled code, data or a hybrid is the cleanest implementation. Calendar keeps application-specific navigation/event integration separate from resource-specific chronology, and missing resources must never silently become a different calendar or clock.
