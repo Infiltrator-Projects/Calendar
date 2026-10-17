@@ -47,11 +47,12 @@ Section: libs
 Depends:
  ${misc:Depends},
  ${shlibs:Depends}
-Description: System-wide executable calendar resources for InfiltratorOS
- Installs independently loadable calendar capability modules under
- /System/Resources/Calendars. Libraries/Common owns discovery, validation,
- loading and the executable provider ABI; Calendar, Files, System Settings,
- shell components and other consumers use the same installed implementations.
+Description: System-wide executable calendar and clock resources for InfiltratorOS
+ Installs independently loadable calendar and clock capability modules under
+ /System/Resources/Calendars and /System/Resources/Clocks. Libraries/Common
+ owns discovery, validation, loading and both executable provider ABIs;
+ Calendar, Files, System Settings, shell components and other consumers can
+ use the same installed implementations.
  .
  This package is intentionally independent of the Calendar application and of
  System Settings so either application can be removed without removing the
