@@ -50,25 +50,31 @@ fi
 CALENDAR_BUILD_MODE=generic dpkg-buildpackage -us -uc -b
 
 DEB="../calendar_${VERSION}_${ARCH}.deb"
-if [ ! -s "$DEB" ]; then
-    echo "Debian package was not produced" >&2
-    exit 1
-fi
+RESOURCES_DEB="../infiltrator-calendar-resources_${VERSION}_${ARCH}.deb"
+for package in "$DEB" "$RESOURCES_DEB"; do
+    if [ ! -s "$package" ]; then
+        echo "Debian package was not produced: $package" >&2
+        exit 1
+    fi
+    dpkg-deb --info "$package" >/dev/null
+    dpkg-deb --contents "$package" >/dev/null
+done
 
-dpkg-deb --info "$DEB" >/dev/null
-dpkg-deb --contents "$DEB" >/dev/null
 command -v lintian >/dev/null || {
     echo "Missing release dependency: lintian" >&2
     exit 1
 }
-lintian --fail-on error "$DEB"
+lintian --fail-on error "$DEB" "$RESOURCES_DEB"
 install -m 0644 "$DEB" "dist/calendar_${VERSION}_${ARCH}.deb"
+install -m 0644 "$RESOURCES_DEB" \
+    "dist/infiltrator-calendar-resources_${VERSION}_${ARCH}.deb"
 
 tools/validate-release-artifacts.sh dist
 tools/native-installer-smoke.sh \
     "dist/calendar-${VERSION}-local-folder.run"
 
-printf 'Release gates passed: generic=%s; installer=%s; dsc=%s\n' \
+printf 'Release gates passed: app=%s; resources=%s; installer=%s; dsc=%s\n' \
     "dist/calendar_${VERSION}_${ARCH}.deb" \
+    "dist/infiltrator-calendar-resources_${VERSION}_${ARCH}.deb" \
     "dist/calendar-${VERSION}-local-folder.run" \
     "$DSC"
