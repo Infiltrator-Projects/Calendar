@@ -40,14 +40,22 @@ override_dh_auto_install:
 	$(MAKE) BUILD_MODE=$(CALENDAR_BUILD_MODE) install \
 		'DESTDIR=$(CURDIR)/debian/calendar' PREFIX=/usr
 	install -d \
-		"$(CURDIR)/debian/infiltrator-calendar-resources/System/Resources/Calendars"
+		"$(CURDIR)/debian/infiltrator-calendar-resources/System/Resources/Calendars" \
+		"$(CURDIR)/debian/infiltrator-calendar-resources/System/Resources/Clocks"
 	mv "$(CURDIR)/debian/calendar/System/Resources/Calendars/"*.so \
 		"$(CURDIR)/debian/infiltrator-calendar-resources/System/Resources/Calendars/"
+	mv "$(CURDIR)/debian/calendar/System/Resources/Clocks/"*.so \
+		"$(CURDIR)/debian/infiltrator-calendar-resources/System/Resources/Clocks/"
 	rmdir --ignore-fail-on-non-empty \
 		"$(CURDIR)/debian/calendar/System/Resources/Calendars" \
+		"$(CURDIR)/debian/calendar/System/Resources/Clocks" \
 		"$(CURDIR)/debian/calendar/System/Resources" \
 		"$(CURDIR)/debian/calendar/System" || true
 	@for resource in hebrew gregorian persian coptic; do \
 		test -f "$(CURDIR)/debian/infiltrator-calendar-resources/System/Resources/Calendars/$$resource.so"; \
 		test ! -e "$(CURDIR)/debian/calendar/System/Resources/Calendars/$$resource.so"; \
+	done
+	@for resource in decimal internet unix hexadecimal binary; do \
+		test -f "$(CURDIR)/debian/infiltrator-calendar-resources/System/Resources/Clocks/$$resource.so"; \
+		test ! -e "$(CURDIR)/debian/calendar/System/Resources/Clocks/$$resource.so"; \
 	done

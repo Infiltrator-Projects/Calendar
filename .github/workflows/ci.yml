@@ -309,9 +309,11 @@ jobs:
           ! dpkg-query -W -f='${Status}' calendar 2>/dev/null | grep -qx "install ok installed"
           test "$(dpkg-query -W -f='${Status}' infiltrator-calendar-resources)" = "install ok installed"
           test -f /System/Resources/Calendars/hebrew.so
+          for id in decimal internet unix hexadecimal binary; do test -f "/System/Resources/Clocks/$id.so"; done
           apt-get check
           apt-get purge -y infiltrator-calendar-resources
           ! test -e /System/Resources/Calendars/hebrew.so
+          ! test -e /System/Resources/Clocks/decimal.so
           apt-get check
       - name: Reinstall and remove the canonical alpha package
         shell: bash

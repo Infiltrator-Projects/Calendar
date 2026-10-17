@@ -106,7 +106,7 @@ dpkg-deb -x "$RESOURCES_DEB" "$STAGE_ROOT"
     echo "Calendar Resources version does not match the qualified Calendar version." >&2
     exit 1
 }
-install -d /System/Resources/Calendars
+install -d /System/Resources/Calendars /System/Resources/Clocks
 for id in hebrew gregorian persian coptic; do
     source="$STAGE_ROOT/System/Resources/Calendars/$id.so"
     [[ -s "$source" ]] || {
@@ -114,6 +114,14 @@ for id in hebrew gregorian persian coptic; do
         exit 1
     }
     install -m 0644 "$source" "/System/Resources/Calendars/$id.so"
+done
+for id in decimal internet unix hexadecimal binary; do
+    source="$STAGE_ROOT/System/Resources/Clocks/$id.so"
+    [[ -s "$source" ]] || {
+        echo "Qualified Clock Resources package lacks $id.so." >&2
+        exit 1
+    }
+    install -m 0644 "$source" "/System/Resources/Clocks/$id.so"
 done
 
 EXACT_ABOUT="$STAGE_ROOT/usr/libexec/calendar-about"

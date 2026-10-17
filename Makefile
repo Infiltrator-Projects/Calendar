@@ -643,7 +643,7 @@ validate-js: validate-settings-generated
 	@! grep -R -n -E 'const UUID = "calendar@cinnamon\.org"' "$(APPLET_SRC_DIR)" || { \
 		echo "Stock applet UUID is configured as the runtime identity." >&2; exit 1; }
 
-validate-exports: $(BUILD_DIR)/$(LIB_REALNAME) $(CALENDAR_RESOURCES)
+validate-exports: $(BUILD_DIR)/$(LIB_REALNAME) $(CALENDAR_RESOURCES) $(CLOCK_RESOURCES)
 	@command -v nm >/dev/null || { \
 		echo "Missing validation dependency: nm" >&2; exit 1; }
 	@nm -D --defined-only --format=posix "$(BUILD_DIR)/$(LIB_REALNAME)" | \
@@ -669,7 +669,7 @@ validate-abi: $(BUILD_DIR)/$(LIB_REALNAME)
 		echo "Missing validation dependency: readelf" >&2; exit 1; }
 	python3 tests/test-abi.py --library "$(BUILD_DIR)/$(LIB_REALNAME)"
 
-validate-runtime-deps: $(BUILD_DIR)/$(LIB_REALNAME) $(CALENDAR_RESOURCES)
+validate-runtime-deps: $(BUILD_DIR)/$(LIB_REALNAME) $(CALENDAR_RESOURCES) $(CLOCK_RESOURCES)
 	@command -v readelf >/dev/null || { \
 		echo "Missing validation dependency: readelf" >&2; exit 1; }
 	@for binary in "$(BUILD_DIR)/$(LIB_REALNAME)" $(CALENDAR_RESOURCES); do \
