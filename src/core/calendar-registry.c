@@ -417,7 +417,11 @@ runtime_add_years(const CalendarCalendarProvider *provider,
  * are deliberately not runtime prerequisites for chronology.
  */
 static const BuiltinCalendarProvider providers[] = {
-    [CALENDAR_CALENDAR_MODE_GREGORIAN] = { 0 },
+    [CALENDAR_CALENDAR_MODE_GREGORIAN] = {
+        .interface = { .calendar_id = NULL },
+        .mode = CALENDAR_CALENDAR_MODE_GREGORIAN,
+        .icu_keyword = NULL
+    },
     CUSTOM_PROVIDER(ISO_WEEK, "iso-week"),
     CUSTOM_PROVIDER(JULIAN, "julian"),
     CUSTOM_PROVIDER(REVISED_JULIAN, "revised-julian"),
@@ -425,10 +429,18 @@ static const BuiltinCalendarProvider providers[] = {
     ARITHMETIC_PROVIDER(ISLAMIC_CIVIL, "islamic-civil", "islamic-civil"),
     ARITHMETIC_PROVIDER(ISLAMIC_TBLA, "islamic-tbla", "islamic-tbla"),
     ICU_PROVIDER(ISLAMIC, "islamic", "islamic"),
-    [CALENDAR_CALENDAR_MODE_PERSIAN] = { 0 },
+    [CALENDAR_CALENDAR_MODE_PERSIAN] = {
+        .interface = { .calendar_id = NULL },
+        .mode = CALENDAR_CALENDAR_MODE_PERSIAN,
+        .icu_keyword = NULL
+    },
     CUSTOM_PROVIDER(BAHAI, "bahai"),
     ARITHMETIC_PROVIDER(BUDDHIST, "buddhist", "buddhist"),
-    [CALENDAR_CALENDAR_MODE_COPTIC] = { 0 },
+    [CALENDAR_CALENDAR_MODE_COPTIC] = {
+        .interface = { .calendar_id = NULL },
+        .mode = CALENDAR_CALENDAR_MODE_COPTIC,
+        .icu_keyword = NULL
+    },
     ARITHMETIC_PROVIDER(ETHIOPIAN, "ethiopian", "ethiopic"),
     ARITHMETIC_PROVIDER(ETHIOPIC_AMETE_ALEM, "ethiopic-amete-alem", "ethiopic-amete-alem"),
     ICU_PROVIDER(CHINESE, "chinese", "chinese"),
