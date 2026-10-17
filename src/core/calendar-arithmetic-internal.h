@@ -2,11 +2,12 @@
  * SPDX-License-Identifier: GPL-3.0-or-later
  * Copyright (C) 1993-2026 Shannon Smith
  *
- * Private family contracts for the arithmetic calendar engine.
+ * Private family contracts for the compiled arithmetic calendar engine.
  *
- * These declarations are translation-unit boundaries only.  The public
+ * These declarations are translation-unit boundaries only. The public
  * arithmetic API remains calendar-arithmetic.h; chronology-specific state
- * and algorithms stay owned by their family modules.
+ * and algorithms stay owned by their compiled family modules. Native resource
+ * calendars own their private chronology inside their executable module.
  */
 
 #ifndef CALENDAR_CALENDAR_ARITHMETIC_INTERNAL_H
@@ -64,24 +65,11 @@ gboolean calendar_arithmetic_islamic_year_supported(
     CalendarCalendarMode mode,
     gint64 year);
 
-gboolean calendar_arithmetic_hebrew_is_leap(gint64 year);
-gint calendar_arithmetic_hebrew_month_length(gint64 year,
-                                                   gint month);
-gint64 calendar_arithmetic_hebrew_fields_to_jdn(gint64 year,
-                                                       gint month,
-                                                       gint day);
-void calendar_arithmetic_hebrew_fields_from_jdn(
-    gint64 jdn,
-    CalendarCalendarFields *fields);
-void calendar_arithmetic_hebrew_add_months_to_fields(
-    CalendarCalendarFields *fields,
-    gint amount);
-
 gint calendar_arithmetic_persian_month_length(gint64 year,
-                                                    gint month);
+                                                gint month);
 gint64 calendar_arithmetic_persian_fields_to_jdn(gint64 year,
-                                                       gint month,
-                                                       gint day);
+                                                   gint month,
+                                                   gint day);
 void calendar_arithmetic_persian_fields_from_jdn(
     gint64 jdn,
     CalendarCalendarFields *fields);
