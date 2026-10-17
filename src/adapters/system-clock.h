@@ -100,11 +100,10 @@ gboolean calendar_system_clock_is_running(
  * The tuple fields are clock mode, calendar, show-seconds, location-configured,
  * latitude, longitude, authority identifier and provider-available flag.
  *
- * The authority identifier is "mint-cinnamon" unless an installed temporal-v3
- * provider and a valid persisted policy are both present; only then is it
- * "system-settings". The provider-available flag therefore
- * distinguishes an installed-but-not-yet-configured System Settings package
- * from an active richer policy.
+ * A valid persisted temporal-v3 policy remains authoritative after the System
+ * Settings writer/UI package is removed. The provider-available flag therefore
+ * describes availability of the richer temporal-v3 capability, whether from an
+ * installed writer marker or from a valid persisted policy document.
  *
  * Returns: (transfer full): a #GVariant tuple (ssbbddsb)
  */
@@ -115,11 +114,10 @@ GVariant *calendar_system_clock_get_system_policy(
  * calendar_system_clock_get_system_mode:
  * @self: a multi-system clock
  *
- * Resolves System Settings' installed temporal policy to a Calendar clock mode.
- * If System Settings itself is absent, or its policy is missing/invalid,
- * Calendar resolves to "standard" and leaves Cinnamon's native locale and
- * 12/24-hour preference authoritative. A stale policy file from an uninstalled
- * System Settings package is deliberately ignored.
+ * Resolves the persisted system temporal policy to a Calendar clock mode. The
+ * selected policy survives removal of the System Settings writer/UI package.
+ * If no valid temporal-v3 policy exists, Calendar resolves to "standard" and
+ * leaves Cinnamon's native locale and 12/24-hour preference authoritative.
  *
  * Returns: (transfer full): a newly allocated Calendar clock-mode identifier
  */
@@ -130,8 +128,9 @@ gchar *calendar_system_clock_get_system_mode(
  * calendar_system_clock_get_system_calendar:
  * @self: a multi-system clock
  *
- * If System Settings is absent, or its Infiltrator policy is missing/invalid,
- * this resolves to Gregorian, matching the stock Cinnamon month view.
+ * Resolves the persisted system-wide calendar even when System Settings itself
+ * is no longer installed. If no valid temporal-v3 policy exists, this resolves
+ * to Gregorian, matching the stock Cinnamon month view.
  *
  * Returns: (transfer full): the effective system-wide calendar identifier
  */
@@ -142,9 +141,9 @@ gchar *calendar_system_clock_get_system_calendar(
  * calendar_system_clock_get_system_show_seconds:
  * @self: a multi-system clock
  *
- * A valid policy from installed System Settings is authoritative. Otherwise
- * this mirrors Cinnamon's clock-show-seconds preference so Calendar remains a
- * drop-in Mint replacement when System Settings is not installed.
+ * A valid persisted temporal-v3 policy is authoritative. Otherwise this mirrors
+ * Cinnamon's clock-show-seconds preference so Calendar remains a drop-in Mint
+ * replacement when no Infiltrator temporal policy has been configured.
  *
  * Returns: whether the effective system policy requests seconds or a finer unit
  */
