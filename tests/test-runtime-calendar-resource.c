@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 // Copyright (C) 1993-2026 Shannon Smith
 
+#include "calendar-arithmetic-internal.h"
 #include "calendar-registry.h"
 #include "julian-day.h"
 
@@ -9,19 +10,45 @@
 #include <glib.h>
 
 static void
+assert_runtime_metadata(const gchar *calendar_id,
+                        const gchar *expected_name)
+{
+    const CalendarCalendarProvider *provider =
+        calendar_calendar_provider_from_id(calendar_id);
+    const InfiltratrTemporalCalendarInfo *info;
+
+    g_assert_nonnull(provider);
+    g_assert_cmpstr(provider->calendar_id, ==, calendar_id);
+    g_assert_cmpuint(provider->abi_version, ==,
+                     CALENDAR_CALENDAR_PROVIDER_ABI);
+    info = calendar_calendar_provider_info(provider);
+    g_assert_nonnull(info);
+    g_assert_cmpstr(info->id, ==, calendar_id);
+    g_assert_cmpstr(info->name, ==, expected_name);
+}
+
+static void
 test_runtime_calendar_resource(void)
 {
     const gsize builtin_count = infiltratr_temporal_calendar_count();
     const CalendarCalendarProvider *provider;
     const InfiltratrTemporalCalendarInfo *info;
     CalendarCalendarFields fields;
+    CalendarCalendarFields expected;
     gchar *formatted;
     gint64 jdn;
 
-    /* Hebrew is no longer part of Common's compiled base catalogue. */
+    /*
+     * Migrated chronologies must be absent from Common's compiled base
+     * catalogue. Their installed executable resources are the sole authority.
+     */
     g_assert_null(infiltratr_temporal_calendar_find("hebrew"));
+    g_assert_null(infiltratr_temporal_calendar_find("gregorian"));
+    g_assert_null(infiltratr_temporal_calendar_find("persian"));
+    g_assert_null(infiltratr_temporal_calendar_find("coptic"));
+    g_assert_cmpuint(builtin_count, ==, 26U);
     g_assert_cmpuint(calendar_calendar_provider_get_count(), ==,
-                     builtin_count + 2U);
+                     builtin_count + 5U);
 
     provider = calendar_calendar_provider_from_id("fixture-calendar");
     g_assert_nonnull(provider);
@@ -47,21 +74,10 @@ test_runtime_calendar_resource(void)
     g_assert_cmpint(provider->add_periods(provider, 1000, 2), ==, 1002);
     g_assert_cmpint(provider->add_years(provider, 1000, 2), ==, 1730);
 
-    /*
-     * Hebrew proves an actual production chronology can leave the compiled
-     * core and return solely through the filesystem-provider ABI without
-     * changing its stable ID or civil-date semantics.
-     */
+    /* Hebrew remains the reference production runtime chronology. */
+    assert_runtime_metadata(
+        "hebrew", "Hebrew (fixed arithmetic calendar)");
     provider = calendar_calendar_provider_from_id("hebrew");
-    g_assert_nonnull(provider);
-    g_assert_cmpstr(provider->calendar_id, ==, "hebrew");
-    g_assert_cmpuint(provider->abi_version, ==,
-                     CALENDAR_CALENDAR_PROVIDER_ABI);
-    info = calendar_calendar_provider_info(provider);
-    g_assert_nonnull(info);
-    g_assert_cmpstr(info->id, ==, "hebrew");
-    g_assert_cmpstr(info->name, ==, "Hebrew (fixed arithmetic calendar)");
-
     jdn = calendar_gregorian_to_jdn(2026, 9, 12);
     g_assert_true(provider->fields_from_jdn(provider, jdn, &fields));
     g_assert_cmpint(fields.year, ==, 5787);
@@ -69,13 +85,48 @@ test_runtime_calendar_resource(void)
     g_assert_cmpint(fields.day, ==, 1);
     g_assert_cmpint(provider->period_start(provider, jdn), ==, jdn);
 
-    /* Existing compiled capability remains authoritative and unchanged. */
-    g_assert_nonnull(calendar_calendar_provider_from_id("gregorian"));
-    g_assert_cmpstr(
-        calendar_calendar_provider_info(
-            calendar_calendar_provider_from_id("gregorian"))->id,
-        ==,
-        "gregorian");
+    /* Gregorian now has exactly the same resource-only ownership model. */
+    assert_runtime_metadata("gregorian", "Gregorian");
+    provider = calendar_calendar_provider_from_id("gregorian");
+    jdn = calendar_gregorian_to_jdn(2026, 9, 12);
+    g_assert_true(provider->fields_from_jdn(provider, jdn, &fields));
+    g_assert_cmpint(fields.year, ==, 2026);
+    g_assert_cmpint(fields.month, ==, 9);
+    g_assert_cmpint(fields.day, ==, 12);
+    g_assert_cmpint(fields.auxiliary, ==, 1);
+    g_assert_cmpint(provider->period_start(provider, jdn), ==,
+                    calendar_gregorian_to_jdn(2026, 9, 1));
+
+    /*
+     * Persian and Coptic are compared with the pre-migration arithmetic
+     * engines. This guards resource extraction against semantic drift while
+     * leaving the resource ABI as the only provider-discovery path.
+     */
+    assert_runtime_metadata(
+        "persian", "Persian (Solar Hijri arithmetic)");
+    provider = calendar_calendar_provider_from_id("persian");
+    calendar_arithmetic_persian_fields_from_jdn(jdn, &expected);
+    g_assert_true(provider->fields_from_jdn(provider, jdn, &fields));
+    g_assert_cmpint(fields.year, ==, expected.year);
+    g_assert_cmpint(fields.month, ==, expected.month);
+    g_assert_cmpint(fields.day, ==, expected.day);
+    g_assert_cmpint(fields.auxiliary, ==, expected.auxiliary);
+    g_assert_cmpint(fields.special, ==, expected.special);
+
+    assert_runtime_metadata(
+        "coptic", "Coptic (Alexandrian 13-month calendar)");
+    provider = calendar_calendar_provider_from_id("coptic");
+    g_assert_true(calendar_arithmetic_coptic_fields_from_jdn(
+        CALENDAR_CALENDAR_MODE_COPTIC, jdn, &expected));
+    g_assert_true(provider->fields_from_jdn(provider, jdn, &fields));
+    g_assert_cmpint(fields.year, ==, expected.year);
+    g_assert_cmpint(fields.month, ==, expected.month);
+    g_assert_cmpint(fields.day, ==, expected.day);
+    g_assert_cmpint(fields.auxiliary, ==, expected.auxiliary);
+    g_assert_cmpint(fields.special, ==, expected.special);
+
+    for (const gchar *id = NULL; id != NULL; )
+        g_assert_not_reached();
 }
 
 int
