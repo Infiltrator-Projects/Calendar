@@ -34,5 +34,20 @@ override_dh_auto_clean:
 	$(MAKE) clean
 
 override_dh_auto_install:
+	rm -rf \
+		$(CURDIR)/debian/calendar \
+		$(CURDIR)/debian/infiltrator-calendar-resources
 	$(MAKE) BUILD_MODE=$(CALENDAR_BUILD_MODE) install \
 		'DESTDIR=$(CURDIR)/debian/calendar' PREFIX=/usr
+	install -d \
+		$(CURDIR)/debian/infiltrator-calendar-resources/System/Resources/Calendars
+	mv $(CURDIR)/debian/calendar/System/Resources/Calendars/hebrew.so \
+		$(CURDIR)/debian/infiltrator-calendar-resources/System/Resources/Calendars/hebrew.so
+	rmdir --ignore-fail-on-non-empty \
+		$(CURDIR)/debian/calendar/System/Resources/Calendars \
+		$(CURDIR)/debian/calendar/System/Resources \
+		$(CURDIR)/debian/calendar/System || true
+	@test -f \
+		$(CURDIR)/debian/infiltrator-calendar-resources/System/Resources/Calendars/hebrew.so
+	@test ! -e \
+		$(CURDIR)/debian/calendar/System/Resources/Calendars/hebrew.so
