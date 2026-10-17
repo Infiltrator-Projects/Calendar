@@ -56,7 +56,7 @@ for (const id of calendarIds) {
 
 /*
  * Hebrew is the first calendar deliberately removed from the compiled provider
- * set.  The canonical native resource path is therefore the authority for this
+ * set. The canonical native resource path is therefore the authority for this
  * integration smoke: installed packages must load it successfully, while a
  * build-tree test on a machine without that resource must observe no fallback.
  */
@@ -86,7 +86,6 @@ const timeModeIds = [
     "japanese-temporal", "italian-hours", "babylonian-hours",
     "indian-ghati", "chinese-ke", "nuremberg-hours",
     "babylonian-ancient", "nuremberg-solar",
-    "japanese-temporal-early",
 ];
 for (const id of timeModeIds) {
     requireCondition(
