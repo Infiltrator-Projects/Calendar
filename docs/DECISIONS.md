@@ -32,7 +32,7 @@ This file records durable architectural decisions for Calendar. It complements `
 
 **Why.** Sharing should reduce duplication without weakening the strongest domain implementation.
 
-**Consequence.** If Calendar has a superior generic helper, Common is improved first; Calendar does not keep a private fork indefinitely. Generic temporal-resource discovery may live in Common without transferring historical chronology policy into Common.
+**Consequence.** If Calendar has a superior generic helper, Common is improved first; Calendar does not keep a private fork indefinitely. Common owns the product-neutral temporal resource contracts and loaders, while the resource module owns the chronology that satisfies those contracts.
 
 ## ADR-005 — Runtime compatibility identifiers survive user-facing renames
 
@@ -60,8 +60,8 @@ This file records durable architectural decisions for Calendar. It complements `
 
 ## ADR-008 — Calendar and clock capabilities move toward filesystem-discovered resources
 
-**Decision.** The long-term extension direction is the filesystem-discovered temporal-resource concept defined by `Libraries/docs/TEMPORAL_PROVIDERS.md`: installed calendar/clock resources are discovered from recognised directories rather than added to a central compiled capability list.
+**Decision.** Installed temporal capabilities use the filesystem-discovered resource concept defined by `Libraries/docs/TEMPORAL_PROVIDERS.md`. Calendar resources are direct native modules under `/System/Resources/Calendars` and expose Common's generic metadata ABI plus Common's versioned executable calendar-provider ABI. Clock metadata uses the same catalogue concept, while an executable clock-resource ABI remains future work.
 
-**Why.** Adding a temporal system should eventually be an installation operation, not coordinated edits to Calendar, Common and System Settings merely to make the system visible.
+**Why.** Adding a temporal system should be an installation operation, not coordinated edits to Calendar, Common and System Settings merely to make the system visible. The executable behaviour contract therefore belongs at the system/Common boundary rather than inside the Calendar application.
 
-**Consequence.** Existing grouped translation units and compiled registries remain valid and unchanged during migration. The physical resource representation is deliberately not fixed yet; the first real Egyptian calendar/time pair should help determine whether compiled code, data or a hybrid is the cleanest implementation. Calendar keeps application-specific navigation/event integration separate from resource-specific chronology, and missing resources must never silently become a different calendar or clock.
+**Consequence.** Existing compiled Calendar providers remain valid during migration and retain priority over duplicate resource identifiers. Calendar's internal provider table is now only a private dispatch mechanism: filesystem modules never implement or depend on it. A missing or invalid resource remains unavailable and must never silently become a different calendar. Direct native-module files are resource ABI version 1; richer bundle forms remain reserved until a real need justifies them.
