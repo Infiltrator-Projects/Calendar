@@ -247,8 +247,11 @@ jobs:
         run: |
           set -euo pipefail
           deb=$(find qualified-release -maxdepth 1 -type f -name 'calendar_*_amd64.deb' -print -quit)
+          resources=$(find qualified-release -maxdepth 1 -type f -name 'infiltrator-calendar-resources_*_amd64.deb' -print -quit)
           test -n "$deb" && test -s "$deb"
+          test -n "$resources" && test -s "$resources"
           printf 'deb=%s/%s\n' "$GITHUB_WORKSPACE" "$deb" >> "$GITHUB_OUTPUT"
+          printf 'resources=%s/%s\n' "$GITHUB_WORKSPACE" "$resources" >> "$GITHUB_OUTPUT"
       - name: Record Cinnamon qualification environment
         shell: bash
         run: |
@@ -257,7 +260,10 @@ jobs:
           dpkg-query -W -f='${Package} ${Version}\n' cinnamon cjs
       - name: Live Cinnamon runtime qualification
         shell: bash
-        run: tools/isolated-cinnamon-artifact-smoke.sh '${{ steps.qualified-package.outputs.deb }}'
+        run: >-
+          tools/isolated-cinnamon-artifact-smoke.sh
+          '${{ steps.qualified-package.outputs.deb }}'
+          '${{ steps.qualified-package.outputs.resources }}'
 
   package-install:
     needs: [debian-package]
@@ -295,7 +301,7 @@ jobs:
             "./$RELEASE_RESOURCES_DEB" "./$RELEASE_DEB"
           test "$(dpkg-query -W -f='${Status}' calendar)" = "install ok installed"
           test "$(dpkg-query -W -f='${Status}' infiltrator-calendar-resources)" = "install ok installed"
-          test -f /System/Resources/Calendars/hebrew.so
+          for id in hebrew gregorian persian coptic; do test -f "/System/Resources/Calendars/$id.so"; done
           /usr/libexec/calendar-about --print-metadata | grep -qx "version=$RELEASE_VERSION"
           /usr/libexec/calendar-about --print-metadata | grep -qx "build-profile=generic"
           CALENDAR_EXPECTED_VERSION="$RELEASE_VERSION" gjs tests/smoke-typelib.js >/dev/null
@@ -311,7 +317,8 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          apt-get install -y --no-install-recommends "./$RELEASE_DEB"
+          apt-get install -y --no-install-recommends \
+            "./$RELEASE_RESOURCES_DEB" "./$RELEASE_DEB"
           test "$(dpkg-query -W -f='${Status}' calendar)" = "install ok installed"
           apt-get purge -y calendar
           ! dpkg-query -W -f='${Status}' calendar 2>/dev/null | grep -qx "install ok installed"

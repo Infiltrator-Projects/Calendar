@@ -2,24 +2,41 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 # Copyright (C) 1993-2026 Shannon Smith
 
-# Qualify one exact Calendar Debian artifact inside a fresh Cinnamon process.
+# Qualify exact Calendar and Calendar Resources artifacts inside fresh Cinnamon.
 # This helper owns the complete isolated desktop/session lifecycle, so release
 # qualification does not depend on a pre-existing desktop or named workstation.
 
 set -euo pipefail
 
-if [[ $# -ne 1 ]]; then
-    echo "usage: $0 <calendar.deb>" >&2
+if [[ $# -ne 2 ]]; then
+    echo "usage: $0 <calendar.deb> <calendar-resources.deb>" >&2
     exit 2
 fi
 
 ROOT=$(CDPATH='' cd -- "$(dirname -- "$0")/.." && pwd)
 DEB=$1
+RESOURCES_DEB=$2
 UUID=calendar@the-infiltratr
 EXPECTED_VERSION=$(cat "$ROOT/VERSION")
 
 [[ -s "$DEB" ]] || {
     echo "Exact CI-qualified Calendar package is unavailable: $DEB" >&2
+    exit 1
+}
+[[ -s "$RESOURCES_DEB" ]] || {
+    echo "Exact CI-qualified Calendar Resources package is unavailable: $RESOURCES_DEB" >&2
+    exit 1
+}
+
+# This test must not write to a real user's installed resource catalogue.
+# The release job runs it as root inside a disposable Debian container.
+if [[ ! -f /.dockerenv || "$(id -u)" -ne 0 ]]; then
+    echo "Exact-resource Cinnamon qualification requires a disposable root container." >&2
+    exit 1
+fi
+
+[[ "$(dpkg-deb -f "$RESOURCES_DEB" Package)" == "infiltrator-calendar-resources" ]] || {
+    echo "Qualified supplemental artifact has the wrong package identity." >&2
     exit 1
 }
 
@@ -80,6 +97,24 @@ trap cleanup EXIT HUP INT TERM
 
 chmod 700 "$TEST_RUNTIME"
 dpkg-deb -x "$DEB" "$STAGE_ROOT"
+dpkg-deb -x "$RESOURCES_DEB" "$STAGE_ROOT"
+
+# The native Common loader deliberately uses the canonical system capability
+# directory. Install ONLY exact handoff modules into this disposable container;
+# never make the production loader accept arbitrary environment override paths.
+[[ "$(dpkg-deb -f "$RESOURCES_DEB" Version)" == "$EXPECTED_VERSION" ]] || {
+    echo "Calendar Resources version does not match the qualified Calendar version." >&2
+    exit 1
+}
+install -d /System/Resources/Calendars
+for id in hebrew gregorian persian coptic; do
+    source="$STAGE_ROOT/System/Resources/Calendars/$id.so"
+    [[ -s "$source" ]] || {
+        echo "Qualified Calendar Resources package lacks $id.so." >&2
+        exit 1
+    }
+    install -m 0644 "$source" "/System/Resources/Calendars/$id.so"
+done
 
 EXACT_ABOUT="$STAGE_ROOT/usr/libexec/calendar-about"
 EXACT_TYPELIB=$(find "$STAGE_ROOT/usr/lib" -type f -name 'Calendar-1.0.typelib' -print -quit)
