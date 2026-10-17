@@ -20,6 +20,8 @@ Chinese and Korean Dangi dates/year headings use native cyclic year names, such 
 
 Calendar is a first-principles engineering project. It does not treat the stock desktop clock/calendar as the specification for what chronology and timekeeping should be.
 
+Calendar is a clean-sheet, independently designed calendar system rather than a derivative of another calendar application's architecture or implementation. Using operating-system, desktop-platform and third-party library interfaces such as Cinnamon, GLib, GTK and ICU/CLDR is treated as normal dependency and platform integration, not as shared implementation lineage; Calendar owns its product-specific architecture, chronology policy and behaviour except where a model or data source is explicitly delegated and documented.
+
 Historical evidence, international standards, maintained reference data, mature implementations and astronomical literature are treated as evidence. Techniques are adopted because they improve correctness, fidelity, performance, resilience, usability, accessibility or maintainability rather than because they are fashionable or new.
 
 Calendar owns the behaviour for which it is responsible. Historical rules, continuation policies, epochs, units, astronomical assumptions, failure states and compatibility boundaries should be explicit, testable and explainable. A plausible-looking date or clock value is not considered sufficient evidence of correctness.
