@@ -96,25 +96,46 @@ test_calendar_reference_vectors(void)
         { "armenian-traditional", 552, 7, 13, 1, 1, 1 },
         { "swedish-historical", 1700, 3, 11, 1700, 3, 1 }
     };
-    const gsize builtin_count = infiltratr_temporal_calendar_count();
     gsize index;
 
+    /*
+     * Registry order is not a contract: installed native resources are
+     * discovered separately from compiled providers, and Common's metadata
+     * catalogue is keyed by stable ID rather than positional index.
+     */
     g_assert_cmpuint(G_N_ELEMENTS(vectors), ==,
                      calendar_calendar_provider_get_count());
-    g_assert_cmpuint(calendar_calendar_provider_get_count(), ==,
-                     builtin_count + 4U);
 
-    for (index = 0; index < builtin_count; index++)
+    for (index = 0; index < calendar_calendar_provider_get_count(); index++)
     {
         const CalendarCalendarProvider *provider =
             calendar_calendar_provider_at(index);
+        const InfiltratrTemporalCalendarInfo *info;
+
+        g_assert_nonnull(provider);
+        info = calendar_calendar_provider_info(provider);
+        g_assert_nonnull(info);
+        g_assert_cmpstr(info->id, ==, provider->calendar_id);
+        g_assert_true(calendar_calendar_provider_from_id(info->id) == provider);
+    }
+
+    for (index = 0; index < G_N_ELEMENTS(vectors); index++)
+    {
+        const CalendarCalendarProvider *provider =
+            calendar_calendar_provider_from_id(vectors[index].id);
         const InfiltratrTemporalCalendarInfo *info =
-            infiltratr_temporal_calendar_at(index);
+            calendar_calendar_provider_info(provider);
+        const gboolean resource =
+            g_str_equal(vectors[index].id, "hebrew") ||
+            g_str_equal(vectors[index].id, "gregorian") ||
+            g_str_equal(vectors[index].id, "persian") ||
+            g_str_equal(vectors[index].id, "coptic");
 
         g_assert_nonnull(provider);
         g_assert_nonnull(info);
-        g_assert_cmpuint(provider->common_index, ==, index);
-        g_assert_true(calendar_calendar_provider_info(provider) == info);
+        g_assert_cmpstr(info->id, ==, vectors[index].id);
+        if (resource)
+            g_assert_cmpuint(provider->common_index, ==, G_MAXSIZE);
     }
 
     {
@@ -122,11 +143,7 @@ test_calendar_reference_vectors(void)
             calendar_calendar_provider_from_id("hebrew");
         const InfiltratrTemporalCalendarInfo *info =
             calendar_calendar_provider_info(hebrew);
-
-        g_assert_nonnull(hebrew);
-        g_assert_cmpuint(hebrew->common_index, ==, G_MAXSIZE);
         g_assert_nonnull(info);
-        g_assert_cmpstr(info->id, ==, "hebrew");
         g_assert_cmpstr(info->name, ==, "Hebrew (fixed arithmetic calendar)");
     }
 
