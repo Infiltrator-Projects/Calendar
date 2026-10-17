@@ -29,15 +29,31 @@ Depends:
  libicu72 | libicu73 | libicu74 | libicu75 | libicu76 | libicu77 | libicu78 | libicu79 | libicu80 | libicu81,
  ${misc:Depends},
  ${shlibs:Depends}
-Description: Cinnamon clock with multiple time and calendar systems
+Recommends:
+ infiltrator-calendar-resources (= ${binary:Version})
+Description: Cinnamon clock and calendar application
  Calendar integrates with Cinnamon's panel, popup, settings and calendar
- service while adding French Republican decimal, Internet, Unix, hexadecimal,
- binary, sidereal, solar, Julian Date, mean-solar, Modified Julian, traditional
- Chinese, Roman temporal, Edo Japanese, Italian, Babylonian-hour, Indian ghaṭī
- Chinese hundred-kè and Nuremberg clock modes plus 30 civil, religious, historical
- and experimental calendar systems.
+ service while consuming the system-wide temporal capabilities exposed through
+ Infiltrator Common. The application does not own installed calendar resource
+ modules; removing Calendar therefore does not remove those system capabilities.
  .
  A platform-neutral C core handles conversion, grid construction, event
  intervals and precise scheduling. Thin native and JavaScript adapters provide
  Cinnamon integration. The same amd64 package can use the system ICU supplied
  by Ubuntu/Mint or Debian.
+
+Package: infiltrator-calendar-resources
+Architecture: any
+Section: libs
+Depends:
+ ${misc:Depends},
+ ${shlibs:Depends}
+Description: System-wide executable calendar resources for InfiltratorOS
+ Installs independently loadable calendar capability modules under
+ /System/Resources/Calendars. Libraries/Common owns discovery, validation,
+ loading and the executable provider ABI; Calendar, Files, System Settings,
+ shell components and other consumers use the same installed implementations.
+ .
+ This package is intentionally independent of the Calendar application and of
+ System Settings so either application can be removed without removing the
+ system calendar capabilities or the user's persisted temporal policy.
