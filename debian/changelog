@@ -1,3 +1,13 @@
+calendar (1.0.109) unstable; urgency=medium
+
+  * Format the agenda selected-date header with the active calendar provider
+    instead of always showing the Gregorian civil date.
+  * Refresh the agenda date heading immediately when the selected system calendar
+    changes and keep Gregorian fallback only for an unavailable provider.
+  * Add JavaScript regression coverage for non-Gregorian agenda headers.
+
+ -- Shannon Smith <infiltratr@yandex.com>  Sun, 18 Oct 2026 00:16:42 +1100
+
 calendar (1.0.108) unstable; urgency=medium
 
   * Keep a valid persisted temporal-v3 policy authoritative after the System
