@@ -53,8 +53,10 @@ def assert_release_handoff_behaviour(version: str) -> None:
     with tempfile.TemporaryDirectory(prefix="calendar-release-model-") as tmp:
         dist = Path(tmp)
         deb = dist / f"calendar_{version}_amd64.deb"
+        resources = dist / f"infiltrator-calendar-resources_{version}_amd64.deb"
         installer = dist / f"calendar-{version}-local-folder.run"
         deb.write_bytes(b"calendar-deb-test\n")
+        resources.write_bytes(b"calendar-resources-deb-test\n")
         installer.write_bytes(b"calendar-installer-test\n")
         source_sha = "a" * 40
 
@@ -81,6 +83,7 @@ def assert_release_handoff_behaviour(version: str) -> None:
         assert manifest["source_sha"] == source_sha
         assert {asset["name"] for asset in manifest["assets"]} == {
             deb.name,
+            resources.name,
             installer.name,
         }
         assert (dist / "release-notes.md").read_text(encoding="utf-8").strip()
@@ -173,8 +176,6 @@ def assert_project_license_markers(root: Path) -> None:
         if not path.is_file():
             continue
         relative = path.relative_to(root)
-        # Pinned dependencies retain their own provenance. Generated build and
-        # distribution output is not a maintained Calendar source input either.
         if (
             ".git" in relative.parts
             or relative.parts[:2] == ("src", "vendor")
@@ -228,8 +229,6 @@ def main() -> None:
     metadata = json.loads(read("src/cinnamon/metadata.json"))
     copyright_file = read("debian/copyright")
 
-    # VERSION is the platform-neutral source identity. Packaging and Cinnamon
-    # project it into their required metadata, which must never disagree.
     version = read("VERSION").strip()
     assert re.fullmatch(r"[0-9]+\.[0-9]+\.[0-9]+", version)
     assert "VERSION := $(strip $(file <VERSION))" in makefile
@@ -253,7 +252,6 @@ def main() -> None:
     assert metadata["author"] == "Shannon Smith"
     assert metadata["website"] == "https://github.com/Infiltrator-Projects/Calendar"
 
-    # Build profiles remain deliberate and Debian construction stays generic.
     assert "BUILD_MODE ?= generic" in makefile
     assert "PGO_MODE ?= none" in makefile
     assert "-march=native" in makefile
@@ -262,7 +260,6 @@ def main() -> None:
     assert "filter nocheck,$(DEB_BUILD_OPTIONS)" in rules
     assert "export CFLAGS" not in makefile
 
-    # Common is pinned and consumed only through its public archive/API surface.
     common_version = make_var(makefile, "INFILTRATR_COMMON_VERSION")
     common_commit = make_var(makefile, "INFILTRATR_COMMON_COMMIT")
     assert re.fullmatch(r"[0-9]+\.[0-9]+\.[0-9]+", common_version)
@@ -298,8 +295,6 @@ def main() -> None:
         f"{missing_common_api}"
     )
 
-    # Typography metadata may nominate proprietary families; binaries are not
-    # redistributed and fallback remains a Common policy requirement.
     assert "FONT_ARCHIVE" not in makefile
     assert "prepare-fonts" not in makefile
     assert not (ROOT / "src/assets/fonts/mb-corpo-fonts.tar.xz").exists()
@@ -310,19 +305,23 @@ def main() -> None:
     assert policy["font_binaries_are_not_part_of_this_contract"] is True
     assert policy["fallback_is_required_when_mb_corpo_is_unavailable"] is True
 
-    # Package identity and runtime ABI boundaries remain explicit.
+    # The application and the system resource pack are separate binary owners.
     assert "Source: calendar" in control
     assert "\nPackage: calendar\n" in control
+    assert "\nPackage: infiltrator-calendar-resources\n" in control
+    assert "infiltrator-calendar-resources (= ${binary:Version})" in control
     assert "cinnamon (>= 6.4)" in control
     binary_stanza = control.split("\nPackage: calendar\n", 1)[1]
     runtime_control = binary_stanza.split("Description:", 1)[0]
     assert "libgtk-3-0," not in runtime_control
     assert "\n python3," not in runtime_control
+    assert "debian/infiltrator-calendar-resources/System/Resources/Calendars" in rules
+    assert "debian/calendar/System/Resources/Calendars/hebrew.so" in rules
+    assert "test ! -e" in rules
     assert "-DU_DISABLE_RENAMING=1" in makefile
     assert "src/core/icu-compat-bridge.c" in makefile
     assert "validate-runtime-deps:" in makefile
 
-    # Local native/PGO installation is distinct from the portable release .deb.
     assert 'NATIVE_VERSION="${VERSION}+nativepgo${NATIVE_REVISION}"' in installer
     assert "CALENDAR_BUILD_MODE=native" in installer
     assert "PGO_MODE=generate" in installer
@@ -332,15 +331,13 @@ def main() -> None:
     assert "@PAYLOAD_SHA256@" in installer
     assert '(cd "$SOURCE_DIR" && dpkg-checkbuilddeps)' in installer
 
-    # Release construction qualifies reproducibility and artifact shape once.
     assert "CALENDAR_RELEASE_SOURCE_ALREADY_QUALIFIED" in release_check
     assert "make reproducible-build" in release_check
     assert "tools/native-installer-smoke.sh" in release_check
     assert "tools/validate-release-artifacts.sh" in release_check
+    assert "infiltrator-calendar-resources_${VERSION}_${ARCH}.deb" in release_check
     assert "lintian --fail-on error" in release_check
 
-    # Release intent is based on source/published version, not commit-message
-    # conventions, and a failed publication remains recoverable by a later push.
     assert "release-handoff.py release-requested" in workflow
     assert "--published-version" in workflow
     assert "releases?per_page=100" in workflow
@@ -355,18 +352,18 @@ def main() -> None:
     assert "startsWith(" not in workflow
     assert "cancel-in-progress: false" in workflow
 
-    # Lifecycle qualification uses exactly the handoff .deb; it never rebuilds.
+    # Lifecycle qualification proves application removal cannot remove resources.
     package_install = workflow_job(workflow, "package-install", "publish-release")
     assert "needs: [debian-package]" in package_install
     assert "actions/download-artifact@" in package_install
     assert "qualified-release/release-handoff.py verify" in package_install
-    assert 'apt-get install -y --no-install-recommends "./$RELEASE_DEB"' in package_install
-    assert 'apt-get install -y --no-install-recommends "$RELEASE_DEB"' not in package_install
+    assert '"./$RELEASE_RESOURCES_DEB" "./$RELEASE_DEB"' in package_install
+    assert "apt-get purge -y calendar" in package_install
+    assert "infiltrator-calendar-resources" in package_install
+    assert "test -f /System/Resources/Calendars/hebrew.so" in package_install
+    assert "apt-get purge -y infiltrator-calendar-resources" in package_install
     assert "dpkg-buildpackage" not in package_install
 
-    # Live release qualification is reproducible infrastructure, not an
-    # availability dependency on a named workstation. It still starts a real,
-    # isolated Cinnamon process against the exact release artifact.
     live_cinnamon = workflow_job(workflow, "live-cinnamon", "package-install")
     assert "runs-on: ubuntu-24.04" in live_cinnamon
     assert "image: debian:13" in live_cinnamon
@@ -375,12 +372,13 @@ def main() -> None:
     assert "tools/isolated-cinnamon-artifact-smoke.sh" in live_cinnamon
     assert "bigbedroom" not in workflow.lower()
 
-    # Publication consumes the immutable JSON handoff and never rebuilds.
     assert "release-manifest.json" in workflow
     assert "release-manifest.txt" not in workflow
     assert "release-manifest.txt" not in publisher
     assert "dist/release-handoff.py" in workflow
+    assert "dist/infiltrator-calendar-resources_*_amd64.deb" in workflow
     assert "qualified-release/release-handoff.py verify" in publisher
+    assert "RELEASE_RESOURCES_DEB" in publisher
     assert "workflow_call:" in publisher
     assert "workflow_run:" not in publisher
     assert "actions/download-artifact@" in publisher
@@ -425,7 +423,6 @@ def main() -> None:
     assert_release_intent_behaviour(version)
     assert_release_handoff_behaviour(version)
 
-    # Licensing/provenance are release-input contracts.
     assert "Calendar is GPL-3.0-or-later" in read("README.md")
     assert "License: GPL-3+" in copyright_file
     assert_license_scope_behaviour()
