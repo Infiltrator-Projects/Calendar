@@ -528,7 +528,7 @@ provider_format(const InfiltratrTemporalCalendarProvider *provider,
         return false;
     }
 
-    memcpy(buffer, text, text_length + 1U);
+    infiltratr_copy_string(buffer, capacity, text);
     *length = text_length;
     g_free(text);
     return true;
