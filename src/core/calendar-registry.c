@@ -50,7 +50,7 @@ typedef struct
 } RuntimeCalendarProvider;
 
 static GPtrArray *runtime_providers;
-static gsize runtime_registry_once;
+static GOnce runtime_registry_once = G_ONCE_INIT;
 
 static const BuiltinCalendarProvider *
 builtin_provider(const CalendarCalendarProvider *provider)
@@ -436,7 +436,7 @@ load_runtime_provider(
     if (!infiltratr_dynlib_symbol(
             &library,
             CALENDAR_CALENDAR_PROVIDER_SYMBOL,
-            &entry,
+            (void *)&entry,
             sizeof(entry)) ||
         entry == NULL)
     {
@@ -462,27 +462,31 @@ load_runtime_provider(
     return true;
 }
 
+static gpointer
+initialise_runtime_registry(gpointer user_data)
+{
+    size_t ignored = 0U;
+
+    (void)user_data;
+    runtime_providers = g_ptr_array_new();
+    /*
+     * A missing directory is an empty optional catalogue. A directory I/O
+     * error likewise cannot remove the built-in capability set. Individual
+     * malformed modules are ignored by Common or by load_runtime_provider.
+     */
+    (void)infiltratr_temporal_runtime_scan_directory(
+        CALENDAR_NATIVE_CALENDAR_RESOURCE_DIRECTORY,
+        INFILTRATR_TEMPORAL_RESOURCE_CALENDAR,
+        load_runtime_provider,
+        NULL,
+        &ignored);
+    return runtime_providers;
+}
+
 static void
 ensure_runtime_registry(void)
 {
-    if (g_once_init_enter(&runtime_registry_once))
-    {
-        size_t ignored = 0U;
-
-        runtime_providers = g_ptr_array_new();
-        /*
-         * A missing directory is an empty optional catalogue. A directory I/O
-         * error likewise cannot remove the built-in capability set. Individual
-         * malformed modules are ignored by Common or by load_runtime_provider.
-         */
-        (void)infiltratr_temporal_runtime_scan_directory(
-            CALENDAR_NATIVE_CALENDAR_RESOURCE_DIRECTORY,
-            INFILTRATR_TEMPORAL_RESOURCE_CALENDAR,
-            load_runtime_provider,
-            NULL,
-            &ignored);
-        g_once_init_leave(&runtime_registry_once, 1U);
-    }
+    (void)g_once(&runtime_registry_once, initialise_runtime_registry, NULL);
 }
 
 gsize
