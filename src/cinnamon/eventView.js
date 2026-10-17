@@ -298,7 +298,7 @@ var EventList = class EventList {
     }
 
     _formatSelectedDate(gdate) {
-        if (this._calendarSystem !== null &&
+        if (this._calendarSystem &&
             this._calendarSystem.get_id() !== "gregorian") {
             try {
                 const text = this._calendarSystem.format_date_part(
