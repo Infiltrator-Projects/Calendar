@@ -22,11 +22,21 @@ test. Tests that are completely subsumed by stronger coverage should be
 consolidated rather than retained for historical reasons.
 
 The temporal extension architecture is an intentional maintenance/refactoring
-direction: preserve every existing compiled calendar/clock while Common gains a
-parallel filesystem-discovery path for additional resources. The first new
-Egyptian calendar/time pair is the intended proving case because it can establish
-what a real drop-in resource needs without first disturbing compatibility-sensitive
-legacy providers.
+direction. Every existing compiled calendar remains available while trusted
+native calendar resources may additionally be discovered from
+`/System/Resources/Calendars`. Common validates the generic temporal-resource
+metadata ABI and Calendar then validates its own provider ABI before a module is
+admitted to the runtime catalogue. Built-in identifiers remain authoritative on
+duplicates, so optional resources cannot silently replace established chronology.
+
+Clock resource metadata discovery exists in Common, but Calendar does not expose
+a filesystem clock as selectable merely because metadata is present. A real
+clock implementation ABI must be designed and qualified before that second half
+of the migration becomes executable capability.
+
+The first new Egyptian calendar/time pair remains the intended historical proving
+case. It should validate the architecture with real scholarship and algorithms,
+not with placeholder chronology.
 
 ## Optional expansion
 
@@ -35,11 +45,11 @@ optional product expansion, not missing completion work. They enter the product
 only when ownership, provenance, failure semantics and a credible validation
 path are explicit.
 
-Once the resource model has been proved by real implementations, adding a
-calendar or clock should normally mean installing a conforming self-contained
-resource with its own implementation, tests and documentation rather than
-editing a central Calendar capability list. The physical resource representation
-remains deliberately undecided until that proving work is complete.
+For calendars, adding capability can now mean installing a conforming trusted
+native module with its own implementation, tests and documentation rather than
+editing Calendar's built-in provider table. Direct native-module files are the
+version-1 executable resource form; directory bundles remain deliberately
+reserved until a real resource requires a richer packaging model.
 
 ## Completion rule
 

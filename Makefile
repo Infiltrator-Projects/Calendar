@@ -22,8 +22,8 @@ DIST_DIR := dist
 # authoritative when the preferred MB Corpo families are unavailable.
 INFILTRATR_COMMON_DIR := src/vendor/infiltratr-common
 INFILTRATR_COMMON_URL := https://github.com/Infiltrator-Projects/Libraries.git
-INFILTRATR_COMMON_COMMIT := fc2c72cb038a8e4c1e0bc62145adf533fbfd7923
-INFILTRATR_COMMON_VERSION := 1.19.46
+INFILTRATR_COMMON_COMMIT := 8c802beb329969a10e99dc277384805d03bd9f45
+INFILTRATR_COMMON_VERSION := 1.19.47
 LIB_BASENAME := calendar
 LIB_SONAME := lib$(LIB_BASENAME).so.0
 LIB_REALNAME := lib$(LIB_BASENAME).so.0.0.0
@@ -121,6 +121,7 @@ INFILTRATR_COMMON_HEADERS := \
 	$(INFILTRATR_COMMON_DIR)/include/infiltratr/timing.h \
 	$(INFILTRATR_COMMON_DIR)/include/infiltratr/temporal.h \
 	$(INFILTRATR_COMMON_DIR)/include/infiltratr/temporal_posix.h \
+	$(INFILTRATR_COMMON_DIR)/include/infiltratr/temporal_runtime.h \
 	$(INFILTRATR_COMMON_DIR)/include/infiltratr/dynlib.h \
 	$(INFILTRATR_COMMON_DIR)/include/infiltratr/design.h \
 	$(INFILTRATR_COMMON_DIR)/include/infiltratr/utf8.h
@@ -133,6 +134,8 @@ INFILTRATR_COMMON_CPPFLAGS := -Iinclude
 OBJECTS := $(patsubst src/%.c,$(BUILD_DIR)/%.o,$(SOURCES))
 CORE_OBJECTS := $(patsubst src/%.c,$(BUILD_DIR)/%.o,$(CORE_SOURCES))
 CORE_ARCHIVE := $(BUILD_DIR)/libcalendar-core.a
+RUNTIME_CALENDAR_FIXTURE_DIR := $(BUILD_DIR)/calendar-resource-fixture
+RUNTIME_CALENDAR_FIXTURE := $(RUNTIME_CALENDAR_FIXTURE_DIR)/fixture-calendar.so
 MULTIARCH ?= $(shell $(CC) -dumpmachine)
 LIBDIR ?= $(PREFIX)/lib/$(MULTIARCH)
 
@@ -484,15 +487,41 @@ $(BUILD_DIR)/test-exact-clock-boundaries: \
 		$(INFILTRATR_COMMON_ARCHIVE) -o $@ $(LDFLAGS) $(CORE_LIBS) \
 		$(ICU_BRIDGE_LIBS) $(MATH_LIBS)
 
+$(RUNTIME_CALENDAR_FIXTURE): \
+		tests/calendar-resource-fixture.c \
+		src/core/calendar-registry.h \
+		src/core/calendar-internal.h \
+		$(INFILTRATR_COMMON_HEADERS)
+	@mkdir -p "$(RUNTIME_CALENDAR_FIXTURE_DIR)"
+	$(CC) $(CPPFLAGS) $(CFLAGS) -frandom-seed=$(REPRO_SEED_PREFIX)-calendar-resource-fixture \
+		$(CORE_CFLAGS) -shared tests/calendar-resource-fixture.c \
+		-o $@ $(LDFLAGS) $(CORE_LIBS)
+
+$(BUILD_DIR)/test-runtime-calendar-resource: \
+		tests/test-runtime-calendar-resource.c \
+		$(RUNTIME_CALENDAR_FIXTURE) \
+		$(CORE_SOURCES) \
+		$(CORE_HEADERS) \
+		$(INFILTRATR_COMMON_ARCHIVE)
+	@mkdir -p "$(BUILD_DIR)"
+	$(CC) $(CPPFLAGS) $(CFLAGS) \
+		-DCALENDAR_NATIVE_CALENDAR_RESOURCE_DIRECTORY=\"$(abspath $(RUNTIME_CALENDAR_FIXTURE_DIR))\" \
+		-frandom-seed=$(REPRO_SEED_PREFIX)-test-runtime-calendar-resource $(CORE_CFLAGS) \
+		tests/test-runtime-calendar-resource.c $(CORE_SOURCES) \
+		$(INFILTRATR_COMMON_ARCHIVE) -o $@ $(LDFLAGS) $(CORE_LIBS) \
+		$(ICU_BRIDGE_LIBS) $(MATH_LIBS)
+
 test: $(BUILD_DIR)/test-time-formats $(BUILD_DIR)/test-properties \
 	$(BUILD_DIR)/test-portable-core \
 	$(BUILD_DIR)/test-exact-clock-boundaries \
+	$(BUILD_DIR)/test-runtime-calendar-resource \
 	common-test \
 	$(BUILD_DIR)/$(ABOUT_BINARY)
 	./$(BUILD_DIR)/test-time-formats
 	./$(BUILD_DIR)/test-properties
 	./$(BUILD_DIR)/test-portable-core
 	./$(BUILD_DIR)/test-exact-clock-boundaries
+	./$(BUILD_DIR)/test-runtime-calendar-resource
 	@./$(BUILD_DIR)/$(ABOUT_BINARY) --print-metadata | \
 		grep -qx 'version=$(VERSION)'
 	@./$(BUILD_DIR)/$(ABOUT_BINARY) --print-metadata | \

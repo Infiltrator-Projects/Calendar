@@ -1,3 +1,15 @@
+calendar (1.0.106) unstable; urgency=medium
+
+  * Add the validated dual-source calendar runtime: preserve every compiled
+    provider while loading trusted native resource modules from
+    /System/Resources/Calendars.
+  * Require native resources to pass both Common metadata ABI validation and
+    Calendar provider ABI validation before they enter the live catalogue.
+  * Advance the pinned Libraries foundation to 1.19.47 and add an executable
+    resource fixture that proves built-in and filesystem providers coexist.
+
+ -- Shannon Smith <infiltratr@yandex.com>  Sat, 17 Oct 2026 18:20:00 +1100
+
 calendar (1.0.105) unstable; urgency=medium
 
   * Use canonical alpha names throughout; remove package aliases and migrations.

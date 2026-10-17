@@ -12,7 +12,7 @@
 G_BEGIN_DECLS
 
 /*
- * Internal calendar-provider ABI.
+ * Calendar-provider ABI.
  *
  * The interface is intentionally independent of CalendarCalendarMode and
  * any ICU/native backend choice. A provider implementation may embed this
@@ -20,11 +20,12 @@ G_BEGIN_DECLS
  * receive the interface address and recover their private implementation data
  * without exposing a built-in enum or backend-specific field to core callers.
  *
- * calendar_id is the stable semantic join key with Libraries. Never use
- * Common catalogue position as provider identity: catalogue ordering is not an
- * ABI and may change independently of Calendar's local implementation table.
+ * calendar_id is the stable semantic join key with Common resource metadata.
+ * Never use catalogue position as provider identity: catalogue ordering is not
+ * an ABI and may change independently of Calendar's implementation table.
  * common_index is retained only as the historical name of Calendar's local
- * provider slot for existing internal tests; runtime Common lookup ignores it.
+ * built-in provider slot for existing internal tests; runtime lookup ignores
+ * it for filesystem providers.
  */
 typedef struct _CalendarCalendarProvider CalendarCalendarProvider;
 
@@ -60,6 +61,15 @@ enum
 {
     CALENDAR_CALENDAR_PROVIDER_ABI = 3
 };
+
+/*
+ * A native calendar resource exports both Common's generic temporal metadata
+ * entry point and this Calendar-specific behaviour entry point. The generic
+ * metadata makes the capability discoverable; Calendar accepts the resource
+ * only after this complete operation table independently validates.
+ */
+#define CALENDAR_CALENDAR_PROVIDER_SYMBOL "calendar_calendar_provider_v3"
+typedef const CalendarCalendarProvider *(*CalendarCalendarProviderEntry)(void);
 
 const CalendarCalendarProvider *calendar_calendar_provider_from_id(
     const gchar *calendar_id);
