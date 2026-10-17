@@ -433,8 +433,8 @@ $(CLOCK_RESOURCE_BUILD_DIR)/%.so: $(CLOCK_RESOURCE_SOURCE) $(CLOCK_RESOURCE_MAP)
 		binary) kind=5; seconds=true ;; *) exit 1 ;; esac; \
 	$(CC) $(CPPFLAGS) $(CFLAGS) -fvisibility=hidden \
 		-frandom-seed=$(REPRO_SEED_PREFIX)-$*-clock-resource \
-		-DCLOCK_RESOURCE_KIND=$kind -DCLOCK_RESOURCE_ID=\"$*\" \
-		-DCLOCK_RESOURCE_NAME=\"$*\" -DCLOCK_RESOURCE_SECONDS=$seconds \
+		-DCLOCK_RESOURCE_KIND=$$kind -DCLOCK_RESOURCE_ID=\"$*\" \
+		-DCLOCK_RESOURCE_NAME=\"$*\" -DCLOCK_RESOURCE_SECONDS=$$seconds \
 		-shared $(CLOCK_RESOURCE_SOURCE) \
 		-Wl,--version-script=$(CLOCK_RESOURCE_MAP) -o $@ $(LDFLAGS)
 
@@ -784,8 +784,8 @@ install: all
 			"$(DESTDIR)/System/Resources/Calendars/$$(basename "$$resource")"; \
 	done
 	@for resource in $(CLOCK_RESOURCES); do \
-		install -Dm755 "$resource" \
-			"$(DESTDIR)/System/Resources/Clocks/$(basename "$resource")"; \
+		install -Dm755 "$$resource" \
+			"$(DESTDIR)/System/Resources/Clocks/$$(basename "$$resource")"; \
 	done
 	install -Dm644 "$(BUILD_DIR)/$(GIR).typelib" \
 		"$(DESTDIR)$(LIBDIR)/girepository-1.0/$(GIR).typelib"
