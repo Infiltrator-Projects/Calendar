@@ -9,9 +9,10 @@
 
 /*
  * Pure authority-resolution seam used by the adapter and deterministic tests.
- * A provider marker alone is not authority: the provider must be installed and
- * a valid policy must have been loaded. Otherwise Cinnamon remains the source
- * for conventional presentation.
+ * A provider marker alone is not authority: a valid persisted policy must have
+ * been loaded. The adapter treats either an installed writer marker or that
+ * valid persisted policy as an available temporal-v3 capability, allowing the
+ * selected policy to survive removal of the System Settings writer/UI package.
  */
 gboolean calendar_system_clock_resolve_effective_policy(
     gboolean provider_available,
