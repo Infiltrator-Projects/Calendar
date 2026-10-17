@@ -4,11 +4,11 @@ This file records durable architectural decisions for Calendar. It complements `
 
 ## ADR-001 — Portable chronology stays below Cinnamon
 
-**Decision.** Calendar, clock, astronomy and event semantics remain in the native core. Cinnamon owns presentation, settings and desktop integration.
+**Decision.** Calendar, clock, astronomy and event semantics remain below the presentation layer. Cinnamon owns presentation, settings and desktop integration.
 
 **Why.** Chronology must be deterministic and testable without a running desktop, while Cinnamon-specific APIs change independently.
 
-**Consequence.** New calendar systems and clock calculations belong in `src/core/`; UI code should not become a second implementation.
+**Consequence.** New calendar systems and clock calculations belong in portable temporal providers or Calendar core infrastructure below the JavaScript/native presentation boundary; UI code must not become a second implementation.
 
 ## ADR-002 — Existing desktop behaviour is evidence, not the specification
 
@@ -28,11 +28,11 @@ This file records durable architectural decisions for Calendar. It complements `
 
 ## ADR-004 — Common owns only genuinely generic mechanics
 
-**Decision.** Calendar consumes Common for shared arithmetic, formatting, timing, loading and other neutral primitives, but Calendar-specific chronology stays local.
+**Decision.** Calendar consumes Common for shared arithmetic, formatting, timing, loading and other neutral primitives. Provider-specific chronology remains owned by the provider that implements it; Calendar-specific application behaviour remains local.
 
 **Why.** Sharing should reduce duplication without weakening the strongest domain implementation.
 
-**Consequence.** If Calendar has a superior generic helper, Common is improved first; Calendar does not keep a private fork indefinitely.
+**Consequence.** If Calendar has a superior generic helper, Common is improved first; Calendar does not keep a private fork indefinitely. Temporal-provider discovery and ABI mechanics may live in Common without transferring historical chronology policy into Common.
 
 ## ADR-005 — Runtime compatibility identifiers survive user-facing renames
 
@@ -56,4 +56,12 @@ This file records durable architectural decisions for Calendar. It complements `
 
 **Why.** Parallel date arithmetic creates silent divergence at calendar boundaries, skipped local dates and large year ranges, while the native implementation is already the tested chronology authority.
 
-**Consequence.** New civil-date arithmetic belongs below the JavaScript/native boundary. Cinnamon may coordinate navigation and presentation, but it delegates chronology semantics to Calendar.
+**Consequence.** New civil-date arithmetic belongs below the JavaScript/native boundary. Cinnamon may coordinate navigation and presentation, but it delegates chronology semantics to Calendar/provider code.
+
+## ADR-008 — Calendar and clock capabilities are runtime-discovered providers
+
+**Decision.** The long-term extension model for calendars and clocks is the Common temporal-provider architecture defined by `Libraries/docs/TEMPORAL_PROVIDERS.md`. Available systems are discovered at runtime through stable provider IDs and a versioned C ABI rather than requiring additions to a central compiled capability catalogue.
+
+**Why.** A temporal system should be a cohesive unit containing its own implementation, tests, metadata and historical/technical specification. Adding one should not require coordinated edits to Calendar's registry, Common's catalogue and System Settings merely to make the capability visible.
+
+**Consequence.** Existing grouped translation units and compiled registries remain valid transitional code but are migration debt, not the target extension boundary. New work should prove the provider pattern, beginning with the first Egyptian calendar/time pair where practical. Calendar consumes the runtime registry and keeps application-specific navigation/event integration separate from provider-specific chronology. Provider failure or absence must remain local and explicit rather than silently substituting a different calendar or clock.
