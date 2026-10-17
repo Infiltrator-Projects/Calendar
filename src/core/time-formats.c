@@ -197,7 +197,7 @@ initialise_clock_resources(gpointer unused)
             }
         }
     }
-    return GINT_TO_POINTER(1);
+    return &clock_modules_once;
 }
 
 static const InfiltratrTemporalClockModule *
