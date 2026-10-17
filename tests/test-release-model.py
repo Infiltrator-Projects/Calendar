@@ -316,6 +316,10 @@ def main() -> None:
     assert "libgtk-3-0," not in runtime_control
     assert "\n python3," not in runtime_control
     assert "debian/infiltrator-calendar-resources/System/Resources/Calendars" in rules
+    assert "debian/infiltrator-calendar-resources/System/Resources/Clocks" in rules
+    assert "debian/calendar/System/Resources/Clocks/" in rules
+    assert "CLOCK_RESOURCE_NAMES := decimal internet unix hexadecimal binary" in read("Makefile")
+    assert "for id in decimal internet unix hexadecimal binary" in read("tools/isolated-cinnamon-artifact-smoke.sh")
     assert "debian/calendar/System/Resources/Calendars/\"*.so" in rules
     assert "test ! -e" in rules
     assert "-DU_DISABLE_RENAMING=1" in makefile

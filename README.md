@@ -30,6 +30,8 @@ The same principle applies across the wider software family: study what is known
 
 ## System temporal authority
 
+The first five clock-system implementations are now separate executable system resources: `decimal.so`, `internet.so`, `unix.so`, `hexadecimal.so` and `binary.so`. They are built under `/System/Resources/Clocks/`, packaged with the independent calendar/clock resource package, and used through Common's versioned clock-provider ABI. These modules own their clock notation and next-visible-tick calculations; Calendar has no runtime fallback for their absence. Other clock systems continue using Common's built-in presentation and Calendar's scheduling until they are migrated. The canonical Unix timestamp is never changed by the selected display system.
+
 Calendar does not own temporal presentation preferences. System Settings is the writer/UI for the richer temporal-v3 policy covering clock system, calendar system, seconds and geographic location. Once a valid shared policy has been written, that persisted system policy remains authoritative even if the System Settings package is later removed; removing the settings UI must not silently discard the user's selected system behaviour. If no valid temporal-v3 policy exists, Calendar behaves as a native Mint replacement: Cinnamon/locale settings remain authoritative for conventional 12/24-hour time, date visibility and presentation, seconds, first day of week and timezone; the stock Gregorian month view is used and no geographic extension is assumed. Calendar's own settings contain only Calendar-specific behaviour such as appearance, events, week numbers and keyboard shortcuts.
 
 ## Capabilities
