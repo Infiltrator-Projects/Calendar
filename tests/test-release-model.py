@@ -360,7 +360,7 @@ def main() -> None:
     assert '"./$RELEASE_RESOURCES_DEB" "./$RELEASE_DEB"' in package_install
     assert "apt-get purge -y calendar" in package_install
     assert "infiltrator-calendar-resources" in package_install
-    assert "for resource in hebrew gregorian persian coptic" in package_install
+    assert "test -f /System/Resources/Calendars/hebrew.so" in package_install
     assert "apt-get purge -y infiltrator-calendar-resources" in package_install
     assert "dpkg-buildpackage" not in package_install
 
