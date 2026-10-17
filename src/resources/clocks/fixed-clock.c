@@ -139,7 +139,7 @@ static bool clock_next_tick(const InfiltratrTemporalClockProvider *provider,
                             double latitude, double longitude, uint32_t *milliseconds)
 {
     uint64_t phase, units, tick, boundary, remaining, result;
-    (void)provider; (void)latitude; (void)longitude;
+    (void)provider; (void)latitude; (void)longitude; (void)offset;
     if (milliseconds == NULL) return false;
 #if CLOCK_RESOURCE_KIND == 1
     units = seconds ? UINT64_C(100000) : UINT64_C(1000);
