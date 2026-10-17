@@ -11,19 +11,20 @@ DIST=${1:-"$ROOT/dist"}
 ARCH=amd64
 MULTIARCH=$(dpkg-architecture -qDEB_HOST_MULTIARCH)
 DEB="$DIST/calendar_${VERSION}_${ARCH}.deb"
+RESOURCES_DEB="$DIST/infiltrator-calendar-resources_${VERSION}_${ARCH}.deb"
 RUN="$DIST/calendar-${VERSION}-local-folder.run"
 TMP=$(mktemp -d)
 trap 'rm -rf "$TMP"' EXIT HUP INT TERM
 
-for artifact in "$DEB" "$RUN"; do
+for artifact in "$DEB" "$RESOURCES_DEB" "$RUN"; do
     [ -s "$artifact" ] || {
         echo "Missing release artifact: $artifact" >&2
         exit 1
     }
 done
 
-[ "$(find "$DIST" -maxdepth 1 -type f | wc -l)" -eq 2 ] || {
-    echo "The uploaded release directory must contain exactly two files" >&2
+[ "$(find "$DIST" -maxdepth 1 -type f | wc -l)" -eq 3 ] || {
+    echo "The uploaded release directory must contain exactly three files" >&2
     exit 1
 }
 [ -x "$RUN" ] || {
@@ -34,7 +35,13 @@ done
 [ "$(dpkg-deb -f "$DEB" Package)" = "calendar" ]
 [ "$(dpkg-deb -f "$DEB" Version)" = "$VERSION" ]
 [ "$(dpkg-deb -f "$DEB" Architecture)" = "$ARCH" ]
+[ "$(dpkg-deb -f "$RESOURCES_DEB" Package)" = "infiltrator-calendar-resources" ]
+[ "$(dpkg-deb -f "$RESOURCES_DEB" Version)" = "$VERSION" ]
+[ "$(dpkg-deb -f "$RESOURCES_DEB" Architecture)" = "$ARCH" ]
+
 dpkg-deb -x "$DEB" "$TMP/generic"
+dpkg-deb -x "$RESOURCES_DEB" "$TMP/resources"
+
 test -f "$TMP/generic/usr/lib/$MULTIARCH/libcalendar.so.0.0.0"
 test -f \
     "$TMP/generic/usr/lib/$MULTIARCH/girepository-1.0/Calendar-1.0.typelib"
@@ -52,6 +59,13 @@ test -f "$TMP/generic/usr/share/app-install/icons/calendar.png"
 test ! -e "$TMP/generic/usr/share/fonts/truetype/calendar"
 test -f \
     "$TMP/generic/usr/share/locale/en_AU/LC_MESSAGES/calendar@the-infiltratr.mo"
+
+# The application package must not own machine calendar resources. The resource
+# package is the sole Debian owner, so apt remove calendar leaves them intact.
+test ! -e "$TMP/generic/System/Resources/Calendars/hebrew.so"
+test -f "$TMP/resources/System/Resources/Calendars/hebrew.so"
+[ "$(find "$TMP/resources/System/Resources/Calendars" -maxdepth 1 -type f | wc -l)" -ge 1 ]
+
 "$TMP/generic/usr/libexec/calendar-about" --print-metadata |
     grep -qx "version=$VERSION"
 "$TMP/generic/usr/libexec/calendar-about" --print-metadata |
@@ -80,6 +94,11 @@ if readelf -d "$RUNTIME_LIB" 2>/dev/null | \
     echo "Generic package has a direct build-host ICU SONAME dependency" >&2
     exit 1
 fi
+if readelf -d "$TMP/resources/System/Resources/Calendars/hebrew.so" 2>/dev/null | \
+        grep -Eq 'Shared library: \[libicu[^]]*\.so\.[0-9]+'; then
+    echo "Calendar resource has a direct build-host ICU SONAME dependency" >&2
+    exit 1
+fi
 python3 "$ROOT/tests/test-abi.py" --library "$RUNTIME_LIB"
 nm -D --defined-only --format=posix "$RUNTIME_LIB" | \
     awk '$1 ~ /^calendar_/ { sub(/@.*/, "", $1); print $1 }' | \
@@ -89,9 +108,19 @@ sed -n 's/^[[:space:]]*\(calendar_[A-Za-z0-9_]*\);[[:space:]]*$/\1/p' \
     "$TMP/generic-exports.expected"
 diff -u "$TMP/generic-exports.expected" "$TMP/generic-exports.actual"
 
+nm -D --defined-only --format=posix \
+    "$TMP/resources/System/Resources/Calendars/hebrew.so" | \
+    awk '{ sub(/@.*/, "", $1); print $1 }' | LC_ALL=C sort -u > \
+    "$TMP/resource-exports.actual"
+printf '%s\n' \
+    infiltratr_temporal_calendar_provider_v1 \
+    infiltratr_temporal_resource_metadata_v1 | LC_ALL=C sort -u > \
+    "$TMP/resource-exports.expected"
+diff -u "$TMP/resource-exports.expected" "$TMP/resource-exports.actual"
+
 sed '/^__ARCHIVE_BELOW__$/q' "$RUN" > "$TMP/installer-header.sh"
 sh -n "$TMP/installer-header.sh"
 "$RUN" --verify-only >/dev/null
 
-printf 'Uploaded release artifacts validated for Calendar %s.\n' \
+printf 'Uploaded release artifacts validated for Calendar %s and Calendar Resources.\n' \
     "$VERSION"
