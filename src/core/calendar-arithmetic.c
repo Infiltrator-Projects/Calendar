@@ -22,9 +22,8 @@
  *   primitives before narrowing back to public field widths.
  *
  * Family-specific conversion and rule sets stay together in private sibling
- * modules. The coordinator owns only cross-family dispatch, simple
- * Gregorian-derived era mapping and generic navigation so review boundaries
- * follow chronology ownership rather than file size.
+ * modules. Native filesystem calendars are not dispatched here: their complete
+ * chronology travels with the executable resource module.
  */
 
 #include "calendar-arithmetic.h"
@@ -41,7 +40,6 @@ arithmetic_mode_supported(CalendarCalendarMode mode)
         case CALENDAR_CALENDAR_MODE_BUDDHIST:
         case CALENDAR_CALENDAR_MODE_MINGUO:
         case CALENDAR_CALENDAR_MODE_PERSIAN:
-        case CALENDAR_CALENDAR_MODE_HEBREW:
         case CALENDAR_CALENDAR_MODE_JAPANESE:
         case CALENDAR_CALENDAR_MODE_ISLAMIC_CIVIL:
         case CALENDAR_CALENDAR_MODE_ISLAMIC_UMM_AL_QURA:
@@ -78,14 +76,11 @@ signed_year_from_fields(CalendarCalendarMode mode,
 
         case CALENDAR_CALENDAR_MODE_MINGUO:
             return fields->auxiliary == 0 ?
-                calendar_i64_subtract_saturating(
-                    1912, fields->year) :
-                calendar_i64_add_saturating(
-                    fields->year, 1911);
+                calendar_i64_subtract_saturating(1912, fields->year) :
+                calendar_i64_add_saturating(fields->year, 1911);
 
         case CALENDAR_CALENDAR_MODE_JAPANESE:
-            return calendar_arithmetic_japanese_signed_year_from_fields(
-                fields);
+            return calendar_arithmetic_japanese_signed_year_from_fields(fields);
 
         default:
             return fields->year;
@@ -107,8 +102,7 @@ set_signed_year(CalendarCalendarMode mode,
             }
             else
             {
-                fields->year =
-                    calendar_i64_subtract_saturating(1, signed_year);
+                fields->year = calendar_i64_subtract_saturating(1, signed_year);
                 fields->auxiliary = 0;
             }
             break;
@@ -116,27 +110,23 @@ set_signed_year(CalendarCalendarMode mode,
         case CALENDAR_CALENDAR_MODE_COPTIC:
         case CALENDAR_CALENDAR_MODE_ETHIOPIAN:
         case CALENDAR_CALENDAR_MODE_ETHIOPIC_AMETE_ALEM:
-            calendar_arithmetic_coptic_set_signed_year(
-                mode, signed_year, fields);
+            calendar_arithmetic_coptic_set_signed_year(mode, signed_year, fields);
             break;
 
         case CALENDAR_CALENDAR_MODE_BUDDHIST:
-            fields->year = calendar_i64_add_saturating(
-                signed_year, 543);
+            fields->year = calendar_i64_add_saturating(signed_year, 543);
             fields->auxiliary = 0;
             break;
 
         case CALENDAR_CALENDAR_MODE_MINGUO:
             if (signed_year >= 1912)
             {
-                fields->year = calendar_i64_subtract_saturating(
-                    signed_year, 1911);
+                fields->year = calendar_i64_subtract_saturating(signed_year, 1911);
                 fields->auxiliary = 1;
             }
             else
             {
-                fields->year = calendar_i64_subtract_saturating(
-                    1912, signed_year);
+                fields->year = calendar_i64_subtract_saturating(1912, signed_year);
                 fields->auxiliary = 0;
             }
             break;
@@ -179,8 +169,7 @@ month_length(CalendarCalendarMode mode,
         case CALENDAR_CALENDAR_MODE_BUDDHIST:
         case CALENDAR_CALENDAR_MODE_MINGUO:
         case CALENDAR_CALENDAR_MODE_JAPANESE:
-            return calendar_gregorian_month_length(
-                year, fields->month);
+            return calendar_gregorian_month_length(year, fields->month);
 
         case CALENDAR_CALENDAR_MODE_ISLAMIC_CIVIL:
         case CALENDAR_CALENDAR_MODE_ISLAMIC_TBLA:
@@ -195,16 +184,10 @@ month_length(CalendarCalendarMode mode,
                 year, fields->month);
 
         case CALENDAR_CALENDAR_MODE_INDIAN:
-            return calendar_arithmetic_indian_month_length(
-                year, fields->month);
+            return calendar_arithmetic_indian_month_length(year, fields->month);
 
         case CALENDAR_CALENDAR_MODE_PERSIAN:
-            return calendar_arithmetic_persian_month_length(
-                year, fields->month);
-
-        case CALENDAR_CALENDAR_MODE_HEBREW:
-            return calendar_arithmetic_hebrew_month_length(
-                year, fields->month);
+            return calendar_arithmetic_persian_month_length(year, fields->month);
 
         default:
             return 0;
@@ -223,8 +206,7 @@ fields_to_jdn(CalendarCalendarMode mode,
         case CALENDAR_CALENDAR_MODE_BUDDHIST:
         case CALENDAR_CALENDAR_MODE_MINGUO:
         case CALENDAR_CALENDAR_MODE_JAPANESE:
-            return calendar_gregorian_to_jdn(
-                year, fields->month, fields->day);
+            return calendar_gregorian_to_jdn(year, fields->month, fields->day);
 
         case CALENDAR_CALENDAR_MODE_ISLAMIC_CIVIL:
         case CALENDAR_CALENDAR_MODE_ISLAMIC_TBLA:
@@ -244,10 +226,6 @@ fields_to_jdn(CalendarCalendarMode mode,
 
         case CALENDAR_CALENDAR_MODE_PERSIAN:
             return calendar_arithmetic_persian_fields_to_jdn(
-                year, fields->month, fields->day);
-
-        case CALENDAR_CALENDAR_MODE_HEBREW:
-            return calendar_arithmetic_hebrew_fields_to_jdn(
                 year, fields->month, fields->day);
 
         default:
@@ -304,10 +282,6 @@ calendar_arithmetic_fields_from_jdn(
             calendar_arithmetic_persian_fields_from_jdn(jdn, fields);
             return TRUE;
 
-        case CALENDAR_CALENDAR_MODE_HEBREW:
-            calendar_arithmetic_hebrew_fields_from_jdn(jdn, fields);
-            return TRUE;
-
         default:
             return FALSE;
     }
@@ -348,13 +322,6 @@ calendar_arithmetic_add_months(
         return G_MAXINT64;
     }
 
-    if (mode == CALENDAR_CALENDAR_MODE_HEBREW)
-    {
-        calendar_arithmetic_hebrew_add_months_to_fields(
-            &fields, amount);
-        return fields_to_jdn(mode, &fields);
-    }
-
     year = signed_year_from_fields(mode, &fields);
     period_count = periods_per_year(mode);
     serial = calendar_i64_add_saturating(
@@ -363,8 +330,7 @@ calendar_arithmetic_add_months(
             fields.month - 1),
         amount);
     year = calendar_floor_divide(serial, period_count);
-    target_month =
-        (gint)calendar_positive_modulo(serial, period_count) + 1;
+    target_month = (gint)calendar_positive_modulo(serial, period_count) + 1;
 
     set_signed_year(mode, year, &fields);
     if (mode == CALENDAR_CALENDAR_MODE_ISLAMIC_UMM_AL_QURA &&
@@ -390,20 +356,6 @@ calendar_arithmetic_add_years(
         !calendar_arithmetic_fields_from_jdn(mode, jdn, &fields))
     {
         return G_MAXINT64;
-    }
-
-    if (mode == CALENDAR_CALENDAR_MODE_HEBREW)
-    {
-        fields.year = calendar_i64_add_saturating(
-            fields.year, amount);
-        if (fields.month == 6 &&
-            !calendar_arithmetic_hebrew_is_leap(fields.year))
-            fields.month = 7;
-        fields.day = MIN(
-            fields.day,
-            calendar_arithmetic_hebrew_month_length(
-                fields.year, fields.month));
-        return fields_to_jdn(mode, &fields);
     }
 
     year = calendar_i64_add_saturating(
