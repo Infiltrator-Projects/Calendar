@@ -1,3 +1,16 @@
+calendar (1.0.108) unstable; urgency=medium
+
+  * Keep a valid persisted temporal-v3 policy authoritative after the System
+    Settings writer/UI package is removed, instead of falling back to Mint and
+    Gregorian solely because the provider marker disappeared.
+  * Load and validate the persisted system policy independently of writer-marker
+    presence while retaining Mint/Cinnamon fallback when no valid richer policy
+    exists.
+  * Align runtime documentation with the Settings-independent policy contract and
+    the separate Calendar Resources release package.
+
+ -- Shannon Smith <infiltratr@yandex.com>  Sat, 17 Oct 2026 23:32:00 +1100
+
 calendar (1.0.107) unstable; urgency=medium
 
   * Move the executable calendar-resource contract into Libraries/Common so
