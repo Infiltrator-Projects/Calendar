@@ -22,8 +22,8 @@ DIST_DIR := dist
 # authoritative when the preferred MB Corpo families are unavailable.
 INFILTRATR_COMMON_DIR := src/vendor/infiltratr-common
 INFILTRATR_COMMON_URL := https://github.com/Infiltrator-Projects/Libraries.git
-INFILTRATR_COMMON_COMMIT := bcc368c251d477d6319854d78cbe73d9ed0ab540
-INFILTRATR_COMMON_VERSION := 1.19.49
+INFILTRATR_COMMON_COMMIT := 3f0e49a0075aa16210af92e6e2477061f4eac893
+INFILTRATR_COMMON_VERSION := 1.19.52
 LIB_BASENAME := calendar
 LIB_SONAME := lib$(LIB_BASENAME).so.0
 LIB_REALNAME := lib$(LIB_BASENAME).so.0.0.0
@@ -121,6 +121,7 @@ INFILTRATR_COMMON_HEADERS := \
 	$(INFILTRATR_COMMON_DIR)/include/infiltratr/temporal.h \
 	$(INFILTRATR_COMMON_DIR)/include/infiltratr/temporal_posix.h \
 	$(INFILTRATR_COMMON_DIR)/include/infiltratr/temporal_runtime.h \
+	$(INFILTRATR_COMMON_DIR)/include/infiltratr/temporal_calendar.h \
 	$(INFILTRATR_COMMON_DIR)/include/infiltratr/dynlib.h \
 	$(INFILTRATR_COMMON_DIR)/include/infiltratr/design.h \
 	$(INFILTRATR_COMMON_DIR)/include/infiltratr/utf8.h
@@ -355,9 +356,8 @@ $(CORE_ARCHIVE): $(CORE_OBJECTS)
 	$(AR) rcsD "$@" $(CORE_OBJECTS)
 
 $(HEBREW_RESOURCE): $(HEBREW_RESOURCE_SOURCE) $(HEBREW_RESOURCE_MAP) \
-		src/core/icu-compat-bridge.c src/core/calendar-registry.h \
-		src/core/calendar-internal.h src/core/integer-math.h \
-		src/core/julian-day.h $(INFILTRATR_COMMON_ARCHIVE)
+		src/core/icu-compat-bridge.c $(INFILTRATR_COMMON_HEADERS) \
+		$(INFILTRATR_COMMON_ARCHIVE)
 	@mkdir -p "$(CALENDAR_RESOURCE_BUILD_DIR)"
 	$(CC) $(CPPFLAGS) $(CFLAGS) -fvisibility=hidden \
 		-frandom-seed=$(REPRO_SEED_PREFIX)-hebrew-resource $(CORE_CFLAGS) \
@@ -512,8 +512,6 @@ $(BUILD_DIR)/test-exact-clock-boundaries: \
 
 $(RUNTIME_CALENDAR_FIXTURE): \
 		tests/calendar-resource-fixture.c \
-		src/core/calendar-registry.h \
-		src/core/calendar-internal.h \
 		$(INFILTRATR_COMMON_HEADERS)
 	@mkdir -p "$(RUNTIME_CALENDAR_FIXTURE_DIR)"
 	$(CC) $(CPPFLAGS) $(CFLAGS) -frandom-seed=$(REPRO_SEED_PREFIX)-calendar-resource-fixture \
@@ -587,7 +585,7 @@ validate-exports: $(BUILD_DIR)/$(LIB_REALNAME) $(HEBREW_RESOURCE)
 	@nm -D --defined-only --format=posix "$(HEBREW_RESOURCE)" | \
 		awk '{ sub(/@.*/, "", $$1); print $$1 }' | LC_ALL=C sort -u > \
 		"$(BUILD_DIR)/hebrew-resource-exports.actual"
-	@printf '%s\n' calendar_calendar_provider_v3 infiltratr_temporal_resource_metadata_v1 | \
+	@printf '%s\n' infiltratr_temporal_calendar_provider_v1 infiltratr_temporal_resource_metadata_v1 | \
 		LC_ALL=C sort -u > "$(BUILD_DIR)/hebrew-resource-exports.expected"
 	diff -u "$(BUILD_DIR)/hebrew-resource-exports.expected" \
 		"$(BUILD_DIR)/hebrew-resource-exports.actual"
@@ -662,8 +660,7 @@ sanitize:
 		LDFLAGS="-fsanitize=address,undefined" test
 	@nm -u "$(INFILTRATR_COMMON_ARCHIVE)" | grep -Eq '__asan_|__ubsan_' || { \
 		echo "Sanitizer instrumentation is missing from Libraries." >&2; \
-		exit 1; \
-	}
+		exit 1; }
 	@for test_path in \
 		/portable/clock-interfaces \
 		/portable/clock-destroy-during-tick \
