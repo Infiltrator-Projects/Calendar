@@ -76,4 +76,31 @@ assert.equal(policy.mode, "standard");
 assert.equal(policy.calendar, "gregorian");
 assert.equal(policy.authority, "mint-cinnamon");
 assert.ok(context.global.errors.length > 0, "invalid policy must be reported before fallback");
+
+const eventViewSource = fs.readFileSync(
+    path.join(root, "src", "cinnamon", "eventView.js"), "utf8"
+);
+const appletSource = fs.readFileSync(
+    path.join(root, "src", "cinnamon", "applet.js"), "utf8"
+);
+assert.match(
+    eventViewSource,
+    /format_date_part\([\s\S]*NativeCalendar\.DatePart\.FULL/,
+    "agenda selected-date header must format non-Gregorian dates through the active provider"
+);
+assert.match(
+    eventViewSource,
+    /set_calendar_system\(calendarSystem\)/,
+    "agenda view must accept the active calendar system from the composition root"
+);
+assert.match(
+    appletSource,
+    /new PopupShell\.EventList\(\s*this\._desktopUses24h\(\),\s*this\._calendar_system\s*\)/,
+    "agenda must receive the initial active calendar system"
+);
+assert.match(
+    appletSource,
+    /this\.event_list\.set_calendar_system\(this\._calendar_system\)/,
+    "calendar policy changes must refresh the agenda header calendar system"
+);
 console.log("Temporal policy behaviour tests passed.");
