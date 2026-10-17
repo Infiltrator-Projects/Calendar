@@ -22,11 +22,11 @@ test. Tests that are completely subsumed by stronger coverage should be
 consolidated rather than retained for historical reasons.
 
 The temporal extension architecture is an intentional maintenance/refactoring
-direction: migrate compiled calendar/clock catalogues toward Common's
-runtime-discovered provider contract without changing canonical data semantics or
-silently dropping existing capability. The first new Egyptian calendar/time pair
-is an appropriate proving provider because it can establish the pattern without
-first disturbing compatibility-sensitive legacy providers.
+direction: preserve every existing compiled calendar/clock while Common gains a
+parallel filesystem-discovery path for additional resources. The first new
+Egyptian calendar/time pair is the intended proving case because it can establish
+what a real drop-in resource needs without first disturbing compatibility-sensitive
+legacy providers.
 
 ## Optional expansion
 
@@ -35,9 +35,11 @@ optional product expansion, not missing completion work. They enter the product
 only when ownership, provenance, failure semantics and a credible validation
 path are explicit.
 
-Once the provider ABI is qualified, adding a calendar or clock should normally
-mean adding/installing a conforming provider with its own implementation, tests
-and documentation rather than editing a central Calendar capability list.
+Once the resource model has been proved by real implementations, adding a
+calendar or clock should normally mean installing a conforming self-contained
+resource with its own implementation, tests and documentation rather than
+editing a central Calendar capability list. The physical resource representation
+remains deliberately undecided until that proving work is complete.
 
 ## Completion rule
 
