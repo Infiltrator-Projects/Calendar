@@ -19,12 +19,12 @@ This directory is the canonical documentation entry point for Calendar. The Infi
 
 The baseline files have distinct responsibilities and should not compete as alternate sources of truth. Architecture describes where behaviour belongs; Design explains why; Roadmap describes direction; Validation records what evidence is required. `debian/changelog` is the sole maintained versioned release-history source and feeds GitHub Release notes. Code and tests remain authoritative for executable behaviour, while immutable tags/releases identify historical source and published assets.
 
-Specialist documents may go deeper into one subsystem, protocol, platform, research area or historical investigation. They should link back to the canonical baseline when a reader needs the wider project context. Calendar keeps model evidence in `MODELS.md`, cross-platform/representation contracts in `PORTABILITY.md`, and exact-source environment-dependent observations in `QUALIFICATION.md` so the project README can remain a product and build/use entry point.
+Specialist documents may go deeper into one subsystem, protocol, platform, representation, research area or historical investigation. They should link back to the canonical baseline when a reader needs the wider project context. Calendar keeps model evidence in `MODELS.md`, cross-platform/representation contracts in `PORTABILITY.md`, and exact-source environment-dependent observations in `QUALIFICATION.md` so the project README can remain a product and build/use entry point.
 
 ## Specialist documentation
 
 - [Chronology, time and astronomy models](MODELS.md) — evidence hierarchy, provenance, continuation rules, astronomical assumptions and model failure semantics.
-- [Ancient Egyptian chronology, calendars and timekeeping](EGYPTIAN_CHRONOLOGY_AND_TIMEKEEPING.md) — catalogue of Egyptian civil, lunar, regnal and reformed date systems; stellar, shadow, sundial, water-clock and later timekeeping; scholarly disputes; reconstruction boundaries; and admission criteria for future Egyptian providers.
+- [Native Ancient Egyptian chronology and timekeeping](EGYPTIAN_CHRONOLOGY_AND_TIMEKEEPING.md) — the five native Egyptian date-system families and five native Egyptian time-system families, their evidence status, reconstruction boundaries, precision semantics and admission requirements. Imported, Coptic and later non-native systems are deliberately excluded from this Egyptian catalogue.
 - [Portability](PORTABILITY.md) — language, platform, representation, locale, ABI and compatibility boundaries.
 - [Qualification](QUALIFICATION.md) — exact-source environment-dependent Cinnamon/location evidence and its evidence-class boundaries.
 
