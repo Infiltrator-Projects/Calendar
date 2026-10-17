@@ -92,26 +92,33 @@ refresh_effective_policy(CalendarTemporalPolicySource *source,
     InfiltratrTemporalPolicyV3 persisted;
     InfiltratrTemporalPolicyV3 next;
     bool found = false;
+    gboolean marker_available;
     gboolean next_provider_available;
     gboolean next_infiltrator_authority = FALSE;
     gboolean changed;
-    InfiltratrIoResult load_result = INFILTRATR_IO_NOT_FOUND;
+    InfiltratrIoResult load_result;
 
     if (source == NULL)
         return FALSE;
 
-    next_provider_available =
+    /*
+     * The System Settings package is only the writer/UI for this policy. Its
+     * provider marker advertises that the writer is currently installed, but a
+     * valid persisted temporal-v3 document is itself a usable system policy and
+     * must survive removal of that writer package.
+     */
+    marker_available =
         infiltratr_temporal_posix_provider_available() ? TRUE : FALSE;
-    if (next_provider_available)
+    load_result = infiltratr_temporal_posix_policy_load(&persisted, &found);
+    if (load_result != INFILTRATR_IO_OK &&
+        load_result != INFILTRATR_IO_NOT_FOUND)
     {
-        load_result = infiltratr_temporal_posix_policy_load(&persisted, &found);
-        if (load_result != INFILTRATR_IO_OK &&
-            load_result != INFILTRATR_IO_NOT_FOUND)
-        {
-            g_warning("Calendar: unable to read temporal policy: %s",
-                      infiltratr_io_result_name(load_result));
-        }
+        g_warning("Calendar: unable to read temporal policy: %s",
+                  infiltratr_io_result_name(load_result));
     }
+
+    next_provider_available =
+        marker_available || (load_result == INFILTRATR_IO_OK && found);
 
     if (!calendar_system_clock_resolve_effective_policy(
             next_provider_available,
