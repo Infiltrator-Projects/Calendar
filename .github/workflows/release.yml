@@ -159,6 +159,7 @@ jobs:
           }
 
           upload_asset "$RELEASE_DEB" "$RELEASE_DEB_NAME"
+          upload_asset "$RELEASE_RESOURCES_DEB" "$RELEASE_RESOURCES_DEB_NAME"
           upload_asset "$RELEASE_INSTALLER" "$RELEASE_INSTALLER_NAME"
 
       - name: Verify immutable release assets
@@ -168,8 +169,9 @@ jobs:
         run: |
           set -euo pipefail
 
-          expected_assets=$(printf '%s\n%s\n' \
-            "$RELEASE_DEB_NAME" "$RELEASE_INSTALLER_NAME" | sort)
+          expected_assets=$(printf '%s\n%s\n%s\n' \
+            "$RELEASE_DEB_NAME" "$RELEASE_RESOURCES_DEB_NAME" \
+            "$RELEASE_INSTALLER_NAME" | sort)
           published_assets=$(gh api --paginate \
             "repos/${GITHUB_REPOSITORY}/releases/${RELEASE_ID}/assets?per_page=100" \
             --jq '.[].name' | sort)
@@ -207,6 +209,9 @@ jobs:
 
           verify_asset \
             "$RELEASE_DEB_NAME" "$RELEASE_DEB_SIZE" "$RELEASE_DEB_SHA256"
+          verify_asset \
+            "$RELEASE_RESOURCES_DEB_NAME" "$RELEASE_RESOURCES_DEB_SIZE" \
+            "$RELEASE_RESOURCES_DEB_SHA256"
           verify_asset \
             "$RELEASE_INSTALLER_NAME" "$RELEASE_INSTALLER_SIZE" \
             "$RELEASE_INSTALLER_SHA256"
