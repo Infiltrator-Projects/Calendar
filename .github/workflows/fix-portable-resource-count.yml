@@ -1,0 +1,41 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
+name: one-shot-fix-portable-resource-count
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - .github/workflows/fix-portable-resource-count.yml
+
+permissions:
+  contents: write
+
+jobs:
+  fix:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          fetch-depth: 0
+          submodules: true
+      - name: Align portable provider count
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+          path = Path('tests/test-portable-core.c')
+          text = path.read_text(encoding='utf-8')
+          old = '''    g_assert_cmpuint(calendar_calendar_provider_get_count(), ==,\n                     builtin_count + 1U);\n'''
+          new = '''    g_assert_cmpuint(calendar_calendar_provider_get_count(), ==,\n                     builtin_count + 4U);\n'''
+          if text.count(old) != 1:
+              raise SystemExit('portable provider-count assertion not found exactly once')
+          path.write_text(text.replace(old, new), encoding='utf-8')
+          PY
+          git checkout HEAD -- .github/workflows/fix-portable-resource-count.yml
+          git diff --check
+          git config user.name 'Shannon Smith'
+          git config user.email 'infiltratr@yandex.com'
+          git add tests/test-portable-core.c
+          git commit -m 'Count four external calendar resources'
+          git push origin HEAD:main
