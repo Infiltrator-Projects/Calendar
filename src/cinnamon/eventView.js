@@ -98,8 +98,9 @@ function _countdown(secondsUntilStart) {
 }
 
 var EventList = class EventList {
-    constructor(use24h) {
+    constructor(use24h, calendarSystem = null) {
         this._use24h = Boolean(use24h);
+        this._calendarSystem = calendarSystem;
         this._destroyed = false;
         this.selected_date = GLib.DateTime.new_now_local();
         this._no_events_timeout_id = 0;
@@ -296,16 +297,51 @@ var EventList = class EventList {
         this.emit("launched-calendar");
     }
 
-    set_date(gdate) {
-        if (this._destroyed) {
+    _formatSelectedDate(gdate) {
+        if (this._calendarSystem !== null &&
+            this._calendarSystem.get_id() !== "gregorian") {
+            try {
+                const text = this._calendarSystem.format_date_part(
+                    gdate.get_year(),
+                    gdate.get_month(),
+                    gdate.get_day_of_month(),
+                    NativeCalendar.DatePart.FULL
+                );
+                if (typeof text === "string" && text.length > 0) {
+                    return text;
+                }
+            } catch (error) {
+                global.logError(error);
+            }
+        }
+        return gdate.format(DATE_FORMAT_FULL);
+    }
+
+    _updateSelectedDateLabel() {
+        if (this.selected_date === null || !this.selected_date_label) {
             return;
         }
-        this.selected_date = gdate;
-        const text = gdate.format(DATE_FORMAT_FULL);
+        const text = this._formatSelectedDate(this.selected_date);
         this.selected_date_label.set_label(text);
         this.selected_date_label.set_accessible_name(
             `${CP_("Open selected date in Calendar")}: ${text}`
         );
+    }
+
+    set_calendar_system(calendarSystem) {
+        if (this._destroyed) {
+            return;
+        }
+        this._calendarSystem = calendarSystem;
+        this._updateSelectedDateLabel();
+    }
+
+    set_date(gdate) {
+        if (this._destroyed || gdate === null) {
+            return;
+        }
+        this.selected_date = gdate;
+        this._updateSelectedDateLabel();
     }
 
     set_use_24h(use24h) {
@@ -458,6 +494,7 @@ var EventList = class EventList {
             this.actor = null;
         }
         this._backendSettings = null;
+        this._calendarSystem = null;
         this.selected_date = null;
     }
 };
