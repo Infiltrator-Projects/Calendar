@@ -21,13 +21,14 @@ features. A fixed defect should gain the narrowest useful permanent regression
 test. Tests that are completely subsumed by stronger coverage should be
 consolidated rather than retained for historical reasons.
 
-The temporal extension architecture is an intentional maintenance/refactoring
-direction. Every existing compiled calendar remains available while trusted
-native calendar resources may additionally be discovered from
-`/System/Resources/Calendars`. Common validates the generic temporal-resource
-metadata ABI and Calendar then validates its own provider ABI before a module is
-admitted to the runtime catalogue. Built-in identifiers remain authoritative on
-duplicates, so optional resources cannot silently replace established chronology.
+The temporal extension architecture is now executable for calendars. Every
+existing compiled calendar remains available while trusted native calendar
+resources may additionally be discovered from `/System/Resources/Calendars`.
+Common owns and validates both the generic temporal-resource metadata ABI and
+the executable calendar-provider ABI; Calendar adapts validated system resource
+modules into its private chronology dispatch instead of defining a second plugin
+contract. Built-in identifiers remain authoritative on duplicates, so optional
+resources cannot silently replace established chronology.
 
 Clock resource metadata discovery exists in Common, but Calendar does not expose
 a filesystem clock as selectable merely because metadata is present. A real
