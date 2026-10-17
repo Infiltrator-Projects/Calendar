@@ -32,17 +32,21 @@ static int64_t positive_modulo(int64_t n, int64_t mod)
     return rem < 0 ? rem + mod : rem;
 }
 
+ #if CLOCK_RESOURCE_KIND == 3
 static int64_t floor_divide(int64_t n, int64_t divisor)
 {
     const int64_t quotient = n / divisor;
     return n % divisor < 0 ? quotient - 1 : quotient;
 }
 
+#endif
+
 static uint64_t ticks_at(uint64_t phase, uint64_t per_day)
 {
     return phase * per_day / (uint64_t)CLOCK_MICROSECONDS_PER_DAY;
 }
 
+#if CLOCK_RESOURCE_KIND == 1 || CLOCK_RESOURCE_KIND == 4 || CLOCK_RESOURCE_KIND == 5
 static uint64_t phase_local(int64_t instant, int32_t offset)
 {
     const int64_t phase = positive_modulo(instant, CLOCK_MICROSECONDS_PER_DAY);
@@ -50,6 +54,9 @@ static uint64_t phase_local(int64_t instant, int32_t offset)
     return (uint64_t)positive_modulo(shifted, CLOCK_MICROSECONDS_PER_DAY);
 }
 
+#endif
+
+#if CLOCK_RESOURCE_KIND == 5
 static void to_binary(unsigned value, unsigned digits, char *dest)
 {
     unsigned bit;
@@ -57,6 +64,8 @@ static void to_binary(unsigned value, unsigned digits, char *dest)
         dest[bit] = (value & (1U << (digits - bit - 1U))) ? '1' : '0';
     dest[digits] = '\0';
 }
+
+#endif
 
 static bool clock_render(const InfiltratrTemporalClockProvider *provider,
                          const char *locale, int64_t instant, int32_t offset,
@@ -69,6 +78,8 @@ static bool clock_render(const InfiltratrTemporalClockProvider *provider,
     const char *sep = vertical ? "\n" : ":";
 
     (void)provider; (void)locale; (void)latitude; (void)longitude;
+    (void)instant; (void)offset; (void)seconds; (void)vertical;
+    (void)tick; (void)sep;
 #if CLOCK_RESOURCE_KIND == 1
     tick = ticks_at(phase_local(instant, offset),
                     seconds ? UINT64_C(100000) : UINT64_C(1000));
