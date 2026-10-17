@@ -24,7 +24,8 @@ Specialist documents may go deeper into one subsystem, protocol, platform, repre
 ## Specialist documentation
 
 - [Chronology, time and astronomy models](MODELS.md) — evidence hierarchy, provenance, continuation rules, astronomical assumptions and model failure semantics.
-- [Native Ancient Egyptian chronology and timekeeping](EGYPTIAN_CHRONOLOGY_AND_TIMEKEEPING.md) — the five native Egyptian date-system families and five native Egyptian time-system families, their evidence status, reconstruction boundaries, precision semantics and admission requirements. Imported, Coptic and later non-native systems are deliberately excluded from this Egyptian catalogue.
+- [Native Ancient Egyptian chronology and timekeeping](EGYPTIAN_CHRONOLOGY_AND_TIMEKEEPING.md) — the five native Egyptian date-system families and five native Egyptian time-system families, their evidence status, model boundaries, precision semantics and admission requirements. Imported, Coptic and later non-native systems are deliberately excluded from this Egyptian catalogue.
+- [First Egyptian calendar and time system](EGYPTIAN_FIRST_SYSTEM.md) — the current best historical model for the earliest Egyptian profile: Early Egyptian Lunar Calendar plus Early Egyptian Stellar–Solar Time, including the evidence base and the rule that the model changes when stronger evidence changes the historical conclusion.
 - [Portability](PORTABILITY.md) — language, platform, representation, locale, ABI and compatibility boundaries.
 - [Qualification](QUALIFICATION.md) — exact-source environment-dependent Cinnamon/location evidence and its evidence-class boundaries.
 
