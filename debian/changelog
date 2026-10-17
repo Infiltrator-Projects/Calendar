@@ -1,3 +1,17 @@
+calendar (1.0.111) unstable; urgency=medium
+
+  * Move Decimal, Swatch Internet, Unix, Hexadecimal and Binary clock modes
+    into independent executable /System/Resources/Clocks modules.
+  * Use Common 1.19.53 to validate, discover and invoke native clock
+    resource implementations for rendering and exact tick scheduling.
+  * Package the five new clocks with the matching system resources package,
+    and require those modules during isolated Cinnamon qualification.
+  * Remove duplicate Calendar-owned tick schedulers for migrated modes.
+  * Verify negative epochs, timezone offsets, precision, display orientation
+    and next-tick boundaries against existing clock behaviour.
+
+ -- Shannon Smith <infiltratr@yandex.com>  Sun, 18 Oct 2026 08:50:00 +1100
+
 calendar (1.0.110) unstable; urgency=medium
 
   * Move Gregorian, Persian and Coptic calendar engines into independent
