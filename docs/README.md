@@ -24,6 +24,7 @@ Specialist documents may go deeper into one subsystem, protocol, platform, resea
 ## Specialist documentation
 
 - [Chronology, time and astronomy models](MODELS.md) — evidence hierarchy, provenance, continuation rules, astronomical assumptions and model failure semantics.
+- [Ancient Egyptian timekeeping model](EGYPTIAN_TIMEKEEPING.md) — historically bounded New Kingdom-centred evidence, reconstruction choices, precision semantics and admission criteria for a future Egyptian temporal clock.
 - [Portability](PORTABILITY.md) — language, platform, representation, locale, ABI and compatibility boundaries.
 - [Qualification](QUALIFICATION.md) — exact-source environment-dependent Cinnamon/location evidence and its evidence-class boundaries.
 
