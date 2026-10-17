@@ -145,7 +145,9 @@ G_STATIC_ASSERT(G_N_ELEMENTS(time_providers) == CALENDAR_TIME_MODE_JAPANESE_TEMP
  * at runtime. Common validates and calls the independent system resources.
  * A test build may override only the scan directory, never the clock ABI.
  */
-#ifndef CALENDAR_NATIVE_CLOCK_RESOURCE_DIRECTORY
+#ifdef CALENDAR_NATIVE_CLOCK_RESOURCE_DIRECTORY
+#define CALENDAR_NATIVE_CLOCK_RESOURCE_DIRECTORY_OVERRIDE 1
+#else
 #define CALENDAR_NATIVE_CLOCK_RESOURCE_DIRECTORY \
     INFILTRATR_TEMPORAL_NATIVE_CLOCK_DIRECTORY
 #endif
@@ -181,11 +183,14 @@ initialise_clock_resources(gpointer unused)
     {
         const CalendarTimeMode mode = selected[index];
         const gchar *id = time_providers[mode].common_id;
+#ifdef CALENDAR_NATIVE_CLOCK_RESOURCE_DIRECTORY_OVERRIDE
         g_autofree gchar *filename = g_strconcat(id, ".so", NULL);
         g_autofree gchar *path = g_build_filename(
             CALENDAR_NATIVE_CLOCK_RESOURCE_DIRECTORY, filename, NULL);
-
         clock_modules[mode] = infiltratr_temporal_clock_module_open(path);
+#else
+        clock_modules[mode] = infiltratr_temporal_clock_module_open_id(id);
+#endif
         if (clock_modules[mode] != NULL)
         {
             const InfiltratrTemporalResourceMetadata *info =
