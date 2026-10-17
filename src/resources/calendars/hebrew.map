@@ -1,6 +1,6 @@
 {
     global:
-        calendar_calendar_provider_v3;
+        infiltratr_temporal_calendar_provider_v1;
         infiltratr_temporal_resource_metadata_v1;
     local:
         *;

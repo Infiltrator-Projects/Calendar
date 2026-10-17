@@ -12,13 +12,13 @@
 G_BEGIN_DECLS
 
 /*
- * Calendar-provider ABI.
+ * Calendar's internal chronology-dispatch interface.
  *
- * The interface is intentionally independent of CalendarCalendarMode and
- * any ICU/native backend choice. A provider implementation may embed this
- * structure as the first member of a larger private structure; callbacks then
- * receive the interface address and recover their private implementation data
- * without exposing a built-in enum or backend-specific field to core callers.
+ * This table remains useful for compiled implementations and for the core's
+ * uniform dispatch, but it is no longer the filesystem resource ABI. Native
+ * calendar resources expose Common's product-neutral temporal_calendar ABI;
+ * calendar-registry.c adapts those validated system capabilities into this
+ * private interface after Common has loaded them.
  *
  * calendar_id is the stable semantic join key with Common resource metadata.
  * Never use catalogue position as provider identity: catalogue ordering is not
@@ -61,15 +61,6 @@ enum
 {
     CALENDAR_CALENDAR_PROVIDER_ABI = 3
 };
-
-/*
- * A native calendar resource exports both Common's generic temporal metadata
- * entry point and this Calendar-specific behaviour entry point. The generic
- * metadata makes the capability discoverable; Calendar accepts the resource
- * only after this complete operation table independently validates.
- */
-#define CALENDAR_CALENDAR_PROVIDER_SYMBOL "calendar_calendar_provider_v3"
-typedef const CalendarCalendarProvider *(*CalendarCalendarProviderEntry)(void);
 
 const CalendarCalendarProvider *calendar_calendar_provider_from_id(
     const gchar *calendar_id);

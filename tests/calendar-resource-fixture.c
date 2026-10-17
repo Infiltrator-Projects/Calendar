@@ -1,9 +1,10 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 // Copyright (C) 1993-2026 Shannon Smith
 
-#include "calendar-registry.h"
+#include <infiltratr/temporal_calendar.h>
 
-#include <infiltratr/temporal_runtime.h>
+#include <stdint.h>
+#include <string.h>
 
 #if defined(_WIN32)
 #define CALENDAR_FIXTURE_EXPORT __declspec(dllexport)
@@ -11,64 +12,86 @@
 #define CALENDAR_FIXTURE_EXPORT __attribute__((visibility("default")))
 #endif
 
-static gboolean fixture_fields(
-    const CalendarCalendarProvider *provider,
-    gint64 jdn,
-    CalendarCalendarFields *fields)
+static bool fixture_fields(
+    const InfiltratrTemporalCalendarProvider *provider,
+    int64_t jdn,
+    InfiltratrTemporalCalendarFields *fields)
 {
     (void)provider;
     if (fields == NULL)
-        return FALSE;
+        return false;
 
-    fields->year = 9000 + (jdn % 100);
+    fields->year = INT64_C(9000) + (jdn % INT64_C(100));
     fields->month = 1;
     fields->day = 1;
     fields->auxiliary = 0;
-    fields->special = FALSE;
-    return TRUE;
+    fields->special = false;
+    return true;
 }
 
-static gchar *fixture_format(
-    const CalendarCalendarProvider *provider,
-    gint64 jdn,
-    CalendarDatePart part)
+static bool fixture_format(
+    const InfiltratrTemporalCalendarProvider *provider,
+    int64_t jdn,
+    InfiltratrTemporalCalendarDatePart part,
+    char *buffer,
+    size_t capacity,
+    size_t *length)
 {
+    static const char text[] = "Fixture Calendar Date";
+    const size_t text_length = sizeof(text) - 1U;
+
     (void)provider;
     (void)jdn;
     (void)part;
-    return g_strdup("Fixture Calendar Date");
+    if (buffer == NULL || length == NULL || capacity <= text_length)
+        return false;
+    memcpy(buffer, text, sizeof(text));
+    *length = text_length;
+    return true;
 }
 
-static gint64 fixture_period_start(
-    const CalendarCalendarProvider *provider,
-    gint64 jdn)
+static bool fixture_period_start(
+    const InfiltratrTemporalCalendarProvider *provider,
+    int64_t jdn,
+    int64_t *result)
 {
     (void)provider;
-    return jdn;
+    if (result == NULL)
+        return false;
+    *result = jdn;
+    return true;
 }
 
-static gint64 fixture_add_periods(
-    const CalendarCalendarProvider *provider,
-    gint64 jdn,
-    gint amount)
+static bool fixture_add_periods(
+    const InfiltratrTemporalCalendarProvider *provider,
+    int64_t jdn,
+    int32_t amount,
+    int64_t *result)
 {
     (void)provider;
-    return jdn + amount;
+    if (result == NULL)
+        return false;
+    *result = jdn + amount;
+    return true;
 }
 
-static gint64 fixture_add_years(
-    const CalendarCalendarProvider *provider,
-    gint64 jdn,
-    gint amount)
+static bool fixture_add_years(
+    const InfiltratrTemporalCalendarProvider *provider,
+    int64_t jdn,
+    int32_t amount,
+    int64_t *result)
 {
     (void)provider;
-    return jdn + ((gint64)amount * 365);
+    if (result == NULL)
+        return false;
+    *result = jdn + ((int64_t)amount * INT64_C(365));
+    return true;
 }
 
 CALENDAR_FIXTURE_EXPORT const InfiltratrTemporalResourceMetadata *
 infiltratr_temporal_resource_metadata_v1(void);
-CALENDAR_FIXTURE_EXPORT const CalendarCalendarProvider *
-calendar_calendar_provider_v3(void);
+CALENDAR_FIXTURE_EXPORT const InfiltratrTemporalCalendarProvider *
+infiltratr_temporal_calendar_provider_v1(void);
 
 CALENDAR_FIXTURE_EXPORT const InfiltratrTemporalResourceMetadata *
 infiltratr_temporal_resource_metadata_v1(void)
@@ -86,13 +109,13 @@ infiltratr_temporal_resource_metadata_v1(void)
     return &metadata;
 }
 
-CALENDAR_FIXTURE_EXPORT const CalendarCalendarProvider *
-calendar_calendar_provider_v3(void)
+CALENDAR_FIXTURE_EXPORT const InfiltratrTemporalCalendarProvider *
+infiltratr_temporal_calendar_provider_v1(void)
 {
-    static const CalendarCalendarProvider provider = {
-        CALENDAR_CALENDAR_PROVIDER_ABI,
+    static const InfiltratrTemporalCalendarProvider provider = {
+        sizeof(InfiltratrTemporalCalendarProvider),
+        INFILTRATR_TEMPORAL_CALENDAR_PROVIDER_ABI,
         "fixture-calendar",
-        0U,
         fixture_fields,
         fixture_format,
         fixture_period_start,

@@ -8,13 +8,13 @@
  * stable data rather than implementation details. Compiled providers and
  * trusted native resources are peers in one runtime catalogue. Native resources
  * are discovered from the InfiltratorOS Calendar resource directory and are
- * admitted only after both Common metadata and Calendar's complete behaviour ABI
- * validate. A calendar moved to native resources is absent when its module is
- * absent; the registry never manufactures a compiled fallback for it.
+ * admitted only after Common validates both their generic metadata and their
+ * executable chronology ABI. Calendar then adapts that system-wide ABI into its
+ * private dispatch interface; filesystem resources never depend on a Calendar-
+ * application-specific loader contract.
  *
- * BuiltinCalendarProvider embeds the generic interface first. The built-in
- * adapters can therefore recover their private enum or ICU keyword while the
- * interface itself remains independent of that private state.
+ * A calendar moved to native resources is absent when its module is absent; the
+ * registry never manufactures a compiled fallback for it.
  */
 
 #include "calendar-registry.h"
@@ -25,8 +25,8 @@
 #include "icu-calendar.h"
 
 #include <infiltratr/core.h>
-#include <infiltratr/dynlib.h>
 #include <infiltratr/temporal.h>
+#include <infiltratr/temporal_calendar.h>
 #include <infiltratr/temporal_runtime.h>
 
 #ifndef CALENDAR_NATIVE_CALENDAR_RESOURCE_DIRECTORY
@@ -43,8 +43,8 @@ typedef struct
 
 typedef struct
 {
-    InfiltratrDynlib library;
-    const CalendarCalendarProvider *provider;
+    CalendarCalendarProvider interface;
+    InfiltratrTemporalCalendarModule *module;
     gchar *id;
     gchar *name;
     InfiltratrTemporalCalendarInfo info;
@@ -58,6 +58,13 @@ builtin_provider(const CalendarCalendarProvider *provider)
 {
     /* The first-member invariant makes this container cast well-defined. */
     return (const BuiltinCalendarProvider *)provider;
+}
+
+static const RuntimeCalendarProvider *
+runtime_provider(const CalendarCalendarProvider *provider)
+{
+    /* RuntimeCalendarProvider likewise embeds the private adapter first. */
+    return (const RuntimeCalendarProvider *)provider;
 }
 
 static gboolean
@@ -255,6 +262,113 @@ swedish_add_years(const CalendarCalendarProvider *provider,
     return calendar_swedish_add_years(jdn, amount);
 }
 
+static InfiltratrTemporalCalendarDatePart
+runtime_date_part(CalendarDatePart part)
+{
+    switch (part)
+    {
+        case CALENDAR_DATE_PART_DAY:
+            return INFILTRATR_TEMPORAL_CALENDAR_DATE_PART_DAY;
+        case CALENDAR_DATE_PART_MONTH:
+            return INFILTRATR_TEMPORAL_CALENDAR_DATE_PART_MONTH;
+        case CALENDAR_DATE_PART_YEAR:
+            return INFILTRATR_TEMPORAL_CALENDAR_DATE_PART_YEAR;
+        case CALENDAR_DATE_PART_SHORT:
+            return INFILTRATR_TEMPORAL_CALENDAR_DATE_PART_SHORT;
+        case CALENDAR_DATE_PART_FULL:
+            return INFILTRATR_TEMPORAL_CALENDAR_DATE_PART_FULL;
+        case CALENDAR_DATE_PART_INVALID:
+        default:
+            return INFILTRATR_TEMPORAL_CALENDAR_DATE_PART_INVALID;
+    }
+}
+
+static gboolean
+runtime_fields(const CalendarCalendarProvider *provider,
+               gint64 jdn,
+               CalendarCalendarFields *fields)
+{
+    const RuntimeCalendarProvider *runtime = runtime_provider(provider);
+    InfiltratrTemporalCalendarFields common_fields;
+
+    if (fields == NULL || runtime->module == NULL ||
+        !infiltratr_temporal_calendar_fields_from_jdn(
+            runtime->module, jdn, &common_fields))
+    {
+        return FALSE;
+    }
+
+    *fields = (CalendarCalendarFields){
+        .year = common_fields.year,
+        .month = common_fields.month,
+        .day = common_fields.day,
+        .auxiliary = common_fields.auxiliary,
+        .special = common_fields.special
+    };
+    return TRUE;
+}
+
+static gchar *
+runtime_format(const CalendarCalendarProvider *provider,
+               gint64 jdn,
+               CalendarDatePart part)
+{
+    const RuntimeCalendarProvider *runtime = runtime_provider(provider);
+    gchar text[INFILTRATR_TEMPORAL_CALENDAR_TEXT_CAPACITY];
+    size_t length = 0U;
+
+    if (runtime->module == NULL ||
+        !infiltratr_temporal_calendar_format(
+            runtime->module,
+            jdn,
+            runtime_date_part(part),
+            text,
+            sizeof(text),
+            &length))
+    {
+        return g_strdup("");
+    }
+    return g_strndup(text, length);
+}
+
+static gint64
+runtime_period_start(const CalendarCalendarProvider *provider,
+                     gint64 jdn)
+{
+    const RuntimeCalendarProvider *runtime = runtime_provider(provider);
+    int64_t result = jdn;
+
+    (void)infiltratr_temporal_calendar_period_start(
+        runtime->module, jdn, &result);
+    return result;
+}
+
+static gint64
+runtime_add_periods(const CalendarCalendarProvider *provider,
+                    gint64 jdn,
+                    gint amount)
+{
+    const RuntimeCalendarProvider *runtime = runtime_provider(provider);
+    int64_t result = jdn;
+
+    (void)infiltratr_temporal_calendar_add_periods(
+        runtime->module, jdn, (int32_t)amount, &result);
+    return result;
+}
+
+static gint64
+runtime_add_years(const CalendarCalendarProvider *provider,
+                  gint64 jdn,
+                  gint amount)
+{
+    const RuntimeCalendarProvider *runtime = runtime_provider(provider);
+    int64_t result = jdn;
+
+    (void)infiltratr_temporal_calendar_add_years(
+        runtime->module, jdn, (int32_t)amount, &result);
+    return result;
+}
+
 #define PROVIDER_INTERFACE(mode_, id_, fields_, format_, start_, add_, years_) \
     { \
         CALENDAR_CALENDAR_PROVIDER_ABI, \
@@ -355,21 +469,6 @@ provider_from_id_unchecked(const gchar *calendar_id)
     return NULL;
 }
 
-static gboolean
-runtime_provider_is_valid(const CalendarCalendarProvider *provider,
-                          const InfiltratrTemporalResourceMetadata *metadata)
-{
-    return provider != NULL && metadata != NULL &&
-        provider->abi_version == CALENDAR_CALENDAR_PROVIDER_ABI &&
-        provider->calendar_id != NULL &&
-        infiltratr_string_equal(provider->calendar_id, metadata->id) &&
-        provider->fields_from_jdn != NULL &&
-        provider->format != NULL &&
-        provider->period_start != NULL &&
-        provider->add_periods != NULL &&
-        provider->add_years != NULL;
-}
-
 static RuntimeCalendarProvider *
 runtime_provider_record_from_id(const gchar *calendar_id)
 {
@@ -404,7 +503,7 @@ runtime_provider_record_from_interface(
     {
         RuntimeCalendarProvider *record =
             g_ptr_array_index(runtime_providers, index);
-        if (record != NULL && record->provider == provider)
+        if (record != NULL && &record->interface == provider)
             return record;
     }
     return NULL;
@@ -416,9 +515,8 @@ load_runtime_provider(
     const char *module_path,
     void *user_data)
 {
-    InfiltratrDynlib library = INFILTRATR_DYNLIB_INIT;
-    CalendarCalendarProviderEntry entry = NULL;
-    const CalendarCalendarProvider *provider;
+    InfiltratrTemporalCalendarModule *module;
+    const InfiltratrTemporalResourceMetadata *loaded_metadata;
     RuntimeCalendarProvider *record;
 
     (void)user_data;
@@ -430,33 +528,34 @@ load_runtime_provider(
         return true;
     }
 
-    if (!infiltratr_dynlib_open(&library, module_path))
+    module = infiltratr_temporal_calendar_module_open(module_path);
+    if (module == NULL)
         return true;
-    if (!infiltratr_dynlib_symbol(
-            &library,
-            CALENDAR_CALENDAR_PROVIDER_SYMBOL,
-            (void *)&entry,
-            sizeof(entry)) ||
-        entry == NULL)
-    {
-        infiltratr_dynlib_close(&library);
-        return true;
-    }
 
-    provider = entry();
-    if (!runtime_provider_is_valid(provider, metadata))
+    loaded_metadata = infiltratr_temporal_calendar_module_metadata(module);
+    if (loaded_metadata == NULL ||
+        !infiltratr_string_equal(loaded_metadata->id, metadata->id))
     {
-        infiltratr_dynlib_close(&library);
+        infiltratr_temporal_calendar_module_free(module);
         return true;
     }
 
     record = g_new0(RuntimeCalendarProvider, 1);
-    record->library = library;
-    record->provider = provider;
-    record->id = g_strdup(metadata->id);
-    record->name = g_strdup(metadata->name);
+    record->module = module;
+    record->id = g_strdup(loaded_metadata->id);
+    record->name = g_strdup(loaded_metadata->name);
     record->info.id = record->id;
     record->info.name = record->name;
+    record->interface = (CalendarCalendarProvider){
+        .abi_version = CALENDAR_CALENDAR_PROVIDER_ABI,
+        .calendar_id = record->id,
+        .common_index = G_MAXSIZE,
+        .fields_from_jdn = runtime_fields,
+        .format = runtime_format,
+        .period_start = runtime_period_start,
+        .add_periods = runtime_add_periods,
+        .add_years = runtime_add_years
+    };
     g_ptr_array_add(runtime_providers, record);
     return true;
 }
@@ -471,7 +570,7 @@ initialise_runtime_registry(gpointer user_data)
     /*
      * A missing directory is an empty optional catalogue. A directory I/O
      * error likewise cannot remove the compiled capability set. Individual
-     * malformed modules are ignored by Common or by load_runtime_provider.
+     * malformed modules are ignored by Common before or during behaviour load.
      */
     (void)infiltratr_temporal_runtime_scan_directory(
         CALENDAR_NATIVE_CALENDAR_RESOURCE_DIRECTORY,
@@ -507,8 +606,8 @@ calendar_calendar_provider_at(gsize index)
     if (runtime_providers == NULL || index >= (gsize)runtime_providers->len)
         return NULL;
 
-    return ((RuntimeCalendarProvider *)
-        g_ptr_array_index(runtime_providers, (guint)index))->provider;
+    return &((RuntimeCalendarProvider *)
+        g_ptr_array_index(runtime_providers, (guint)index))->interface;
 }
 
 const InfiltratrTemporalCalendarInfo *
@@ -549,5 +648,5 @@ calendar_calendar_provider_from_id(const gchar *calendar_id)
 
     ensure_runtime_registry();
     runtime_record = runtime_provider_record_from_id(calendar_id);
-    return runtime_record != NULL ? runtime_record->provider : NULL;
+    return runtime_record != NULL ? &runtime_record->interface : NULL;
 }

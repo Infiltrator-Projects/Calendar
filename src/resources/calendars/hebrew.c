@@ -4,25 +4,25 @@
 /*
  * Native Hebrew calendar resource.
  *
- * This module is intentionally self-contained at the chronology boundary. The
- * 19-year cycle, postponement rules, month tables, navigation and localized ICU
- * presentation all travel with the capability. Calendar loads it through the
- * stable provider ABI; Common discovers its product-neutral metadata. Nothing
- * in Calendar's compiled registry implements Hebrew as a fallback.
+ * The chronology and its presentation travel as one system resource. The
+ * module exports Common's generic temporal metadata plus Common's executable
+ * calendar-provider ABI; it has no dependency on Calendar's private registry
+ * ABI. Any Common consumer can therefore discover and execute this installed
+ * capability from /System/Resources/Calendars.
  */
 
-#include "calendar-registry.h"
-#include "integer-math.h"
-#include "julian-day.h"
-
+#include <infiltratr/arithmetic.h>
 #include <infiltratr/core.h>
-#include <infiltratr/temporal_runtime.h>
+#include <infiltratr/temporal_calendar.h>
 
 #include <glib.h>
 #include <unicode/ucal.h>
 #include <unicode/udat.h>
 #include <unicode/uloc.h>
 #include <unicode/ustring.h>
+
+#include <stdint.h>
+#include <string.h>
 
 #if defined(_WIN32)
 #define CALENDAR_RESOURCE_EXPORT __declspec(dllexport)
@@ -33,6 +33,7 @@
 #endif
 
 #define MILLISECONDS_PER_DAY 86400000.0
+#define HEBREW_UNIX_EPOCH_JDN INT64_C(2440588)
 
 enum
 {
@@ -70,62 +71,82 @@ static const gint hebrew_leap_month_start[14][3] = {
 
 static const UChar utc_zone[] = { 0x0055, 0x0054, 0x0043, 0 };
 
-static gboolean
-hebrew_is_leap(gint64 year)
+static int64_t
+floor_divide(int64_t value,
+             int64_t divisor)
 {
-    return calendar_positive_modulo(
-        calendar_i64_add_saturating(
-            calendar_i64_multiply_saturating(year, 12), 17),
+    int64_t quotient = 0;
+
+    return infiltratr_i64_floor_divmod(value, divisor, &quotient, NULL) ?
+        quotient : 0;
+}
+
+static int64_t
+positive_modulo(int64_t value,
+                int64_t modulus)
+{
+    int64_t remainder = 0;
+
+    return infiltratr_i64_floor_divmod(value, modulus, NULL, &remainder) ?
+        remainder : 0;
+}
+
+static gboolean
+hebrew_is_leap(int64_t year)
+{
+    return positive_modulo(
+        infiltratr_i64_add_saturating(
+            infiltratr_i64_multiply_saturating(year, 12), 17),
         19) >= 12;
 }
 
-static gint64
-hebrew_start_of_year(gint64 year)
+static int64_t
+hebrew_start_of_year(int64_t year)
 {
-    const gint64 months = calendar_floor_divide(
-        calendar_i64_subtract_saturating(
-            calendar_i64_multiply_saturating(235, year), 234),
+    const int64_t months = floor_divide(
+        infiltratr_i64_subtract_saturating(
+            infiltratr_i64_multiply_saturating(235, year), 234),
         19);
-    const gint64 total_fraction = calendar_i64_add_saturating(
-        calendar_i64_multiply_saturating(months, HEBREW_MONTH_FRACT),
+    const int64_t total_fraction = infiltratr_i64_add_saturating(
+        infiltratr_i64_multiply_saturating(months, HEBREW_MONTH_FRACT),
         HEBREW_BAHARAD);
-    const gint64 fraction_days = calendar_floor_divide(
+    const int64_t fraction_days = floor_divide(
         total_fraction, HEBREW_DAY_PARTS);
-    gint64 day = calendar_i64_add_saturating(
-        calendar_i64_multiply_saturating(months, 29),
+    int64_t day = infiltratr_i64_add_saturating(
+        infiltratr_i64_multiply_saturating(months, 29),
         fraction_days);
-    const gint64 fraction = calendar_i64_subtract_saturating(
+    const int64_t fraction = infiltratr_i64_subtract_saturating(
         total_fraction,
-        calendar_i64_multiply_saturating(
+        infiltratr_i64_multiply_saturating(
             fraction_days, HEBREW_DAY_PARTS));
-    gint weekday = (gint)calendar_positive_modulo(day, 7);
+    gint weekday = (gint)positive_modulo(day, 7);
 
     if (weekday == 2 || weekday == 4 || weekday == 6 ||
         (weekday == 0 &&
          fraction >= 21 * HEBREW_HOUR_PARTS + 589 &&
-         hebrew_is_leap(calendar_i64_subtract_saturating(year, 1))))
+         hebrew_is_leap(infiltratr_i64_subtract_saturating(year, 1))))
     {
-        day = calendar_i64_add_saturating(day, 1);
+        day = infiltratr_i64_add_saturating(day, 1);
     }
     else if (weekday == 1 &&
              fraction >= 15 * HEBREW_HOUR_PARTS + 204 &&
              !hebrew_is_leap(year))
     {
-        day = calendar_i64_add_saturating(day, 2);
+        day = infiltratr_i64_add_saturating(day, 2);
     }
 
     return day;
 }
 
 static gint
-hebrew_year_type(gint64 year)
+hebrew_year_type(int64_t year)
 {
-    gint64 length = calendar_i64_subtract_saturating(
-        hebrew_start_of_year(calendar_i64_add_saturating(year, 1)),
+    int64_t length = infiltratr_i64_subtract_saturating(
+        hebrew_start_of_year(infiltratr_i64_add_saturating(year, 1)),
         hebrew_start_of_year(year));
 
     if (length > 380)
-        length = calendar_i64_subtract_saturating(length, 30);
+        length = infiltratr_i64_subtract_saturating(length, 30);
 
     if (length == 353)
         return 0;
@@ -135,7 +156,7 @@ hebrew_year_type(gint64 year)
 }
 
 static gint
-hebrew_month_length(gint64 year,
+hebrew_month_length(int64_t year,
                     gint month)
 {
     const gint month_index = month - 1;
@@ -150,7 +171,7 @@ hebrew_month_length(gint64 year,
 }
 
 static gint
-hebrew_month_start_offset(gint64 year,
+hebrew_month_start_offset(int64_t year,
                           gint month)
 {
     const gint month_index = month - 1;
@@ -163,36 +184,36 @@ hebrew_month_start_offset(gint64 year,
         hebrew_month_start[month_index][type];
 }
 
-static gint64
-hebrew_to_jdn(gint64 year,
+static int64_t
+hebrew_to_jdn(int64_t year,
               gint month,
               gint day)
 {
-    gint64 result = calendar_i64_add_saturating(
+    int64_t result = infiltratr_i64_add_saturating(
         hebrew_start_of_year(year), HEBREW_EPOCH_OFFSET);
 
-    result = calendar_i64_add_saturating(
+    result = infiltratr_i64_add_saturating(
         result, hebrew_month_start_offset(year, month));
-    return calendar_i64_add_saturating(result, day - 1);
+    return infiltratr_i64_add_saturating(result, day - 1);
 }
 
 static void
-hebrew_from_jdn(gint64 jdn,
-                CalendarCalendarFields *fields)
+hebrew_from_jdn(int64_t jdn,
+                InfiltratrTemporalCalendarFields *fields)
 {
-    const gint64 d = calendar_i64_subtract_saturating(
+    const int64_t d = infiltratr_i64_subtract_saturating(
         jdn, HEBREW_EPOCH_OFFSET - 1);
-    const gint64 approximate_months = calendar_floor_divide(
-        calendar_i64_multiply_saturating(d, HEBREW_DAY_PARTS),
+    const int64_t approximate_months = floor_divide(
+        infiltratr_i64_multiply_saturating(d, HEBREW_DAY_PARTS),
         HEBREW_MONTH_PARTS);
-    gint64 year = calendar_i64_add_saturating(
-        calendar_floor_divide(
-            calendar_i64_add_saturating(
-                calendar_i64_multiply_saturating(19, approximate_months),
+    int64_t year = infiltratr_i64_add_saturating(
+        floor_divide(
+            infiltratr_i64_add_saturating(
+                infiltratr_i64_multiply_saturating(19, approximate_months),
                 234),
             235),
         1);
-    gint64 day_of_year = calendar_i64_subtract_saturating(
+    int64_t day_of_year = infiltratr_i64_subtract_saturating(
         d, hebrew_start_of_year(year));
     gint month_index = 0;
     gint type;
@@ -200,8 +221,8 @@ hebrew_from_jdn(gint64 jdn,
 
     while (day_of_year < 1)
     {
-        year = calendar_i64_subtract_saturating(year, 1);
-        day_of_year = calendar_i64_subtract_saturating(
+        year = infiltratr_i64_subtract_saturating(year, 1);
+        day_of_year = infiltratr_i64_subtract_saturating(
             d, hebrew_start_of_year(year));
     }
 
@@ -217,31 +238,31 @@ hebrew_from_jdn(gint64 jdn,
     if (month_index > 0)
         month_index--;
 
-    *fields = (CalendarCalendarFields){
+    *fields = (InfiltratrTemporalCalendarFields){
         .year = year,
         .month = month_index + 1,
-        .day = (gint)calendar_i64_subtract_saturating(
+        .day = (int32_t)infiltratr_i64_subtract_saturating(
             day_of_year,
             leap ? hebrew_leap_month_start[month_index][type] :
                    hebrew_month_start[month_index][type]),
         .auxiliary = 0,
-        .special = FALSE
+        .special = false
     };
 }
 
 static void
-hebrew_add_months_to_fields(CalendarCalendarFields *fields,
-                            gint amount)
+hebrew_add_months_to_fields(InfiltratrTemporalCalendarFields *fields,
+                            int32_t amount)
 {
-    gint64 year = fields->year;
+    int64_t year = fields->year;
     gint month = fields->month - 1;
-    gint remaining = amount;
+    int32_t remaining = amount;
 
     if (remaining >= 235 || remaining <= -235)
     {
-        const gint cycles = remaining / 235;
-        year = calendar_i64_add_saturating(
-            year, calendar_i64_multiply_saturating(cycles, 19));
+        const int32_t cycles = remaining / 235;
+        year = infiltratr_i64_add_saturating(
+            year, infiltratr_i64_multiply_saturating(cycles, 19));
         remaining -= cycles * 235;
     }
 
@@ -251,7 +272,7 @@ hebrew_add_months_to_fields(CalendarCalendarFields *fields,
         if (month > 12)
         {
             month = 0;
-            year = calendar_i64_add_saturating(year, 1);
+            year = infiltratr_i64_add_saturating(year, 1);
         }
         if (month == 5 && !hebrew_is_leap(year))
             month++;
@@ -263,7 +284,7 @@ hebrew_add_months_to_fields(CalendarCalendarFields *fields,
         month--;
         if (month < 0)
         {
-            year = calendar_i64_subtract_saturating(year, 1);
+            year = infiltratr_i64_subtract_saturating(year, 1);
             month = 12;
         }
         if (month == 5 && !hebrew_is_leap(year))
@@ -316,9 +337,9 @@ open_hebrew_calendar(UErrorCode *status)
 }
 
 static UDate
-jdn_to_udate(gint64 jdn)
+jdn_to_udate(int64_t jdn)
 {
-    return (UDate)(jdn - CALENDAR_UNIX_EPOCH_JDN) *
+    return (UDate)(jdn - HEBREW_UNIX_EPOCH_JDN) *
                MILLISECONDS_PER_DAY +
            MILLISECONDS_PER_DAY / 2.0;
 }
@@ -360,22 +381,22 @@ utf16_to_utf8(const UChar *source,
 }
 
 static const gchar *
-pattern_for_part(CalendarDatePart part)
+pattern_for_part(InfiltratrTemporalCalendarDatePart part)
 {
-    if (part == CALENDAR_DATE_PART_DAY)
+    if (part == INFILTRATR_TEMPORAL_CALENDAR_DATE_PART_DAY)
         return "d";
-    if (part == CALENDAR_DATE_PART_MONTH)
+    if (part == INFILTRATR_TEMPORAL_CALENDAR_DATE_PART_MONTH)
         return "LLLL";
-    if (part == CALENDAR_DATE_PART_YEAR)
+    if (part == INFILTRATR_TEMPORAL_CALENDAR_DATE_PART_YEAR)
         return "y";
-    if (part == CALENDAR_DATE_PART_FULL)
+    if (part == INFILTRATR_TEMPORAL_CALENDAR_DATE_PART_FULL)
         return "EEEE, d MMMM y G";
     return "d MMMM y G";
 }
 
 static gchar *
-hebrew_format_jdn(gint64 jdn,
-                  CalendarDatePart part)
+hebrew_format_jdn(int64_t jdn,
+                  InfiltratrTemporalCalendarDatePart part)
 {
     UErrorCode status = U_ZERO_ERROR;
     gchar locale[ULOC_FULLNAME_CAPACITY];
@@ -463,66 +484,107 @@ hebrew_format_jdn(gint64 jdn,
     return result;
 }
 
-static gboolean
-provider_fields(const CalendarCalendarProvider *provider,
-                gint64 jdn,
-                CalendarCalendarFields *fields)
+static bool
+provider_fields(const InfiltratrTemporalCalendarProvider *provider,
+                int64_t jdn,
+                InfiltratrTemporalCalendarFields *fields)
 {
     (void)provider;
     if (fields == NULL)
-        return FALSE;
+        return false;
     hebrew_from_jdn(jdn, fields);
-    return TRUE;
+    return true;
 }
 
-static gchar *
-provider_format(const CalendarCalendarProvider *provider,
-                gint64 jdn,
-                CalendarDatePart part)
+static bool
+provider_format(const InfiltratrTemporalCalendarProvider *provider,
+                int64_t jdn,
+                InfiltratrTemporalCalendarDatePart part,
+                char *buffer,
+                size_t capacity,
+                size_t *length)
 {
+    gchar *text;
+    size_t text_length;
+
     (void)provider;
-    return hebrew_format_jdn(jdn, part);
+    if (buffer == NULL || capacity == 0U || length == NULL ||
+        part <= INFILTRATR_TEMPORAL_CALENDAR_DATE_PART_INVALID ||
+        part > INFILTRATR_TEMPORAL_CALENDAR_DATE_PART_FULL)
+    {
+        return false;
+    }
+
+    text = hebrew_format_jdn(jdn, part);
+    if (text == NULL || text[0] == '\0')
+    {
+        g_free(text);
+        return false;
+    }
+    text_length = strlen(text);
+    if (text_length >= capacity)
+    {
+        g_free(text);
+        return false;
+    }
+
+    memcpy(buffer, text, text_length + 1U);
+    *length = text_length;
+    g_free(text);
+    return true;
 }
 
-static gint64
-provider_period_start(const CalendarCalendarProvider *provider,
-                      gint64 jdn)
+static bool
+provider_period_start(const InfiltratrTemporalCalendarProvider *provider,
+                      int64_t jdn,
+                      int64_t *result)
 {
-    CalendarCalendarFields fields;
+    InfiltratrTemporalCalendarFields fields;
 
     (void)provider;
+    if (result == NULL)
+        return false;
     hebrew_from_jdn(jdn, &fields);
-    return hebrew_to_jdn(fields.year, fields.month, 1);
+    *result = hebrew_to_jdn(fields.year, fields.month, 1);
+    return true;
 }
 
-static gint64
-provider_add_periods(const CalendarCalendarProvider *provider,
-                     gint64 jdn,
-                     gint amount)
+static bool
+provider_add_periods(const InfiltratrTemporalCalendarProvider *provider,
+                     int64_t jdn,
+                     int32_t amount,
+                     int64_t *result)
 {
-    CalendarCalendarFields fields;
+    InfiltratrTemporalCalendarFields fields;
 
     (void)provider;
+    if (result == NULL)
+        return false;
     hebrew_from_jdn(jdn, &fields);
     hebrew_add_months_to_fields(&fields, amount);
-    return hebrew_to_jdn(fields.year, fields.month, fields.day);
+    *result = hebrew_to_jdn(fields.year, fields.month, fields.day);
+    return true;
 }
 
-static gint64
-provider_add_years(const CalendarCalendarProvider *provider,
-                   gint64 jdn,
-                   gint amount)
+static bool
+provider_add_years(const InfiltratrTemporalCalendarProvider *provider,
+                   int64_t jdn,
+                   int32_t amount,
+                   int64_t *result)
 {
-    CalendarCalendarFields fields;
+    InfiltratrTemporalCalendarFields fields;
 
     (void)provider;
+    if (result == NULL)
+        return false;
     hebrew_from_jdn(jdn, &fields);
-    fields.year = calendar_i64_add_saturating(fields.year, amount);
+    fields.year = infiltratr_i64_add_saturating(fields.year, amount);
     if (fields.month == 6 && !hebrew_is_leap(fields.year))
         fields.month = 7;
     fields.day = MIN(fields.day,
                      hebrew_month_length(fields.year, fields.month));
-    return hebrew_to_jdn(fields.year, fields.month, fields.day);
+    *result = hebrew_to_jdn(fields.year, fields.month, fields.day);
+    return true;
 }
 
 static const InfiltratrTemporalResourceMetadata hebrew_metadata = {
@@ -536,10 +598,10 @@ static const InfiltratrTemporalResourceMetadata hebrew_metadata = {
     .requires_longitude = false
 };
 
-static const CalendarCalendarProvider hebrew_provider = {
-    .abi_version = CALENDAR_CALENDAR_PROVIDER_ABI,
+static const InfiltratrTemporalCalendarProvider hebrew_provider = {
+    .struct_size = sizeof(InfiltratrTemporalCalendarProvider),
+    .abi_version = INFILTRATR_TEMPORAL_CALENDAR_PROVIDER_ABI,
     .calendar_id = "hebrew",
-    .common_index = G_MAXSIZE,
     .fields_from_jdn = provider_fields,
     .format = provider_format,
     .period_start = provider_period_start,
@@ -549,8 +611,8 @@ static const CalendarCalendarProvider hebrew_provider = {
 
 CALENDAR_RESOURCE_EXPORT const InfiltratrTemporalResourceMetadata *
 infiltratr_temporal_resource_metadata_v1(void);
-CALENDAR_RESOURCE_EXPORT const CalendarCalendarProvider *
-calendar_calendar_provider_v3(void);
+CALENDAR_RESOURCE_EXPORT const InfiltratrTemporalCalendarProvider *
+infiltratr_temporal_calendar_provider_v1(void);
 
 CALENDAR_RESOURCE_EXPORT const InfiltratrTemporalResourceMetadata *
 infiltratr_temporal_resource_metadata_v1(void)
@@ -558,8 +620,8 @@ infiltratr_temporal_resource_metadata_v1(void)
     return &hebrew_metadata;
 }
 
-CALENDAR_RESOURCE_EXPORT const CalendarCalendarProvider *
-calendar_calendar_provider_v3(void)
+CALENDAR_RESOURCE_EXPORT const InfiltratrTemporalCalendarProvider *
+infiltratr_temporal_calendar_provider_v1(void)
 {
     return &hebrew_provider;
 }
