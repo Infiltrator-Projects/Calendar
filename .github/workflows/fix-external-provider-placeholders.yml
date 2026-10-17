@@ -1,0 +1,50 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
+name: one-shot-fix-external-provider-placeholders
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - .github/workflows/fix-external-provider-placeholders.yml
+
+permissions:
+  contents: write
+
+jobs:
+  fix:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          fetch-depth: 0
+          submodules: true
+      - name: Use explicit null built-in placeholders
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+
+          path = Path('src/core/calendar-registry.c')
+          text = path.read_text(encoding='utf-8')
+          for mode in ('GREGORIAN', 'PERSIAN', 'COPTIC'):
+              old = f'    [CALENDAR_CALENDAR_MODE_{mode}] = {{ 0 }},'
+              new = (
+                  f'    [CALENDAR_CALENDAR_MODE_{mode}] = {{\n'
+                  f'        .interface = {{ .calendar_id = NULL }},\n'
+                  f'        .mode = CALENDAR_CALENDAR_MODE_{mode},\n'
+                  f'        .icu_keyword = NULL\n'
+                  f'    }},'
+              )
+              if text.count(old) != 1:
+                  raise SystemExit(f'expected one placeholder for {mode}')
+              text = text.replace(old, new)
+          path.write_text(text, encoding='utf-8')
+          PY
+          git checkout HEAD -- .github/workflows/fix-external-provider-placeholders.yml
+          git diff --check
+          git config user.name 'Shannon Smith'
+          git config user.email 'infiltratr@yandex.com'
+          git add src/core/calendar-registry.c
+          git commit -m 'Use explicit external provider placeholders'
+          git push origin HEAD:main
