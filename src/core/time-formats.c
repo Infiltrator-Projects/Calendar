@@ -13,6 +13,7 @@
 
 #include <infiltratr/core.h>
 #include <infiltratr/temporal.h>
+#include <infiltratr/temporal_clock_resource.h>
 #include <infiltratr/timing.h>
 #include <math.h>
 #include <string.h>
@@ -139,6 +140,76 @@ static const TimeProvider time_providers[] = {
 
 G_STATIC_ASSERT(G_N_ELEMENTS(time_providers) == CALENDAR_TIME_MODE_JAPANESE_TEMPORAL_EARLY + 1);
 
+/*
+ * The five migrated clocks have no Calendar-owned implementation or fallback
+ * at runtime. Common validates and calls the independent system resources.
+ * A test build may override only the scan directory, never the clock ABI.
+ */
+#ifndef CALENDAR_NATIVE_CLOCK_RESOURCE_DIRECTORY
+#define CALENDAR_NATIVE_CLOCK_RESOURCE_DIRECTORY \
+    INFILTRATR_TEMPORAL_NATIVE_CLOCK_DIRECTORY
+#endif
+
+static InfiltratrTemporalClockModule *
+    clock_modules[CALENDAR_TIME_MODE_JAPANESE_TEMPORAL_EARLY + 1];
+static GOnce clock_modules_once = G_ONCE_INIT;
+
+static gboolean
+is_native_clock(CalendarTimeMode mode)
+{
+    return mode == CALENDAR_TIME_MODE_DECIMAL ||
+           mode == CALENDAR_TIME_MODE_INTERNET ||
+           mode == CALENDAR_TIME_MODE_UNIX ||
+           mode == CALENDAR_TIME_MODE_HEXADECIMAL ||
+           mode == CALENDAR_TIME_MODE_BINARY;
+}
+
+static gpointer
+initialise_clock_resources(gpointer unused)
+{
+    static const CalendarTimeMode selected[] = {
+        CALENDAR_TIME_MODE_DECIMAL,
+        CALENDAR_TIME_MODE_INTERNET,
+        CALENDAR_TIME_MODE_UNIX,
+        CALENDAR_TIME_MODE_HEXADECIMAL,
+        CALENDAR_TIME_MODE_BINARY
+    };
+    gsize index;
+
+    (void)unused;
+    for (index = 0; index < G_N_ELEMENTS(selected); index++)
+    {
+        const CalendarTimeMode mode = selected[index];
+        const gchar *id = time_providers[mode].common_id;
+        g_autofree gchar *filename = g_strconcat(id, ".so", NULL);
+        g_autofree gchar *path = g_build_filename(
+            CALENDAR_NATIVE_CLOCK_RESOURCE_DIRECTORY, filename, NULL);
+
+        clock_modules[mode] = infiltratr_temporal_clock_module_open(path);
+        if (clock_modules[mode] != NULL)
+        {
+            const InfiltratrTemporalResourceMetadata *info =
+                infiltratr_temporal_clock_module_metadata(clock_modules[mode]);
+            if (info == NULL || !infiltratr_string_equal(info->id, id))
+            {
+                infiltratr_temporal_clock_module_free(clock_modules[mode]);
+                clock_modules[mode] = NULL;
+            }
+        }
+    }
+    return GINT_TO_POINTER(1);
+}
+
+static const InfiltratrTemporalClockModule *
+clock_resource_for_mode(CalendarTimeMode mode)
+{
+    if (!is_native_clock(mode))
+        return NULL;
+    g_once(&clock_modules_once, initialise_clock_resources, NULL);
+    return clock_modules[mode];
+}
+
+
 static const InfiltratrTemporalClockModeInfo *
 common_mode_info_for_provider(const TimeProvider *provider)
 {
@@ -158,7 +229,8 @@ time_provider_for_mode(CalendarTimeMode mode)
 
     provider = &time_providers[mode];
     return provider->abi_version == CALENDAR_TIME_PROVIDER_ABI &&
-           common_mode_info_for_provider(provider) != NULL
+           common_mode_info_for_provider(provider) != NULL &&
+           (!is_native_clock(mode) || clock_resource_for_mode(mode) != NULL)
         ? provider : NULL;
 }
 
@@ -258,6 +330,17 @@ calendar_format_time_at_location(CalendarTimeMode mode, gint64 unix_microseconds
 
     if (!location_is_valid_for_provider(provider, latitude, longitude))
         return g_strdup("");
+    if (is_native_clock(mode))
+    {
+        const InfiltratrTemporalClockModule *resource =
+            clock_resource_for_mode(mode);
+        if (resource == NULL || !infiltratr_temporal_clock_format(
+                resource, g_get_language_names()[0], unix_microseconds,
+                utc_offset_seconds, show_seconds, vertical,
+                safe_latitude, safe_longitude, text, sizeof(text), NULL))
+            return g_strdup("");
+        return g_strdup(text);
+    }
     if (!infiltratr_temporal_format_clock_mode_localized(
             g_get_language_names()[0], provider->common_id,
             unix_microseconds,
@@ -297,6 +380,15 @@ calendar_time_delay_to_next_tick_at_location(CalendarTimeMode mode,
         return 1000;
     if (!location_is_valid_for_provider(provider, latitude, longitude))
         return 3600000U;
+    if (is_native_clock(mode))
+    {
+        const InfiltratrTemporalClockModule *resource =
+            clock_resource_for_mode(mode);
+        uint32_t delay = 0U;
+        return resource != NULL && infiltratr_temporal_clock_next_tick(
+            resource, unix_microseconds, utc_offset_seconds, show_seconds,
+            safe_latitude, safe_longitude, &delay) ? delay : 1000U;
+    }
     return provider->next_tick(unix_microseconds, utc_offset_seconds, show_seconds,
                                safe_latitude, safe_longitude);
 }
