@@ -1,0 +1,45 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
+name: one-shot-update-common-resource-pin
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - .github/workflows/update-common-resource-pin.yml
+
+permissions:
+  contents: write
+
+jobs:
+  update:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          fetch-depth: 0
+          submodules: true
+      - name: Advance exact Common pin
+        shell: bash
+        run: |
+          set -euo pipefail
+          OLD=76911d64893b54922e1a067ad653556194ebda46
+          NEW=a9bfa89cc9b07f37324bb928691cf9e008e5c3a8
+          python3 - <<'PY'
+          from pathlib import Path
+          old = '76911d64893b54922e1a067ad653556194ebda46'
+          new = 'a9bfa89cc9b07f37324bb928691cf9e008e5c3a8'
+          path = Path('Makefile')
+          text = path.read_text(encoding='utf-8')
+          if text.count(old) != 1:
+              raise SystemExit('expected old Common pin exactly once')
+          path.write_text(text.replace(old, new), encoding='utf-8')
+          PY
+          git -C src/vendor/infiltratr-common fetch --depth=1 origin "$NEW"
+          git -C src/vendor/infiltratr-common checkout --detach "$NEW"
+          git checkout HEAD -- .github/workflows/update-common-resource-pin.yml
+          git diff --check
+          git config user.name 'Shannon Smith'
+          git config user.email 'infiltratr@yandex.com'
+          git add Makefile src/vendor/infiltratr-common
+          git commit -m 'Pin Common resource runtime fix'
+          git push origin HEAD:main
