@@ -5,11 +5,12 @@
  * Dual-source calendar-provider registry.
  *
  * Calendar identifiers are persisted in system presentation policy, so IDs are
- * stable data rather than implementation details. Existing compiled providers
- * remain first-class compatibility capability. Additional trusted native
- * resources are discovered from the InfiltratorOS Calendar resource directory
- * and are admitted only after both Common metadata and Calendar's complete
- * behaviour ABI validate.
+ * stable data rather than implementation details. Compiled providers and
+ * trusted native resources are peers in one runtime catalogue. Native resources
+ * are discovered from the InfiltratorOS Calendar resource directory and are
+ * admitted only after both Common metadata and Calendar's complete behaviour ABI
+ * validate. A calendar moved to native resources is absent when its module is
+ * absent; the registry never manufactures a compiled fallback for it.
  *
  * BuiltinCalendarProvider embeds the generic interface first. The built-in
  * adapters can therefore recover their private enum or ICU keyword while the
@@ -296,18 +297,16 @@ swedish_add_years(const CalendarCalendarProvider *provider,
     }
 
 /*
- * Local implementation slots are keyed explicitly by stable calendar ID.
- * Common owns descriptive catalogue metadata, but catalogue completeness and
- * array ordering are deliberately not runtime prerequisites for chronology.
- * An independently valid Calendar provider must continue to work even if a
- * mismatched Common build lacks metadata for some other provider.
+ * Local compiled implementation slots are keyed explicitly by stable calendar
+ * ID. Native filesystem providers have no entry in this array. Common owns
+ * descriptive catalogue metadata, but catalogue completeness and array ordering
+ * are deliberately not runtime prerequisites for chronology.
  */
 static const BuiltinCalendarProvider providers[] = {
     ARITHMETIC_PROVIDER(GREGORIAN, "gregorian", "gregorian"),
     CUSTOM_PROVIDER(ISO_WEEK, "iso-week"),
     CUSTOM_PROVIDER(JULIAN, "julian"),
     CUSTOM_PROVIDER(REVISED_JULIAN, "revised-julian"),
-    ARITHMETIC_PROVIDER(HEBREW, "hebrew", "hebrew"),
     ARITHMETIC_PROVIDER(ISLAMIC_UMM_AL_QURA, "islamic-umalqura", "islamic-umalqura"),
     ARITHMETIC_PROVIDER(ISLAMIC_CIVIL, "islamic-civil", "islamic-civil"),
     ARITHMETIC_PROVIDER(ISLAMIC_TBLA, "islamic-tbla", "islamic-tbla"),
@@ -471,7 +470,7 @@ initialise_runtime_registry(gpointer user_data)
     runtime_providers = g_ptr_array_new();
     /*
      * A missing directory is an empty optional catalogue. A directory I/O
-     * error likewise cannot remove the built-in capability set. Individual
+     * error likewise cannot remove the compiled capability set. Individual
      * malformed modules are ignored by Common or by load_runtime_provider.
      */
     (void)infiltratr_temporal_runtime_scan_directory(
