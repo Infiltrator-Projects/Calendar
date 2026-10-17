@@ -1,3 +1,14 @@
+calendar (1.0.110) unstable; urgency=medium
+
+  * Move Gregorian, Persian and Coptic calendar engines into independent
+    Calendar Resources modules using the Common temporal-calendar provider ABI.
+  * Package the new native modules alongside Hebrew as installed system
+    capabilities, not application-owned calendar implementations.
+  * Update provider regression tests to resolve by stable calendar ID rather
+    than assuming compiled-provider and Common catalogue array positions.
+
+ -- Shannon Smith <infiltratr@yandex.com>  Sun, 18 Oct 2026 07:36:00 +1100
+
 calendar (1.0.109) unstable; urgency=medium
 
   * Format the agenda selected-date header with the active calendar provider
