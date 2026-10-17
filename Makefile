@@ -22,7 +22,7 @@ DIST_DIR := dist
 # authoritative when the preferred MB Corpo families are unavailable.
 INFILTRATR_COMMON_DIR := src/vendor/infiltratr-common
 INFILTRATR_COMMON_URL := https://github.com/Infiltrator-Projects/Libraries.git
-INFILTRATR_COMMON_COMMIT := 3f0e49a0075aa16210af92e6e2477061f4eac893
+INFILTRATR_COMMON_COMMIT := 3b86318e5c2277db4f2e5b3c1c5b35cd3bfe3b09
 INFILTRATR_COMMON_VERSION := 1.19.52
 LIB_BASENAME := calendar
 LIB_SONAME := lib$(LIB_BASENAME).so.0
@@ -135,14 +135,27 @@ OBJECTS := $(patsubst src/%.c,$(BUILD_DIR)/%.o,$(SOURCES))
 CORE_OBJECTS := $(patsubst src/%.c,$(BUILD_DIR)/%.o,$(CORE_SOURCES))
 CORE_ARCHIVE := $(BUILD_DIR)/libcalendar-core.a
 CALENDAR_RESOURCE_BUILD_DIR := $(BUILD_DIR)/calendar-resources
+CALENDAR_RESOURCE_MAP := src/resources/calendars/calendar-resource.map
+CALENDAR_RESOURCE_NAMES := hebrew gregorian persian coptic
 HEBREW_RESOURCE_SOURCE := src/resources/calendars/hebrew.c
-HEBREW_RESOURCE_MAP := src/resources/calendars/hebrew.map
+GREGORIAN_RESOURCE_SOURCE := src/resources/calendars/gregorian.c
+PERSIAN_RESOURCE_SOURCE := src/resources/calendars/persian.c
+COPTIC_RESOURCE_SOURCE := src/resources/calendars/coptic.c
+CALENDAR_RESOURCE_SOURCES := $(HEBREW_RESOURCE_SOURCE) \
+	$(GREGORIAN_RESOURCE_SOURCE) \
+	$(PERSIAN_RESOURCE_SOURCE) \
+	$(COPTIC_RESOURCE_SOURCE)
 HEBREW_RESOURCE := $(CALENDAR_RESOURCE_BUILD_DIR)/hebrew.so
+GREGORIAN_RESOURCE := $(CALENDAR_RESOURCE_BUILD_DIR)/gregorian.so
+PERSIAN_RESOURCE := $(CALENDAR_RESOURCE_BUILD_DIR)/persian.so
+COPTIC_RESOURCE := $(CALENDAR_RESOURCE_BUILD_DIR)/coptic.so
+CALENDAR_RESOURCES := $(HEBREW_RESOURCE) $(GREGORIAN_RESOURCE) \
+	$(PERSIAN_RESOURCE) $(COPTIC_RESOURCE)
 TEST_CALENDAR_RESOURCE_CPPFLAG := \
 	-DCALENDAR_NATIVE_CALENDAR_RESOURCE_DIRECTORY=\"$(abspath $(CALENDAR_RESOURCE_BUILD_DIR))\"
 RUNTIME_CALENDAR_FIXTURE_DIR := $(BUILD_DIR)/calendar-resource-fixture
 RUNTIME_CALENDAR_FIXTURE := $(RUNTIME_CALENDAR_FIXTURE_DIR)/fixture-calendar.so
-RUNTIME_HEBREW_RESOURCE := $(RUNTIME_CALENDAR_FIXTURE_DIR)/hebrew.so
+RUNTIME_CALENDAR_RESOURCES := $(addprefix $(RUNTIME_CALENDAR_FIXTURE_DIR)/,$(addsuffix .so,$(CALENDAR_RESOURCE_NAMES)))
 MULTIARCH ?= $(shell $(CC) -dumpmachine)
 LIBDIR ?= $(PREFIX)/lib/$(MULTIARCH)
 
@@ -254,7 +267,7 @@ DIST_FILES := \
 all: common-check check-deps \
 	$(INFILTRATR_COMMON_ARCHIVE) \
 	$(CORE_ARCHIVE) \
-	$(HEBREW_RESOURCE) \
+	$(CALENDAR_RESOURCES) \
 	$(BUILD_DIR)/$(LIB_REALNAME) \
 	$(BUILD_DIR)/$(GIR).typelib \
 	$(BUILD_DIR)/$(ABOUT_BINARY) \
@@ -355,7 +368,7 @@ $(CORE_ARCHIVE): $(CORE_OBJECTS)
 	@rm -f "$@"
 	$(AR) rcsD "$@" $(CORE_OBJECTS)
 
-$(HEBREW_RESOURCE): $(HEBREW_RESOURCE_SOURCE) $(HEBREW_RESOURCE_MAP) \
+$(HEBREW_RESOURCE): $(HEBREW_RESOURCE_SOURCE) $(CALENDAR_RESOURCE_MAP) \
 		src/core/icu-compat-bridge.c $(INFILTRATR_COMMON_HEADERS) \
 		$(INFILTRATR_COMMON_ARCHIVE)
 	@mkdir -p "$(CALENDAR_RESOURCE_BUILD_DIR)"
@@ -363,7 +376,46 @@ $(HEBREW_RESOURCE): $(HEBREW_RESOURCE_SOURCE) $(HEBREW_RESOURCE_MAP) \
 		-frandom-seed=$(REPRO_SEED_PREFIX)-hebrew-resource $(CORE_CFLAGS) \
 		-shared $(HEBREW_RESOURCE_SOURCE) src/core/icu-compat-bridge.c \
 		$(INFILTRATR_COMMON_ARCHIVE) \
-		-Wl,--version-script=$(HEBREW_RESOURCE_MAP) \
+		-Wl,--version-script=$(CALENDAR_RESOURCE_MAP) \
+		-o $@ $(LDFLAGS) $(CORE_LIBS) $(ICU_BRIDGE_LIBS) $(MATH_LIBS)
+
+$(GREGORIAN_RESOURCE): $(GREGORIAN_RESOURCE_SOURCE) $(CALENDAR_RESOURCE_MAP) \
+		src/core/julian-day.c src/core/icu-calendar.c \
+		src/core/icu-compat-bridge.c $(INFILTRATR_COMMON_HEADERS) \
+		$(INFILTRATR_COMMON_ARCHIVE)
+	@mkdir -p "$(CALENDAR_RESOURCE_BUILD_DIR)"
+	$(CC) $(CPPFLAGS) $(CFLAGS) -fvisibility=hidden \
+		-frandom-seed=$(REPRO_SEED_PREFIX)-gregorian-resource $(CORE_CFLAGS) \
+		-shared $(GREGORIAN_RESOURCE_SOURCE) src/core/julian-day.c \
+		src/core/icu-calendar.c src/core/icu-compat-bridge.c \
+		$(INFILTRATR_COMMON_ARCHIVE) \
+		-Wl,--version-script=$(CALENDAR_RESOURCE_MAP) \
+		-o $@ $(LDFLAGS) $(CORE_LIBS) $(ICU_BRIDGE_LIBS) $(MATH_LIBS)
+
+$(PERSIAN_RESOURCE): $(PERSIAN_RESOURCE_SOURCE) $(CALENDAR_RESOURCE_MAP) \
+		src/core/calendar-arithmetic-persian.c src/core/icu-calendar.c \
+		src/core/icu-compat-bridge.c $(INFILTRATR_COMMON_HEADERS) \
+		$(INFILTRATR_COMMON_ARCHIVE)
+	@mkdir -p "$(CALENDAR_RESOURCE_BUILD_DIR)"
+	$(CC) $(CPPFLAGS) $(CFLAGS) -fvisibility=hidden \
+		-frandom-seed=$(REPRO_SEED_PREFIX)-persian-resource $(CORE_CFLAGS) \
+		-shared $(PERSIAN_RESOURCE_SOURCE) src/core/calendar-arithmetic-persian.c \
+		src/core/icu-calendar.c src/core/icu-compat-bridge.c \
+		$(INFILTRATR_COMMON_ARCHIVE) \
+		-Wl,--version-script=$(CALENDAR_RESOURCE_MAP) \
+		-o $@ $(LDFLAGS) $(CORE_LIBS) $(ICU_BRIDGE_LIBS) $(MATH_LIBS)
+
+$(COPTIC_RESOURCE): $(COPTIC_RESOURCE_SOURCE) $(CALENDAR_RESOURCE_MAP) \
+		src/core/calendar-arithmetic-coptic.c src/core/icu-calendar.c \
+		src/core/icu-compat-bridge.c $(INFILTRATR_COMMON_HEADERS) \
+		$(INFILTRATR_COMMON_ARCHIVE)
+	@mkdir -p "$(CALENDAR_RESOURCE_BUILD_DIR)"
+	$(CC) $(CPPFLAGS) $(CFLAGS) -fvisibility=hidden \
+		-frandom-seed=$(REPRO_SEED_PREFIX)-coptic-resource $(CORE_CFLAGS) \
+		-shared $(COPTIC_RESOURCE_SOURCE) src/core/calendar-arithmetic-coptic.c \
+		src/core/icu-calendar.c src/core/icu-compat-bridge.c \
+		$(INFILTRATR_COMMON_ARCHIVE) \
+		-Wl,--version-script=$(CALENDAR_RESOURCE_MAP) \
 		-o $@ $(LDFLAGS) $(CORE_LIBS) $(ICU_BRIDGE_LIBS) $(MATH_LIBS)
 
 $(BUILD_DIR)/$(LIB_REALNAME): $(OBJECTS) $(INFILTRATR_COMMON_ARCHIVE) \
@@ -464,7 +516,7 @@ $(BUILD_DIR)/$(GIR).typelib: $(BUILD_DIR)/$(GIR).gir
 
 $(BUILD_DIR)/test-time-formats: \
 		tests/test-time-formats.c \
-		$(HEBREW_RESOURCE) \
+		$(CALENDAR_RESOURCES) \
 		$(SOURCES) \
 		$(HEADERS) \
 		$(INFILTRATR_COMMON_ARCHIVE)
@@ -476,7 +528,7 @@ $(BUILD_DIR)/test-time-formats: \
 
 $(BUILD_DIR)/test-properties: \
 		tests/test-properties.c \
-		$(HEBREW_RESOURCE) \
+		$(CALENDAR_RESOURCES) \
 		$(SOURCES) \
 		$(HEADERS) \
 		$(INFILTRATR_COMMON_ARCHIVE)
@@ -488,7 +540,7 @@ $(BUILD_DIR)/test-properties: \
 
 $(BUILD_DIR)/test-portable-core: \
 		tests/test-portable-core.c \
-		$(HEBREW_RESOURCE) \
+		$(CALENDAR_RESOURCES) \
 		$(CORE_SOURCES) \
 		$(CORE_HEADERS) \
 		$(INFILTRATR_COMMON_ARCHIVE)
@@ -500,7 +552,7 @@ $(BUILD_DIR)/test-portable-core: \
 
 $(BUILD_DIR)/test-exact-clock-boundaries: \
 		tests/test-exact-clock-boundaries.c \
-		$(HEBREW_RESOURCE) \
+		$(CALENDAR_RESOURCES) \
 		$(CORE_SOURCES) \
 		$(CORE_HEADERS) \
 		$(INFILTRATR_COMMON_ARCHIVE)
@@ -518,14 +570,14 @@ $(RUNTIME_CALENDAR_FIXTURE): \
 		$(CORE_CFLAGS) -shared tests/calendar-resource-fixture.c \
 		-o $@ $(LDFLAGS) $(CORE_LIBS)
 
-$(RUNTIME_HEBREW_RESOURCE): $(HEBREW_RESOURCE)
+$(RUNTIME_CALENDAR_FIXTURE_DIR)/%.so: $(CALENDAR_RESOURCE_BUILD_DIR)/%.so
 	@mkdir -p "$(RUNTIME_CALENDAR_FIXTURE_DIR)"
-	cp "$(HEBREW_RESOURCE)" "$@"
+	cp "$<" "$@"
 
 $(BUILD_DIR)/test-runtime-calendar-resource: \
 		tests/test-runtime-calendar-resource.c \
 		$(RUNTIME_CALENDAR_FIXTURE) \
-		$(RUNTIME_HEBREW_RESOURCE) \
+		$(RUNTIME_CALENDAR_RESOURCES) \
 		$(CORE_SOURCES) \
 		$(CORE_HEADERS) \
 		$(INFILTRATR_COMMON_ARCHIVE)
@@ -571,7 +623,7 @@ validate-js: validate-settings-generated
 	@! grep -R -n -E 'const UUID = "calendar@cinnamon\.org"' "$(APPLET_SRC_DIR)" || { \
 		echo "Stock applet UUID is configured as the runtime identity." >&2; exit 1; }
 
-validate-exports: $(BUILD_DIR)/$(LIB_REALNAME) $(HEBREW_RESOURCE)
+validate-exports: $(BUILD_DIR)/$(LIB_REALNAME) $(CALENDAR_RESOURCES)
 	@command -v nm >/dev/null || { \
 		echo "Missing validation dependency: nm" >&2; exit 1; }
 	@nm -D --defined-only --format=posix "$(BUILD_DIR)/$(LIB_REALNAME)" | \
@@ -582,23 +634,25 @@ validate-exports: $(BUILD_DIR)/$(LIB_REALNAME) $(HEBREW_RESOURCE)
 		"$(BUILD_DIR)/exported-symbols.expected"
 	diff -u "$(BUILD_DIR)/exported-symbols.expected" \
 		"$(BUILD_DIR)/exported-symbols.actual"
-	@nm -D --defined-only --format=posix "$(HEBREW_RESOURCE)" | \
-		awk '{ sub(/@.*/, "", $$1); print $$1 }' | LC_ALL=C sort -u > \
-		"$(BUILD_DIR)/hebrew-resource-exports.actual"
 	@printf '%s\n' infiltratr_temporal_calendar_provider_v1 infiltratr_temporal_resource_metadata_v1 | \
-		LC_ALL=C sort -u > "$(BUILD_DIR)/hebrew-resource-exports.expected"
-	diff -u "$(BUILD_DIR)/hebrew-resource-exports.expected" \
-		"$(BUILD_DIR)/hebrew-resource-exports.actual"
+		LC_ALL=C sort -u > "$(BUILD_DIR)/calendar-resource-exports.expected"
+	@for resource in $(CALENDAR_RESOURCES); do \
+		nm -D --defined-only --format=posix "$$resource" | \
+			awk '{ sub(/@.*/, "", $$1); print $$1 }' | LC_ALL=C sort -u > \
+			"$(BUILD_DIR)/calendar-resource-exports.actual"; \
+		diff -u "$(BUILD_DIR)/calendar-resource-exports.expected" \
+			"$(BUILD_DIR)/calendar-resource-exports.actual" || exit 1; \
+	done
 
 validate-abi: $(BUILD_DIR)/$(LIB_REALNAME)
 	@command -v readelf >/dev/null || { \
 		echo "Missing validation dependency: readelf" >&2; exit 1; }
 	python3 tests/test-abi.py --library "$(BUILD_DIR)/$(LIB_REALNAME)"
 
-validate-runtime-deps: $(BUILD_DIR)/$(LIB_REALNAME) $(HEBREW_RESOURCE)
+validate-runtime-deps: $(BUILD_DIR)/$(LIB_REALNAME) $(CALENDAR_RESOURCES)
 	@command -v readelf >/dev/null || { \
 		echo "Missing validation dependency: readelf" >&2; exit 1; }
-	@for binary in "$(BUILD_DIR)/$(LIB_REALNAME)" "$(HEBREW_RESOURCE)"; do \
+	@for binary in "$(BUILD_DIR)/$(LIB_REALNAME)" $(CALENDAR_RESOURCES); do \
 		needed=$$(readelf -d "$$binary" | \
 			sed -n 's/.*Shared library: \[\([^]]*\)\].*/\1/p'); \
 		if printf '%s\n' "$$needed" | grep -Eq '^libicu(i18n|uc|data)\.so'; then \
@@ -690,7 +744,7 @@ static-analysis:
 	clang-tidy \
 		-checks='-*,clang-analyzer-*,bugprone-*,-bugprone-easily-swappable-parameters,-bugprone-reserved-identifier,performance-*,portability-*' \
 		-warnings-as-errors='clang-analyzer-*,bugprone-*,performance-*,portability-*' \
-		$(SOURCES) $(HEBREW_RESOURCE_SOURCE) -- $(CPPFLAGS) $(GLIB_CFLAGS) \
+		$(SOURCES) $(CALENDAR_RESOURCE_SOURCES) -- $(CPPFLAGS) $(GLIB_CFLAGS) \
 		-std=c11 -Wall -Wextra -Wpedantic
 	# The About helper is a separately linked production executable. Analyse it
 	# with its GTK boundary flags instead of contaminating the library source set.
@@ -705,8 +759,10 @@ install: all
 		"$(DESTDIR)$(LIBDIR)/$(LIB_REALNAME)"
 	ln -sfn "$(LIB_REALNAME)" \
 		"$(DESTDIR)$(LIBDIR)/$(LIB_SONAME)"
-	install -Dm755 "$(HEBREW_RESOURCE)" \
-		"$(DESTDIR)/System/Resources/Calendars/hebrew.so"
+	@for resource in $(CALENDAR_RESOURCES); do \
+		install -Dm755 "$$resource" \
+			"$(DESTDIR)/System/Resources/Calendars/$$(basename "$$resource")"; \
+	done
 	install -Dm644 "$(BUILD_DIR)/$(GIR).typelib" \
 		"$(DESTDIR)$(LIBDIR)/girepository-1.0/$(GIR).typelib"
 	install -Dm755 "$(BUILD_DIR)/$(ABOUT_BINARY)" \

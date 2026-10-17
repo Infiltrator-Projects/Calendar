@@ -62,9 +62,11 @@ test -f \
 
 # The application package must not own machine calendar resources. The resource
 # package is the sole Debian owner, so apt remove calendar leaves them intact.
-test ! -e "$TMP/generic/System/Resources/Calendars/hebrew.so"
-test -f "$TMP/resources/System/Resources/Calendars/hebrew.so"
-[ "$(find "$TMP/resources/System/Resources/Calendars" -maxdepth 1 -type f | wc -l)" -ge 1 ]
+for resource in hebrew gregorian persian coptic; do
+    test ! -e "$TMP/generic/System/Resources/Calendars/$resource.so"
+    test -f "$TMP/resources/System/Resources/Calendars/$resource.so"
+done
+[ "$(find "$TMP/resources/System/Resources/Calendars" -maxdepth 1 -type f -name '*.so' | wc -l)" -eq 4 ]
 
 "$TMP/generic/usr/libexec/calendar-about" --print-metadata |
     grep -qx "version=$VERSION"
@@ -94,11 +96,13 @@ if readelf -d "$RUNTIME_LIB" 2>/dev/null | \
     echo "Generic package has a direct build-host ICU SONAME dependency" >&2
     exit 1
 fi
-if readelf -d "$TMP/resources/System/Resources/Calendars/hebrew.so" 2>/dev/null | \
-        grep -Eq 'Shared library: \[libicu[^]]*\.so\.[0-9]+'; then
-    echo "Calendar resource has a direct build-host ICU SONAME dependency" >&2
-    exit 1
-fi
+for resource in hebrew gregorian persian coptic; do
+    if readelf -d "$TMP/resources/System/Resources/Calendars/$resource.so" 2>/dev/null | \
+            grep -Eq 'Shared library: \[libicu[^]]*\.so\.[0-9]+'; then
+        echo "Calendar resource $resource has a direct build-host ICU SONAME dependency" >&2
+        exit 1
+    fi
+done
 python3 "$ROOT/tests/test-abi.py" --library "$RUNTIME_LIB"
 nm -D --defined-only --format=posix "$RUNTIME_LIB" | \
     awk '$1 ~ /^calendar_/ { sub(/@.*/, "", $1); print $1 }' | \
@@ -108,15 +112,17 @@ sed -n 's/^[[:space:]]*\(calendar_[A-Za-z0-9_]*\);[[:space:]]*$/\1/p' \
     "$TMP/generic-exports.expected"
 diff -u "$TMP/generic-exports.expected" "$TMP/generic-exports.actual"
 
-nm -D --defined-only --format=posix \
-    "$TMP/resources/System/Resources/Calendars/hebrew.so" | \
-    awk '{ sub(/@.*/, "", $1); print $1 }' | LC_ALL=C sort -u > \
-    "$TMP/resource-exports.actual"
 printf '%s\n' \
     infiltratr_temporal_calendar_provider_v1 \
     infiltratr_temporal_resource_metadata_v1 | LC_ALL=C sort -u > \
     "$TMP/resource-exports.expected"
-diff -u "$TMP/resource-exports.expected" "$TMP/resource-exports.actual"
+for resource in hebrew gregorian persian coptic; do
+    nm -D --defined-only --format=posix \
+        "$TMP/resources/System/Resources/Calendars/$resource.so" | \
+        awk '{ sub(/@.*/, "", $1); print $1 }' | LC_ALL=C sort -u > \
+        "$TMP/resource-exports.actual"
+    diff -u "$TMP/resource-exports.expected" "$TMP/resource-exports.actual"
+done
 
 sed '/^__ARCHIVE_BELOW__$/q' "$RUN" > "$TMP/installer-header.sh"
 sh -n "$TMP/installer-header.sh"

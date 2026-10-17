@@ -316,7 +316,7 @@ def main() -> None:
     assert "libgtk-3-0," not in runtime_control
     assert "\n python3," not in runtime_control
     assert "debian/infiltrator-calendar-resources/System/Resources/Calendars" in rules
-    assert "debian/calendar/System/Resources/Calendars/hebrew.so" in rules
+    assert "debian/calendar/System/Resources/Calendars/\"*.so" in rules
     assert "test ! -e" in rules
     assert "-DU_DISABLE_RENAMING=1" in makefile
     assert "src/core/icu-compat-bridge.c" in makefile
@@ -360,7 +360,7 @@ def main() -> None:
     assert '"./$RELEASE_RESOURCES_DEB" "./$RELEASE_DEB"' in package_install
     assert "apt-get purge -y calendar" in package_install
     assert "infiltrator-calendar-resources" in package_install
-    assert "test -f /System/Resources/Calendars/hebrew.so" in package_install
+    assert "for resource in hebrew gregorian persian coptic" in package_install
     assert "apt-get purge -y infiltrator-calendar-resources" in package_install
     assert "dpkg-buildpackage" not in package_install
 

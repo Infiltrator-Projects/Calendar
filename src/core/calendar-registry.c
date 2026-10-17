@@ -417,7 +417,7 @@ runtime_add_years(const CalendarCalendarProvider *provider,
  * are deliberately not runtime prerequisites for chronology.
  */
 static const BuiltinCalendarProvider providers[] = {
-    ARITHMETIC_PROVIDER(GREGORIAN, "gregorian", "gregorian"),
+    [CALENDAR_CALENDAR_MODE_GREGORIAN] = { 0 },
     CUSTOM_PROVIDER(ISO_WEEK, "iso-week"),
     CUSTOM_PROVIDER(JULIAN, "julian"),
     CUSTOM_PROVIDER(REVISED_JULIAN, "revised-julian"),
@@ -425,10 +425,10 @@ static const BuiltinCalendarProvider providers[] = {
     ARITHMETIC_PROVIDER(ISLAMIC_CIVIL, "islamic-civil", "islamic-civil"),
     ARITHMETIC_PROVIDER(ISLAMIC_TBLA, "islamic-tbla", "islamic-tbla"),
     ICU_PROVIDER(ISLAMIC, "islamic", "islamic"),
-    ARITHMETIC_PROVIDER(PERSIAN, "persian", "persian"),
+    [CALENDAR_CALENDAR_MODE_PERSIAN] = { 0 },
     CUSTOM_PROVIDER(BAHAI, "bahai"),
     ARITHMETIC_PROVIDER(BUDDHIST, "buddhist", "buddhist"),
-    ARITHMETIC_PROVIDER(COPTIC, "coptic", "coptic"),
+    [CALENDAR_CALENDAR_MODE_COPTIC] = { 0 },
     ARITHMETIC_PROVIDER(ETHIOPIAN, "ethiopian", "ethiopic"),
     ARITHMETIC_PROVIDER(ETHIOPIC_AMETE_ALEM, "ethiopic-amete-alem", "ethiopic-amete-alem"),
     ICU_PROVIDER(CHINESE, "chinese", "chinese"),
@@ -460,7 +460,8 @@ provider_from_id_unchecked(const gchar *calendar_id)
 
     for (index = 0; index < G_N_ELEMENTS(providers); index++)
     {
-        if (infiltratr_string_equal(
+        if (providers[index].interface.calendar_id != NULL &&
+            infiltratr_string_equal(
                 calendar_id, providers[index].interface.calendar_id))
         {
             return &providers[index].interface;
@@ -587,22 +588,45 @@ ensure_runtime_registry(void)
     (void)g_once(&runtime_registry_once, initialise_runtime_registry, NULL);
 }
 
+static gsize
+builtin_provider_count(void)
+{
+    gsize index;
+    gsize count = 0U;
+
+    for (index = 0; index < G_N_ELEMENTS(providers); index++)
+    {
+        if (providers[index].interface.calendar_id != NULL)
+            count++;
+    }
+    return count;
+}
+
 gsize
 calendar_calendar_provider_get_count(void)
 {
     ensure_runtime_registry();
-    return G_N_ELEMENTS(providers) +
+    return builtin_provider_count() +
         (runtime_providers != NULL ? (gsize)runtime_providers->len : 0U);
 }
 
 const CalendarCalendarProvider *
 calendar_calendar_provider_at(gsize index)
 {
-    ensure_runtime_registry();
-    if (index < G_N_ELEMENTS(providers))
-        return &providers[index].interface;
+    gsize builtin_index;
 
-    index -= G_N_ELEMENTS(providers);
+    ensure_runtime_registry();
+    for (builtin_index = 0;
+         builtin_index < G_N_ELEMENTS(providers);
+         builtin_index++)
+    {
+        if (providers[builtin_index].interface.calendar_id == NULL)
+            continue;
+        if (index == 0U)
+            return &providers[builtin_index].interface;
+        index--;
+    }
+
     if (runtime_providers == NULL || index >= (gsize)runtime_providers->len)
         return NULL;
 

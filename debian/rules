@@ -41,13 +41,13 @@ override_dh_auto_install:
 		'DESTDIR=$(CURDIR)/debian/calendar' PREFIX=/usr
 	install -d \
 		"$(CURDIR)/debian/infiltrator-calendar-resources/System/Resources/Calendars"
-	mv "$(CURDIR)/debian/calendar/System/Resources/Calendars/hebrew.so" \
-		"$(CURDIR)/debian/infiltrator-calendar-resources/System/Resources/Calendars/hebrew.so"
+	mv "$(CURDIR)/debian/calendar/System/Resources/Calendars/"*.so \
+		"$(CURDIR)/debian/infiltrator-calendar-resources/System/Resources/Calendars/"
 	rmdir --ignore-fail-on-non-empty \
 		"$(CURDIR)/debian/calendar/System/Resources/Calendars" \
 		"$(CURDIR)/debian/calendar/System/Resources" \
 		"$(CURDIR)/debian/calendar/System" || true
-	@test -f \
-		"$(CURDIR)/debian/infiltrator-calendar-resources/System/Resources/Calendars/hebrew.so"
-	@test ! -e \
-		"$(CURDIR)/debian/calendar/System/Resources/Calendars/hebrew.so"
+	@for resource in hebrew gregorian persian coptic; do \
+		test -f "$(CURDIR)/debian/infiltrator-calendar-resources/System/Resources/Calendars/$$resource.so"; \
+		test ! -e "$(CURDIR)/debian/calendar/System/Resources/Calendars/$$resource.so"; \
+	done
