@@ -102,7 +102,7 @@ test_calendar_reference_vectors(void)
     g_assert_cmpuint(G_N_ELEMENTS(vectors), ==,
                      calendar_calendar_provider_get_count());
     g_assert_cmpuint(calendar_calendar_provider_get_count(), ==,
-                     builtin_count + 1U);
+                     builtin_count + 4U);
 
     for (index = 0; index < builtin_count; index++)
     {
