@@ -4,93 +4,16 @@
  *
  * Civil and discrete native clock scheduling.
  *
- * Common renders the visible clock text. These callbacks retain Calendar's
- * exact next-boundary scheduling so the Cinnamon panel wakes only when the
- * Common-rendered value can change.
+ * Only unmigrated clocks retain Calendar-owned scheduling here. Fixed-unit
+ * decimal, Internet, Unix, hexadecimal and binary scheduling is provided by
+ * their independent system resources through Common's executable clock ABI.
  */
 
 #include "time-formats-internal.h"
 
 #include <infiltratr/temporal.h>
 
-guint
-delay_decimal_provider(gint64 unix_microseconds,
-                       gint utc_offset_seconds,
-                       gboolean show_seconds,
-                       gdouble latitude G_GNUC_UNUSED,
-                       gdouble longitude)
-{
-    (void)longitude;
-    return delay_for_day_ticks(
-        local_microseconds_of_day(unix_microseconds, utc_offset_seconds),
-        show_seconds ? DECIMAL_SECONDS_PER_DAY : 1000);
-}
-
-/* @000 is midnight at UTC+01:00; the host's civil timezone is not involved. */
-static gint64
-internet_microseconds(gint64 unix_microseconds)
-{
-    const gint64 instant_phase =
-        positive_modulo(unix_microseconds, MICROSECONDS_PER_DAY);
-
-    return positive_modulo(
-        instant_phase + (gint64)SECONDS_PER_HOUR * G_USEC_PER_SEC,
-        MICROSECONDS_PER_DAY);
-}
-
-guint
-delay_internet_provider(gint64 unix_microseconds,
-                        gint utc_offset_seconds,
-                        gboolean show_seconds,
-                        gdouble latitude G_GNUC_UNUSED,
-                        gdouble longitude)
-{
-    (void)utc_offset_seconds;
-    (void)longitude;
-    return delay_for_day_ticks(
-        internet_microseconds(unix_microseconds),
-        show_seconds ? INTERNET_BEATS_PER_DAY * 100 : INTERNET_BEATS_PER_DAY);
-}
-
-guint
-delay_unix_provider(gint64 unix_microseconds,
-                    gint utc_offset_seconds,
-                    gboolean show_seconds,
-                    gdouble latitude G_GNUC_UNUSED,
-                    gdouble longitude)
-{
-    (void)utc_offset_seconds;
-    (void)show_seconds;
-    (void)longitude;
-    return delay_for_integer_period(unix_microseconds, G_USEC_PER_SEC);
-}
-
-guint
-delay_hexadecimal_provider(gint64 unix_microseconds,
-                           gint utc_offset_seconds,
-                           gboolean show_seconds,
-                           gdouble latitude G_GNUC_UNUSED,
-                           gdouble longitude)
-{
-    (void)show_seconds;
-    (void)longitude;
-    return delay_for_day_ticks(
-        local_microseconds_of_day(unix_microseconds, utc_offset_seconds),
-        HEX_TICKS_PER_DAY);
-}
-
-guint
-delay_binary_provider(gint64 unix_microseconds,
-                      gint utc_offset_seconds,
-                      gboolean show_seconds,
-                      gdouble latitude G_GNUC_UNUSED,
-                      gdouble longitude)
-{
-    (void)longitude;
-    return delay_for_day_ticks(
-        local_microseconds_of_day(unix_microseconds, utc_offset_seconds),
-        show_seconds ? SECONDS_PER_DAY : MINUTES_PER_HOUR * HOURS_PER_DAY);
-}
+/* The first five fixed-unit modes now live in /System/Resources/Clocks. */
 
 guint
 delay_chinese_provider(gint64 unix_microseconds,

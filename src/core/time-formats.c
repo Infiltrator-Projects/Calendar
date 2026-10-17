@@ -3,9 +3,10 @@
 
 /*
  * Native clock-provider registry, shared timing primitives and public dispatch.
- * Common owns each mode's stable identifier, capability metadata and rendered
- * clock text. Calendar retains only boundary scheduling needed to wake the
- * Cinnamon panel at the exact instant that Common's visible value can change.
+ * Common owns stable identifiers and capability metadata. Five fixed-unit
+ * clocks are independently loaded system modules implementing both rendering
+ * and update scheduling; remaining modes use Common rendering and Calendar
+ * boundary callbacks until their own resource migration.
  */
 
 #include "time-formats.h"
@@ -113,13 +114,16 @@ calendar_time_delay_for_clock_seconds(long double clock_seconds,
 #define TIME_PROVIDER(mode_, token_, id_) \
     [CALENDAR_TIME_MODE_##mode_] = { CALENDAR_TIME_PROVIDER_ABI, \
         CALENDAR_TIME_MODE_##mode_, id_, delay_##token_##_provider }
+#define NATIVE_TIME_PROVIDER(mode_, id_) \
+    [CALENDAR_TIME_MODE_##mode_] = { CALENDAR_TIME_PROVIDER_ABI, \
+        CALENDAR_TIME_MODE_##mode_, id_, NULL }
 
 static const TimeProvider time_providers[] = {
-    TIME_PROVIDER(DECIMAL, decimal, "decimal"),
-    TIME_PROVIDER(INTERNET, internet, "internet"),
-    TIME_PROVIDER(UNIX, unix, "unix"),
-    TIME_PROVIDER(HEXADECIMAL, hexadecimal, "hexadecimal"),
-    TIME_PROVIDER(BINARY, binary, "binary"),
+    NATIVE_TIME_PROVIDER(DECIMAL, "decimal"),
+    NATIVE_TIME_PROVIDER(INTERNET, "internet"),
+    NATIVE_TIME_PROVIDER(UNIX, "unix"),
+    NATIVE_TIME_PROVIDER(HEXADECIMAL, "hexadecimal"),
+    NATIVE_TIME_PROVIDER(BINARY, "binary"),
     TIME_PROVIDER(SIDEREAL, sidereal, "sidereal"),
     TIME_PROVIDER(SOLAR, solar, "solar"),
     TIME_PROVIDER(JULIAN, julian, "julian"),

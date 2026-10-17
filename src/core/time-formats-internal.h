@@ -40,11 +40,6 @@ guint calendar_time_delay_for_clock_seconds(long double clock_seconds, long doub
 #define delay_for_day_ticks calendar_time_delay_for_day_ticks
 #define delay_for_clock_seconds calendar_time_delay_for_clock_seconds
 
-guint delay_decimal_provider(gint64, gint, gboolean, gdouble, gdouble);
-guint delay_internet_provider(gint64, gint, gboolean, gdouble, gdouble);
-guint delay_unix_provider(gint64, gint, gboolean, gdouble, gdouble);
-guint delay_hexadecimal_provider(gint64, gint, gboolean, gdouble, gdouble);
-guint delay_binary_provider(gint64, gint, gboolean, gdouble, gdouble);
 guint delay_sidereal_provider(gint64, gint, gboolean, gdouble, gdouble);
 guint delay_solar_provider(gint64, gint, gboolean, gdouble, gdouble);
 guint delay_julian_provider(gint64, gint, gboolean, gdouble, gdouble);
