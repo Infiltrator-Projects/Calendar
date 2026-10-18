@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 /*
- * Exact external clock-resource contract. Compare all five native providers
+ * Exact external clock-resource contract. Compare installed native providers
  * against the stable Common presentation reference at positive/negative Unix
  * epochs, offsets, layouts and precision levels. These tests invoke the
  * independent .so directly; a metadata-only resource cannot pass.
@@ -195,6 +195,78 @@ static void test_conventional_clock_resources(void)
     }
 }
 
+/* Cross-language output and exact next-tick verification for the two newly
+ * independent alternative clocks, with negative epochs, odd UTC offsets,
+ * longitude changes, horizontal/vertical and precision settings. */
+static void test_hundred_ke_and_mean_solar(void)
+{
+    static const char *ids[] = { "chinese-ke", "mean-solar" };
+    static const char *langs[] = {
+        "en_AU", "zh_CN", "zh_Hant_TW", "ja_JP", "ru_RU"
+    };
+    static const gint64 instants[] = {
+        -INT64_C(86400000001), -INT64_C(1), INT64_C(0),
+        INT64_C(43200000000), INT64_C(86399999999),
+        INT64_C(1792256400123456)
+    };
+    static const gint32 offsets[] = { 0, 39600, -19800, 30 };
+    static const double longitudes[] = { -145.1234, 0.0, 15.0, 145.3499 };
+    for (gsize i = 0; i < G_N_ELEMENTS(ids); ++i)
+    {
+        g_autofree gchar *name = g_strconcat(ids[i], ".so", NULL);
+        g_autofree gchar *path =
+            g_build_filename(TEST_CLOCK_RESOURCE_DIRECTORY, name, NULL);
+        InfiltratrTemporalClockModule *module =
+            infiltratr_temporal_clock_module_open(path);
+        const InfiltratrTemporalResourceMetadata *metadata;
+        g_assert_nonnull(module);
+        metadata = infiltratr_temporal_clock_module_metadata(module);
+        g_assert_nonnull(metadata);
+        g_assert_cmpstr(metadata->id, ==, ids[i]);
+        g_assert_cmpint(metadata->requires_longitude, ==, i == 1);
+        for (gsize j = 0; j < G_N_ELEMENTS(instants); ++j)
+            for (gsize k = 0; k < G_N_ELEMENTS(offsets); ++k)
+                for (gsize n = 0; n < G_N_ELEMENTS(langs); ++n)
+                    for (gsize g = 0; g < G_N_ELEMENTS(longitudes); ++g)
+                        for (gint vertical = 0; vertical <= 1; ++vertical)
+                            for (gint seconds = 0; seconds <= 1; ++seconds)
+                            {
+                                char actual[256] = {0};
+                                char expected[256] = {0};
+                                char following[256] = {0};
+                                guint32 ms = 0;
+                                const gint64 instant = instants[j];
+                                const gint32 offset = offsets[k];
+                                const double longitude = longitudes[g];
+                                const char *language = langs[n];
+                                g_assert_true(infiltratr_temporal_clock_format(
+                                    module, language, instant, offset,
+                                    seconds != 0, vertical != 0, 0.0,
+                                    longitude, actual, sizeof(actual), NULL));
+                                g_assert_true(infiltratr_temporal_format_clock_mode_localized(
+                                    language, ids[i], instant, offset,
+                                    seconds != 0, vertical != 0, true,
+                                    0.0, longitude, expected, sizeof(expected),
+                                    NULL));
+                                g_assert_cmpstr(actual, ==, expected);
+                                g_assert_true(infiltratr_temporal_clock_next_tick(
+                                    module, instant, offset, seconds != 0,
+                                    0.0, longitude, &ms));
+                                g_assert_cmpuint(ms, >, 0U);
+                                g_assert_cmpuint(ms, <=, i == 0
+                                    ? 864000U
+                                    : (seconds ? 1000U : 60000U));
+                                g_assert_true(infiltratr_temporal_clock_format(
+                                    module, language, instant + (gint64)ms * 1000,
+                                    offset, seconds != 0, vertical != 0, 0.0,
+                                    longitude, following, sizeof(following),
+                                    NULL));
+                                g_assert_cmpstr(actual, !=, following);
+                            }
+        infiltratr_temporal_clock_module_free(module);
+    }
+}
+
 int main(int argc, char **argv)
 {
     g_test_init(&argc, &argv, NULL);
@@ -204,5 +276,7 @@ int main(int argc, char **argv)
                     test_julian_clock_resources);
     g_test_add_func("/clock-resource/conventional-executable-modes",
                     test_conventional_clock_resources);
+    g_test_add_func("/clock-resource/chinese-ke-and-mean-solar",
+                    test_hundred_ke_and_mean_solar);
     return g_test_run();
 }
