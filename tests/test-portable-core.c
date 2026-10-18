@@ -1178,9 +1178,14 @@ test_time_catalogue(void)
 
     g_assert_cmpint(calendar_time_mode_from_string("standard"), ==,
                     CALENDAR_TIME_MODE_INVALID);
+    /* Explicit civil choices now have independent native resources, but
+     * remain outside the 21 alternative clock catalogue. */
     g_assert_cmpint(calendar_time_mode_from_string("standard-24"), ==,
-                    CALENDAR_TIME_MODE_INVALID);
+                    CALENDAR_TIME_MODE_STANDARD_24);
     g_assert_cmpint(calendar_time_mode_from_string("standard-12"), ==,
+                    CALENDAR_TIME_MODE_STANDARD_12);
+    g_assert_cmpuint(calendar_time_mode_get_count(), ==, 21U);
+    g_assert_cmpint(calendar_time_mode_get_at(21U), ==,
                     CALENDAR_TIME_MODE_INVALID);
 
     for (item = 0; item < calendar_time_mode_get_count(); item++)
