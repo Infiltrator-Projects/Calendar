@@ -16,7 +16,7 @@ mkdir -p "$TARGET"
         --exclude='./dist' \
         --exclude='./debian/.debhelper' \
         --exclude='./debian/calendar' \
-        --exclude='./debian/cinnamon-calendar' \
+        --exclude='./debian/infiltrator-calendar-resources' \
         --exclude='./debian/calendar' \
         --exclude='./debian/files' \
         --exclude='./debian/*.substvars' \

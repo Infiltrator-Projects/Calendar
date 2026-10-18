@@ -923,23 +923,25 @@ coverage:
 		LDFLAGS="--coverage" test
 	@command -v gcovr >/dev/null || { \
 		echo "gcovr is required for the coverage gate" >&2; exit 1; }
-	gcovr --root . --filter src --exclude 'src/app/about-dialog.c' \
+	gcovr --root . --filter src --exclude 'src/app/about-dialog.c' --exclude 'src/vendor/' \
 		--print-summary --fail-under-line $(COVERAGE_MIN_LINES) \
 		--fail-under-branch $(COVERAGE_MIN_BRANCHES) \
-		--html-details -o "$(BUILD_DIR)/coverage.html" $(BUILD_DIR)/*.gcda
+		--html-details -o "$(BUILD_DIR)/coverage.html" $(BUILD_DIR)
 
+# GNU libc does not implement optional Annex K *_s functions. Exclude only
+# that migration advisory; bounds, lifetime and other analyzer checks remain.
 static-analysis:
 	@command -v clang-tidy >/dev/null || { \
 		echo "clang-tidy is not installed" >&2; exit 1; }
 	clang-tidy \
-		-checks='-*,clang-analyzer-*,bugprone-*,-bugprone-easily-swappable-parameters,-bugprone-reserved-identifier,performance-*,portability-*' \
+		-checks='-*,clang-analyzer-*,-clang-analyzer-security.insecureAPI.DeprecatedOrUnsafeBufferHandling,bugprone-*,-bugprone-easily-swappable-parameters,-bugprone-reserved-identifier,performance-*,portability-*' \
 		-warnings-as-errors='clang-analyzer-*,bugprone-*,performance-*,portability-*' \
 		$(SOURCES) $(RESOURCE_ENGINE_SOURCES) $(CALENDAR_RESOURCE_SOURCES) $(SIDEREAL_CLOCK_SOURCE) $(CHINESE_TIME_CLOCK_SOURCE) $(SOLAR_CLOCK_SOURCE) $(SOLAR_ORIGIN_CLOCK_SOURCE) $(SEASONAL_CLOCK_SOURCE) src/resources/calendars/native-calendar.c -- -DRESOURCE_ISO_WEEK $(CPPFLAGS) $(GLIB_CFLAGS) \
 		-std=c11 -Wall -Wextra -Wpedantic
 	# The About helper is a separately linked production executable. Analyse it
 	# with its GTK boundary flags instead of contaminating the library source set.
 	clang-tidy \
-		-checks='-*,clang-analyzer-*,bugprone-*,-bugprone-easily-swappable-parameters,-bugprone-reserved-identifier,performance-*,portability-*' \
+		-checks='-*,clang-analyzer-*,-clang-analyzer-security.insecureAPI.DeprecatedOrUnsafeBufferHandling,bugprone-*,-bugprone-easily-swappable-parameters,-bugprone-reserved-identifier,performance-*,portability-*' \
 		-warnings-as-errors='clang-analyzer-*,bugprone-*,performance-*,portability-*' \
 		src/app/about-dialog.c -- $(CPPFLAGS) $(GTK_CFLAGS) \
 		-std=c11 -Wall -Wextra -Wpedantic

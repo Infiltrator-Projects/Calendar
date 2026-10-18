@@ -21,6 +21,20 @@ struct ResourceCalendar {
     ResourceNavigateFunc add_periods;
     ResourceNavigateFunc add_years;
 };
+#if defined(RESOURCE_FAMILY_ICU) || defined(RESOURCE_FAMILY_ARITHMETIC)
+static gchar *
+icu_format(const ResourceCalendar *provider,
+           gint64 jdn,
+           CalendarDatePart part)
+{
+    const ResourceCalendar *builtin = provider;
+
+    return calendar_icu_format(
+        builtin->mode, builtin->icu_keyword, jdn, part);
+}
+
+#endif
+
 #if defined(RESOURCE_FAMILY_ICU)
 static gboolean
 icu_fields(const ResourceCalendar *provider,
@@ -31,17 +45,6 @@ icu_fields(const ResourceCalendar *provider,
 
     return calendar_icu_fields_from_jdn(
         builtin->icu_keyword, jdn, fields);
-}
-
-static gchar *
-icu_format(const ResourceCalendar *provider,
-           gint64 jdn,
-           CalendarDatePart part)
-{
-    const ResourceCalendar *builtin = provider;
-
-    return calendar_icu_format(
-        builtin->mode, builtin->icu_keyword, jdn, part);
 }
 
 static gint64
@@ -78,17 +81,6 @@ icu_add_years(const ResourceCalendar *provider,
 #endif
 
 #if defined(RESOURCE_FAMILY_ARITHMETIC)
-static gchar *
-icu_format(const ResourceCalendar *provider,
-           gint64 jdn,
-           CalendarDatePart part)
-{
-    const ResourceCalendar *builtin = provider;
-
-    return calendar_icu_format(
-        builtin->mode, builtin->icu_keyword, jdn, part);
-}
-
 static gboolean
 arithmetic_fields(const ResourceCalendar *provider,
                   gint64 jdn,

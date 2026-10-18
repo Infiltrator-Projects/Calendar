@@ -30,13 +30,11 @@
 #include <infiltratr/temporal_clock_resource.h>
 
 #include "infiltratr/arithmetic.h"
-#include "infiltratr/compiler.h"
 #include "infiltratr/core.h"
 #include "infiltratr/i18n.h"
 #include "infiltratr/timing.h"
 
 #include <math.h>
-#include <stdarg.h>
 #include <stdio.h>
 #include <string.h>
 
@@ -74,28 +72,13 @@ static bool write_text(char *buffer, size_t capacity, size_t *length,
     return true;
 }
 
-static bool write_printf(char *buffer, size_t capacity, size_t *length,
-                         const char *format, ...)
-    INFILTRATR_PRINTF_FORMAT(4, 5);
-static bool write_printf(char *buffer, size_t capacity, size_t *length,
-                         const char *format, ...)
+static bool finish_output(char *buffer,size_t capacity,size_t *length,int written)
 {
-    va_list arguments;
-    int written;
-
-    if (buffer == NULL || capacity == 0U || format == NULL) {
-        return false;
-    }
-    va_start(arguments, format);
-    written = vsnprintf(buffer, capacity, format, arguments);
-    va_end(arguments);
     if (written < 0 || (size_t)written >= capacity) {
-        buffer[0] = '\0';
+        if (buffer != NULL && capacity != 0U) buffer[0]='\0';
         return false;
     }
-    if (length != NULL) {
-        *length = (size_t)written;
-    }
+    if (length != NULL) *length=(size_t)written;
     return true;
 }
 
@@ -518,15 +501,11 @@ static bool format_nuremberg_hours(char *buffer,
         fmodl(elapsed, (long double)SECONDS_PER_MINUTE));
 
     if (show_seconds) {
-        return write_printf(buffer, capacity, length,
-                            "%02d%s%02d%s%02d%s%s",
-                            hour, separator, minute, separator, second,
-                            vertical ? "\n" : " ", suffix);
+        return finish_output(buffer, capacity, length,
+            snprintf(buffer, capacity, "%02d%s%02d%s%02d%s%s", hour, separator, minute, separator, second, vertical ? "\n" : " ", suffix));
     }
-    return write_printf(buffer, capacity, length,
-                        "%02d%s%02d%s%s",
-                        hour, separator, minute,
-                        vertical ? "\n" : " ", suffix);
+    return finish_output(buffer, capacity, length,
+            snprintf(buffer, capacity, "%02d%s%02d%s%s", hour, separator, minute, vertical ? "\n" : " ", suffix));
 }
 
 static bool mode_location_valid(const InfiltratrTemporalClockModeInfo *info,
@@ -719,25 +698,18 @@ static bool format_clock_mode(const InfiltratrI18n *language,
                 uncia = 11U;
             }
             if (uncia != 0U) {
-                return write_printf(
-                    buffer, capacity, length,
-                    vertical ? "%s\n%s\n%s %s"
-                             : "%s %s · %s %s",
-                    language != NULL ? infiltratr_i18n_get(language, "hour") : "Hora",
-                    roman[period.index], roman[uncia - 1U],
-                    language != NULL ? infiltratr_i18n_get(language,
+                return finish_output(buffer, capacity, length,
+            snprintf(buffer, capacity, vertical ? "%s\n%s\n%s %s"
+                             : "%s %s · %s %s", language != NULL ? infiltratr_i18n_get(language, "hour") : "Hora", roman[period.index], roman[uncia - 1U], language != NULL ? infiltratr_i18n_get(language,
                         uncia == 1U ? "twelfth" : "twelfths")
-                        : (uncia == 1U ? "uncia" : "unciae"));
+                        : (uncia == 1U ? "uncia" : "unciae")));
             }
         }
 
-        return write_printf(
-            buffer, capacity, length,
-            vertical ? "%s\n%s" : "%s %s",
-            language != NULL ? infiltratr_i18n_get(language,
+        return finish_output(buffer, capacity, length,
+            snprintf(buffer, capacity, vertical ? "%s\n%s" : "%s %s", language != NULL ? infiltratr_i18n_get(language,
                 period.daylight ? "hour" : "watch")
-                : (period.daylight ? "Hora" : "Vigilia"),
-            roman[period.index]);
+                : (period.daylight ? "Hora" : "Vigilia"), roman[period.index]));
     }
 
     if (strcmp(mode, "japanese-temporal") == 0 ||
@@ -783,10 +755,8 @@ static bool format_clock_mode(const InfiltratrI18n *language,
                 infiltratr_i18n_get(language, vertical ? "edo-vertical" : "edo"),
                 arguments, sizeof(arguments) / sizeof(arguments[0]));
         }
-        return write_printf(
-            buffer, capacity, length,
-            vertical ? "%sの刻\n%sつ" : "%sの刻 · %sつ",
-            toki->character, toki->bell);
+        return finish_output(buffer, capacity, length,
+            snprintf(buffer, capacity, vertical ? "%sの刻\n%sつ" : "%sの刻 · %sつ", toki->character, toki->bell));
     }
 
     if (strcmp(mode, "nuremberg-hours") == 0) {
