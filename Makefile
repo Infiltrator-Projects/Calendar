@@ -744,8 +744,8 @@ validate-runtime-deps: $(BUILD_DIR)/$(LIB_REALNAME) $(CALENDAR_RESOURCES) $(CLOC
 	done
 
 	@for resource in $(CALENDAR_RESOURCES) $(CLOCK_RESOURCES); do \
-		if readelf -d "$resource" | grep -Eq 'Shared library: \[libcalendar\.so'; then \
-			echo "System resource unexpectedly depends on Calendar application: $resource" >&2; \
+		if readelf -d "$$resource" | grep -Eq 'Shared library: \[libcalendar\.so'; then \
+			echo "System resource unexpectedly depends on Calendar application: $$resource" >&2; \
 			exit 1; \
 		fi; \
 	done
