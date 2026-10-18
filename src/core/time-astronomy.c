@@ -120,23 +120,6 @@ calendar_julian_date(gint64 unix_microseconds)
 }
 
 long double
-calendar_local_sidereal_seconds(gint64 unix_microseconds,
-                                     gdouble longitude)
-{
-    const long double days_since_j2000 =
-        calendar_julian_date(unix_microseconds) - JULIAN_DATE_J2000;
-    const long double gmst_hours =
-        18.697374558L + 24.06570982441908L * days_since_j2000;
-    long double local_hours =
-        fmodl(gmst_hours + normalise_longitude(longitude) / 15.0L, 24.0L);
-
-    if (local_hours < 0.0L)
-        local_hours += 24.0L;
-
-    return local_hours * SECONDS_PER_HOUR;
-}
-
-long double
 calendar_mean_solar_seconds(gint64 unix_microseconds,
                                  gdouble longitude)
 {
