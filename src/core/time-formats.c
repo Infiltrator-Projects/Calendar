@@ -4,7 +4,7 @@
 /*
  * Native clock-provider registry, shared timing primitives and public dispatch.
  * Common owns stable identifiers and capability metadata. Eleven executable
- * clock resources (eleven alternative clocks, two explicit conventional
+ * clock resources (twelve alternative clocks, two explicit conventional
  * modes) own their notation and next-visible-tick scheduling. The 21-mode
  * alternative catalogue remains stable; OS-following standard mode retains
  * Cinnamon's locale fallback.
@@ -126,7 +126,7 @@ static const TimeProvider time_providers[] = {
     NATIVE_TIME_PROVIDER(HEXADECIMAL, "hexadecimal"),
     NATIVE_TIME_PROVIDER(BINARY, "binary"),
     NATIVE_TIME_PROVIDER(SIDEREAL, "sidereal"),
-    TIME_PROVIDER(SOLAR, solar, "solar"),
+    NATIVE_TIME_PROVIDER(SOLAR, "solar"),
     NATIVE_TIME_PROVIDER(JULIAN, "julian"),
     NATIVE_TIME_PROVIDER(MEAN_SOLAR, "mean-solar"),
     NATIVE_TIME_PROVIDER(MODIFIED_JULIAN, "modified-julian"),
@@ -148,7 +148,7 @@ static const TimeProvider time_providers[] = {
 G_STATIC_ASSERT(G_N_ELEMENTS(time_providers) == CALENDAR_TIME_MODE_STANDARD_24 + 1);
 
 /*
- * These thirteen resource-backed clocks have no Calendar-owned implementation
+ * These fourteen resource-backed clocks have no Calendar-owned implementation
  * or fallback at runtime. OS-following standard uses Cinnamon unchanged.
  * Common validates and calls the independent system resources.
  * A test build may override only the scan directory, never the clock ABI.
@@ -167,7 +167,8 @@ static GOnce clock_modules_once = G_ONCE_INIT;
 static gboolean
 is_native_clock(CalendarTimeMode mode)
 {
-    return mode == CALENDAR_TIME_MODE_CHINESE ||
+    return mode == CALENDAR_TIME_MODE_SOLAR ||
+           mode == CALENDAR_TIME_MODE_CHINESE ||
            mode == CALENDAR_TIME_MODE_SIDEREAL ||
            mode == CALENDAR_TIME_MODE_DECIMAL ||
            mode == CALENDAR_TIME_MODE_INTERNET ||
@@ -186,6 +187,7 @@ static gpointer
 initialise_clock_resources(gpointer unused)
 {
     static const CalendarTimeMode selected[] = {
+        CALENDAR_TIME_MODE_SOLAR,
         CALENDAR_TIME_MODE_CHINESE,
         CALENDAR_TIME_MODE_SIDEREAL,
         CALENDAR_TIME_MODE_DECIMAL,
