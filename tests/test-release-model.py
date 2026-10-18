@@ -331,19 +331,21 @@ def main() -> None:
         "chinese-ke", "mean-solar", "sidereal", "chinese-time", "solar",
         "italian-hours", "babylonian-hours",
         "babylonian-ancient", "indian-ghati",
+        "roman-temporal", "japanese-temporal", "japanese-temporal-early",
+        "nuremberg-hours", "nuremberg-solar",
     }
     installed_clock_checks = re.findall(
         r"@for resource in ([^;]+); do \\\\?", rules
     )
     assert any(set(group.split()) == mandatory_clock_ids
                for group in installed_clock_checks), (
-        "debian/rules does not verify all eighteen mandatory clock resources"
+        "debian/rules does not verify all twenty-three mandatory clock resources"
     )
     assert "for id in decimal internet unix hexadecimal binary julian modified-julian standard-12 standard-24 chinese-ke mean-solar sidereal chinese-time solar italian-hours babylonian-hours babylonian-ancient indian-ghati" in read("tools/isolated-cinnamon-artifact-smoke.sh")
     assert "debian/calendar/System/Resources/Calendars/\"*.so" in rules
     assert "test ! -e" in rules
     assert "-DU_DISABLE_RENAMING=1" in makefile
-    assert "src/core/icu-compat-bridge.c" in makefile
+    assert "src/resources/calendars/engine/icu-compat-bridge.c" in makefile
     assert "validate-runtime-deps:" in makefile
 
     assert 'NATIVE_VERSION="${VERSION}+nativepgo${NATIVE_REVISION}"' in installer

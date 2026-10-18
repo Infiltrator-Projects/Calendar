@@ -22,8 +22,8 @@ DIST_DIR := dist
 # authoritative when the preferred MB Corpo families are unavailable.
 INFILTRATR_COMMON_DIR := src/vendor/infiltratr-common
 INFILTRATR_COMMON_URL := https://github.com/Infiltrator-Projects/Libraries.git
-INFILTRATR_COMMON_COMMIT := b3c239c900bc62acb5b80cfb499af410112fee1c
-INFILTRATR_COMMON_VERSION := 1.19.63
+INFILTRATR_COMMON_COMMIT := f099551fd290199367fe0c7aee823415c104de39
+INFILTRATR_COMMON_VERSION := 1.19.64
 LIB_BASENAME := calendar
 LIB_SONAME := lib$(LIB_BASENAME).so.0
 LIB_REALNAME := lib$(LIB_BASENAME).so.0.0.0
@@ -34,27 +34,9 @@ GIR := Calendar-1.0
 CORE_SOURCES := \
 	src/core/clock-engine.c \
 	src/core/time-formats.c \
-	src/core/time-formats-astronomy.c \
-	src/core/time-formats-nuremberg.c \
-	src/core/time-astronomy.c \
 	src/core/julian-day.c \
 	src/core/calendar-registry.c \
-	src/core/calendar-arithmetic.c \
-	src/core/calendar-arithmetic-coptic.c \
-	src/core/calendar-arithmetic-indian.c \
-	src/core/calendar-arithmetic-islamic.c \
-	src/core/calendar-arithmetic-japanese.c \
-	src/core/calendar-helpers.c \
 	src/core/locale-weekend.c \
-	src/core/icu-calendar.c \
-	src/core/icu-compat-bridge.c \
-	src/core/calendar-ancient.c \
-	src/core/calendar-bahai.c \
-	src/core/calendar-historical.c \
-	src/core/calendar-swedish.c \
-	src/core/calendar-perpetual.c \
-	src/core/calendar-reform.c \
-	src/core/calendar-custom.c \
 	src/core/calendar-core.c \
 	src/core/event-core.c \
 	src/core/event-source.c
@@ -79,27 +61,15 @@ CORE_HEADERS := \
 	src/core/clock-engine.h \
 	src/core/time-formats.h \
 	src/core/time-formats-internal.h \
-	src/core/time-astronomy.h \
 	src/core/julian-day.h \
 	src/core/calendar-types.h \
 	src/core/calendar-core.h \
 	src/core/calendar-internal.h \
 	src/core/calendar-registry.h \
-	src/core/calendar-arithmetic.h \
-	src/core/calendar-arithmetic-internal.h \
-	src/core/icu-calendar.h \
-	src/core/calendar-ancient.h \
-	src/core/calendar-bahai.h \
-	src/core/calendar-historical.h \
-	src/core/calendar-swedish.h \
-	src/core/calendar-perpetual.h \
-	src/core/calendar-reform.h \
-	src/core/calendar-custom.h \
 	src/core/event-types.h \
 	src/core/event-core.h \
 	src/core/event-source.h \
 	src/core/integer-math.h \
-	src/core/calendar-helpers.h \
 	src/core/locale-weekend.h
 PRIVATE_HEADERS := \
 	src/app/project-info.h \
@@ -133,9 +103,31 @@ INFILTRATR_COMMON_CPPFLAGS := -Iinclude
 OBJECTS := $(patsubst src/%.c,$(BUILD_DIR)/%.o,$(SOURCES))
 CORE_OBJECTS := $(patsubst src/%.c,$(BUILD_DIR)/%.o,$(CORE_SOURCES))
 CORE_ARCHIVE := $(BUILD_DIR)/libcalendar-core.a
+RESOURCE_ENGINE_SOURCES := \
+	src/resources/calendars/engine/time-astronomy.c \
+	src/resources/calendars/engine/calendar-arithmetic-indian.c \
+	src/resources/calendars/engine/calendar-perpetual.c \
+	src/resources/calendars/engine/icu-calendar.c \
+	src/resources/calendars/engine/icu-compat-bridge.c \
+	src/resources/calendars/engine/calendar-arithmetic.c \
+	src/resources/calendars/engine/calendar-ancient.c \
+	src/resources/calendars/engine/calendar-arithmetic-japanese.c \
+	src/resources/calendars/engine/calendar-custom.c \
+	src/resources/calendars/engine/calendar-arithmetic-coptic.c \
+	src/resources/calendars/engine/calendar-historical.c \
+	src/resources/calendars/engine/calendar-arithmetic-islamic.c \
+	src/resources/calendars/engine/calendar-helpers.c \
+	src/resources/calendars/engine/calendar-swedish.c \
+	src/resources/calendars/engine/calendar-bahai.c \
+	src/resources/calendars/engine/calendar-reform.c \
+	src/resources/calendars/engine/julian.c
+RESOURCE_ENGINE_OBJECTS := $(patsubst src/%.c,$(BUILD_DIR)/%.o,$(RESOURCE_ENGINE_SOURCES))
+RESOURCE_ENGINE_ARCHIVE := $(BUILD_DIR)/libcalendar-resource-engine.a
+RESOURCE_ENGINE_HEADERS := $(wildcard src/resources/calendars/engine/*.h)
 CALENDAR_RESOURCE_BUILD_DIR := $(BUILD_DIR)/calendar-resources
 CALENDAR_RESOURCE_MAP := src/resources/calendars/calendar-resource.map
-CALENDAR_RESOURCE_NAMES := hebrew gregorian persian coptic
+EXTRACTED_CALENDAR_RESOURCE_NAMES := iso-week julian revised-julian islamic-umalqura islamic-civil islamic-tbla islamic bahai buddhist ethiopian ethiopic-amete-alem chinese dangi indian japanese minguo roman byzantine egyptian-nabonassar armenian-traditional mayan french-republican swedish-historical international-fixed world positivist
+CALENDAR_RESOURCE_NAMES := hebrew gregorian persian coptic $(EXTRACTED_CALENDAR_RESOURCE_NAMES)
 HEBREW_RESOURCE_SOURCE := src/resources/calendars/hebrew.c
 GREGORIAN_RESOURCE_SOURCE := src/resources/calendars/gregorian.c
 PERSIAN_RESOURCE_SOURCE := src/resources/calendars/persian.c
@@ -151,7 +143,8 @@ GREGORIAN_RESOURCE := $(CALENDAR_RESOURCE_BUILD_DIR)/gregorian.so
 PERSIAN_RESOURCE := $(CALENDAR_RESOURCE_BUILD_DIR)/persian.so
 COPTIC_RESOURCE := $(CALENDAR_RESOURCE_BUILD_DIR)/coptic.so
 CALENDAR_RESOURCES := $(HEBREW_RESOURCE) $(GREGORIAN_RESOURCE) \
-	$(PERSIAN_RESOURCE) $(COPTIC_RESOURCE)
+	$(PERSIAN_RESOURCE) $(COPTIC_RESOURCE) \
+	$(addprefix $(CALENDAR_RESOURCE_BUILD_DIR)/,$(addsuffix .so,$(EXTRACTED_CALENDAR_RESOURCE_NAMES)))
 CLOCK_RESOURCE_BUILD_DIR := $(BUILD_DIR)/clock-resources
 CLOCK_RESOURCE_SOURCE := src/resources/clocks/fixed-clock.c
 JULIAN_CLOCK_RESOURCE_SOURCE := src/resources/clocks/julian-clock.c
@@ -162,13 +155,15 @@ SIDEREAL_CLOCK_SOURCE := src/resources/clocks/sidereal-clock.c
 CHINESE_TIME_CLOCK_SOURCE := src/resources/clocks/chinese-time-clock.c
 SOLAR_CLOCK_SOURCE := src/resources/clocks/solar-clock.c
 SOLAR_ORIGIN_CLOCK_SOURCE := src/resources/clocks/solar-origin-clock.c
+SEASONAL_CLOCK_SOURCE := src/resources/clocks/seasonal-clock.c
+SEASONAL_CLOCK_RESOURCE_NAMES := roman-temporal japanese-temporal japanese-temporal-early nuremberg-hours nuremberg-solar
 CLOCK_RESOURCE_MAP := src/resources/clocks/clock-resource.map
 FIXED_CLOCK_RESOURCE_NAMES := decimal internet unix hexadecimal binary
 JULIAN_CLOCK_RESOURCE_NAMES := julian modified-julian
 CONVENTIONAL_CLOCK_RESOURCE_NAMES := standard-12 standard-24
 NEXT_CLOCK_RESOURCE_NAMES := chinese-ke mean-solar
 ORIGIN_CLOCK_RESOURCE_NAMES := italian-hours babylonian-hours babylonian-ancient indian-ghati
-CLOCK_RESOURCE_NAMES := $(FIXED_CLOCK_RESOURCE_NAMES) $(JULIAN_CLOCK_RESOURCE_NAMES) $(CONVENTIONAL_CLOCK_RESOURCE_NAMES) $(NEXT_CLOCK_RESOURCE_NAMES) $(ORIGIN_CLOCK_RESOURCE_NAMES) sidereal chinese-time solar
+CLOCK_RESOURCE_NAMES := $(FIXED_CLOCK_RESOURCE_NAMES) $(JULIAN_CLOCK_RESOURCE_NAMES) $(CONVENTIONAL_CLOCK_RESOURCE_NAMES) $(NEXT_CLOCK_RESOURCE_NAMES) $(ORIGIN_CLOCK_RESOURCE_NAMES) sidereal chinese-time solar $(SEASONAL_CLOCK_RESOURCE_NAMES)
 CLOCK_RESOURCES := $(addprefix $(CLOCK_RESOURCE_BUILD_DIR)/,$(addsuffix .so,$(CLOCK_RESOURCE_NAMES)))
 TEST_CLOCK_RESOURCE_CPPFLAG := \
 	-DCALENDAR_NATIVE_CLOCK_RESOURCE_DIRECTORY=\"$(abspath $(CLOCK_RESOURCE_BUILD_DIR))\"
@@ -180,7 +175,7 @@ RUNTIME_CALENDAR_RESOURCES := $(addprefix $(RUNTIME_CALENDAR_FIXTURE_DIR)/,$(add
 MULTIARCH ?= $(shell $(CC) -dumpmachine)
 LIBDIR ?= $(PREFIX)/lib/$(MULTIARCH)
 
-CPPFLAGS += -Isrc/app -Isrc/core -Isrc/adapters -I$(INFILTRATR_COMMON_DIR)/include \
+CPPFLAGS += -Isrc/app -Isrc/core -Isrc/adapters -Isrc/resources/calendars -Isrc/resources/calendars/engine -I$(INFILTRATR_COMMON_DIR)/include \
 	-DCALENDAR_VERSION=\"$(VERSION)\" \
 	-DCALENDAR_SOURCE_ID=\"calendar-$(VERSION)\" \
 	-DCALENDAR_BUILD_PROFILE=\"$(BUILD_MODE)\" \
@@ -385,56 +380,98 @@ common-test: $(INFILTRATR_COMMON_ARCHIVE)
 		CFLAGS='$(INFILTRATR_COMMON_CFLAGS)' \
 		BUILD_DIR="$(INFILTRATR_COMMON_BUILD_DIR)" check
 
+$(CALENDAR_RESOURCES): $(RESOURCE_ENGINE_HEADERS) $(HEADERS)
+
 $(CORE_ARCHIVE): $(CORE_OBJECTS)
 	@rm -f "$@"
 	$(AR) rcsD "$@" $(CORE_OBJECTS)
 
+$(RESOURCE_ENGINE_ARCHIVE): $(RESOURCE_ENGINE_OBJECTS)
+	@rm -f "$@"
+	$(AR) rcsD "$@" $(RESOURCE_ENGINE_OBJECTS)
+
+$(addprefix $(CALENDAR_RESOURCE_BUILD_DIR)/,$(addsuffix .so,$(EXTRACTED_CALENDAR_RESOURCE_NAMES))): $(CALENDAR_RESOURCE_BUILD_DIR)/%.so: src/resources/calendars/native-calendar.c src/resources/calendars/catalogue.h $(RESOURCE_ENGINE_ARCHIVE) src/core/julian-day.c $(INFILTRATR_COMMON_ARCHIVE) $(CALENDAR_RESOURCE_MAP)
+	@mkdir -p "$(CALENDAR_RESOURCE_BUILD_DIR)"
+	@case "$*" in \
+	  iso-week) variant=ISO_WEEK ;; \
+	  julian) variant=JULIAN ;; \
+	  revised-julian) variant=REVISED_JULIAN ;; \
+	  islamic-umalqura) variant=ISLAMIC_UMM_AL_QURA ;; \
+	  islamic-civil) variant=ISLAMIC_CIVIL ;; \
+	  islamic-tbla) variant=ISLAMIC_TBLA ;; \
+	  islamic) variant=ISLAMIC ;; \
+	  bahai) variant=BAHAI ;; \
+	  buddhist) variant=BUDDHIST ;; \
+	  ethiopian) variant=ETHIOPIAN ;; \
+	  ethiopic-amete-alem) variant=ETHIOPIC_AMETE_ALEM ;; \
+	  chinese) variant=CHINESE ;; \
+	  dangi) variant=DANGI ;; \
+	  indian) variant=INDIAN ;; \
+	  japanese) variant=JAPANESE ;; \
+	  minguo) variant=MINGUO ;; \
+	  roman) variant=ROMAN ;; \
+	  byzantine) variant=BYZANTINE ;; \
+	  egyptian-nabonassar) variant=EGYPTIAN_NABONASSAR ;; \
+	  armenian-traditional) variant=ARMENIAN_TRADITIONAL ;; \
+	  mayan) variant=MAYAN ;; \
+	  french-republican) variant=FRENCH_REPUBLICAN ;; \
+	  swedish-historical) variant=SWEDISH_HISTORICAL ;; \
+	  international-fixed) variant=INTERNATIONAL_FIXED ;; \
+	  world) variant=WORLD ;; \
+	  positivist) variant=POSITIVIST ;; \
+	  *) exit 1 ;; esac; \
+	$(CC) $(CPPFLAGS) $(CFLAGS) -fvisibility=hidden -DRESOURCE_$$variant $(CORE_CFLAGS) \
+		-shared src/resources/calendars/native-calendar.c src/core/julian-day.c \
+		$(RESOURCE_ENGINE_ARCHIVE) $(INFILTRATR_COMMON_ARCHIVE) \
+		-Wl,--version-script=$(CALENDAR_RESOURCE_MAP) -Wl,-z,defs \
+		-o $@ $(LDFLAGS) $(CORE_LIBS) $(ICU_BRIDGE_LIBS) $(MATH_LIBS)
+
 $(HEBREW_RESOURCE): $(HEBREW_RESOURCE_SOURCE) $(CALENDAR_RESOURCE_MAP) \
-		src/core/icu-compat-bridge.c $(INFILTRATR_COMMON_HEADERS) \
+		src/resources/calendars/engine/icu-compat-bridge.c $(INFILTRATR_COMMON_HEADERS) \
 		$(INFILTRATR_COMMON_ARCHIVE)
 	@mkdir -p "$(CALENDAR_RESOURCE_BUILD_DIR)"
 	$(CC) $(CPPFLAGS) $(CFLAGS) -fvisibility=hidden \
 		-frandom-seed=$(REPRO_SEED_PREFIX)-hebrew-resource $(CORE_CFLAGS) \
-		-shared $(HEBREW_RESOURCE_SOURCE) src/core/icu-compat-bridge.c \
+		-shared $(HEBREW_RESOURCE_SOURCE) src/resources/calendars/engine/icu-compat-bridge.c \
 		$(INFILTRATR_COMMON_ARCHIVE) \
 		-Wl,--version-script=$(CALENDAR_RESOURCE_MAP) \
 		-o $@ $(LDFLAGS) $(CORE_LIBS) $(ICU_BRIDGE_LIBS) $(MATH_LIBS)
 
 $(GREGORIAN_RESOURCE): $(GREGORIAN_RESOURCE_SOURCE) $(CALENDAR_RESOURCE_MAP) \
-		src/core/julian-day.c src/core/icu-calendar.c \
-		src/core/icu-compat-bridge.c $(INFILTRATR_COMMON_HEADERS) \
+		src/core/julian-day.c src/resources/calendars/engine/icu-calendar.c \
+		src/resources/calendars/engine/icu-compat-bridge.c $(INFILTRATR_COMMON_HEADERS) \
 		$(INFILTRATR_COMMON_ARCHIVE)
 	@mkdir -p "$(CALENDAR_RESOURCE_BUILD_DIR)"
 	$(CC) $(CPPFLAGS) $(CFLAGS) -fvisibility=hidden \
 		-frandom-seed=$(REPRO_SEED_PREFIX)-gregorian-resource $(CORE_CFLAGS) \
 		-shared $(GREGORIAN_RESOURCE_SOURCE) src/core/julian-day.c \
-		src/core/icu-calendar.c src/core/icu-compat-bridge.c \
+		src/resources/calendars/engine/icu-calendar.c src/resources/calendars/engine/icu-compat-bridge.c \
 		$(INFILTRATR_COMMON_ARCHIVE) \
 		-Wl,--version-script=$(CALENDAR_RESOURCE_MAP) \
 		-o $@ $(LDFLAGS) $(CORE_LIBS) $(ICU_BRIDGE_LIBS) $(MATH_LIBS)
 
 $(PERSIAN_RESOURCE): $(PERSIAN_RESOURCE_SOURCE) $(CALENDAR_RESOURCE_MAP) \
-		$(PERSIAN_RESOURCE_ARITHMETIC) src/core/icu-calendar.c \
-		src/core/icu-compat-bridge.c $(INFILTRATR_COMMON_HEADERS) \
+		$(PERSIAN_RESOURCE_ARITHMETIC) src/resources/calendars/engine/icu-calendar.c \
+		src/resources/calendars/engine/icu-compat-bridge.c $(INFILTRATR_COMMON_HEADERS) \
 		$(INFILTRATR_COMMON_ARCHIVE)
 	@mkdir -p "$(CALENDAR_RESOURCE_BUILD_DIR)"
 	$(CC) $(CPPFLAGS) $(CFLAGS) -fvisibility=hidden \
 		-frandom-seed=$(REPRO_SEED_PREFIX)-persian-resource $(CORE_CFLAGS) \
-		-shared $(PERSIAN_RESOURCE_SOURCE) $(PERSIAN_RESOURCE_ARITHMETIC) \
-		src/core/icu-calendar.c src/core/icu-compat-bridge.c \
+		-shared $(PERSIAN_RESOURCE_SOURCE) $(PERSIAN_RESOURCE_ARITHMETIC) src/core/julian-day.c \
+		src/resources/calendars/engine/icu-calendar.c src/resources/calendars/engine/icu-compat-bridge.c \
 		$(INFILTRATR_COMMON_ARCHIVE) \
 		-Wl,--version-script=$(CALENDAR_RESOURCE_MAP) \
 		-o $@ $(LDFLAGS) $(CORE_LIBS) $(ICU_BRIDGE_LIBS) $(MATH_LIBS)
 
 $(COPTIC_RESOURCE): $(COPTIC_RESOURCE_SOURCE) $(CALENDAR_RESOURCE_MAP) \
-		src/core/calendar-arithmetic-coptic.c src/core/icu-calendar.c \
-		src/core/icu-compat-bridge.c $(INFILTRATR_COMMON_HEADERS) \
+		src/resources/calendars/engine/calendar-arithmetic-coptic.c src/resources/calendars/engine/icu-calendar.c \
+		src/resources/calendars/engine/icu-compat-bridge.c $(INFILTRATR_COMMON_HEADERS) \
 		$(INFILTRATR_COMMON_ARCHIVE)
 	@mkdir -p "$(CALENDAR_RESOURCE_BUILD_DIR)"
 	$(CC) $(CPPFLAGS) $(CFLAGS) -fvisibility=hidden \
 		-frandom-seed=$(REPRO_SEED_PREFIX)-coptic-resource $(CORE_CFLAGS) \
-		-shared $(COPTIC_RESOURCE_SOURCE) src/core/calendar-arithmetic-coptic.c \
-		src/core/icu-calendar.c src/core/icu-compat-bridge.c \
+		-shared $(COPTIC_RESOURCE_SOURCE) src/resources/calendars/engine/calendar-arithmetic-coptic.c src/core/julian-day.c \
+		src/resources/calendars/engine/icu-calendar.c src/resources/calendars/engine/icu-compat-bridge.c \
 		$(INFILTRATR_COMMON_ARCHIVE) \
 		-Wl,--version-script=$(CALENDAR_RESOURCE_MAP) \
 		-o $@ $(LDFLAGS) $(CORE_LIBS) $(ICU_BRIDGE_LIBS) $(MATH_LIBS)
@@ -484,6 +521,20 @@ $(addprefix $(CLOCK_RESOURCE_BUILD_DIR)/,$(addsuffix .so,$(ORIGIN_CLOCK_RESOURCE
 		$(if $(filter indian-ghati,$*),-DCLOCK_GHATI=1,) \
 		-shared $(SOLAR_ORIGIN_CLOCK_SOURCE) \
 		-Wl,--version-script=$(CLOCK_RESOURCE_MAP) -o $@ $(LDFLAGS) $(MATH_LIBS)
+
+$(addprefix $(CLOCK_RESOURCE_BUILD_DIR)/,$(addsuffix .so,$(SEASONAL_CLOCK_RESOURCE_NAMES))): $(CLOCK_RESOURCE_BUILD_DIR)/%.so: $(SEASONAL_CLOCK_SOURCE) $(CLOCK_RESOURCE_MAP) $(INFILTRATR_COMMON_HEADERS) $(INFILTRATR_COMMON_ARCHIVE)
+	@mkdir -p "$(CLOCK_RESOURCE_BUILD_DIR)"
+	@case "$*" in \
+	  roman-temporal) kind=CLOCK_ROMAN ;; \
+	  japanese-temporal) kind=CLOCK_JAPANESE_LATE ;; \
+	  japanese-temporal-early) kind=CLOCK_JAPANESE_EARLY ;; \
+	  nuremberg-solar) kind=CLOCK_NUREMBERG_LOCAL ;; \
+	  nuremberg-hours) kind=CLOCK_NUREMBERG_HISTORICAL ;; \
+	  *) exit 1 ;; esac; \
+	$(CC) $(CPPFLAGS) $(CFLAGS) -fvisibility=hidden -D$$kind \
+		-shared $(SEASONAL_CLOCK_SOURCE) $(INFILTRATR_COMMON_ARCHIVE) \
+		-Wl,--version-script=$(CLOCK_RESOURCE_MAP) -Wl,-z,defs \
+		-o $@ $(LDFLAGS) $(MATH_LIBS) $(DYNLIB_LIBS)
 
 $(CLOCK_RESOURCE_BUILD_DIR)/solar.so: $(SOLAR_CLOCK_SOURCE) $(CLOCK_RESOURCE_MAP) $(INFILTRATR_COMMON_HEADERS)
 	@mkdir -p "$(CLOCK_RESOURCE_BUILD_DIR)"
@@ -623,7 +674,7 @@ $(BUILD_DIR)/test-time-formats: \
 		$(INFILTRATR_COMMON_ARCHIVE)
 	@mkdir -p "$(BUILD_DIR)"
 	$(CC) $(CPPFLAGS) $(TEST_CALENDAR_RESOURCE_CPPFLAG) $(TEST_CLOCK_RESOURCE_CPPFLAG) $(CFLAGS) -frandom-seed=$(REPRO_SEED_PREFIX)-test-time-formats $(GLIB_CFLAGS) \
-		tests/test-time-formats.c $(SOURCES) \
+		tests/test-time-formats.c $(SOURCES) $(RESOURCE_ENGINE_SOURCES) \
 		$(INFILTRATR_COMMON_ARCHIVE) -o $@ $(LDFLAGS) $(GLIB_LIBS) \
 		$(ICU_BRIDGE_LIBS) $(MATH_LIBS)
 
@@ -635,7 +686,7 @@ $(BUILD_DIR)/test-properties: \
 		$(INFILTRATR_COMMON_ARCHIVE)
 	@mkdir -p "$(BUILD_DIR)"
 	$(CC) $(CPPFLAGS) $(TEST_CALENDAR_RESOURCE_CPPFLAG) $(TEST_CLOCK_RESOURCE_CPPFLAG) $(CFLAGS) -frandom-seed=$(REPRO_SEED_PREFIX)-test-properties $(GLIB_CFLAGS) \
-		tests/test-properties.c $(SOURCES) \
+		tests/test-properties.c $(SOURCES) $(RESOURCE_ENGINE_SOURCES) \
 		$(INFILTRATR_COMMON_ARCHIVE) -o $@ $(LDFLAGS) $(GLIB_LIBS) \
 		$(ICU_BRIDGE_LIBS) $(MATH_LIBS)
 
@@ -647,7 +698,7 @@ $(BUILD_DIR)/test-portable-core: \
 		$(INFILTRATR_COMMON_ARCHIVE)
 	@mkdir -p "$(BUILD_DIR)"
 	$(CC) $(CPPFLAGS) $(TEST_CALENDAR_RESOURCE_CPPFLAG) $(TEST_CLOCK_RESOURCE_CPPFLAG) $(CFLAGS) -frandom-seed=$(REPRO_SEED_PREFIX)-test-portable-core $(CORE_CFLAGS) \
-		tests/test-portable-core.c $(CORE_SOURCES) \
+		tests/test-portable-core.c $(CORE_SOURCES) $(RESOURCE_ENGINE_SOURCES) \
 		$(INFILTRATR_COMMON_ARCHIVE) -o $@ $(LDFLAGS) $(CORE_LIBS) \
 		$(ICU_BRIDGE_LIBS) $(MATH_LIBS)
 
@@ -659,7 +710,7 @@ $(BUILD_DIR)/test-exact-clock-boundaries: \
 		$(INFILTRATR_COMMON_ARCHIVE)
 	@mkdir -p "$(BUILD_DIR)"
 	$(CC) $(CPPFLAGS) $(TEST_CALENDAR_RESOURCE_CPPFLAG) $(TEST_CLOCK_RESOURCE_CPPFLAG) $(CFLAGS) -frandom-seed=$(REPRO_SEED_PREFIX)-test-exact-clock-boundaries $(CORE_CFLAGS) \
-		tests/test-exact-clock-boundaries.c $(CORE_SOURCES) \
+		tests/test-exact-clock-boundaries.c $(CORE_SOURCES) $(RESOURCE_ENGINE_SOURCES) \
 		$(INFILTRATR_COMMON_ARCHIVE) -o $@ $(LDFLAGS) $(CORE_LIBS) \
 		$(ICU_BRIDGE_LIBS) $(MATH_LIBS)
 
@@ -686,7 +737,7 @@ $(BUILD_DIR)/test-runtime-calendar-resource: \
 	$(CC) $(CPPFLAGS) $(CFLAGS) \
 		-DCALENDAR_NATIVE_CALENDAR_RESOURCE_DIRECTORY=\"$(abspath $(RUNTIME_CALENDAR_FIXTURE_DIR))\" \
 		-frandom-seed=$(REPRO_SEED_PREFIX)-test-runtime-calendar-resource $(CORE_CFLAGS) \
-		tests/test-runtime-calendar-resource.c $(CORE_SOURCES) \
+		tests/test-runtime-calendar-resource.c $(CORE_SOURCES) $(RESOURCE_ENGINE_SOURCES) \
 		$(INFILTRATR_COMMON_ARCHIVE) -o $@ $(LDFLAGS) $(CORE_LIBS) \
 		$(ICU_BRIDGE_LIBS) $(MATH_LIBS)
 
@@ -883,7 +934,7 @@ static-analysis:
 	clang-tidy \
 		-checks='-*,clang-analyzer-*,bugprone-*,-bugprone-easily-swappable-parameters,-bugprone-reserved-identifier,performance-*,portability-*' \
 		-warnings-as-errors='clang-analyzer-*,bugprone-*,performance-*,portability-*' \
-		$(SOURCES) $(CALENDAR_RESOURCE_SOURCES) $(SIDEREAL_CLOCK_SOURCE) $(CHINESE_TIME_CLOCK_SOURCE) $(SOLAR_CLOCK_SOURCE) $(SOLAR_ORIGIN_CLOCK_SOURCE) -- $(CPPFLAGS) $(GLIB_CFLAGS) \
+		$(SOURCES) $(RESOURCE_ENGINE_SOURCES) $(CALENDAR_RESOURCE_SOURCES) $(SIDEREAL_CLOCK_SOURCE) $(CHINESE_TIME_CLOCK_SOURCE) $(SOLAR_CLOCK_SOURCE) $(SOLAR_ORIGIN_CLOCK_SOURCE) $(SEASONAL_CLOCK_SOURCE) src/resources/calendars/native-calendar.c -- -DRESOURCE_ISO_WEEK $(CPPFLAGS) $(GLIB_CFLAGS) \
 		-std=c11 -Wall -Wextra -Wpedantic
 	# The About helper is a separately linked production executable. Analyse it
 	# with its GTK boundary flags instead of contaminating the library source set.
@@ -951,7 +1002,7 @@ package-source: common-check validate-settings-generated
 		"$(BUILD_DIR)/source-stage/Calendar-$(VERSION)/debian/.debhelper" \
 		"$(BUILD_DIR)/source-stage/Calendar-$(VERSION)/debian/calendar" \
 		"$(BUILD_DIR)/source-stage/Calendar-$(VERSION)/debian/calendar-dbgsym" \
-		"$(BUILD_DIR)/source-stage/Calendar-$(VERSION)/debian/calendar-dbgsym"
+		"$(BUILD_DIR)/source-stage/Calendar-$(VERSION)/debian/infiltrator-calendar-resources"
 	@rm -f \
 		"$(BUILD_DIR)/source-stage/Calendar-$(VERSION)/debian/files" \
 		"$(BUILD_DIR)/source-stage/Calendar-$(VERSION)/debian/"*.substvars \
@@ -984,4 +1035,4 @@ reproducible-build:
 clean:
 	rm -rf "$(BUILD_DIR)"
 
--include $(OBJECTS:.o=.d)
+-include $(OBJECTS:.o=.d) $(RESOURCE_ENGINE_OBJECTS:.o=.d)

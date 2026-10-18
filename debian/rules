@@ -46,16 +46,19 @@ override_dh_auto_install:
 		"$(CURDIR)/debian/infiltrator-calendar-resources/System/Resources/Calendars/"
 	mv "$(CURDIR)/debian/calendar/System/Resources/Clocks/"*.so \
 		"$(CURDIR)/debian/infiltrator-calendar-resources/System/Resources/Clocks/"
+	install -d "$(CURDIR)/debian/infiltrator-calendar-resources/usr/share"
+	mv "$(CURDIR)/debian/calendar/usr/share/locale" \
+		"$(CURDIR)/debian/infiltrator-calendar-resources/usr/share/locale"
 	rmdir --ignore-fail-on-non-empty \
 		"$(CURDIR)/debian/calendar/System/Resources/Calendars" \
 		"$(CURDIR)/debian/calendar/System/Resources/Clocks" \
 		"$(CURDIR)/debian/calendar/System/Resources" \
 		"$(CURDIR)/debian/calendar/System" || true
-	@for resource in hebrew gregorian persian coptic; do \
+	@for resource in gregorian hebrew persian coptic iso-week julian revised-julian islamic-umalqura islamic-civil islamic-tbla islamic bahai buddhist ethiopian ethiopic-amete-alem chinese dangi indian japanese minguo roman byzantine egyptian-nabonassar armenian-traditional mayan french-republican swedish-historical international-fixed world positivist; do \
 		test -f "$(CURDIR)/debian/infiltrator-calendar-resources/System/Resources/Calendars/$$resource.so"; \
 		test ! -e "$(CURDIR)/debian/calendar/System/Resources/Calendars/$$resource.so"; \
 	done
-	@for resource in decimal internet unix hexadecimal binary julian modified-julian standard-12 standard-24 chinese-ke mean-solar sidereal chinese-time solar italian-hours babylonian-hours babylonian-ancient indian-ghati; do \
+	@for resource in decimal internet unix hexadecimal binary julian modified-julian standard-12 standard-24 chinese-ke mean-solar sidereal chinese-time solar italian-hours babylonian-hours babylonian-ancient indian-ghati roman-temporal japanese-temporal japanese-temporal-early nuremberg-hours nuremberg-solar; do \
 		test -f "$(CURDIR)/debian/infiltrator-calendar-resources/System/Resources/Clocks/$$resource.so"; \
 		test ! -e "$(CURDIR)/debian/calendar/System/Resources/Clocks/$$resource.so"; \
 	done

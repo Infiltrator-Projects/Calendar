@@ -3,7 +3,7 @@
 
 /*
  * Native clock-provider registry, shared timing primitives and public dispatch.
- * Common owns stable identifiers and capability metadata. Eighteen executable
+ * Common owns stable identifiers and capability metadata. Twenty-three executable
  * clock resources (sixteen alternative clocks, two explicit conventional
  * modes) own their notation and next-visible-tick scheduling. The 21-mode
  * alternative catalogue remains stable; OS-following standard mode retains
@@ -130,16 +130,16 @@ static const TimeProvider time_providers[] = {
     NATIVE_TIME_PROVIDER(MEAN_SOLAR, "mean-solar"),
     NATIVE_TIME_PROVIDER(MODIFIED_JULIAN, "modified-julian"),
     NATIVE_TIME_PROVIDER(CHINESE, "chinese-time"),
-    TIME_PROVIDER(ROMAN_TEMPORAL, roman_temporal, "roman-temporal"),
-    TIME_PROVIDER(JAPANESE_TEMPORAL, japanese_temporal, "japanese-temporal"),
+    NATIVE_TIME_PROVIDER(ROMAN_TEMPORAL, "roman-temporal"),
+    NATIVE_TIME_PROVIDER(JAPANESE_TEMPORAL, "japanese-temporal"),
     NATIVE_TIME_PROVIDER(ITALIAN_HOURS, "italian-hours"),
     NATIVE_TIME_PROVIDER(BABYLONIAN_HOURS, "babylonian-hours"),
     NATIVE_TIME_PROVIDER(INDIAN_GHATI, "indian-ghati"),
     NATIVE_TIME_PROVIDER(CHINESE_KE, "chinese-ke"),
-    TIME_PROVIDER(NUREMBERG_HOURS, nuremberg_hours, "nuremberg-hours"),
+    NATIVE_TIME_PROVIDER(NUREMBERG_HOURS, "nuremberg-hours"),
     NATIVE_TIME_PROVIDER(BABYLONIAN_ANCIENT, "babylonian-ancient"),
-    TIME_PROVIDER(NUREMBERG_SOLAR, nuremberg_solar, "nuremberg-solar"),
-    TIME_PROVIDER(JAPANESE_TEMPORAL_EARLY, japanese_temporal_early, "japanese-temporal-early"),
+    NATIVE_TIME_PROVIDER(NUREMBERG_SOLAR, "nuremberg-solar"),
+    NATIVE_TIME_PROVIDER(JAPANESE_TEMPORAL_EARLY, "japanese-temporal-early"),
     NATIVE_TIME_PROVIDER(STANDARD_12, "standard-12"),
     NATIVE_TIME_PROVIDER(STANDARD_24, "standard-24")
 };
@@ -147,7 +147,7 @@ static const TimeProvider time_providers[] = {
 G_STATIC_ASSERT(G_N_ELEMENTS(time_providers) == CALENDAR_TIME_MODE_STANDARD_24 + 1);
 
 /*
- * These eighteen resource-backed clocks have no Calendar-owned implementation
+ * These twenty-three resource-backed clocks have no Calendar-owned implementation
  * or fallback at runtime. OS-following standard uses Cinnamon unchanged.
  * Common validates and calls the independent system resources.
  * A test build may override only the scan directory, never the clock ABI.
@@ -166,55 +166,17 @@ static GOnce clock_modules_once = G_ONCE_INIT;
 static gboolean
 is_native_clock(CalendarTimeMode mode)
 {
-    return mode == CALENDAR_TIME_MODE_BABYLONIAN_ANCIENT ||
-           mode == CALENDAR_TIME_MODE_INDIAN_GHATI ||
-           mode == CALENDAR_TIME_MODE_ITALIAN_HOURS ||
-           mode == CALENDAR_TIME_MODE_BABYLONIAN_HOURS ||
-           mode == CALENDAR_TIME_MODE_SOLAR ||
-           mode == CALENDAR_TIME_MODE_CHINESE ||
-           mode == CALENDAR_TIME_MODE_SIDEREAL ||
-           mode == CALENDAR_TIME_MODE_DECIMAL ||
-           mode == CALENDAR_TIME_MODE_INTERNET ||
-           mode == CALENDAR_TIME_MODE_UNIX ||
-           mode == CALENDAR_TIME_MODE_HEXADECIMAL ||
-           mode == CALENDAR_TIME_MODE_BINARY ||
-           mode == CALENDAR_TIME_MODE_JULIAN ||
-           mode == CALENDAR_TIME_MODE_MODIFIED_JULIAN ||
-           mode == CALENDAR_TIME_MODE_CHINESE_KE ||
-           mode == CALENDAR_TIME_MODE_MEAN_SOLAR ||
-           mode == CALENDAR_TIME_MODE_STANDARD_12 ||
-           mode == CALENDAR_TIME_MODE_STANDARD_24;
+    return mode >= CALENDAR_TIME_MODE_DECIMAL &&
+           mode <= CALENDAR_TIME_MODE_STANDARD_24;
 }
 
 static gpointer
 initialise_clock_resources(gpointer unused)
 {
-    static const CalendarTimeMode selected[] = {
-        CALENDAR_TIME_MODE_BABYLONIAN_ANCIENT,
-        CALENDAR_TIME_MODE_INDIAN_GHATI,
-        CALENDAR_TIME_MODE_ITALIAN_HOURS,
-        CALENDAR_TIME_MODE_BABYLONIAN_HOURS,
-        CALENDAR_TIME_MODE_SOLAR,
-        CALENDAR_TIME_MODE_CHINESE,
-        CALENDAR_TIME_MODE_SIDEREAL,
-        CALENDAR_TIME_MODE_DECIMAL,
-        CALENDAR_TIME_MODE_INTERNET,
-        CALENDAR_TIME_MODE_UNIX,
-        CALENDAR_TIME_MODE_HEXADECIMAL,
-        CALENDAR_TIME_MODE_BINARY,
-        CALENDAR_TIME_MODE_JULIAN,
-        CALENDAR_TIME_MODE_MODIFIED_JULIAN,
-        CALENDAR_TIME_MODE_CHINESE_KE,
-        CALENDAR_TIME_MODE_MEAN_SOLAR,
-        CALENDAR_TIME_MODE_STANDARD_12,
-        CALENDAR_TIME_MODE_STANDARD_24
-    };
-    gsize index;
-
     (void)unused;
-    for (index = 0; index < G_N_ELEMENTS(selected); index++)
+    for (CalendarTimeMode mode = CALENDAR_TIME_MODE_DECIMAL;
+         mode <= CALENDAR_TIME_MODE_STANDARD_24; mode++)
     {
-        const CalendarTimeMode mode = selected[index];
         const gchar *id = time_providers[mode].common_id;
 #ifdef CALENDAR_NATIVE_CLOCK_RESOURCE_DIRECTORY_OVERRIDE
         g_autofree gchar *filename = g_strconcat(id, ".so", NULL);
@@ -288,7 +250,8 @@ calendar_time_mode_from_string(const gchar *mode)
     for (index = 1; index < G_N_ELEMENTS(time_providers); index++)
         if (time_providers[index].common_id != NULL &&
             infiltratr_string_equal(info->id, time_providers[index].common_id))
-            return time_providers[index].mode;
+            return clock_resource_for_mode(time_providers[index].mode) != NULL
+                ? time_providers[index].mode : CALENDAR_TIME_MODE_INVALID;
 
     return CALENDAR_TIME_MODE_INVALID;
 }
@@ -380,22 +343,7 @@ calendar_format_time_at_location(CalendarTimeMode mode, gint64 unix_microseconds
             return g_strdup("");
         return g_strdup(text);
     }
-    if (!infiltratr_temporal_format_clock_mode_localized(
-            g_get_language_names()[0], provider->common_id,
-            unix_microseconds,
-            utc_offset_seconds,
-            show_seconds,
-            vertical,
-            TRUE,
-            safe_latitude,
-            safe_longitude,
-            text,
-            sizeof(text),
-            NULL))
-    {
-        return g_strdup("");
-    }
-    return g_strdup(text);
+    return g_strdup("");
 }
 
 gchar *
@@ -428,8 +376,7 @@ calendar_time_delay_to_next_tick_at_location(CalendarTimeMode mode,
             resource, unix_microseconds, utc_offset_seconds, show_seconds,
             safe_latitude, safe_longitude, &delay) ? delay : 1000U;
     }
-    return provider->next_tick(unix_microseconds, utc_offset_seconds, show_seconds,
-                               safe_latitude, safe_longitude);
+    return 1000U;
 }
 
 guint

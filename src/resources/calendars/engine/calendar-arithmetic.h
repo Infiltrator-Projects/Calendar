@@ -4,7 +4,7 @@
 #ifndef CALENDAR_CALENDAR_ARITHMETIC_H
 #define CALENDAR_CALENDAR_ARITHMETIC_H
 
-#include "calendar-internal.h"
+#include "calendar-engine-types.h"
 
 G_BEGIN_DECLS
 

@@ -77,6 +77,14 @@ assert.equal(policy.calendar, "gregorian");
 assert.equal(policy.authority, "mint-cinnamon");
 assert.ok(context.global.errors.length > 0, "invalid policy must be reported before fallback");
 
+resolver.invalidate();
+row = ["missing-clock", "missing-calendar", false, false, 0, 0,
+    "system-settings", true];
+policy = resolver.get();
+assert.equal(policy.mode,"missing-clock");
+assert.equal(policy.calendar,"missing-calendar");
+assert.equal(policy.authority,"system-settings");
+
 const eventViewSource = fs.readFileSync(
     path.join(root, "src", "cinnamon", "eventView.js"), "utf8"
 );

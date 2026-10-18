@@ -107,7 +107,7 @@ dpkg-deb -x "$RESOURCES_DEB" "$STAGE_ROOT"
     exit 1
 }
 install -d /System/Resources/Calendars /System/Resources/Clocks
-for id in hebrew gregorian persian coptic; do
+for id in gregorian hebrew persian coptic iso-week julian revised-julian islamic-umalqura islamic-civil islamic-tbla islamic bahai buddhist ethiopian ethiopic-amete-alem chinese dangi indian japanese minguo roman byzantine egyptian-nabonassar armenian-traditional mayan french-republican swedish-historical international-fixed world positivist; do
     source="$STAGE_ROOT/System/Resources/Calendars/$id.so"
     [[ -s "$source" ]] || {
         echo "Qualified Calendar Resources package lacks $id.so." >&2
@@ -115,7 +115,7 @@ for id in hebrew gregorian persian coptic; do
     }
     install -m 0644 "$source" "/System/Resources/Calendars/$id.so"
 done
-for id in decimal internet unix hexadecimal binary julian modified-julian standard-12 standard-24 chinese-ke mean-solar sidereal chinese-time solar italian-hours babylonian-hours babylonian-ancient indian-ghati; do
+for id in decimal internet unix hexadecimal binary julian modified-julian standard-12 standard-24 chinese-ke mean-solar sidereal chinese-time solar italian-hours babylonian-hours babylonian-ancient indian-ghati roman-temporal japanese-temporal japanese-temporal-early nuremberg-hours nuremberg-solar; do
     source="$STAGE_ROOT/System/Resources/Clocks/$id.so"
     [[ -s "$source" ]] || {
         echo "Qualified Clock Resources package lacks $id.so." >&2

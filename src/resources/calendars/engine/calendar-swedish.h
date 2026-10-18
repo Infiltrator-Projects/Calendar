@@ -8,7 +8,7 @@
 #ifndef CALENDAR_CALENDAR_SWEDISH_H
 #define CALENDAR_CALENDAR_SWEDISH_H
 
-#include "calendar-internal.h"
+#include "calendar-engine-types.h"
 #include "calendar-types.h"
 
 G_BEGIN_DECLS

@@ -14,11 +14,9 @@ G_BEGIN_DECLS
 /*
  * Calendar's internal chronology-dispatch interface.
  *
- * This table remains useful for compiled implementations and for the core's
- * uniform dispatch, but it is no longer the filesystem resource ABI. Native
- * calendar resources expose Common's product-neutral temporal_calendar ABI;
- * calendar-registry.c adapts those validated system capabilities into this
- * private interface after Common has loaded them.
+ * This private adapter lets the grid use validated system resources through
+ * one dispatch interface. Resource modules use only Common's product-neutral
+ * executable ABI and never depend on this application dispatch contract.
  *
  * calendar_id is the stable semantic join key with Common resource metadata.
  * Never use catalogue position as provider identity: catalogue ordering is not

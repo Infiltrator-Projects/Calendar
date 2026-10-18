@@ -410,9 +410,19 @@ test_tick_boundaries(void)
             0, FALSE, FALSE, 0.0, 0.0);
         g_assert_cmpstr(roman_before, ==, "Hour VI");
         g_assert_cmpstr(roman_at, ==, "Hour VII");
-        /* Japanese scheduling retains the existing solar-phase estimate. */
-        g_assert_cmpuint(japanese_delay, >=, 174200);
-        g_assert_cmpuint(japanese_delay, <=, 174300);
+        /* The resource schedules the first actual text change, including
+         * moving twilight. It must never wake at an obsolete phase estimate. */
+        g_autofree gchar *japanese_initial = calendar_format_time_at_location(
+            japanese_mode, USECONDS(946728000),0,FALSE,FALSE,0.0,0.0);
+        g_autofree gchar *japanese_before = calendar_format_time_at_location(
+            japanese_mode, USECONDS(946728000)+(gint64)(japanese_delay-1)*1000,
+            0,FALSE,FALSE,0.0,0.0);
+        g_autofree gchar *japanese_at = calendar_format_time_at_location(
+            japanese_mode, USECONDS(946728000)+(gint64)japanese_delay*1000,
+            0,FALSE,FALSE,0.0,0.0);
+        g_assert_cmpuint(japanese_delay,>,0);
+        g_assert_cmpstr(japanese_before,==,japanese_initial);
+        g_assert_cmpstr(japanese_at,!=,japanese_initial);
     }
 }
 

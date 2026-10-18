@@ -37,6 +37,10 @@ DEB="$TMP/output/calendar_${NATIVE_VERSION}_${ARCH}.deb"
 dpkg --compare-versions "$NATIVE_VERSION" gt "$VERSION"
 
 dpkg-deb -x "$DEB" "$TMP/native"
+RESOURCES_DEB="$TMP/output/infiltrator-calendar-resources_${NATIVE_VERSION}_${ARCH}.deb"
+test -s "$RESOURCES_DEB"
+[ "$(dpkg-deb -f "$RESOURCES_DEB" Version)" = "$NATIVE_VERSION" ]
+dpkg-deb -x "$RESOURCES_DEB" "$TMP/native"
 grep -q '^Build mode: local hardware-native PGO-trained ' \
     "$TMP/native/usr/share/doc/calendar/BUILD-INFO"
 test -f "$TMP/native/usr/lib/$MULTIARCH/libcalendar.so.0.0.0"

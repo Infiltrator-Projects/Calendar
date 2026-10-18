@@ -12,7 +12,6 @@
 
 #include "calendar-core.h"
 
-#include "calendar-custom.h"
 #include "calendar-internal.h"
 #include "calendar-registry.h"
 #include "locale-weekend.h"
@@ -425,6 +424,9 @@ calendar_calendar_engine_build_grid_for_locale(
 
     period_start = engine->provider->period_start(engine->provider,
                                                    selected_jdn);
+    CalendarDate period_date;
+    if (!date_from_jdn(period_start, &period_date))
+        return FALSE;
     start_weekday = calendar_iso_weekday(period_start) %
                     CALENDAR_DAYS_PER_WEEK;
     first_cell = period_start - calendar_positive_modulo(
@@ -457,8 +459,14 @@ calendar_calendar_engine_build_grid_for_locale(
 
         cell->row = 2 + (gint)(index / CALENDAR_DAYS_PER_WEEK);
         cell->column = (gint)(index % CALENDAR_DAYS_PER_WEEK);
-        cell->week_number = weekday == 4 ?
-            calendar_custom_iso_week_number(cell_jdn) : 0;
+        cell->week_number = 0;
+        if (weekday == 4) {
+            const CalendarCalendarProvider *iso =
+                calendar_calendar_provider_from_id("iso-week");
+            CalendarCalendarFields week;
+            if (iso != NULL && iso->fields_from_jdn(iso,cell_jdn,&week))
+                cell->week_number = week.month;
+        }
         cell->is_work_day =
             iso_weekday_is_work_day_for_locale(iso_weekday, locale);
         cell->is_today = cell_jdn == today_jdn;

@@ -97,9 +97,6 @@ class CalendarApplet extends Applet.Applet {
         }
 
         this._calendar_system = NativeCalendar.CalendarSystem.new("gregorian");
-        if (this._calendar_system === null) {
-            throw new Error(`${UUID}: native Gregorian calendar unavailable`);
-        }
     }
 
     _buildApplet() {
@@ -127,8 +124,7 @@ class CalendarApplet extends Applet.Applet {
         this.clock = new CinnamonDesktop.WallClock();
         this.system_clock = NativeCalendar.SystemClock.new();
         this._temporalPolicy = new TemporalPolicy.TemporalPolicyResolver(
-            this.system_clock,
-            PanelClock.isNativeClockMode
+            this.system_clock
         );
         this._signals.connect(
             this.system_clock,
@@ -385,10 +381,8 @@ class CalendarApplet extends Applet.Applet {
         if (!this._calendar_system ||
             this._calendar_system.get_id() !== temporal.calendar) {
             const candidate = NativeCalendar.CalendarSystem.new(temporal.calendar);
-            if (candidate) {
-                this._calendar_system = candidate;
-                this._calendar.setCalendarSystem(temporal.calendar);
-            }
+            this._calendar_system = candidate;
+            this._calendar.setCalendarSystem(temporal.calendar);
         }
         if (this.event_list) {
             this.event_list.set_calendar_system(this._calendar_system);

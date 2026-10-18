@@ -1,3 +1,14 @@
+calendar (1.0.116) unstable; urgency=medium
+
+  * Finish extraction of all thirty calendars and twenty-three explicit clocks
+    into the independently installed system resources package.
+  * Remove compiled application chronology and Common clock-face fallbacks.
+  * Preserve provider navigation failures and validate the complete resource
+    payload, dependencies and application-removal lifecycle.
+  * Pin all temporal consumers to Common 1.19.64.
+
+ -- Shannon Smith <infiltratr@yandex.com>  Sun, 18 Oct 2026 21:00:00 +1100
+
 calendar (1.0.115) unstable; urgency=medium
 
   * Pin Common 1.19.56 and its resource-only clock presentation ABI.

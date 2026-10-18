@@ -58,15 +58,15 @@ test -f "$TMP/generic/usr/share/icons/hicolor/256x256/apps/infiltratr-calendar.p
 test -f "$TMP/generic/usr/share/app-install/icons/calendar.png"
 test ! -e "$TMP/generic/usr/share/fonts/truetype/calendar"
 test -f \
-    "$TMP/generic/usr/share/locale/en_AU/LC_MESSAGES/calendar@the-infiltratr.mo"
+    "$TMP/resources/usr/share/locale/en_AU/LC_MESSAGES/calendar@the-infiltratr.mo"
 
 # The application package must not own machine calendar resources. The resource
 # package is the sole Debian owner, so apt remove calendar leaves them intact.
-for resource in hebrew gregorian persian coptic; do
+for resource in gregorian hebrew persian coptic iso-week julian revised-julian islamic-umalqura islamic-civil islamic-tbla islamic bahai buddhist ethiopian ethiopic-amete-alem chinese dangi indian japanese minguo roman byzantine egyptian-nabonassar armenian-traditional mayan french-republican swedish-historical international-fixed world positivist; do
     test ! -e "$TMP/generic/System/Resources/Calendars/$resource.so"
     test -f "$TMP/resources/System/Resources/Calendars/$resource.so"
 done
-[ "$(find "$TMP/resources/System/Resources/Calendars" -maxdepth 1 -type f -name '*.so' | wc -l)" -eq 4 ]
+[ "$(find "$TMP/resources/System/Resources/Calendars" -maxdepth 1 -type f -name '*.so' | wc -l)" -eq 30 ]
 
 "$TMP/generic/usr/libexec/calendar-about" --print-metadata |
     grep -qx "version=$VERSION"
@@ -96,7 +96,7 @@ if readelf -d "$RUNTIME_LIB" 2>/dev/null | \
     echo "Generic package has a direct build-host ICU SONAME dependency" >&2
     exit 1
 fi
-for resource in hebrew gregorian persian coptic; do
+for resource in gregorian hebrew persian coptic iso-week julian revised-julian islamic-umalqura islamic-civil islamic-tbla islamic bahai buddhist ethiopian ethiopic-amete-alem chinese dangi indian japanese minguo roman byzantine egyptian-nabonassar armenian-traditional mayan french-republican swedish-historical international-fixed world positivist; do
     if readelf -d "$TMP/resources/System/Resources/Calendars/$resource.so" 2>/dev/null | \
             grep -Eq 'Shared library: \[libicu[^]]*\.so\.[0-9]+'; then
         echo "Calendar resource $resource has a direct build-host ICU SONAME dependency" >&2
@@ -116,7 +116,7 @@ printf '%s\n' \
     infiltratr_temporal_calendar_provider_v1 \
     infiltratr_temporal_resource_metadata_v1 | LC_ALL=C sort -u > \
     "$TMP/resource-exports.expected"
-for resource in hebrew gregorian persian coptic; do
+for resource in gregorian hebrew persian coptic iso-week julian revised-julian islamic-umalqura islamic-civil islamic-tbla islamic bahai buddhist ethiopian ethiopic-amete-alem chinese dangi indian japanese minguo roman byzantine egyptian-nabonassar armenian-traditional mayan french-republican swedish-historical international-fixed world positivist; do
     nm -D --defined-only --format=posix \
         "$TMP/resources/System/Resources/Calendars/$resource.so" | \
         awk '{ sub(/@.*/, "", $1); print $1 }' | LC_ALL=C sort -u > \

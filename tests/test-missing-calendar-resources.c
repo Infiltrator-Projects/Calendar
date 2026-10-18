@@ -15,7 +15,7 @@
 static void test_missing_migrated_calendar_modules(void)
 {
     static const gchar *const migrated[] = {
-        "gregorian", "hebrew", "persian", "coptic"
+        "gregorian", "hebrew", "persian", "coptic", "iso-week", "julian", "revised-julian", "islamic-umalqura", "islamic-civil", "islamic-tbla", "islamic", "bahai", "buddhist", "ethiopian", "ethiopic-amete-alem", "chinese", "dangi", "indian", "japanese", "minguo", "roman", "byzantine", "egyptian-nabonassar", "armenian-traditional", "mayan", "french-republican", "swedish-historical", "international-fixed", "world", "positivist"
     };
 
     for (gsize i = 0; i < G_N_ELEMENTS(migrated); ++i)
@@ -24,10 +24,7 @@ static void test_missing_migrated_calendar_modules(void)
         g_assert_null(infiltratr_temporal_calendar_find(migrated[i]));
     }
 
-    /* The absence of independent resources must not disable unrelated
-     * legacy providers or manufacture Gregorian/Persian/Coptic fallbacks. */
-    g_assert_nonnull(calendar_calendar_provider_from_id("islamic-civil"));
-    g_assert_cmpuint(calendar_calendar_provider_get_count(), ==, 26U);
+    g_assert_cmpuint(calendar_calendar_provider_get_count(), ==, 0U);
 }
 
 int main(int argc, char **argv)

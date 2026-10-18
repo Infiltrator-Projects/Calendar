@@ -298,8 +298,7 @@ var EventList = class EventList {
     }
 
     _formatSelectedDate(gdate) {
-        if (this._calendarSystem &&
-            this._calendarSystem.get_id() !== "gregorian") {
+        if (this._calendarSystem) {
             try {
                 const text = this._calendarSystem.format_date_part(
                     gdate.get_year(),
@@ -314,7 +313,7 @@ var EventList = class EventList {
                 global.logError(error);
             }
         }
-        return gdate.format(DATE_FORMAT_FULL);
+        return CP_("Calendar unavailable");
     }
 
     _updateSelectedDateLabel() {

@@ -4,7 +4,7 @@
 #ifndef CALENDAR_ICU_CALENDAR_H
 #define CALENDAR_ICU_CALENDAR_H
 
-#include "calendar-internal.h"
+#include "calendar-engine-types.h"
 #include "calendar-types.h"
 
 G_BEGIN_DECLS

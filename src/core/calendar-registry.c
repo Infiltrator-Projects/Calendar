@@ -2,11 +2,11 @@
  * SPDX-License-Identifier: GPL-3.0-or-later
  * Copyright (C) 1993-2026 Shannon Smith
  *
- * Dual-source calendar-provider registry.
+ * Resource-only calendar-provider registry.
  *
  * Calendar identifiers are persisted in system presentation policy, so IDs are
- * stable data rather than implementation details. Compiled providers and
- * trusted native resources are peers in one runtime catalogue. Native resources
+ * stable data rather than implementation details. Trusted native resources
+ * are the sole executable catalogue. Native resources
  * are discovered from the InfiltratorOS Calendar resource directory and are
  * admitted only after Common validates both their generic metadata and their
  * executable chronology ABI. Calendar then adapts that system-wide ABI into its
@@ -19,10 +19,6 @@
 
 #include "calendar-registry.h"
 
-#include "calendar-arithmetic.h"
-#include "calendar-custom.h"
-#include "calendar-swedish.h"
-#include "icu-calendar.h"
 
 #include <infiltratr/core.h>
 #include <infiltratr/temporal.h>
@@ -37,13 +33,6 @@
 typedef struct
 {
     CalendarCalendarProvider interface;
-    CalendarCalendarMode mode;
-    const gchar *icu_keyword;
-} BuiltinCalendarProvider;
-
-typedef struct
-{
-    CalendarCalendarProvider interface;
     InfiltratrTemporalCalendarModule *module;
     gchar *id;
     gchar *name;
@@ -53,213 +42,11 @@ typedef struct
 static GPtrArray *runtime_providers;
 static GOnce runtime_registry_once = G_ONCE_INIT;
 
-static const BuiltinCalendarProvider *
-builtin_provider(const CalendarCalendarProvider *provider)
-{
-    /* The first-member invariant makes this container cast well-defined. */
-    return (const BuiltinCalendarProvider *)provider;
-}
-
 static const RuntimeCalendarProvider *
 runtime_provider(const CalendarCalendarProvider *provider)
 {
     /* RuntimeCalendarProvider likewise embeds the private adapter first. */
     return (const RuntimeCalendarProvider *)provider;
-}
-
-static gboolean
-icu_fields(const CalendarCalendarProvider *provider,
-           gint64 jdn,
-           CalendarCalendarFields *fields)
-{
-    const BuiltinCalendarProvider *builtin = builtin_provider(provider);
-
-    return calendar_icu_fields_from_jdn(
-        builtin->icu_keyword, jdn, fields);
-}
-
-static gchar *
-icu_format(const CalendarCalendarProvider *provider,
-           gint64 jdn,
-           CalendarDatePart part)
-{
-    const BuiltinCalendarProvider *builtin = builtin_provider(provider);
-
-    return calendar_icu_format(
-        builtin->mode, builtin->icu_keyword, jdn, part);
-}
-
-static gint64
-icu_period_start(const CalendarCalendarProvider *provider,
-                 gint64 jdn)
-{
-    const BuiltinCalendarProvider *builtin = builtin_provider(provider);
-
-    return calendar_icu_month_start(builtin->icu_keyword, jdn);
-}
-
-static gint64
-icu_add_periods(const CalendarCalendarProvider *provider,
-                gint64 jdn,
-                gint amount)
-{
-    const BuiltinCalendarProvider *builtin = builtin_provider(provider);
-
-    return calendar_icu_add_months(
-        builtin->icu_keyword, jdn, amount);
-}
-
-static gint64
-icu_add_years(const CalendarCalendarProvider *provider,
-              gint64 jdn,
-              gint amount)
-{
-    const BuiltinCalendarProvider *builtin = builtin_provider(provider);
-
-    return calendar_icu_add_years(
-        builtin->icu_keyword, jdn, amount);
-}
-
-static gboolean
-arithmetic_fields(const CalendarCalendarProvider *provider,
-                  gint64 jdn,
-                  CalendarCalendarFields *fields)
-{
-    const BuiltinCalendarProvider *builtin = builtin_provider(provider);
-
-    return calendar_arithmetic_fields_from_jdn(
-        builtin->mode, jdn, fields);
-}
-
-static gint64
-arithmetic_period_start(const CalendarCalendarProvider *provider,
-                        gint64 jdn)
-{
-    const BuiltinCalendarProvider *builtin = builtin_provider(provider);
-
-    return calendar_arithmetic_month_start(builtin->mode, jdn);
-}
-
-static gint64
-arithmetic_add_periods(const CalendarCalendarProvider *provider,
-                       gint64 jdn,
-                       gint amount)
-{
-    const BuiltinCalendarProvider *builtin = builtin_provider(provider);
-
-    return calendar_arithmetic_add_months(
-        builtin->mode, jdn, amount);
-}
-
-static gint64
-arithmetic_add_years(const CalendarCalendarProvider *provider,
-                     gint64 jdn,
-                     gint amount)
-{
-    const BuiltinCalendarProvider *builtin = builtin_provider(provider);
-
-    return calendar_arithmetic_add_years(
-        builtin->mode, jdn, amount);
-}
-
-static gboolean
-custom_fields(const CalendarCalendarProvider *provider,
-              gint64 jdn,
-              CalendarCalendarFields *fields)
-{
-    const BuiltinCalendarProvider *builtin = builtin_provider(provider);
-
-    calendar_custom_fields_from_jdn(builtin->mode, jdn, fields);
-    return TRUE;
-}
-
-static gchar *
-custom_format(const CalendarCalendarProvider *provider,
-              gint64 jdn,
-              CalendarDatePart part)
-{
-    const BuiltinCalendarProvider *builtin = builtin_provider(provider);
-    CalendarCalendarFields fields;
-
-    calendar_custom_fields_from_jdn(builtin->mode, jdn, &fields);
-    return calendar_custom_format(builtin->mode, &fields, part);
-}
-
-static gint64
-custom_period_start(const CalendarCalendarProvider *provider,
-                    gint64 jdn)
-{
-    const BuiltinCalendarProvider *builtin = builtin_provider(provider);
-
-    return calendar_custom_month_start(builtin->mode, jdn);
-}
-
-static gint64
-custom_add_periods(const CalendarCalendarProvider *provider,
-                   gint64 jdn,
-                   gint amount)
-{
-    const BuiltinCalendarProvider *builtin = builtin_provider(provider);
-
-    return calendar_custom_add_months(builtin->mode, jdn, amount);
-}
-
-static gint64
-custom_add_years(const CalendarCalendarProvider *provider,
-                 gint64 jdn,
-                 gint amount)
-{
-    const BuiltinCalendarProvider *builtin = builtin_provider(provider);
-
-    return calendar_custom_add_years(builtin->mode, jdn, amount);
-}
-
-static gboolean
-swedish_fields(const CalendarCalendarProvider *provider,
-               gint64 jdn,
-               CalendarCalendarFields *fields)
-{
-    (void)provider;
-    calendar_swedish_fields_from_jdn(jdn, fields);
-    return TRUE;
-}
-
-static gchar *
-swedish_format(const CalendarCalendarProvider *provider,
-               gint64 jdn,
-               CalendarDatePart part)
-{
-    CalendarCalendarFields fields;
-
-    (void)provider;
-    calendar_swedish_fields_from_jdn(jdn, &fields);
-    return calendar_swedish_format(&fields, part);
-}
-
-static gint64
-swedish_period_start(const CalendarCalendarProvider *provider,
-                     gint64 jdn)
-{
-    (void)provider;
-    return calendar_swedish_month_start(jdn);
-}
-
-static gint64
-swedish_add_periods(const CalendarCalendarProvider *provider,
-                    gint64 jdn,
-                    gint amount)
-{
-    (void)provider;
-    return calendar_swedish_add_months(jdn, amount);
-}
-
-static gint64
-swedish_add_years(const CalendarCalendarProvider *provider,
-                  gint64 jdn,
-                  gint amount)
-{
-    (void)provider;
-    return calendar_swedish_add_years(jdn, amount);
 }
 
 static InfiltratrTemporalCalendarDatePart
@@ -338,9 +125,8 @@ runtime_period_start(const CalendarCalendarProvider *provider,
     const RuntimeCalendarProvider *runtime = runtime_provider(provider);
     int64_t result = jdn;
 
-    (void)infiltratr_temporal_calendar_period_start(
-        runtime->module, jdn, &result);
-    return result;
+    return infiltratr_temporal_calendar_period_start(
+        runtime->module, jdn, &result) ? result : G_MAXINT64;
 }
 
 static gint64
@@ -351,9 +137,8 @@ runtime_add_periods(const CalendarCalendarProvider *provider,
     const RuntimeCalendarProvider *runtime = runtime_provider(provider);
     int64_t result = jdn;
 
-    (void)infiltratr_temporal_calendar_add_periods(
-        runtime->module, jdn, (int32_t)amount, &result);
-    return result;
+    return infiltratr_temporal_calendar_add_periods(
+        runtime->module, jdn, (int32_t)amount, &result) ? result : G_MAXINT64;
 }
 
 static gint64
@@ -364,122 +149,8 @@ runtime_add_years(const CalendarCalendarProvider *provider,
     const RuntimeCalendarProvider *runtime = runtime_provider(provider);
     int64_t result = jdn;
 
-    (void)infiltratr_temporal_calendar_add_years(
-        runtime->module, jdn, (int32_t)amount, &result);
-    return result;
-}
-
-#define PROVIDER_INTERFACE(mode_, id_, fields_, format_, start_, add_, years_) \
-    { \
-        CALENDAR_CALENDAR_PROVIDER_ABI, \
-        id_, \
-        CALENDAR_CALENDAR_MODE_##mode_, \
-        fields_, format_, start_, add_, years_ \
-    }
-
-#define ICU_PROVIDER(mode_, id_, keyword_) \
-    [CALENDAR_CALENDAR_MODE_##mode_] = { \
-        PROVIDER_INTERFACE(mode_, id_, \
-                           icu_fields, icu_format, icu_period_start, \
-                           icu_add_periods, icu_add_years), \
-        CALENDAR_CALENDAR_MODE_##mode_, keyword_ \
-    }
-
-#define ARITHMETIC_PROVIDER(mode_, id_, keyword_) \
-    [CALENDAR_CALENDAR_MODE_##mode_] = { \
-        PROVIDER_INTERFACE(mode_, id_, \
-                           arithmetic_fields, icu_format, \
-                           arithmetic_period_start, arithmetic_add_periods, \
-                           arithmetic_add_years), \
-        CALENDAR_CALENDAR_MODE_##mode_, keyword_ \
-    }
-
-#define CUSTOM_PROVIDER(mode_, id_) \
-    [CALENDAR_CALENDAR_MODE_##mode_] = { \
-        PROVIDER_INTERFACE(mode_, id_, \
-                           custom_fields, custom_format, custom_period_start, \
-                           custom_add_periods, custom_add_years), \
-        CALENDAR_CALENDAR_MODE_##mode_, NULL \
-    }
-
-#define SWEDISH_PROVIDER(mode_, id_) \
-    [CALENDAR_CALENDAR_MODE_##mode_] = { \
-        PROVIDER_INTERFACE(mode_, id_, \
-                           swedish_fields, swedish_format, swedish_period_start, \
-                           swedish_add_periods, swedish_add_years), \
-        CALENDAR_CALENDAR_MODE_##mode_, NULL \
-    }
-
-/*
- * Local compiled implementation slots are keyed explicitly by stable calendar
- * ID. Native filesystem providers have no entry in this array. Common owns
- * descriptive catalogue metadata, but catalogue completeness and array ordering
- * are deliberately not runtime prerequisites for chronology.
- */
-static const BuiltinCalendarProvider providers[] = {
-    [CALENDAR_CALENDAR_MODE_GREGORIAN] = {
-        .interface = { .calendar_id = NULL },
-        .mode = CALENDAR_CALENDAR_MODE_GREGORIAN,
-        .icu_keyword = NULL
-    },
-    CUSTOM_PROVIDER(ISO_WEEK, "iso-week"),
-    CUSTOM_PROVIDER(JULIAN, "julian"),
-    CUSTOM_PROVIDER(REVISED_JULIAN, "revised-julian"),
-    ARITHMETIC_PROVIDER(ISLAMIC_UMM_AL_QURA, "islamic-umalqura", "islamic-umalqura"),
-    ARITHMETIC_PROVIDER(ISLAMIC_CIVIL, "islamic-civil", "islamic-civil"),
-    ARITHMETIC_PROVIDER(ISLAMIC_TBLA, "islamic-tbla", "islamic-tbla"),
-    ICU_PROVIDER(ISLAMIC, "islamic", "islamic"),
-    [CALENDAR_CALENDAR_MODE_PERSIAN] = {
-        .interface = { .calendar_id = NULL },
-        .mode = CALENDAR_CALENDAR_MODE_PERSIAN,
-        .icu_keyword = NULL
-    },
-    CUSTOM_PROVIDER(BAHAI, "bahai"),
-    ARITHMETIC_PROVIDER(BUDDHIST, "buddhist", "buddhist"),
-    [CALENDAR_CALENDAR_MODE_COPTIC] = {
-        .interface = { .calendar_id = NULL },
-        .mode = CALENDAR_CALENDAR_MODE_COPTIC,
-        .icu_keyword = NULL
-    },
-    ARITHMETIC_PROVIDER(ETHIOPIAN, "ethiopian", "ethiopic"),
-    ARITHMETIC_PROVIDER(ETHIOPIC_AMETE_ALEM, "ethiopic-amete-alem", "ethiopic-amete-alem"),
-    ICU_PROVIDER(CHINESE, "chinese", "chinese"),
-    ICU_PROVIDER(DANGI, "dangi", "dangi"),
-    ARITHMETIC_PROVIDER(INDIAN, "indian", "indian"),
-    ARITHMETIC_PROVIDER(JAPANESE, "japanese", "japanese"),
-    ARITHMETIC_PROVIDER(MINGUO, "minguo", "roc"),
-    CUSTOM_PROVIDER(ROMAN, "roman"),
-    CUSTOM_PROVIDER(BYZANTINE, "byzantine"),
-    CUSTOM_PROVIDER(EGYPTIAN_NABONASSAR, "egyptian-nabonassar"),
-    CUSTOM_PROVIDER(ARMENIAN_TRADITIONAL, "armenian-traditional"),
-    CUSTOM_PROVIDER(MAYAN, "mayan"),
-    CUSTOM_PROVIDER(FRENCH_REPUBLICAN, "french-republican"),
-    SWEDISH_PROVIDER(SWEDISH_HISTORICAL, "swedish-historical"),
-    CUSTOM_PROVIDER(INTERNATIONAL_FIXED, "international-fixed"),
-    CUSTOM_PROVIDER(WORLD, "world"),
-    CUSTOM_PROVIDER(POSITIVIST, "positivist")
-};
-
-G_STATIC_ASSERT(G_N_ELEMENTS(providers) == CALENDAR_CALENDAR_MODE_COUNT);
-
-static const CalendarCalendarProvider *
-provider_from_id_unchecked(const gchar *calendar_id)
-{
-    gsize index;
-
-    if (calendar_id == NULL)
-        return NULL;
-
-    for (index = 0; index < G_N_ELEMENTS(providers); index++)
-    {
-        if (providers[index].interface.calendar_id != NULL &&
-            infiltratr_string_equal(
-                calendar_id, providers[index].interface.calendar_id))
-        {
-            return &providers[index].interface;
-        }
-    }
-    return NULL;
+    return infiltratr_temporal_calendar_add_years(
+        runtime->module, jdn, (int32_t)amount, &result) ? result : G_MAXINT64;
 }
 
 static RuntimeCalendarProvider *
@@ -534,10 +205,9 @@ load_runtime_provider(
 
     (void)user_data;
     if (metadata == NULL || module_path == NULL ||
-        provider_from_id_unchecked(metadata->id) != NULL ||
         runtime_provider_record_from_id(metadata->id) != NULL)
     {
-        /* Existing compiled capability and first validated native ID win. */
+        /* The first validated native ID wins. */
         return true;
     }
 
@@ -582,7 +252,7 @@ initialise_runtime_registry(gpointer user_data)
     runtime_providers = g_ptr_array_new();
     /*
      * A missing directory is an empty optional catalogue. A directory I/O
-     * error likewise cannot remove the compiled capability set. Individual
+     * error likewise leaves the catalogue empty. Individual
      * malformed modules are ignored by Common before or during behaviour load.
      */
     (void)infiltratr_temporal_runtime_scan_directory(
@@ -600,45 +270,17 @@ ensure_runtime_registry(void)
     (void)g_once(&runtime_registry_once, initialise_runtime_registry, NULL);
 }
 
-static gsize
-builtin_provider_count(void)
-{
-    gsize index;
-    gsize count = 0U;
-
-    for (index = 0; index < G_N_ELEMENTS(providers); index++)
-    {
-        if (providers[index].interface.calendar_id != NULL)
-            count++;
-    }
-    return count;
-}
-
 gsize
 calendar_calendar_provider_get_count(void)
 {
     ensure_runtime_registry();
-    return builtin_provider_count() +
-        (runtime_providers != NULL ? (gsize)runtime_providers->len : 0U);
+    return runtime_providers != NULL ? (gsize)runtime_providers->len : 0U;
 }
 
 const CalendarCalendarProvider *
 calendar_calendar_provider_at(gsize index)
 {
-    gsize builtin_index;
-
     ensure_runtime_registry();
-    for (builtin_index = 0;
-         builtin_index < G_N_ELEMENTS(providers);
-         builtin_index++)
-    {
-        if (providers[builtin_index].interface.calendar_id == NULL)
-            continue;
-        if (index == 0U)
-            return &providers[builtin_index].interface;
-        index--;
-    }
-
     if (runtime_providers == NULL || index >= (gsize)runtime_providers->len)
         return NULL;
 
@@ -650,7 +292,6 @@ const InfiltratrTemporalCalendarInfo *
 calendar_calendar_provider_info(
     const CalendarCalendarProvider *provider)
 {
-    const InfiltratrTemporalCalendarInfo *builtin_info;
     RuntimeCalendarProvider *runtime_record;
 
     if (provider == NULL ||
@@ -658,13 +299,6 @@ calendar_calendar_provider_info(
         provider->calendar_id == NULL)
     {
         return NULL;
-    }
-
-    builtin_info = infiltratr_temporal_calendar_find(provider->calendar_id);
-    if (builtin_info != NULL &&
-        provider_from_id_unchecked(provider->calendar_id) == provider)
-    {
-        return builtin_info;
     }
 
     ensure_runtime_registry();
@@ -675,12 +309,7 @@ calendar_calendar_provider_info(
 const CalendarCalendarProvider *
 calendar_calendar_provider_from_id(const gchar *calendar_id)
 {
-    const CalendarCalendarProvider *builtin;
     RuntimeCalendarProvider *runtime_record;
-
-    builtin = provider_from_id_unchecked(calendar_id);
-    if (builtin != NULL)
-        return builtin;
 
     ensure_runtime_registry();
     runtime_record = runtime_provider_record_from_id(calendar_id);

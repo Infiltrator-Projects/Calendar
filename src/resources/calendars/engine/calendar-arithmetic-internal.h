@@ -13,7 +13,7 @@
 #ifndef CALENDAR_CALENDAR_ARITHMETIC_INTERNAL_H
 #define CALENDAR_CALENDAR_ARITHMETIC_INTERNAL_H
 
-#include "calendar-internal.h"
+#include "calendar-engine-types.h"
 
 G_BEGIN_DECLS
 

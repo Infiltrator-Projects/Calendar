@@ -236,6 +236,10 @@ static const InfiltratrTemporalClockProvider provider={
 #define EXPORT __attribute__((visibility("default")))
 #endif
 EXPORT const InfiltratrTemporalResourceMetadata *
+infiltratr_temporal_resource_metadata_v1(void);
+EXPORT const InfiltratrTemporalClockProvider *
+infiltratr_temporal_clock_provider_v1(void);
+EXPORT const InfiltratrTemporalResourceMetadata *
 infiltratr_temporal_resource_metadata_v1(void){return &metadata;}
 EXPORT const InfiltratrTemporalClockProvider *
 infiltratr_temporal_clock_provider_v1(void){return &provider;}

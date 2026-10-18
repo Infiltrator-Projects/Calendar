@@ -34,7 +34,12 @@ static void test_extracted_clocks_require_installed_modules(void)
         { CALENDAR_TIME_MODE_CHINESE_KE, "chinese-ke" },
         { CALENDAR_TIME_MODE_MEAN_SOLAR, "mean-solar" },
         { CALENDAR_TIME_MODE_STANDARD_12, "standard-12" },
-        { CALENDAR_TIME_MODE_STANDARD_24, "standard-24" }
+        { CALENDAR_TIME_MODE_STANDARD_24, "standard-24" },
+        { CALENDAR_TIME_MODE_ROMAN_TEMPORAL, "roman-temporal" },
+        { CALENDAR_TIME_MODE_JAPANESE_TEMPORAL, "japanese-temporal" },
+        { CALENDAR_TIME_MODE_JAPANESE_TEMPORAL_EARLY, "japanese-temporal-early" },
+        { CALENDAR_TIME_MODE_NUREMBERG_HOURS, "nuremberg-hours" },
+        { CALENDAR_TIME_MODE_NUREMBERG_SOLAR, "nuremberg-solar" }
     };
 
     for (gsize i = 0; i < G_N_ELEMENTS(extracted); ++i)
@@ -52,9 +57,7 @@ static void test_extracted_clocks_require_installed_modules(void)
             extracted[i].mode, 0, 0, TRUE, -36.0, 145.0), ==, 1000U);
     }
 
-    /* A missing migrated resource must not disable an unmigrated clock. */
-    g_assert_cmpint(calendar_time_mode_from_string("roman-temporal"),
-                    ==, CALENDAR_TIME_MODE_ROMAN_TEMPORAL);
+
 }
 
 int main(int argc, char **argv)

@@ -719,8 +719,8 @@ function testPanelClockDefensiveFormatting() {
     assert.equal(PanelClock.isNativeClockMode("standard"), false);
     assert.equal(
         PanelClock.isNativeClockMode("not-a-clock-mode"),
-        false,
-        "unknown clock IDs must not be misclassified as native"
+        true,
+        "missing explicit clocks must not silently select WallClock"
     );
     assert.equal(
         PanelClock.panelText(clock, systemClock, base),
@@ -835,13 +835,13 @@ function testPanelClockPreservesLocaleCasingAndNullFormats() {
 
     assert.equal(
         PanelClock.panelText(clock, systemClock, config),
-        "maanantai 12:34",
-        "locale-provided casing must not be rewritten by Calendar"
+        "Calendar unavailable maanantai 12:34",
+        "missing date resources must be visible without rewriting clock text"
     );
     assert.equal(PanelClock.dayName(clock), "");
     const display = PanelClock.todayDisplay(clock, null, config);
-    assert.equal(display.shortDate, "");
-    assert.equal(display.tooltip, "");
+    assert.equal(display.shortDate, "Calendar unavailable");
+    assert.equal(display.tooltip, "Calendar unavailable");
 }
 
 function testMintFallbackClockFormatting() {
@@ -889,13 +889,13 @@ function testMintFallbackClockFormatting() {
     );
     assert.equal(
         render({ use24h: true, showDate: true, showSeconds: false }),
-        "%A %B %-e, %R",
-        "Mint date visibility must be preserved with a 24-hour clock"
+        "%R",
+        "Gregorian panel dates must come from their resource"
     );
     assert.equal(
         render({ use24h: false, showDate: true, showSeconds: true }),
-        "%A %B %-e, %-l:%M:%S %p",
-        "Mint date visibility and seconds must combine in 12-hour mode"
+        "%-l:%M:%S %p",
+        "date composition must not duplicate platform Gregorian formatting"
     );
     assert.equal(
         render({

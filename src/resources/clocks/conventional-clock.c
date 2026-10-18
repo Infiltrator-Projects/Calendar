@@ -47,10 +47,23 @@ static uint64_t local_phase(int64_t epoch, int32_t offset)
 }
 
 #if CONVENTIONAL_CLOCK_KIND == 12
-static void day_period(const char *language, bool am, char *out, size_t cap)
+static bool day_period(const char *language, bool am, char *out, size_t cap)
 {
     const char *fallback = am ? "AM" : "PM";
     locale_t loc = (locale_t)0;
+    /* These UI-language forms and their leading placement must remain valid
+     * even when the host has not generated the corresponding libc locale. */
+    if (language != NULL && strlen(language) >= 2U &&
+        (language[2] == '\0' || strchr("_-.@", language[2]) != NULL)) {
+        if (strncmp(language,"ja",2U) == 0) {
+            snprintf(out,cap,"%s",am ? "午前" : "午後");
+            return true;
+        }
+        if (strncmp(language,"zh",2U) == 0) {
+            snprintf(out,cap,"%s",am ? "上午" : "下午");
+            return true;
+        }
+    }
     if (language != NULL && *language != '\0') {
         char name[96];
         const size_t length = strcspn(language, ".@");
@@ -69,6 +82,7 @@ static void day_period(const char *language, bool am, char *out, size_t cap)
         period = fallback;
     snprintf(out, cap, "%s", period);
     if (loc) freelocale(loc);
+    return false;
 }
 #endif
 
@@ -88,8 +102,14 @@ static bool render(const InfiltratrTemporalClockProvider *provider,
 #if CONVENTIONAL_CLOCK_KIND == 12
     char period[48] = {0};
     const unsigned hour12 = hour24 % 12U == 0U ? 12U : hour24 % 12U;
-    day_period(locale, hour24 < 12U, period, sizeof(period));
-    if (seconds)
+    const bool leading = day_period(locale, hour24 < 12U, period, sizeof(period));
+    if (leading) {
+        written = seconds
+            ? snprintf(text,sizeof(text),"%s%s%u%s%02u%s%02u",
+                period,vertical ? "\n" : "",hour12,sep,minute,sep,second)
+            : snprintf(text,sizeof(text),"%s%s%u%s%02u",
+                period,vertical ? "\n" : "",hour12,sep,minute);
+    } else if (seconds)
         written = snprintf(text, sizeof(text), "%u%s%02u%s%02u%s%s",
             hour12, sep, minute, sep, second, vertical ? "\n" : " ", period);
     else

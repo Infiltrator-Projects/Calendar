@@ -77,8 +77,9 @@ const CONVENTIONAL_TIME_FORMATS = Object.freeze([
 ]);
 
 function isNativeClockMode(mode) {
-    return NativeCalendar.time_mode_from_string(mode) !==
-        NativeCalendar.TimeMode.INVALID;
+    /* Every explicit selection requires a resource, including an unknown or
+     * uninstalled ID. Only OS-following standard may use WallClock. */
+    return typeof mode === "string" && mode.length > 0 && mode !== "standard";
 }
 
 function nativeModeRequiresLocation(mode) {
@@ -138,9 +139,7 @@ function defaultHorizontalFormat(config) {
      * time token only; panelText() will prepend the selected calendar's date
      * through Calendar's own chronology engine.
      */
-    const showDate =
-        config.primaryCalendar === "gregorian" &&
-        Boolean(config.showDate);
+    const showDate = false; // Every selected date comes from its resource.
     const use24 = uses24HourClock(config.mode, config.use24h);
     const seconds = config.showSeconds && !isNativeClockMode(config.mode);
 
@@ -210,6 +209,9 @@ function nativePanelText(clock, systemClock, config) {
     }
 
     const nativeTime = systemClock.get_time();
+    if (typeof nativeTime !== "string" || nativeTime.length === 0) {
+        return _("Clock unavailable");
+    }
     if (config.vertical) {
         return nativeTime;
     }
@@ -239,12 +241,11 @@ function nativePanelText(clock, systemClock, config) {
 }
 
 function selectedCalendarPanelDate(primaryCalendarSystem, config) {
-    if (!primaryCalendarSystem || config.vertical ||
-        config.primaryCalendar === "gregorian" ||
-        !Boolean(config.showDate)) {
+    if (config.vertical || !Boolean(config.showDate)) {
         return null;
     }
 
+    if (!primaryCalendarSystem) return _("Calendar unavailable");
     const today = new Date();
     try {
         const text = primaryCalendarSystem.format_date_part(
@@ -253,10 +254,10 @@ function selectedCalendarPanelDate(primaryCalendarSystem, config) {
             today.getDate(),
             NativeCalendar.DatePart.SHORT
         );
-        return typeof text === "string" && text.length > 0 ? text : null;
+        return typeof text === "string" && text.length > 0 ? text : _("Calendar unavailable");
     } catch (error) {
         global.logError(error);
-        return null;
+        return _("Calendar unavailable");
     }
 }
 
@@ -272,7 +273,7 @@ function panelText(clock, systemClock, config, primaryCalendarSystem = null) {
     let text;
 
     if (isNativeClockMode(config.mode)) {
-        text = systemClock ? nativePanelText(clock, systemClock, config) : null;
+        text = systemClock ? nativePanelText(clock, systemClock, config) : _("Clock unavailable");
     } else {
         text = clock.get_clock();
     }
@@ -290,18 +291,17 @@ function todayDisplay(clock, primaryCalendarSystem, config) {
 
     let shortDate;
     let tooltip;
-    if (config.primaryCalendar === "gregorian") {
-        shortDate = clockForFormat(clock, DATE_FORMAT_SHORT) || "";
-        tooltip = clockForFormat(clock, DATE_FORMAT_FULL) || shortDate;
-    } else {
-        shortDate = primaryCalendarSystem.format_date_part(
-            ...args,
-            NativeCalendar.DatePart.SHORT
-        );
-        tooltip = primaryCalendarSystem.format_date_part(
-            ...args,
-            NativeCalendar.DatePart.FULL
-        );
+    shortDate = _("Calendar unavailable");
+    tooltip = shortDate;
+    if (primaryCalendarSystem) {
+        try {
+            shortDate = primaryCalendarSystem.format_date_part(
+                ...args, NativeCalendar.DatePart.SHORT) || shortDate;
+            tooltip = primaryCalendarSystem.format_date_part(
+                ...args, NativeCalendar.DatePart.FULL) || shortDate;
+        } catch (error) {
+            global.logError(error);
+        }
     }
 
     return { today, args, shortDate, tooltip };

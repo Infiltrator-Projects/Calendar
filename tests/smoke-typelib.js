@@ -50,13 +50,7 @@ const calendarIds = [
     "world", "positivist",
 ];
 for (const id of calendarIds) {
-    const provider = Calendar.CalendarSystem.new(id);
-    requireCondition(provider !== null, `calendar provider unavailable: ${id}`);
-    requireCondition(provider.get_id() === id, `calendar provider id mismatch: ${id}`);
-    requireCondition(
-        provider.format_date(2026, 8, 11, "short").length > 0,
-        `calendar provider failed to format: ${id}`
-    );
+    nativeCalendarResources.set(id, `/System/Resources/Calendars/${id}.so`);
 }
 
 /*
@@ -98,7 +92,8 @@ const timeModeIds = [
 ];
 for (const id of timeModeIds) {
     requireCondition(
-        Calendar.time_mode_from_string(id) !== Calendar.TimeMode.INVALID,
+        (Calendar.time_mode_from_string(id) !== Calendar.TimeMode.INVALID) ===
+            GLib.file_test(`/System/Resources/Clocks/${id}.so`, GLib.FileTest.EXISTS),
         `time provider unavailable: ${id}`
     );
 }
@@ -107,9 +102,11 @@ const historicalClock = Calendar.SystemClock.new();
 historicalClock.start_at_location(
     "roman-temporal", false, false, 0.0, 0.0
 );
-requireCondition(historicalClock.is_running(),
-                 "historical clock did not start");
-requireCondition(historicalClock.get_time().length > 0,
+const romanInstalled = GLib.file_test(
+    "/System/Resources/Clocks/roman-temporal.so", GLib.FileTest.EXISTS);
+requireCondition(historicalClock.is_running() === romanInstalled,
+                 "historical clock availability disagrees with its resource");
+requireCondition(!romanInstalled || historicalClock.get_time().length > 0,
                  "historical clock produced no text");
 historicalClock.stop();
 

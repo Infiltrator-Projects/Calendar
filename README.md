@@ -30,7 +30,18 @@ The same principle applies across the wider software family: study what is known
 
 ## System temporal authority
 
-Eighteen clock implementations are now independently installed: sixteen alternative clocks (`decimal.so`, `internet.so`, `unix.so`, `hexadecimal.so`, `binary.so`, `julian.so`, `modified-julian.so`, `chinese-ke.so`, `mean-solar.so`, `sidereal.so`, `chinese-time.so`, `solar.so`, `italian-hours.so`, `babylonian-hours.so`, `babylonian-ancient.so` and `indian-ghati.so`) and two explicit conventional choices (`standard-12.so` and `standard-24.so`). The two conventional modes are not counted among the 21 alternative calendar-clock modes. They are built under `/System/Resources/Clocks/`, packaged with the independent calendar/clock resource package, and used through Common's versioned clock-provider ABI. These modules own their clock notation and next-visible-tick calculations; Calendar has no runtime fallback for their absence. The five unextracted alternative clock systems temporarily use Common's legacy presentation and Calendar's scheduling. For the eighteen extracted modes, Calendar requires installed modules and never substitutes compiled clock arithmetic. Common 1.19.63 additionally makes ancient Babylonian bēru/UŠ and Indian ghaṭī/pala resource-only. All eighteen extracted clocks require their independently installed modules; Calendar, Files and System Settings must share this Common revision. The canonical Unix timestamp is never changed by the selected display system.
+All thirty calendar implementations and all twenty-three explicit clock modes
+are independently installed system resources. The `infiltrator-calendar-resources`
+package owns `/System/Resources/Calendars/*.so` and `/System/Resources/Clocks/*.so`;
+removing Calendar or System Settings leaves those resources installed. Common
+1.19.64 owns the validated provider ABIs, discovery, loading and policy bridge.
+Calendar, Files, Settings and the desktop consume the same installed providers.
+Calendar's production core contains no selectable chronology or clock-face
+fallback implementation. Each clock resource owns its notation and exact next
+display boundary. Missing or malformed resources are visibly unavailable.
+The canonical Unix timestamp and raw timestamp sorting never change with the
+selected calendar or clock. OS-following `standard` remains a platform policy
+choice; explicit 12/24-hour modes require their respective resources.
 
 Calendar does not own temporal presentation preferences. System Settings is the writer/UI for the richer temporal-v3 policy covering clock system, calendar system, seconds and geographic location. Once a valid shared policy has been written, that persisted system policy remains authoritative even if the System Settings package is later removed; removing the settings UI must not silently discard the user's selected system behaviour. If no valid temporal-v3 policy exists, Calendar behaves as a native Mint replacement: Cinnamon/locale settings remain authoritative for conventional 12/24-hour time, date visibility and presentation, seconds, first day of week and timezone; the stock Gregorian month view is used and no geographic extension is assumed. Calendar's own settings contain only Calendar-specific behaviour such as appearance, events, week numbers and keyboard shortcuts.
 

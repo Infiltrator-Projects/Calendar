@@ -21,23 +21,7 @@ features. A fixed defect should gain the narrowest useful permanent regression
 test. Tests that are completely subsumed by stronger coverage should be
 consolidated rather than retained for historical reasons.
 
-The temporal extension architecture is now executable for calendars. Every
-existing compiled calendar remains available while trusted native calendar
-resources may additionally be discovered from `/System/Resources/Calendars`.
-Common owns and validates both the generic temporal-resource metadata ABI and
-the executable calendar-provider ABI; Calendar adapts validated system resource
-modules into its private chronology dispatch instead of defining a second plugin
-contract. Built-in identifiers remain authoritative on duplicates, so optional
-resources cannot silently replace established chronology.
-
-Clock resource metadata discovery exists in Common, but Calendar does not expose
-a filesystem clock as selectable merely because metadata is present. A real
-clock implementation ABI must be designed and qualified before that second half
-of the migration becomes executable capability.
-
-The first new Egyptian calendar/time pair remains the intended historical proving
-case. It should validate the architecture with real scholarship and algorithms,
-not with placeholder chronology.
+The temporal resource migration is complete for the declared catalogue: thirty calendars and twenty-three explicit clocks. Each is an independently installed module under `/System/Resources/Calendars` or `/System/Resources/Clocks`. Common validates metadata and executable provider ABIs before advertising installed capabilities. Calendar, Files and System Settings are consumers; no UI owns a duplicate implementation or a hidden fallback. Missing resources preserve the user's policy and remain visibly unavailable.
 
 ## Optional expansion
 

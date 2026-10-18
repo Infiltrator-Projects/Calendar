@@ -186,6 +186,22 @@ static void test_conventional_clock_resources(void)
     }
 }
 
+static void test_conventional_ui_language(void)
+{
+    g_autofree gchar *path=g_build_filename(TEST_CLOCK_RESOURCE_DIRECTORY,"standard-12.so",NULL);
+    InfiltratrTemporalClockModule *module=infiltratr_temporal_clock_module_open(path);
+    g_assert_nonnull(module);
+    const char *locales[] = {"ja_JP","zh_TW"};
+    const char *expected[] = {"午後12:00","下午12:00"};
+    for (gsize i=0;i<G_N_ELEMENTS(locales);i++) {
+        char output[128];
+        g_assert_true(infiltratr_temporal_clock_format(module,locales[i],
+            INT64_C(43200000000),0,false,false,0,0,output,sizeof(output),NULL));
+        g_assert_cmpstr(output,==,expected[i]);
+    }
+    infiltratr_temporal_clock_module_free(module);
+}
+
 /* Cross-language output and exact next-tick verification for the two newly
  * independent alternative clocks, with negative epochs, odd UTC offsets,
  * longitude changes, horizontal/vertical and precision settings. */
@@ -478,6 +494,126 @@ static void test_solar_origin_hour_resources(void)
     }
 }
 
+#define CHECK(expression) g_assert_true(expression)
+static bool resource_test_format_localized(const char *locale,const char *id,
+    int64_t instant,int32_t offset,bool seconds,bool vertical,bool configured,
+    double latitude,double longitude,char *buffer,size_t capacity,size_t *length)
+{
+    gchar *path=g_strdup_printf("%s/%s.so",TEST_CLOCK_RESOURCE_DIRECTORY,id);
+    InfiltratrTemporalClockModule *module=infiltratr_temporal_clock_module_open(path);
+    g_free(path);
+    const InfiltratrTemporalResourceMetadata *metadata=infiltratr_temporal_clock_module_metadata(module);
+    const bool result=metadata != NULL &&
+        (!(metadata->requires_latitude || metadata->requires_longitude) || configured) &&
+        infiltratr_temporal_clock_format(module,locale,instant,offset,seconds,vertical,
+            latitude,longitude,buffer,capacity,length);
+    infiltratr_temporal_clock_module_free(module);
+    return result;
+}
+static bool resource_test_format(const char *id,int64_t instant,int32_t offset,
+    bool seconds,bool vertical,bool configured,double latitude,double longitude,
+    char *buffer,size_t capacity,size_t *length)
+{ return resource_test_format_localized(NULL,id,instant,offset,seconds,vertical,
+    configured,latitude,longitude,buffer,capacity,length); }
+
+static void test_seasonal_resources(void)
+{
+    static const char *const ids[] = {"roman-temporal","japanese-temporal",
+        "japanese-temporal-early","nuremberg-hours","nuremberg-solar"};
+    const int64_t instants[] = {INT64_C(-1),INT64_C(946728000000000),
+        INT64_C(1792256400123456),INT64_C(1789990000000000)};
+    for (gsize i=0;i<G_N_ELEMENTS(ids);i++) {
+        gchar *path=g_strdup_printf("%s/%s.so",TEST_CLOCK_RESOURCE_DIRECTORY,ids[i]);
+        InfiltratrTemporalClockModule *module=infiltratr_temporal_clock_module_open(path);
+        g_free(path);g_assert_nonnull(module);
+        for (gsize j=0;j<G_N_ELEMENTS(instants);j++) {
+            for (unsigned detailed=0;detailed<2;detailed++) {
+                char before[256],after[256],offset[256];uint32_t delay=0;
+                g_assert_true(infiltratr_temporal_clock_format(module,"en",instants[j],0,
+                    detailed,false,-36.39,145.36,before,sizeof(before),NULL));
+                g_assert_true(infiltratr_temporal_clock_format(module,"en",instants[j],39600,
+                    detailed,false,-36.39,145.36,offset,sizeof(offset),NULL));
+                g_assert_cmpstr(before,==,offset);
+                g_assert_true(infiltratr_temporal_clock_next_tick(module,instants[j],0,
+                    detailed,-36.39,145.36,&delay));
+                g_assert_cmpuint(delay,>,0);
+                g_assert_true(infiltratr_temporal_clock_format(module,"en",
+                    instants[j]+(int64_t)delay*1000,0,detailed,false,-36.39,145.36,
+                    after,sizeof(after),NULL));
+                g_assert_cmpstr(before,!=,after);
+                if (delay>1) {
+                    g_assert_true(infiltratr_temporal_clock_format(module,"en",
+                        instants[j]+(int64_t)(delay-1)*1000,0,detailed,false,-36.39,145.36,
+                        after,sizeof(after),NULL));
+                    g_assert_cmpstr(before,==,after);
+                }
+            }
+        }
+        infiltratr_temporal_clock_module_free(module);
+    }
+    char text[256];
+    g_assert_true(resource_test_format_localized("en","roman-temporal",
+        INT64_C(45000000000),0,true,false,true,0,0,text,sizeof(text),NULL));
+    g_assert_true(g_str_has_prefix(text,"Hour "));
+    g_assert_nonnull(strstr(text,"twelfth"));
+    g_assert_true(resource_test_format_localized("fr","roman-temporal",
+        INT64_C(45000000000),0,true,false,true,0,0,text,sizeof(text),NULL));
+    g_assert_true(g_str_has_prefix(text,"Heure "));
+}
+
+static void test_localized_edo_clock(void)
+{
+    static const struct {
+        const char *locale;
+        bool vertical;
+        const char *expected;
+    } vectors[] = {
+        { "en_AU", false, "Mi · 四 bells" },
+        { "ja_JP", false, "巳の刻 · 四つ" },
+        { "ja", true, "巳の刻\n四つ" },
+        { "zh_CN", false, "巳刻 · 四声" },
+        { "zh_TW.UTF-8", true, "巳刻\n四聲" },
+        { "fr_FR", false, "Mi · 四 coups" },
+        { "de_DE", false, "Mi · 四 Schläge" },
+        { "ko_KR", false, "Mi · 四타" },
+        { "xx_XX", false, "Mi · 四 bells" }
+    };
+    static const char *const modes[] = {
+        "japanese-temporal", "japanese-temporal-early"
+    };
+    char text[192];
+    for (size_t mode = 0U; mode < sizeof(modes) / sizeof(modes[0]); ++mode) {
+        for (size_t i = 0U; i < sizeof(vectors) / sizeof(vectors[0]); ++i) {
+            size_t length = 0U;
+            CHECK(resource_test_format_localized(
+                vectors[i].locale, modes[mode], INT64_C(946728000000000),
+                0, false, vectors[i].vertical, true, 0.0, 0.0,
+                text, sizeof(text), &length));
+            CHECK(strcmp(text, vectors[i].expected) == 0);
+            CHECK(length == strlen(text));
+        }
+        /* Branches distinguish repeated daytime/nighttime bell counts. */
+        char day[192];
+        CHECK(resource_test_format_localized("en", modes[mode],
+            INT64_C(946731600000000), 0, false, false, true, 0.0, 0.0,
+            day, sizeof(day), NULL));
+        CHECK(resource_test_format_localized("en", modes[mode],
+            INT64_C(946688400000000), 0, false, false, true, 0.0, 0.0,
+            text, sizeof(text), NULL));
+        CHECK(strstr(day, "九 bells") != NULL);
+        CHECK(strstr(text, "九 bells") != NULL);
+        CHECK(strcmp(day, text) != 0);
+        CHECK(!resource_test_format_localized("ja", modes[mode],
+            INT64_C(946728000000000), 0, false, false, true, 0.0, 0.0,
+            text, 8U, NULL));
+        /* Common preserves the caller buffer on a short-buffer failure. */
+        CHECK(resource_test_format(modes[mode],
+            INT64_C(946728000000000), 0, false, false, true, 0.0, 0.0,
+            text, sizeof(text), NULL));
+        CHECK(strcmp(text, "巳の刻 · 四つ") == 0);
+    }
+}
+
 int main(int argc, char **argv)
 {
     g_test_init(&argc, &argv, NULL);
@@ -498,5 +634,8 @@ int main(int argc, char **argv)
                     test_solar_origin_hour_resources);
     g_test_add_func("/clock-resource/known-epoch-vectors",
                     test_resource_known_epoch_vectors);
+    g_test_add_func("/clock-resource/seasonal-boundaries",test_seasonal_resources);
+    g_test_add_func("/clock-resource/edo-locales",test_localized_edo_clock);
+    g_test_add_func("/clock-resource/conventional-ui-language",test_conventional_ui_language);
     return g_test_run();
 }

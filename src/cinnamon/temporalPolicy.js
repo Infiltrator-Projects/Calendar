@@ -9,8 +9,6 @@
  * and reduces it to the scalar clock configuration needed by presentation.
  */
 
-const NativeCalendar = imports.gi.Calendar;
-
 function _loadRuntimeSupport() {
     try {
         const Extension = imports.ui.extension;
@@ -42,18 +40,15 @@ const FALLBACK_POLICY = Object.freeze({
     providerAvailable: false,
 });
 
-function _freezePolicy(decoded, isNativeClockMode) {
+function _freezePolicy(decoded) {
     const numericLatitude = Number(decoded.latitude);
     const numericLongitude = Number(decoded.longitude);
-    const modeIsValid =
-        decoded.mode === "standard" ||
-        decoded.mode === "standard-24" ||
-        decoded.mode === "standard-12" ||
-        isNativeClockMode(decoded.mode);
-    const calendarIsValid =
-        typeof decoded.calendar === "string" &&
-        decoded.calendar.length > 0 &&
-        NativeCalendar.CalendarSystem.new(decoded.calendar) !== null;
+    /* Availability is not policy validity. Preserve missing selections so
+     * presentation can report them instead of silently selecting Gregorian. */
+    const validId = value => typeof value === "string" &&
+        /^[a-z0-9][a-z0-9-]*$/.test(value) && value.length < 96;
+    const modeIsValid = validId(decoded.mode);
+    const calendarIsValid = validId(decoded.calendar);
     const authorityIsValid =
         decoded.authority === "mint-cinnamon" ||
         decoded.authority === "system-settings";
@@ -81,11 +76,8 @@ function _freezePolicy(decoded, isNativeClockMode) {
 }
 
 var TemporalPolicyResolver = class TemporalPolicyResolver {
-    constructor(systemClock, isNativeClockMode) {
+    constructor(systemClock) {
         this._systemClock = systemClock;
-        this._isNativeClockMode = typeof isNativeClockMode === "function"
-            ? isNativeClockMode
-            : () => false;
         this._cache = null;
     }
 
@@ -107,8 +99,7 @@ var TemporalPolicyResolver = class TemporalPolicyResolver {
                 throw new Error("missing effective temporal policy");
             }
             this._cache = _freezePolicy(
-                NativeBoundary.decodeTemporalPolicy(variant),
-                this._isNativeClockMode
+                NativeBoundary.decodeTemporalPolicy(variant)
             );
         } catch (error) {
             global.logError(error);

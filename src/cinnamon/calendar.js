@@ -155,22 +155,22 @@ var Calendar = class Calendar {
             return;
         }
         const replacement = NativeCalendar.CalendarSystem.new(calendarId);
-        if (replacement === null) {
-            global.logError(`Calendar: unknown calendar '${calendarId}'.`);
-            return;
-        }
-
-        const model = this._gridModelForDate(this._selectedDate, replacement);
-        if (model === null) {
-            global.logError(
-                `Calendar: '${calendarId}' cannot represent the selected date.`
-            );
-            return;
-        }
-
+        const model = replacement !== null
+            ? this._gridModelForDate(this._selectedDate, replacement) : null;
         this._calendarSystem = replacement;
         this._calendarSystemId = calendarId;
+        if (model === null) {
+            global.logError(`Calendar: resource unavailable '${calendarId}'.`);
+            this._showUnavailable();
+            return;
+        }
         this._update(true, model);
+    }
+
+    _showUnavailable() {
+        this._monthLabel.text = CP_("Calendar unavailable");
+        this._yearLabel.text = "";
+        this._removeCells();
     }
 
     formatDate(date, part) {
@@ -179,6 +179,7 @@ var Calendar = class Calendar {
             global.logError(`Calendar: invalid date part '${part}'.`);
             return "";
         }
+        if (!this._calendarSystem) return CP_("Calendar unavailable");
         return this._calendarSystem.format_date_part(
             ..._dateFields(date),
             typedPart
@@ -186,7 +187,7 @@ var Calendar = class Calendar {
     }
 
     getCalendarName() {
-        return this._calendarSystem.get_name();
+        return this._calendarSystem ? this._calendarSystem.get_name() : CP_("Calendar unavailable");
     }
 
     setDate(date, forceReload) {
@@ -515,7 +516,9 @@ var Calendar = class Calendar {
     }
 
     _update(forceReload, preparedModel = null) {
-        if (this._destroyed || !this._calendarSystem) {
+        if (this._destroyed) return;
+        if (!this._calendarSystem) {
+            this._showUnavailable();
             return;
         }
 

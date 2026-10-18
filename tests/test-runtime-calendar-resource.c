@@ -47,9 +47,9 @@ test_runtime_calendar_resource(void)
     g_assert_null(infiltratr_temporal_calendar_find("gregorian"));
     g_assert_null(infiltratr_temporal_calendar_find("persian"));
     g_assert_null(infiltratr_temporal_calendar_find("coptic"));
-    g_assert_cmpuint(builtin_count, ==, 26U);
+    g_assert_cmpuint(builtin_count, ==, 0U);
     g_assert_cmpuint(calendar_calendar_provider_get_count(), ==,
-                     builtin_count + 5U);
+                     31U);
 
     provider = calendar_calendar_provider_from_id("fixture-calendar");
     g_assert_nonnull(provider);
