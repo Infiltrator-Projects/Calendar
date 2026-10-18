@@ -329,15 +329,16 @@ def main() -> None:
         "decimal", "internet", "unix", "hexadecimal", "binary",
         "julian", "modified-julian", "standard-12", "standard-24",
         "chinese-ke", "mean-solar", "sidereal", "chinese-time", "solar",
+        "italian-hours", "babylonian-hours",
     }
     installed_clock_checks = re.findall(
         r"@for resource in ([^;]+); do \\\\?", rules
     )
     assert any(set(group.split()) == mandatory_clock_ids
                for group in installed_clock_checks), (
-        "debian/rules does not verify all fourteen mandatory clock resources"
+        "debian/rules does not verify all sixteen mandatory clock resources"
     )
-    assert "for id in decimal internet unix hexadecimal binary julian modified-julian standard-12 standard-24 chinese-ke mean-solar sidereal chinese-time solar" in read("tools/isolated-cinnamon-artifact-smoke.sh")
+    assert "for id in decimal internet unix hexadecimal binary julian modified-julian standard-12 standard-24 chinese-ke mean-solar sidereal chinese-time solar italian-hours babylonian-hours" in read("tools/isolated-cinnamon-artifact-smoke.sh")
     assert "debian/calendar/System/Resources/Calendars/\"*.so" in rules
     assert "test ! -e" in rules
     assert "-DU_DISABLE_RENAMING=1" in makefile
