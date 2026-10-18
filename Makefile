@@ -667,8 +667,22 @@ $(BUILD_DIR)/test-missing-clock-resources: \
 		$(INFILTRATR_COMMON_ARCHIVE) -o $@ $(LDFLAGS) $(CORE_LIBS) \
 		$(ICU_BRIDGE_LIBS) $(MATH_LIBS)
 
+$(BUILD_DIR)/test-missing-calendar-resources: \
+		tests/test-missing-calendar-resources.c \
+		$(CORE_SOURCES) $(CORE_HEADERS) $(INFILTRATR_COMMON_ARCHIVE)
+	@mkdir -p "$(BUILD_DIR)/empty-calendar-resources"
+	@if find "$(BUILD_DIR)/empty-calendar-resources" -maxdepth 1 -name '*.so' -print -quit | grep -q .; then \
+		echo "Missing-calendar fixture unexpectedly contains a resource module" >&2; exit 1; fi
+	$(CC) $(CPPFLAGS) \
+		-DCALENDAR_NATIVE_CALENDAR_RESOURCE_DIRECTORY=\"$(abspath $(BUILD_DIR)/empty-calendar-resources)\" \
+		$(CFLAGS) -frandom-seed=$(REPRO_SEED_PREFIX)-test-missing-calendar-resources \
+		$(CORE_CFLAGS) tests/test-missing-calendar-resources.c $(CORE_SOURCES) \
+		$(INFILTRATR_COMMON_ARCHIVE) -o $@ $(LDFLAGS) $(CORE_LIBS) \
+		$(ICU_BRIDGE_LIBS) $(MATH_LIBS)
+
 test: $(BUILD_DIR)/test-native-clock-resources $(BUILD_DIR)/test-time-formats $(BUILD_DIR)/test-properties \
 	$(BUILD_DIR)/test-missing-clock-resources \
+	$(BUILD_DIR)/test-missing-calendar-resources \
 	$(BUILD_DIR)/test-portable-core \
 	$(BUILD_DIR)/test-exact-clock-boundaries \
 	$(BUILD_DIR)/test-runtime-calendar-resource \
@@ -676,6 +690,7 @@ test: $(BUILD_DIR)/test-native-clock-resources $(BUILD_DIR)/test-time-formats $(
 	$(BUILD_DIR)/$(ABOUT_BINARY)
 	./$(BUILD_DIR)/test-native-clock-resources
 	./$(BUILD_DIR)/test-missing-clock-resources
+	./$(BUILD_DIR)/test-missing-calendar-resources
 	./$(BUILD_DIR)/test-time-formats
 	./$(BUILD_DIR)/test-properties
 	./$(BUILD_DIR)/test-portable-core
