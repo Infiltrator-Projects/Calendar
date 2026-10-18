@@ -1,3 +1,16 @@
+calendar (1.0.115) unstable; urgency=medium
+
+  * Pin Common 1.19.56 and its resource-only clock presentation ABI.
+  * Require installed independent implementations for all nine migrated
+    alternative clocks and both explicit conventional clocks; do not
+    silently substitute the retired Common clock-face formatters.
+  * Use independent reference vectors in resource tests instead of
+    comparing modules to copies of their old implementation.
+  * Keep the remaining twelve alternative modes' interim formatting and
+    preserve Cinnamon's operating-system-following locale preference.
+
+ -- Shannon Smith <infiltratr@yandex.com>  Sun, 18 Oct 2026 15:00:00 +1100
+
 calendar (1.0.114) unstable; urgency=medium
 
   * Extract Chinese hundred-kè time and local mean solar time into two
