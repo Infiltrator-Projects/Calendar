@@ -3,10 +3,11 @@
 
 /*
  * Native clock-provider registry, shared timing primitives and public dispatch.
- * Common owns stable identifiers and capability metadata. Seven clock modes
- * are independent executable system resources owning both their notation and
- * next-visible-tick scheduling. Other modes temporarily use the legacy
- * formatter until independently extracted.
+ * Common owns stable identifiers and capability metadata. Nine executable
+ * clock resources (seven alternative clocks, two explicit conventional
+ * modes) own their notation and next-visible-tick scheduling. The 21-mode
+ * alternative catalogue remains stable; OS-following standard mode retains
+ * Cinnamon's locale fallback.
  */
 
 #include "time-formats.h"
@@ -139,14 +140,17 @@ static const TimeProvider time_providers[] = {
     TIME_PROVIDER(NUREMBERG_HOURS, nuremberg_hours, "nuremberg-hours"),
     TIME_PROVIDER(BABYLONIAN_ANCIENT, babylonian_ancient, "babylonian-ancient"),
     TIME_PROVIDER(NUREMBERG_SOLAR, nuremberg_solar, "nuremberg-solar"),
-    TIME_PROVIDER(JAPANESE_TEMPORAL_EARLY, japanese_temporal_early, "japanese-temporal-early")
+    TIME_PROVIDER(JAPANESE_TEMPORAL_EARLY, japanese_temporal_early, "japanese-temporal-early"),
+    NATIVE_TIME_PROVIDER(STANDARD_12, "standard-12"),
+    NATIVE_TIME_PROVIDER(STANDARD_24, "standard-24")
 };
 
-G_STATIC_ASSERT(G_N_ELEMENTS(time_providers) == CALENDAR_TIME_MODE_JAPANESE_TEMPORAL_EARLY + 1);
+G_STATIC_ASSERT(G_N_ELEMENTS(time_providers) == CALENDAR_TIME_MODE_STANDARD_24 + 1);
 
 /*
- * These seven migrated clocks have no Calendar-owned implementation or fallback
- * at runtime. Common validates and calls the independent system resources.
+ * These nine resource-backed clocks have no Calendar-owned implementation
+ * or fallback at runtime. OS-following standard uses Cinnamon unchanged.
+ * Common validates and calls the independent system resources.
  * A test build may override only the scan directory, never the clock ABI.
  */
 #ifdef CALENDAR_NATIVE_CLOCK_RESOURCE_DIRECTORY
@@ -157,7 +161,7 @@ G_STATIC_ASSERT(G_N_ELEMENTS(time_providers) == CALENDAR_TIME_MODE_JAPANESE_TEMP
 #endif
 
 static InfiltratrTemporalClockModule *
-    clock_modules[CALENDAR_TIME_MODE_JAPANESE_TEMPORAL_EARLY + 1];
+    clock_modules[CALENDAR_TIME_MODE_STANDARD_24 + 1];
 static GOnce clock_modules_once = G_ONCE_INIT;
 
 static gboolean
@@ -169,7 +173,9 @@ is_native_clock(CalendarTimeMode mode)
            mode == CALENDAR_TIME_MODE_HEXADECIMAL ||
            mode == CALENDAR_TIME_MODE_BINARY ||
            mode == CALENDAR_TIME_MODE_JULIAN ||
-           mode == CALENDAR_TIME_MODE_MODIFIED_JULIAN;
+           mode == CALENDAR_TIME_MODE_MODIFIED_JULIAN ||
+           mode == CALENDAR_TIME_MODE_STANDARD_12 ||
+           mode == CALENDAR_TIME_MODE_STANDARD_24;
 }
 
 static gpointer
@@ -182,7 +188,9 @@ initialise_clock_resources(gpointer unused)
         CALENDAR_TIME_MODE_HEXADECIMAL,
         CALENDAR_TIME_MODE_BINARY,
         CALENDAR_TIME_MODE_JULIAN,
-        CALENDAR_TIME_MODE_MODIFIED_JULIAN
+        CALENDAR_TIME_MODE_MODIFIED_JULIAN,
+        CALENDAR_TIME_MODE_STANDARD_12,
+        CALENDAR_TIME_MODE_STANDARD_24
     };
     gsize index;
 
@@ -237,7 +245,7 @@ time_provider_for_mode(CalendarTimeMode mode)
     const TimeProvider *provider;
 
     if (mode < CALENDAR_TIME_MODE_DECIMAL ||
-        mode > CALENDAR_TIME_MODE_JAPANESE_TEMPORAL_EARLY)
+        mode > CALENDAR_TIME_MODE_STANDARD_24)
         return NULL;
 
     provider = &time_providers[mode];
@@ -277,7 +285,8 @@ const gchar *calendar_time_mode_get_id(CalendarTimeMode mode)
 
 gsize calendar_time_mode_get_count(void)
 {
-    return G_N_ELEMENTS(time_providers) - 1;
+    /* Explicit conventional modes are native, but not alternative systems. */
+    return CALENDAR_TIME_MODE_JAPANESE_TEMPORAL_EARLY;
 }
 
 CalendarTimeMode calendar_time_mode_get_at(gsize index)

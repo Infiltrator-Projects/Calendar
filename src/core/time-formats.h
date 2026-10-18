@@ -33,8 +33,10 @@ G_BEGIN_DECLS
  * @CALENDAR_TIME_MODE_NUREMBERG_SOLAR: location-aware Nuremberg-style solar reconstruction
  * @CALENDAR_TIME_MODE_JAPANESE_TEMPORAL_EARLY: early-Edo sunrise/sunset unequal hours
  *
- * Native time systems supported by Calendar. Conventional 12-hour and
- * 24-hour modes remain with CinnamonDesktop.WallClock for locale handling.
+ * Native time systems supported by Calendar. The 21 alternative modes are
+ * enumerated by the public catalogue. Explicit 12-hour and 24-hour choices
+ * are native clock resources; OS-following "standard" still uses Mint locale
+ * and CinnamonDesktop.WallClock, with no change to that fallback contract.
  */
 typedef enum
 {
@@ -59,7 +61,10 @@ typedef enum
     CALENDAR_TIME_MODE_NUREMBERG_HOURS,
     CALENDAR_TIME_MODE_BABYLONIAN_ANCIENT,
     CALENDAR_TIME_MODE_NUREMBERG_SOLAR,
-    CALENDAR_TIME_MODE_JAPANESE_TEMPORAL_EARLY
+    CALENDAR_TIME_MODE_JAPANESE_TEMPORAL_EARLY,
+    /* Explicit conventional modes, outside the 21 alternative-mode catalogue. */
+    CALENDAR_TIME_MODE_STANDARD_12,
+    CALENDAR_TIME_MODE_STANDARD_24
 } CalendarTimeMode;
 
 /**

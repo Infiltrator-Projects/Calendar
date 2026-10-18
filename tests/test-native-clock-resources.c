@@ -138,6 +138,63 @@ static void test_julian_clock_resources(void)
     }
 }
 
+/* The explicit civil clocks use local wall-time and tick at an actual
+ * second or minute boundary (including a non-hour UTC offset). */
+static void test_conventional_clock_resources(void)
+{
+    static const char *ids[] = { "standard-12", "standard-24" };
+    static const gint64 instants[] = {
+        -INT64_C(1), INT64_C(0), INT64_C(43200000000),
+        INT64_C(86399999999), INT64_C(86400000000)
+    };
+    static const gint32 offsets[] = { 0, 39600, -19800, 30 };
+    for (gsize i = 0; i < G_N_ELEMENTS(ids); ++i)
+    {
+        g_autofree gchar *filename = g_strconcat(ids[i], ".so", NULL);
+        g_autofree gchar *path =
+            g_build_filename(TEST_CLOCK_RESOURCE_DIRECTORY, filename, NULL);
+        InfiltratrTemporalClockModule *module =
+            infiltratr_temporal_clock_module_open(path);
+        const InfiltratrTemporalResourceMetadata *metadata;
+        g_assert_nonnull(module);
+        metadata = infiltratr_temporal_clock_module_metadata(module);
+        g_assert_nonnull(metadata);
+        g_assert_cmpstr(metadata->id, ==, ids[i]);
+        for (gsize a = 0; a < G_N_ELEMENTS(instants); ++a)
+            for (gsize b = 0; b < G_N_ELEMENTS(offsets); ++b)
+                for (gint seconds = 0; seconds <= 1; ++seconds)
+                    for (gint vertical = 0; vertical <= 1; ++vertical)
+                    {
+                        const gint64 instant = instants[a];
+                        const gint32 offset = offsets[b];
+                        char actual[256] = {0};
+                        char expected[256] = {0};
+                        char following[256] = {0};
+                        guint32 ms = 0;
+                        g_assert_true(infiltratr_temporal_clock_format(
+                            module, "en_AU", instant, offset, seconds != 0,
+                            vertical != 0, 0.0, 0.0,
+                            actual, sizeof(actual), NULL));
+                        g_assert_true(infiltratr_temporal_format_clock_mode_localized(
+                            "en_AU", ids[i], instant, offset, seconds != 0,
+                            vertical != 0, true, 0.0, 0.0,
+                            expected, sizeof(expected), NULL));
+                        g_assert_cmpstr(actual, ==, expected);
+                        g_assert_true(infiltratr_temporal_clock_next_tick(
+                            module, instant, offset, seconds != 0,
+                            0.0, 0.0, &ms));
+                        g_assert_cmpuint(ms, >, 0);
+                        g_assert_cmpuint(ms, <=, seconds ? 1000 : 60000);
+                        g_assert_true(infiltratr_temporal_clock_format(
+                            module, "en_AU", instant + (gint64)ms * 1000,
+                            offset, seconds != 0, vertical != 0, 0.0, 0.0,
+                            following, sizeof(following), NULL));
+                        g_assert_cmpstr(following, !=, actual);
+                    }
+        infiltratr_temporal_clock_module_free(module);
+    }
+}
+
 int main(int argc, char **argv)
 {
     g_test_init(&argc, &argv, NULL);
@@ -145,5 +202,7 @@ int main(int argc, char **argv)
                     test_five_clock_resources);
     g_test_add_func("/clock-resource/julian-executable-modes",
                     test_julian_clock_resources);
+    g_test_add_func("/clock-resource/conventional-executable-modes",
+                    test_conventional_clock_resources);
     return g_test_run();
 }

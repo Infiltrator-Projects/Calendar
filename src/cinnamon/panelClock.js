@@ -10,9 +10,10 @@
  * out of applet.js leaves the applet controller responsible for lifecycle and
  * wiring rather than clock-format policy.
  *
- * Native time is still calculated and boundary-scheduled in libcalendar;
- * CinnamonDesktop.WallClock remains authoritative for conventional localized
- * time and surrounding date text.
+ * Explicit conventional 12/24-hour selections are rendered and scheduled by
+ * their independent installed clock resources. OS-following "standard" still
+ * uses CinnamonDesktop.WallClock for locale-specific time. WallClock remains
+ * responsible for Gregorian date text surrounding the native clock token.
  */
 
 const NativeCalendar = imports.gi.Calendar;

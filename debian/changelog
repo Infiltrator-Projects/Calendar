@@ -1,3 +1,16 @@
+calendar (1.0.113) unstable; urgency=medium
+
+  * Extract explicit 12-hour and 24-hour clock formatting and exact tick
+    scheduling into two independent executable system clock resources.
+  * Preserve Mint's locale-controlled standard clock when no explicit
+    conventional clock policy is selected.
+  * Route explicit conventional modes through the native ABI while keeping
+    the catalogue of 21 alternative modes unchanged.
+  * Extend native resource boundary tests, build, packages and Cinnamon
+    qualification to require nine clock providers.
+
+ -- Shannon Smith <infiltratr@yandex.com>  Sun, 18 Oct 2026 13:15:00 +1100
+
 calendar (1.0.112) unstable; urgency=medium
 
   * Extract Julian Date (JD) and Modified Julian Date (MJD) clock notation
