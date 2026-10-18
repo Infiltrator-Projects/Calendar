@@ -7,11 +7,9 @@
  * Calendar public clock functions rather than retesting Common in isolation.
  */
 
-#include "calendar-ancient.h"
 #include "calendar-core.h"
 #include "julian-day.h"
 #include "time-formats.h"
-#include "time-astronomy.h"
 
 #include <glib.h>
 #include <string.h>
@@ -124,79 +122,13 @@ test_extreme_instant_normalisation(void)
     }
 }
 
-static void
-assert_gregorian_round_trip(gint year,
-                            gint month,
-                            gint day)
-{
-    const gint64 jdn = calendar_gregorian_to_jdn(year, month, day);
-    gint actual_year = 0;
-    gint actual_month = 0;
-    gint actual_day = 0;
 
-    calendar_jdn_to_gregorian(jdn,
-                                   &actual_year,
-                                   &actual_month,
-                                   &actual_day);
-    g_assert_cmpint(actual_year, ==, year);
-    g_assert_cmpint(actual_month, ==, month);
-    g_assert_cmpint(actual_day, ==, day);
-}
 
-static void
-assert_julian_round_trip(gint year,
-                        gint month,
-                        gint day)
-{
-    const gint64 jdn = calendar_julian_to_jdn(year, month, day);
-    gint actual_year = 0;
-    gint actual_month = 0;
-    gint actual_day = 0;
 
-    calendar_jdn_to_julian(jdn,
-                                &actual_year,
-                                &actual_month,
-                                &actual_day);
-    g_assert_cmpint(actual_year, ==, year);
-    g_assert_cmpint(actual_month, ==, month);
-    g_assert_cmpint(actual_day, ==, day);
-}
 
-static void
-test_solar_instant_overflow_rejection(void)
-{
-    gint64 dawn = 0;
-    gint64 dusk = 0;
 
-    /*
-     * The instant API must reject values whose containing solar day cannot be
-     * represented without overflow; it must never silently clamp them.
-     */
-    g_assert_false(calendar_solar_boundary_instants(
-        G_MININT64, -36.3833, 145.4000, 0.833, &dawn, &dusk));
-    g_assert_false(calendar_solar_boundary_instants(
-        G_MAXINT64, -36.3833, 145.4000, 0.833, &dawn, &dusk));
 
-    /* A normal mid-latitude date remains representable and ordered. */
-    g_assert_true(calendar_solar_boundary_instants(
-        1788177600LL * G_USEC_PER_SEC,
-        -36.3833, 145.4000, 0.833, &dawn, &dusk));
-    g_assert_cmpint(dawn, <, dusk);
-}
 
-static void
-test_complete_civil_year_domain(void)
-{
-    assert_gregorian_round_trip(G_MININT, 1, 1);
-    assert_gregorian_round_trip(G_MININT, 12, 31);
-    assert_gregorian_round_trip(G_MAXINT, 1, 1);
-    assert_gregorian_round_trip(G_MAXINT, 12, 31);
-
-    assert_julian_round_trip(G_MININT, 1, 1);
-    assert_julian_round_trip(G_MININT, 12, 31);
-    assert_julian_round_trip(G_MAXINT, 1, 1);
-    assert_julian_round_trip(G_MAXINT, 12, 31);
-}
 
 static void
 test_extreme_navigation_is_bounded(void)
@@ -222,13 +154,7 @@ test_extreme_navigation_is_bounded(void)
     calendar_calendar_engine_free(gregorian);
 }
 
-static void
-test_roman_extreme_format_is_bounded(void)
-{
-    g_autofree gchar *large = calendar_roman_number(G_MAXINT);
 
-    g_assert_cmpstr(large, ==, "2147483647");
-}
 
 static void
 test_native_historical_precision_boundaries(void)
@@ -315,14 +241,8 @@ main(int argc, char **argv)
                     test_signed_unix_boundaries);
     g_test_add_func("/exact-clock/extreme-instant-normalisation",
                     test_extreme_instant_normalisation);
-    g_test_add_func("/exact-clock/solar-overflow-rejection",
-                    test_solar_instant_overflow_rejection);
-    g_test_add_func("/date-domain/complete-gint-years",
-                    test_complete_civil_year_domain);
     g_test_add_func("/date-domain/extreme-navigation-bounded",
                     test_extreme_navigation_is_bounded);
-    g_test_add_func("/date-domain/roman-format-bounded",
-                    test_roman_extreme_format_is_bounded);
     g_test_add_func("/exact-clock/native-historical-precision",
                     test_native_historical_precision_boundaries);
     g_test_add_func("/date-domain/runtime-formatter-contract",

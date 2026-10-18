@@ -154,8 +154,8 @@ def main() -> None:
     # Application source and its include closure must never own chronology.
     assert not any("calendar-arithmetic" in path or "calendar-custom" in path
                    or "icu-calendar" in path for path in core_sources)
-    assert (ROOT / "src/resources/calendars/engine/calendar-arithmetic.c").is_file()
-    assert "RESOURCE_ENGINE_ARCHIVE" in read("Makefile")
+    assert not (ROOT / "src/resources").exists(), "Shared implementations belong to Common"
+    assert "RESOURCE_ENGINE_ARCHIVE" not in read("Makefile")
 
     assert all(path.startswith("src/core/") for path in declared_core)
     assert all(path.startswith("src/adapters/") for path in adapter_sources)

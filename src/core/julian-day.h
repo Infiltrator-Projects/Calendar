@@ -28,7 +28,6 @@ G_BEGIN_DECLS
 
 gboolean calendar_gregorian_is_leap(gint64 year);
 gint calendar_gregorian_month_length(gint64 year, gint month);
-gint calendar_julian_month_length(gint64 year, gint month);
 gboolean calendar_gregorian_date_is_valid(gint year,
                                                 gint month,
                                                 gint day);
@@ -39,13 +38,6 @@ void calendar_jdn_to_gregorian(gint64 jdn,
                                     gint *year,
                                     gint *month,
                                     gint *day);
-gint64 calendar_julian_to_jdn(gint64 year,
-                                   gint month,
-                                   gint day);
-void calendar_jdn_to_julian(gint64 jdn,
-                                 gint *year,
-                                 gint *month,
-                                 gint *day);
 gint calendar_gregorian_day_of_year(gint year,
                                          gint month,
                                          gint day);

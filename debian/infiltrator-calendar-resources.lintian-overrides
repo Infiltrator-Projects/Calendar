@@ -1,6 +1,0 @@
-# Calendar Resources are system capabilities, not application-private data.
-# InfiltratorOS deliberately exposes executable calendar resources from the
-# stable system capability namespace below so Common, System Settings, Files,
-# the desktop clock and Calendar can all discover the same modules without the
-# Calendar application package owning them.
-infiltrator-calendar-resources: non-standard-toplevel-dir [System/]

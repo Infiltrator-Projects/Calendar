@@ -34,7 +34,8 @@ All thirty calendar implementations and all twenty-three explicit clock modes
 are independently installed system resources. The `infiltrator-calendar-resources`
 package owns `/System/Resources/Calendars/*.so` and `/System/Resources/Clocks/*.so`;
 removing Calendar or System Settings leaves those resources installed. Common
-1.19.64 owns the validated provider ABIs, discovery, loading and policy bridge.
+1.19.66 owns the source, builds, tests, releases and Debian package, as well as
+the validated provider ABIs, discovery, loading and policy bridge.
 Calendar, Files, Settings and the desktop consume the same installed providers.
 Calendar's production core contains no selectable chronology or clock-face
 fallback implementation. Each clock resource owns its notation and exact next
@@ -102,7 +103,6 @@ The source tree is grouped by responsibility:
 ```text
 src/
 ├── core/       Canonical coordinates, resource adapters and event logic
-├── resources/  Independent calendar and clock implementations
 ├── adapters/   GObject, GVariant, main-loop and native integration
 ├── app/        Project identity, version API and About helper
 ├── cinnamon/   Cinnamon JavaScript runtime and settings
@@ -111,7 +111,7 @@ src/
 └── vendor/     Pinned Libraries submodule
 ```
 
-Calendar-specific chronology, continuation and astronomy algorithms live in the independently installed Calendar Resources pack. Common owns the resource ABIs, discovery, validation, loading and policy integration. Cinnamon owns desktop integration. Calendar, Files and System Settings consume the shared resources. ICU/CLDR remains authoritative for explicitly delegated lunisolar models and locale data inside the resource pack.
+Calendar chronology, continuation and astronomy source, tests, builds and packages live in Common (`Libraries/resources/temporal`), which independently releases the system resource pack. Common owns the resource ABIs, discovery, validation, loading and policy integration. Cinnamon owns desktop integration. Calendar, Files and System Settings consume the shared resources. ICU/CLDR remains authoritative for explicitly delegated lunisolar models and locale data inside the resource pack.
 
 The installed `libcalendar.so.0` ABI and established `Calendar` compatibility identifiers remain stable runtime contracts even though the visible product is **Calendar** and the Debian package is `calendar`.
 
@@ -158,14 +158,14 @@ Numbered releases publish three project-owned binary/install artifacts:
 | File | Purpose |
 | --- | --- |
 | `calendar_<version>_amd64.deb` | Generic amd64 Debian application package; package identity is `calendar` |
-| `infiltrator-calendar-resources_<version>_amd64.deb` | Independent system Calendar Resources package; remains installed when the Calendar app is removed |
+| Common release: `infiltrator-calendar-resources_<Common-version>_amd64.deb` | Optional shared system modules, built and published exclusively by Common |
 | `calendar-<version>-local-folder.run` | Verified local hardware-native PGO builder (`-O3 -march=native -mtune=native`, LTO, representative profile training, profile-use rebuild) |
 
 Install the generic packages with:
 
 ```bash
 sudo apt install ./calendar_<version>_amd64.deb \
-    ./infiltrator-calendar-resources_<version>_amd64.deb
+    ./infiltrator-calendar-resources_<Common-version>_amd64.deb
 ```
 
 Or use the native PGO builder:
@@ -211,3 +211,8 @@ Copyright © 1993-2026 Shannon Smith.
 Calendar is GPL-3.0-or-later. The pinned Libraries dependency uses the same licence. The complete project licence is in `LICENSE`; Debian packaging provenance is recorded in `debian/copyright`.
 
 The packaged Calendar icon follows the non-automotive Infiltrator desktop family: graphite tile with canonical `#00ADEF` linework. One verified source asset feeds Cinnamon, the desktop icon theme and Mint app-install metadata.
+
+Calendar owns no calendar/clock implementation source or module release jobs.
+Normal host Gregorian dates and standard system time work without optional
+modules. Additional system capabilities are discovered from the resource folders
+through Common. Missing custom selections stay visibly unavailable.

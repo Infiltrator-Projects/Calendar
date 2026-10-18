@@ -11,7 +11,6 @@ Build-Depends:
  gjs,
  libglib2.0-dev,
  libgtk-3-dev,
- libicu-dev,
  nodejs,
  pkg-config,
  python3,
@@ -26,9 +25,11 @@ Package: calendar
 Architecture: any
 Depends:
  cinnamon (>= 6.4),
- infiltrator-calendar-resources (= ${binary:Version}),
  ${misc:Depends},
  ${shlibs:Depends}
+Suggests: infiltrator-calendar-resources (>= 1.19.66)
+Breaks: infiltrator-calendar-resources (<< 1.19.65)
+Replaces: infiltrator-calendar-resources (<< 1.19.65)
 Description: Cinnamon clock and calendar application
  Calendar integrates with Cinnamon's panel, popup, settings and calendar
  service while consuming the system-wide temporal capabilities exposed through
@@ -39,21 +40,3 @@ Description: Cinnamon clock and calendar application
  intervals and precise scheduling. Thin native and JavaScript adapters provide
  Cinnamon integration. The same amd64 package can use the system ICU supplied
  by Ubuntu/Mint or Debian.
-
-Package: infiltrator-calendar-resources
-Architecture: any
-Section: libs
-Depends:
- libicu72 | libicu73 | libicu74 | libicu75 | libicu76 | libicu77 | libicu78 | libicu79 | libicu80 | libicu81,
- ${misc:Depends},
- ${shlibs:Depends}
-Description: System-wide executable calendar and clock resources for InfiltratorOS
- Installs independently loadable calendar and clock capability modules under
- /System/Resources/Calendars and /System/Resources/Clocks. Libraries/Common
- owns discovery, validation, loading and both executable provider ABIs;
- Calendar, Files, System Settings, shell components and other consumers can
- use the same installed implementations.
- .
- This package is intentionally independent of the Calendar application and of
- System Settings so either application can be removed without removing the
- system calendar capabilities or the user's persisted temporal policy.

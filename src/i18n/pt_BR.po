@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Calendar 1.0.82\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-09-01 09:25+0000\n"
+"POT-Creation-Date: 2026-10-11 22:50+0000\n"
 "PO-Revision-Date: 2026-09-01 03:05+0000\n"
 "Last-Translator: Calendar contributors\n"
 "Language-Team: pt_BR\n"
@@ -17,75 +17,11 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 
-#, c-format
-msgid "%d %s %lld"
-msgstr "%d %s %lld"
-
-#, c-format
-msgid "%d %s %lld %s"
-msgstr "%d %s %lld %s"
-
-#, c-format
-msgid "%d %s %lld B.E."
-msgstr "%d %s %lld B.E."
-
-#, c-format
-msgid "%d %s, An %s"
-msgstr "%d %s, An %s"
-
 msgid "A native C-backed Cinnamon clock and calendar authored by Shannon Smith, with multiple time and calendar systems."
 msgstr "Um relógio e calendário Cinnamon com backend nativo em C, criado por Shannon Smith, com vários sistemas de horário e calendário."
 
 msgid "About Calendar"
 msgstr "Sobre o Calendar"
-
-msgid "Ahekan"
-msgstr "Ahekan"
-
-msgid "April"
-msgstr "Abril"
-
-msgid "Aprilis"
-msgstr "Aprilis"
-
-msgid "Aracʿ"
-msgstr "Aracʿ"
-
-msgid "Archimedes"
-msgstr "Archimedes"
-
-msgid "Areg"
-msgstr "Areg"
-
-msgid "Aristotle"
-msgstr "Aristotle"
-
-msgid "Asmá’"
-msgstr "Asmá’"
-
-msgid "August"
-msgstr "Agosto"
-
-msgid "Augustus"
-msgstr "Augustus"
-
-msgid "Aweleacʿ"
-msgstr "Aweleacʿ"
-
-msgid "Ayyám-i-Há"
-msgstr "Ayyám-i-Há"
-
-msgid "Bahá"
-msgstr "Bahá"
-
-msgid "Bichat"
-msgstr "Bichat"
-
-msgid "Brumaire"
-msgstr "Brumaire"
-
-msgid "Caesar"
-msgstr "Caesar"
 
 msgid "Calendar"
 msgstr "Calendar"
@@ -93,17 +29,11 @@ msgstr "Calendar"
 msgid "Calendar unavailable"
 msgstr "Calendário indisponível"
 
-msgid "Charlemagne"
-msgstr "Charlemagne"
-
 msgid "Check this to display events in the calendar."
 msgstr "Marque esta opção para exibir eventos no calendário."
 
 msgid "Check this to show week numbers in the calendar."
 msgstr "Marque esta opção para mostrar os números das semanas no calendário."
-
-msgid "Choiak"
-msgstr "Choiak"
 
 msgid ""
 "Copyright © 1993-2026 Shannon Smith\n"
@@ -119,41 +49,11 @@ msgstr ""
 "This program comes with absolutely no warranty.\n"
 "See the GNU GPL v3+ License for details."
 
-msgid "Dante"
-msgstr "Dante"
-
 msgid "Day"
 msgstr "Dia"
 
-msgid "December"
-msgstr "Dezembro"
-
-msgid "Descartes"
-msgstr "Descartes"
-
 msgid "Display"
 msgstr "Exibição"
-
-msgid "Epagomenal days"
-msgstr "Dias epagômenos"
-
-msgid "Epiphi"
-msgstr "Epiphi"
-
-msgid "Februarius"
-msgstr "Februarius"
-
-msgid "February"
-msgstr "Fevereiro"
-
-msgid "Festival of All the Dead"
-msgstr "Festival of All the Dead"
-
-msgid "Festival of Holy Women"
-msgstr "Festival of Holy Women"
-
-msgid "Floréal"
-msgstr "Floréal"
 
 msgid "Follow system"
 msgstr "Seguir o sistema"
@@ -161,119 +61,8 @@ msgstr "Seguir o sistema"
 msgid "Follow the current Cinnamon theme, or force Calendar to use its light or dark Infiltrator appearance."
 msgstr "Seguir o tema atual do Cinnamon ou forçar o Calendar a usar a aparência Infiltrator clara ou escura."
 
-msgid "Frederick"
-msgstr "Frederick"
-
-msgid "Frimaire"
-msgstr "Frimaire"
-
-msgid "Fructidor"
-msgstr "Fructidor"
-
-msgid "Germinal"
-msgstr "Germinal"
-
-msgid "Gutenberg"
-msgstr "Gutenberg"
-
-msgid "Hathyr"
-msgstr "Hathyr"
-
-msgid "Homer"
-msgstr "Homer"
-
-msgid "Hoṙi"
-msgstr "Hoṙi"
-
-msgid "Hroticʿ"
-msgstr "Hroticʿ"
-
-msgid "Ianuarius"
-msgstr "Ianuarius"
-
-msgid "Iulius"
-msgstr "Iulius"
-
-msgid "Iunius"
-msgstr "Iunius"
-
-msgid "Jalál"
-msgstr "Jalál"
-
-msgid "Jamál"
-msgstr "Jamál"
-
-msgid "January"
-msgstr "Janeiro"
-
-msgid "July"
-msgstr "Julho"
-
-msgid "June"
-msgstr "Junho"
-
-msgid "Kalimát"
-msgstr "Kalimát"
-
-msgid "Kamál"
-msgstr "Kamál"
-
 msgid "Keyboard shortcuts"
 msgstr "Atalhos de teclado"
-
-msgid "Kʿałocʿ"
-msgstr "Kʿałocʿ"
-
-msgid "Leap Day"
-msgstr "Dia intercalar"
-
-msgid "Leapyear Day"
-msgstr "Dia de ano bissexto"
-
-msgid "Maius"
-msgstr "Maius"
-
-msgid "March"
-msgstr "Março"
-
-msgid "Mareri"
-msgstr "Mareri"
-
-msgid "Margacʿ"
-msgstr "Margacʿ"
-
-msgid "Martius"
-msgstr "Martius"
-
-msgid "Mashíyyat"
-msgstr "Mashíyyat"
-
-msgid "Masá’il"
-msgstr "Masá’il"
-
-msgid "May"
-msgstr "Maio"
-
-msgid "Mecheir"
-msgstr "Mecheir"
-
-msgid "Mehekan"
-msgstr "Mehekan"
-
-msgid "Mesore"
-msgstr "Mesore"
-
-msgid "Messidor"
-msgstr "Messidor"
-
-msgid "Moses"
-msgstr "Moses"
-
-msgid "Mulk"
-msgstr "Mulk"
-
-msgid "Nawasard"
-msgstr "Nawasard"
 
 msgid "Next month"
 msgstr "Próximo mês"
@@ -284,44 +73,11 @@ msgstr "Próximo ano"
 msgid "Night"
 msgstr "Noite"
 
-msgid "Nivôse"
-msgstr "Nivôse"
-
-msgid "November"
-msgstr "Novembro"
-
-msgid "Núr"
-msgstr "Núr"
-
-msgid "October"
-msgstr "Outubro"
-
 msgid "Open Calendar"
 msgstr "Abrir Calendário"
 
 msgid "Open selected date in Calendar"
 msgstr "Abrir a data selecionada no Calendário"
-
-msgid "Pachons"
-msgstr "Pachons"
-
-msgid "Payni"
-msgstr "Payni"
-
-msgid "Phamenoth"
-msgstr "Phamenoth"
-
-msgid "Phaophi"
-msgstr "Phaophi"
-
-msgid "Pharmouthi"
-msgstr "Pharmouthi"
-
-msgid "Pluviôse"
-msgstr "Pluviôse"
-
-msgid "Prairial"
-msgstr "Prairial"
 
 msgid "Previous month"
 msgstr "Mês anterior"
@@ -329,35 +85,8 @@ msgstr "Mês anterior"
 msgid "Previous year"
 msgstr "Ano anterior"
 
-msgid "Qawl"
-msgstr "Qawl"
-
-msgid "Qudrat"
-msgstr "Qudrat"
-
-msgid "Raḥmat"
-msgstr "Raḥmat"
-
-msgid "Sahmi"
-msgstr "Sahmi"
-
-msgid "Saint Paul"
-msgstr "Saint Paul"
-
-msgid "Sans-culottides"
-msgstr "Sans-culottides"
-
-msgid "September"
-msgstr "Setembro"
-
 msgid "Set keybinding(s) to show the calendar."
 msgstr "Defina atalhos de teclado para mostrar o calendário."
-
-msgid "Shakespeare"
-msgstr "Shakespeare"
-
-msgid "Sharaf"
-msgstr "Sharaf"
 
 msgid "Show calendar"
 msgstr "Mostrar calendário"
@@ -371,61 +100,11 @@ msgstr "Mostrar hoje"
 msgid "Show week numbers in calendar"
 msgstr "Mostrar números das semanas no calendário"
 
-msgid "Sol"
-msgstr "Sol"
-
-msgid "Sulṭán"
-msgstr "Sulṭán"
-
 msgid "The Cinnamon clock and calendar with multiple time and calendar systems"
 msgstr "O relógio e calendário Cinnamon com vários sistemas de horário e calendário"
 
 msgid "Theme"
 msgstr "Tema"
 
-msgid "Thermidor"
-msgstr "Thermidor"
-
-msgid "Thoth"
-msgstr "Thoth"
-
-msgid "Trē"
-msgstr "Trē"
-
-msgid "Tybi"
-msgstr "Tybi"
-
-#, c-format
-msgid "Uinal %d"
-msgstr "Uinal %d"
-
-msgid "Vendémiaire"
-msgstr "Vendémiaire"
-
-msgid "Ventôse"
-msgstr "Ventôse"
-
 msgid "Week"
 msgstr "Semana"
-
-#, c-format
-msgid "Week %02d"
-msgstr "Week %02d"
-
-msgid "Worldsday"
-msgstr "Worldsday"
-
-msgid "Year Day"
-msgstr "Dia do ano"
-
-msgid "‘Alá’"
-msgstr "‘Alá’"
-
-msgid "‘Aẓamat"
-msgstr "‘Aẓamat"
-
-msgid "‘Ilm"
-msgstr "‘Ilm"
-
-msgid "‘Izzat"
-msgstr "‘Izzat"

@@ -1,8 +1,6 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 // Copyright (C) 1993-2026 Shannon Smith
 
-#include "calendar-arithmetic.h"
-#include "calendar-arithmetic-internal.h"
 #include "calendar-registry.h"
 #include "julian-day.h"
 
@@ -35,7 +33,6 @@ test_runtime_calendar_resource(void)
     const CalendarCalendarProvider *provider;
     const InfiltratrTemporalCalendarInfo *info;
     CalendarCalendarFields fields;
-    CalendarCalendarFields expected;
     gchar *formatted;
     gint64 jdn;
 
@@ -44,10 +41,10 @@ test_runtime_calendar_resource(void)
      * catalogue. Their installed executable resources are the sole authority.
      */
     g_assert_null(infiltratr_temporal_calendar_find("hebrew"));
-    g_assert_null(infiltratr_temporal_calendar_find("gregorian"));
+    g_assert_nonnull(infiltratr_temporal_calendar_find("gregorian"));
     g_assert_null(infiltratr_temporal_calendar_find("persian"));
     g_assert_null(infiltratr_temporal_calendar_find("coptic"));
-    g_assert_cmpuint(builtin_count, ==, 0U);
+    g_assert_cmpuint(builtin_count, ==, 1U);
     g_assert_cmpuint(calendar_calendar_provider_get_count(), ==,
                      31U);
 
@@ -102,8 +99,6 @@ test_runtime_calendar_resource(void)
      * the removed Calendar-core arithmetic copy. The old direct arithmetic
      * entry point must reject it instead of manufacturing a fallback.
      */
-    g_assert_false(calendar_arithmetic_fields_from_jdn(
-        CALENDAR_CALENDAR_MODE_PERSIAN, jdn, &expected));
     assert_runtime_metadata(
         "persian", "Persian (Solar Hijri arithmetic)");
     provider = calendar_calendar_provider_from_id("persian");
@@ -115,19 +110,16 @@ test_runtime_calendar_resource(void)
     g_assert_cmpint(fields.auxiliary, ==, 0);
     g_assert_false(fields.special);
 
-    /* Ethiopian calendars still share arithmetic with Coptic pending their
-     * own extraction; keep their invariant comparison until that migration. */
+    /* A fixed Coptic reference vector through the installed provider ABI. */
     assert_runtime_metadata(
         "coptic", "Coptic (Alexandrian 13-month calendar)");
     provider = calendar_calendar_provider_from_id("coptic");
-    g_assert_true(calendar_arithmetic_coptic_fields_from_jdn(
-        CALENDAR_CALENDAR_MODE_COPTIC, jdn, &expected));
     g_assert_true(provider->fields_from_jdn(provider, jdn, &fields));
-    g_assert_cmpint(fields.year, ==, expected.year);
-    g_assert_cmpint(fields.month, ==, expected.month);
-    g_assert_cmpint(fields.day, ==, expected.day);
-    g_assert_cmpint(fields.auxiliary, ==, expected.auxiliary);
-    g_assert_cmpint(fields.special, ==, expected.special);
+    g_assert_cmpint(fields.year, ==, 1743);
+    g_assert_cmpint(fields.month, ==, 1);
+    g_assert_cmpint(fields.day, ==, 2);
+    g_assert_cmpint(fields.auxiliary, ==, 1);
+    g_assert_false(fields.special);
 }
 
 int

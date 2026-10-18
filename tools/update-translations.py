@@ -113,7 +113,6 @@ def main() -> None:
         for source_dir in (
             ROOT / "src/app",
             ROOT / "src/core",
-            ROOT / "src/resources/calendars/engine",
             ROOT / "src/adapters",
         )
         for path in sorted(source_dir.glob("*.c"))

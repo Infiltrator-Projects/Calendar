@@ -7,7 +7,7 @@
 #, fuzzy
 msgid ""
 msgstr ""
-"Project-Id-Version: Calendar 1.0.116\n"
+"Project-Id-Version: Calendar 1.0.117\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2026-10-11 22:50+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
@@ -18,74 +18,10 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 
-#, c-format
-msgid "%d %s %lld"
-msgstr ""
-
-#, c-format
-msgid "%d %s %lld %s"
-msgstr ""
-
-#, c-format
-msgid "%d %s %lld B.E."
-msgstr ""
-
-#, c-format
-msgid "%d %s, An %s"
-msgstr ""
-
 msgid "A native C-backed Cinnamon clock and calendar authored by Shannon Smith, with multiple time and calendar systems."
 msgstr ""
 
 msgid "About Calendar"
-msgstr ""
-
-msgid "Ahekan"
-msgstr ""
-
-msgid "April"
-msgstr ""
-
-msgid "Aprilis"
-msgstr ""
-
-msgid "Aracʿ"
-msgstr ""
-
-msgid "Archimedes"
-msgstr ""
-
-msgid "Areg"
-msgstr ""
-
-msgid "Aristotle"
-msgstr ""
-
-msgid "Asmá’"
-msgstr ""
-
-msgid "August"
-msgstr ""
-
-msgid "Augustus"
-msgstr ""
-
-msgid "Aweleacʿ"
-msgstr ""
-
-msgid "Ayyám-i-Há"
-msgstr ""
-
-msgid "Bahá"
-msgstr ""
-
-msgid "Bichat"
-msgstr ""
-
-msgid "Brumaire"
-msgstr ""
-
-msgid "Caesar"
 msgstr ""
 
 msgid "Calendar"
@@ -94,16 +30,10 @@ msgstr ""
 msgid "Calendar unavailable"
 msgstr ""
 
-msgid "Charlemagne"
-msgstr ""
-
 msgid "Check this to display events in the calendar."
 msgstr ""
 
 msgid "Check this to show week numbers in the calendar."
-msgstr ""
-
-msgid "Choiak"
 msgstr ""
 
 msgid ""
@@ -113,40 +43,10 @@ msgid ""
 "See the GNU GPL v3+ License for details."
 msgstr ""
 
-msgid "Dante"
-msgstr ""
-
 msgid "Day"
 msgstr ""
 
-msgid "December"
-msgstr ""
-
-msgid "Descartes"
-msgstr ""
-
 msgid "Display"
-msgstr ""
-
-msgid "Epagomenal days"
-msgstr ""
-
-msgid "Epiphi"
-msgstr ""
-
-msgid "Februarius"
-msgstr ""
-
-msgid "February"
-msgstr ""
-
-msgid "Festival of All the Dead"
-msgstr ""
-
-msgid "Festival of Holy Women"
-msgstr ""
-
-msgid "Floréal"
 msgstr ""
 
 msgid "Follow system"
@@ -155,118 +55,7 @@ msgstr ""
 msgid "Follow the current Cinnamon theme, or force Calendar to use its light or dark Infiltrator appearance."
 msgstr ""
 
-msgid "Frederick"
-msgstr ""
-
-msgid "Frimaire"
-msgstr ""
-
-msgid "Fructidor"
-msgstr ""
-
-msgid "Germinal"
-msgstr ""
-
-msgid "Gutenberg"
-msgstr ""
-
-msgid "Hathyr"
-msgstr ""
-
-msgid "Homer"
-msgstr ""
-
-msgid "Hoṙi"
-msgstr ""
-
-msgid "Hroticʿ"
-msgstr ""
-
-msgid "Ianuarius"
-msgstr ""
-
-msgid "Iulius"
-msgstr ""
-
-msgid "Iunius"
-msgstr ""
-
-msgid "Jalál"
-msgstr ""
-
-msgid "Jamál"
-msgstr ""
-
-msgid "January"
-msgstr ""
-
-msgid "July"
-msgstr ""
-
-msgid "June"
-msgstr ""
-
-msgid "Kalimát"
-msgstr ""
-
-msgid "Kamál"
-msgstr ""
-
 msgid "Keyboard shortcuts"
-msgstr ""
-
-msgid "Kʿałocʿ"
-msgstr ""
-
-msgid "Leap Day"
-msgstr ""
-
-msgid "Leapyear Day"
-msgstr ""
-
-msgid "Maius"
-msgstr ""
-
-msgid "March"
-msgstr ""
-
-msgid "Mareri"
-msgstr ""
-
-msgid "Margacʿ"
-msgstr ""
-
-msgid "Martius"
-msgstr ""
-
-msgid "Mashíyyat"
-msgstr ""
-
-msgid "Masá’il"
-msgstr ""
-
-msgid "May"
-msgstr ""
-
-msgid "Mecheir"
-msgstr ""
-
-msgid "Mehekan"
-msgstr ""
-
-msgid "Mesore"
-msgstr ""
-
-msgid "Messidor"
-msgstr ""
-
-msgid "Moses"
-msgstr ""
-
-msgid "Mulk"
-msgstr ""
-
-msgid "Nawasard"
 msgstr ""
 
 msgid "Next month"
@@ -278,43 +67,10 @@ msgstr ""
 msgid "Night"
 msgstr ""
 
-msgid "Nivôse"
-msgstr ""
-
-msgid "November"
-msgstr ""
-
-msgid "Núr"
-msgstr ""
-
-msgid "October"
-msgstr ""
-
 msgid "Open Calendar"
 msgstr ""
 
 msgid "Open selected date in Calendar"
-msgstr ""
-
-msgid "Pachons"
-msgstr ""
-
-msgid "Payni"
-msgstr ""
-
-msgid "Phamenoth"
-msgstr ""
-
-msgid "Phaophi"
-msgstr ""
-
-msgid "Pharmouthi"
-msgstr ""
-
-msgid "Pluviôse"
-msgstr ""
-
-msgid "Prairial"
 msgstr ""
 
 msgid "Previous month"
@@ -323,34 +79,7 @@ msgstr ""
 msgid "Previous year"
 msgstr ""
 
-msgid "Qawl"
-msgstr ""
-
-msgid "Qudrat"
-msgstr ""
-
-msgid "Raḥmat"
-msgstr ""
-
-msgid "Sahmi"
-msgstr ""
-
-msgid "Saint Paul"
-msgstr ""
-
-msgid "Sans-culottides"
-msgstr ""
-
-msgid "September"
-msgstr ""
-
 msgid "Set keybinding(s) to show the calendar."
-msgstr ""
-
-msgid "Shakespeare"
-msgstr ""
-
-msgid "Sharaf"
 msgstr ""
 
 msgid "Show calendar"
@@ -365,61 +94,11 @@ msgstr ""
 msgid "Show week numbers in calendar"
 msgstr ""
 
-msgid "Sol"
-msgstr ""
-
-msgid "Sulṭán"
-msgstr ""
-
 msgid "The Cinnamon clock and calendar with multiple time and calendar systems"
 msgstr ""
 
 msgid "Theme"
 msgstr ""
 
-msgid "Thermidor"
-msgstr ""
-
-msgid "Thoth"
-msgstr ""
-
-msgid "Trē"
-msgstr ""
-
-msgid "Tybi"
-msgstr ""
-
-#, c-format
-msgid "Uinal %d"
-msgstr ""
-
-msgid "Vendémiaire"
-msgstr ""
-
-msgid "Ventôse"
-msgstr ""
-
 msgid "Week"
-msgstr ""
-
-#, c-format
-msgid "Week %02d"
-msgstr ""
-
-msgid "Worldsday"
-msgstr ""
-
-msgid "Year Day"
-msgstr ""
-
-msgid "‘Alá’"
-msgstr ""
-
-msgid "‘Aẓamat"
-msgstr ""
-
-msgid "‘Ilm"
-msgstr ""
-
-msgid "‘Izzat"
 msgstr ""

@@ -206,15 +206,8 @@ BUILT_DEB="$WORK_DIR/calendar_${NATIVE_VERSION}_${ARCH}.deb"
 [ "$(dpkg-deb -f "$BUILT_DEB" Version)" = "$NATIVE_VERSION" ]
 [ "$(dpkg-deb -f "$BUILT_DEB" Architecture)" = "$ARCH" ]
 
-BUILT_RESOURCES_DEB="$WORK_DIR/infiltrator-calendar-resources_${NATIVE_VERSION}_${ARCH}.deb"
-[ -s "$BUILT_RESOURCES_DEB" ]
-[ "$(dpkg-deb -f "$BUILT_RESOURCES_DEB" Package)" = "infiltrator-calendar-resources" ]
-[ "$(dpkg-deb -f "$BUILT_RESOURCES_DEB" Version)" = "$NATIVE_VERSION" ]
-[ "$(dpkg-deb -f "$BUILT_RESOURCES_DEB" Architecture)" = "$ARCH" ]
-
 PACKAGE_ROOT="$WORK_DIR/package-root"
 dpkg-deb -x "$BUILT_DEB" "$PACKAGE_ROOT"
-dpkg-deb -x "$BUILT_RESOURCES_DEB" "$PACKAGE_ROOT"
 grep -q '^Build mode: local hardware-native PGO-trained ' \
     "$PACKAGE_ROOT/usr/share/doc/calendar/BUILD-INFO"
 test -f "$PACKAGE_ROOT/usr/lib/$MULTIARCH/libcalendar.so.0.0.0"
@@ -237,22 +230,20 @@ mkdir -p "$OUTPUT_DIR"
 OUTPUT_DIR=$(CDPATH='' cd -- "$OUTPUT_DIR" && pwd)
 OUTPUT_DEB="$OUTPUT_DIR/calendar_${NATIVE_VERSION}_${ARCH}.deb"
 install -m 0644 "$BUILT_DEB" "$OUTPUT_DEB"
-OUTPUT_RESOURCES_DEB="$OUTPUT_DIR/infiltrator-calendar-resources_${NATIVE_VERSION}_${ARCH}.deb"
-install -m 0644 "$BUILT_RESOURCES_DEB" "$OUTPUT_RESOURCES_DEB"
 
 if [ "$BUILD_ONLY" -eq 0 ]; then
     # Version 1.0 intentionally reset the public version sequence from the
     # 3.x development line. APT therefore needs explicit permission for this
     # one-time transition when an older development package is still present.
     # For normal later upgrades this flag is harmless.
-    run_privileged apt-get install -y --allow-downgrades "$OUTPUT_RESOURCES_DEB" "$OUTPUT_DEB"
+    run_privileged apt-get install -y --allow-downgrades "$OUTPUT_DEB"
     printf 'Calendar %s is installed and managed by APT.\n' \
         "$NATIVE_VERSION"
 else
     printf 'Calendar native package built without installation.\n'
 fi
 
-printf 'Package: %s\nResources: %s\n' "$OUTPUT_DEB" "$OUTPUT_RESOURCES_DEB"
+printf 'Package: %s\n' "$OUTPUT_DEB"
 exit 0
 
 # shellcheck disable=SC2317

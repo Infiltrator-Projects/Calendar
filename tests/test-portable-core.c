@@ -7,11 +7,8 @@
  * GObject, GVariant, GJS or a GLib main loop.
  */
 
-#include "calendar-arithmetic.h"
 #include "calendar-core.h"
-#include "calendar-helpers.h"
 #include "calendar-registry.h"
-#include "calendar-swedish.h"
 #include "clock-engine.h"
 #include "event-core.h"
 #include "event-source.h"
@@ -276,7 +273,7 @@ test_historical_calendar_edge_vectors(void)
     g_assert_nonnull(french);
     g_assert_nonnull(byzantine);
 
-    jdn = calendar_julian_to_jdn(2024, 2, 24);
+    jdn = G_GINT64_CONSTANT(2460378) /* Julian 2024-02-24 */;
     g_assert_true(roman->fields_from_jdn(roman, jdn, &fields));
     text = roman->format(roman, jdn, CALENDAR_DATE_PART_FULL);
     g_assert_nonnull(text);
@@ -299,10 +296,10 @@ test_historical_calendar_edge_vectors(void)
     g_assert_cmpint(fields.month, ==, 13);
     g_assert_cmpint(fields.day, ==, 6);
 
-    jdn = calendar_julian_to_jdn(2026, 8, 31);
+    jdn = G_GINT64_CONSTANT(2461297) /* Julian 2026-08-31 */;
     g_assert_true(byzantine->fields_from_jdn(byzantine, jdn, &fields));
     g_assert_cmpint(fields.year, ==, 7534);
-    jdn = calendar_julian_to_jdn(2026, 9, 1);
+    jdn = G_GINT64_CONSTANT(2461298) /* Julian 2026-09-01 */;
     g_assert_true(byzantine->fields_from_jdn(byzantine, jdn, &fields));
     g_assert_cmpint(fields.year, ==, 7535);
 }
@@ -826,292 +823,11 @@ test_event_index_scale(void)
     calendar_event_index_free(index);
 }
 
-static void
-test_shared_calendar_helpers(void)
-{
-    g_assert_cmpint(calendar_gregorian_month_length(2000, 2), ==, 29);
-    g_assert_cmpint(calendar_gregorian_month_length(1900, 2), ==, 28);
-    g_assert_cmpint(calendar_julian_month_length(1900, 2), ==, 29);
-    g_assert_cmpint(calendar_julian_month_length(1901, 2), ==, 28);
 
-    g_assert_cmpint(calendar_count_multiples_inclusive(1, 12, 4), ==, 3);
-    g_assert_cmpint(calendar_count_multiples_inclusive(-12, -1, 4), ==, 3);
-    g_assert_cmpint(calendar_count_multiples_inclusive(-4, 4, 4), ==, 3);
-    g_assert_cmpint(calendar_count_multiples_inclusive(5, 4, 4), ==, 0);
 
-    /* Extreme public inputs must remain defined under ASan/UBSan. */
-    (void)calendar_gregorian_to_jdn(G_MININT64, 1, 1);
-    (void)calendar_gregorian_to_jdn(G_MAXINT64, 12, 31);
-    (void)calendar_julian_to_jdn(G_MININT64, 1, 1);
-    (void)calendar_julian_to_jdn(G_MAXINT64, 12, 31);
-}
 
-static void
-test_arithmetic_calendar_engines(void)
-{
-    typedef struct
-    {
-        CalendarCalendarMode mode;
-        gint64 jdn;
-        gint64 year;
-        gint month;
-        gint day;
-        gint auxiliary;
-    } ArithmeticVector;
 
-    static const ArithmeticVector vectors[] = {
-        {
-            CALENDAR_CALENDAR_MODE_GREGORIAN,
-            1721060, 1, 1, 1, 0
-        },
-        {
-            CALENDAR_CALENDAR_MODE_ISLAMIC_CIVIL,
-            1948440, 1, 1, 1, 0
-        },
-        {
-            CALENDAR_CALENDAR_MODE_ISLAMIC_UMM_AL_QURA,
-            2408762, 1300, 1, 1, 0
-        },
-        {
-            CALENDAR_CALENDAR_MODE_ISLAMIC_TBLA,
-            1948439, 1, 1, 1, 0
-        },
-        {
-            CALENDAR_CALENDAR_MODE_COPTIC,
-            1825030, 1, 1, 1, 1
-        },
-        {
-            CALENDAR_CALENDAR_MODE_COPTIC,
-            1825029, 1, 13, 5, 0
-        },
-        {
-            CALENDAR_CALENDAR_MODE_ETHIOPIAN,
-            1724221, 1, 1, 1, 1
-        },
-        {
-            CALENDAR_CALENDAR_MODE_ETHIOPIAN,
-            1724220, 5500, 13, 5, 0
-        },
-        {
-            CALENDAR_CALENDAR_MODE_ETHIOPIC_AMETE_ALEM,
-            1724221, 5501, 1, 1, 0
-        },
-        {
-            CALENDAR_CALENDAR_MODE_INDIAN,
-            2461122, 1948, 1, 1, 0
-        },
-        {
-            CALENDAR_CALENDAR_MODE_BUDDHIST,
-            2461042, 2569, 1, 1, 0
-        },
-        {
-            CALENDAR_CALENDAR_MODE_MINGUO,
-            2419403, 1, 1, 1, 1
-        },
-        {
-            CALENDAR_CALENDAR_MODE_JAPANESE,
-            2458605, 1, 5, 1, 236
-        }
-    };
-    gsize index;
 
-    for (index = 0; index < G_N_ELEMENTS(vectors); index++)
-    {
-        CalendarCalendarFields fields = { 0 };
-
-        g_assert_true(calendar_arithmetic_fields_from_jdn(
-            vectors[index].mode, vectors[index].jdn, &fields));
-        g_assert_cmpint(fields.year, ==, vectors[index].year);
-        g_assert_cmpint(fields.month, ==, vectors[index].month);
-        g_assert_cmpint(fields.day, ==, vectors[index].day);
-        g_assert_cmpint(fields.auxiliary, ==, vectors[index].auxiliary);
-        g_assert_false(fields.special);
-    }
-
-    {
-        const gint64 leap_day =
-            calendar_gregorian_to_jdn(2024, 2, 29);
-        const gint64 next_year = calendar_arithmetic_add_years(
-            CALENDAR_CALENDAR_MODE_GREGORIAN, leap_day, 1);
-
-        g_assert_cmpint(
-            next_year,
-            ==,
-            calendar_gregorian_to_jdn(2025, 2, 28));
-    }
-
-    {
-        CalendarCalendarFields fields = { 0 };
-        const gint64 next_month = calendar_arithmetic_add_months(
-            CALENDAR_CALENDAR_MODE_ISLAMIC_CIVIL, 1948440, 1);
-
-        g_assert_true(calendar_arithmetic_fields_from_jdn(
-            CALENDAR_CALENDAR_MODE_ISLAMIC_CIVIL,
-            next_month,
-            &fields));
-        g_assert_cmpint(fields.year, ==, 1);
-        g_assert_cmpint(fields.month, ==, 2);
-        g_assert_cmpint(fields.day, ==, 1);
-    }
-
-    {
-        CalendarCalendarFields fields = { 0 };
-        const gint64 date = calendar_gregorian_to_jdn(2026, 9, 20);
-        const gint64 month_start = calendar_arithmetic_month_start(
-            CALENDAR_CALENDAR_MODE_ETHIOPIAN, date);
-
-        g_assert_true(calendar_arithmetic_fields_from_jdn(
-            CALENDAR_CALENDAR_MODE_ETHIOPIAN,
-            month_start,
-            &fields));
-        g_assert_cmpint(fields.year, ==, 2019);
-        g_assert_cmpint(fields.month, ==, 1);
-        g_assert_cmpint(fields.day, ==, 1);
-    }
-
-    {
-        CalendarCalendarFields fields = { 0 };
-        const gint64 first = G_GINT64_CONSTANT(2408762);
-        const gint64 last_boundary =
-            calendar_i64_add_saturating(first, 106665);
-        const gint64 last_year = calendar_i64_add_saturating(
-            first, 106311);
-
-        g_assert_false(calendar_arithmetic_fields_from_jdn(
-            CALENDAR_CALENDAR_MODE_ISLAMIC_UMM_AL_QURA,
-            first - 1,
-            &fields));
-        g_assert_false(calendar_arithmetic_fields_from_jdn(
-            CALENDAR_CALENDAR_MODE_ISLAMIC_UMM_AL_QURA,
-            last_boundary,
-            &fields));
-
-        g_assert_true(calendar_arithmetic_fields_from_jdn(
-            CALENDAR_CALENDAR_MODE_ISLAMIC_UMM_AL_QURA,
-            last_year,
-            &fields));
-        g_assert_cmpint(fields.year, ==, 1600);
-        g_assert_cmpint(fields.month, ==, 1);
-        g_assert_cmpint(fields.day, ==, 1);
-
-        g_assert_cmpint(
-            calendar_arithmetic_add_years(
-                CALENDAR_CALENDAR_MODE_ISLAMIC_UMM_AL_QURA,
-                last_year,
-                1),
-            ==,
-            G_MAXINT64);
-    }
-}
-
-static void
-test_swedish_historical_boundaries(void)
-{
-    CalendarCalendarFields fields = { 0 };
-    CalendarCalendarFields date;
-    gint64 jdn;
-    g_autofree gchar *formatted = NULL;
-
-    /* Julian before the failed gradual reform. */
-    jdn = calendar_julian_to_jdn(1699, 12, 31);
-    calendar_swedish_fields_from_jdn(jdn, &fields);
-    g_assert_cmpint(fields.year, ==, 1699);
-    g_assert_cmpint(fields.month, ==, 12);
-    g_assert_cmpint(fields.day, ==, 31);
-    g_assert_false(fields.special);
-
-    /* Swedish style: one displayed civil day ahead of Julian. */
-    jdn = calendar_gregorian_to_jdn(1700, 3, 11);
-    calendar_swedish_fields_from_jdn(jdn, &fields);
-    g_assert_cmpint(fields.year, ==, 1700);
-    g_assert_cmpint(fields.month, ==, 3);
-    g_assert_cmpint(fields.day, ==, 1);
-
-    /* The unique restoration day must round-trip exactly. */
-    jdn = calendar_julian_to_jdn(1712, 2, 29);
-    calendar_swedish_fields_from_jdn(jdn, &fields);
-    g_assert_cmpint(fields.year, ==, 1712);
-    g_assert_cmpint(fields.month, ==, 2);
-    g_assert_cmpint(fields.day, ==, 30);
-    g_assert_true(fields.special);
-    g_assert_cmpint(calendar_swedish_fields_to_jdn(&fields), ==, jdn);
-
-    /* After 30 February Sweden returned to ordinary Julian dating. */
-    jdn = calendar_julian_to_jdn(1712, 3, 1);
-    calendar_swedish_fields_from_jdn(jdn, &fields);
-    g_assert_cmpint(fields.year, ==, 1712);
-    g_assert_cmpint(fields.month, ==, 3);
-    g_assert_cmpint(fields.day, ==, 1);
-
-    /* Gregorian adoption skipped directly from 17 February to 1 March. */
-    jdn = calendar_gregorian_to_jdn(1753, 3, 1);
-    calendar_swedish_fields_from_jdn(jdn, &fields);
-    g_assert_cmpint(fields.year, ==, 1753);
-    g_assert_cmpint(fields.month, ==, 3);
-    g_assert_cmpint(fields.day, ==, 1);
-
-    date = (CalendarCalendarFields){ .year = 1700, .month = 2, .day = 1 };
-    g_assert_cmpint(calendar_swedish_month_length(&date), ==, 28);
-    date = (CalendarCalendarFields){ .year = 1712, .month = 2, .day = 1 };
-    g_assert_cmpint(calendar_swedish_month_length(&date), ==, 30);
-    date = (CalendarCalendarFields){ .year = 1753, .month = 2, .day = 1 };
-    g_assert_cmpint(calendar_swedish_month_length(&date), ==, 17);
-    date = (CalendarCalendarFields){ .year = 1704, .month = 2, .day = 1 };
-    g_assert_cmpint(calendar_swedish_month_length(&date), ==, 29);
-    date = (CalendarCalendarFields){ .year = 1800, .month = 2, .day = 1 };
-    g_assert_cmpint(calendar_swedish_month_length(&date), ==, 28);
-    date = (CalendarCalendarFields){ .year = 1804, .month = 2, .day = 1 };
-    g_assert_cmpint(calendar_swedish_month_length(&date), ==, 29);
-    date = (CalendarCalendarFields){ .year = 1804, .month = 4, .day = 1 };
-    g_assert_cmpint(calendar_swedish_month_length(&date), ==, 30);
-    date = (CalendarCalendarFields){ .year = 1804, .month = 1, .day = 1 };
-    g_assert_cmpint(calendar_swedish_month_length(&date), ==, 31);
-
-    date = (CalendarCalendarFields){ .year = 1712, .month = 2, .day = 30,
-                                         .special = TRUE };
-    formatted = calendar_swedish_format(&date, CALENDAR_DATE_PART_SHORT);
-    g_assert_cmpstr(formatted, ==, "30 February 1712");
-    g_clear_pointer(&formatted, g_free);
-    formatted = calendar_swedish_format(&date, CALENDAR_DATE_PART_DAY);
-    g_assert_cmpstr(formatted, ==, "30");
-    g_clear_pointer(&formatted, g_free);
-    formatted = calendar_swedish_format(&date, CALENDAR_DATE_PART_MONTH);
-    g_assert_cmpstr(formatted, ==, "February");
-    g_clear_pointer(&formatted, g_free);
-    formatted = calendar_swedish_format(&date, CALENDAR_DATE_PART_YEAR);
-    g_assert_cmpstr(formatted, ==, "1712");
-
-    date = (CalendarCalendarFields){ .year = 1712, .month = 1, .day = 30 };
-    jdn = calendar_swedish_fields_to_jdn(&date);
-    calendar_swedish_fields_from_jdn(
-        calendar_swedish_add_months(jdn, 1), &fields);
-    g_assert_cmpint(fields.month, ==, 2);
-    g_assert_cmpint(fields.day, ==, 30);
-    g_assert_true(fields.special);
-
-    date = (CalendarCalendarFields){ .year = 1753, .month = 1, .day = 31 };
-    jdn = calendar_swedish_fields_to_jdn(&date);
-    calendar_swedish_fields_from_jdn(
-        calendar_swedish_add_months(jdn, 1), &fields);
-    g_assert_cmpint(fields.month, ==, 2);
-    g_assert_cmpint(fields.day, ==, 17);
-
-    date = (CalendarCalendarFields){ .year = 1712, .month = 2, .day = 30,
-                                         .special = TRUE };
-    jdn = calendar_swedish_fields_to_jdn(&date);
-    calendar_swedish_fields_from_jdn(
-        calendar_swedish_add_years(jdn, 1), &fields);
-    g_assert_cmpint(fields.year, ==, 1713);
-    g_assert_cmpint(fields.month, ==, 2);
-    g_assert_cmpint(fields.day, ==, 28);
-
-    date = (CalendarCalendarFields){ .year = 1753, .month = 2, .day = 17 };
-    jdn = calendar_swedish_fields_to_jdn(&date);
-    g_assert_cmpint(calendar_swedish_month_start(jdn), ==,
-                    calendar_swedish_fields_to_jdn(
-                        &(CalendarCalendarFields){
-                            .year = 1753, .month = 2, .day = 1 }));
-}
 
 static void
 test_nuremberg_clock_boundaries(void)
@@ -1230,15 +946,9 @@ main(int argc,
                     test_historical_calendar_edge_vectors);
     g_test_add_func("/portable/gregorian-proleptic-cutover",
                     test_gregorian_proleptic_cutover);
-    g_test_add_func("/portable/shared-calendar-helpers",
-                    test_shared_calendar_helpers);
-    g_test_add_func("/portable/arithmetic-calendar-engines",
-                    test_arithmetic_calendar_engines);
     g_test_add_func("/portable/event-source", test_event_source_and_snapshot);
     g_test_add_func("/portable/event-scale", test_event_index_scale);
     g_test_add_func("/portable/time-catalogue", test_time_catalogue);
-    g_test_add_func("/portable/swedish-historical-boundaries",
-                    test_swedish_historical_boundaries);
     g_test_add_func("/portable/nuremberg-clock-boundaries",
                     test_nuremberg_clock_boundaries);
     return g_test_run();

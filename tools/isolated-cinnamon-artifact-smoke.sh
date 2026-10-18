@@ -102,8 +102,8 @@ dpkg-deb -x "$RESOURCES_DEB" "$STAGE_ROOT"
 # The native Common loader deliberately uses the canonical system capability
 # directory. Install ONLY exact handoff modules into this disposable container;
 # never make the production loader accept arbitrary environment override paths.
-[[ "$(dpkg-deb -f "$RESOURCES_DEB" Version)" == "$EXPECTED_VERSION" ]] || {
-    echo "Calendar Resources version does not match the qualified Calendar version." >&2
+dpkg --compare-versions "$(dpkg-deb -f "$RESOURCES_DEB" Version)" ge 1.19.66 || {
+    echo "Common resource package is older than the required executable ABI release." >&2
     exit 1
 }
 install -d /System/Resources/Calendars /System/Resources/Clocks

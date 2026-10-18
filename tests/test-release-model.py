@@ -53,10 +53,8 @@ def assert_release_handoff_behaviour(version: str) -> None:
     with tempfile.TemporaryDirectory(prefix="calendar-release-model-") as tmp:
         dist = Path(tmp)
         deb = dist / f"calendar_{version}_amd64.deb"
-        resources = dist / f"infiltrator-calendar-resources_{version}_amd64.deb"
         installer = dist / f"calendar-{version}-local-folder.run"
         deb.write_bytes(b"calendar-deb-test\n")
-        resources.write_bytes(b"calendar-resources-deb-test\n")
         installer.write_bytes(b"calendar-installer-test\n")
         source_sha = "a" * 40
 
@@ -83,7 +81,6 @@ def assert_release_handoff_behaviour(version: str) -> None:
         assert manifest["source_sha"] == source_sha
         assert {asset["name"] for asset in manifest["assets"]} == {
             deb.name,
-            resources.name,
             installer.name,
         }
         assert (dist / "release-notes.md").read_text(encoding="utf-8").strip()
@@ -305,47 +302,17 @@ def main() -> None:
     assert policy["font_binaries_are_not_part_of_this_contract"] is True
     assert policy["fallback_is_required_when_mb_corpo_is_unavailable"] is True
 
-    # The application and the system resource pack are separate binary owners.
+    # Common alone owns provider source, module compilation and publication.
     assert "Source: calendar" in control
     assert "\nPackage: calendar\n" in control
-    assert "\nPackage: infiltrator-calendar-resources\n" in control
-    assert "infiltrator-calendar-resources (= ${binary:Version})" in control
+    assert "\nPackage: infiltrator-calendar-resources\n" not in control
+    assert "infiltrator-calendar-resources (= ${binary:Version})" not in control
+    assert "Suggests: infiltrator-calendar-resources (>= 1.19.66)" in control
     assert "cinnamon (>= 6.4)" in control
-    binary_stanza = control.split("\nPackage: calendar\n", 1)[1]
-    runtime_control = binary_stanza.split("Description:", 1)[0]
-    assert "libgtk-3-0," not in runtime_control
-    assert "\n python3," not in runtime_control
-    assert "debian/infiltrator-calendar-resources/System/Resources/Calendars" in rules
-    assert "debian/infiltrator-calendar-resources/System/Resources/Clocks" in rules
-    assert "debian/calendar/System/Resources/Clocks/" in rules
-    assert "FIXED_CLOCK_RESOURCE_NAMES := decimal internet unix hexadecimal binary" in read("Makefile")
-    assert "JULIAN_CLOCK_RESOURCE_NAMES := julian modified-julian" in read("Makefile")
-    assert "CONVENTIONAL_CLOCK_RESOURCE_NAMES := standard-12 standard-24" in read("Makefile")
-    assert "NEXT_CLOCK_RESOURCE_NAMES := chinese-ke mean-solar" in read("Makefile")
-    # The separately-owned Debian package must qualify every migrated clock,
-    # not just the first five extracted modes. A missing .so is a broken
-    # resource package even when Calendar itself still builds successfully.
-    mandatory_clock_ids = {
-        "decimal", "internet", "unix", "hexadecimal", "binary",
-        "julian", "modified-julian", "standard-12", "standard-24",
-        "chinese-ke", "mean-solar", "sidereal", "chinese-time", "solar",
-        "italian-hours", "babylonian-hours",
-        "babylonian-ancient", "indian-ghati",
-        "roman-temporal", "japanese-temporal", "japanese-temporal-early",
-        "nuremberg-hours", "nuremberg-solar",
-    }
-    installed_clock_checks = re.findall(
-        r"@for resource in ([^;]+); do \\\\?", rules
-    )
-    assert any(set(group.split()) == mandatory_clock_ids
-               for group in installed_clock_checks), (
-        "debian/rules does not verify all twenty-three mandatory clock resources"
-    )
-    assert "for id in decimal internet unix hexadecimal binary julian modified-julian standard-12 standard-24 chinese-ke mean-solar sidereal chinese-time solar italian-hours babylonian-hours babylonian-ancient indian-ghati" in read("tools/isolated-cinnamon-artifact-smoke.sh")
-    assert "debian/calendar/System/Resources/Calendars/\"*.so" in rules
-    assert "test ! -e" in rules
-    assert "-DU_DISABLE_RENAMING=1" in makefile
-    assert "src/resources/calendars/engine/icu-compat-bridge.c" in makefile
+    assert not (ROOT / "src/resources").exists()
+    assert "RESOURCE_ENGINE_ARCHIVE" not in makefile
+    assert "System/Resources" not in read("tools/release-check.sh")
+    assert "github.com/Infiltrator-Projects/Libraries/releases/download" in read("tools/test-resources.sh")
     assert "validate-runtime-deps:" in makefile
 
     assert 'NATIVE_VERSION="${VERSION}+nativepgo${NATIVE_REVISION}"' in installer
@@ -361,7 +328,7 @@ def main() -> None:
     assert "make reproducible-build" in release_check
     assert "tools/native-installer-smoke.sh" in release_check
     assert "tools/validate-release-artifacts.sh" in release_check
-    assert "infiltrator-calendar-resources_${VERSION}_${ARCH}.deb" in release_check
+    assert "infiltrator-calendar-resources_${VERSION}_${ARCH}.deb" not in release_check
     assert "lintian --fail-on error" in release_check
 
     assert "release-handoff.py release-requested" in workflow
@@ -383,7 +350,7 @@ def main() -> None:
     assert "needs: [debian-package]" in package_install
     assert "actions/download-artifact@" in package_install
     assert "qualified-release/release-handoff.py verify" in package_install
-    assert '"./$RELEASE_RESOURCES_DEB" "./$RELEASE_DEB"' in package_install
+    assert '"$RELEASE_RESOURCES_DEB" "./$RELEASE_DEB"' in package_install
     assert "apt-get purge -y calendar" in package_install
     assert "infiltrator-calendar-resources" in package_install
     assert "test -f /System/Resources/Calendars/hebrew.so" in package_install
@@ -402,9 +369,9 @@ def main() -> None:
     assert "release-manifest.txt" not in workflow
     assert "release-manifest.txt" not in publisher
     assert "dist/release-handoff.py" in workflow
-    assert "dist/infiltrator-calendar-resources_*_amd64.deb" in workflow
+    assert "dist/infiltrator-calendar-resources_*_amd64.deb" not in workflow
     assert "qualified-release/release-handoff.py verify" in publisher
-    assert "RELEASE_RESOURCES_DEB" in publisher
+    assert "RELEASE_RESOURCES_DEB" not in publisher
     assert "workflow_call:" in publisher
     assert "workflow_run:" not in publisher
     assert "actions/download-artifact@" in publisher

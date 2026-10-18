@@ -204,14 +204,16 @@ load_runtime_provider(
     RuntimeCalendarProvider *record;
 
     (void)user_data;
-    if (metadata == NULL || module_path == NULL ||
+    if (metadata == NULL ||
         runtime_provider_record_from_id(metadata->id) != NULL)
     {
         /* The first validated native ID wins. */
         return true;
     }
 
-    module = infiltratr_temporal_calendar_module_open(module_path);
+    module = module_path != NULL
+        ? infiltratr_temporal_calendar_module_open(module_path)
+        : infiltratr_temporal_calendar_module_open_system();
     if (module == NULL)
         return true;
 
@@ -261,6 +263,19 @@ initialise_runtime_registry(gpointer user_data)
         load_runtime_provider,
         NULL,
         &ignored);
+    if (runtime_provider_record_from_id("gregorian") == NULL)
+    {
+        /* Common delegates the normal calendar to host services. This adapter
+         * contains no custom calendar implementation or substitute engine. */
+        InfiltratrTemporalCalendarModule *system =
+            infiltratr_temporal_calendar_module_open_system();
+        if (system != NULL)
+        {
+            (void)load_runtime_provider(
+                infiltratr_temporal_calendar_module_metadata(system), NULL, NULL);
+            infiltratr_temporal_calendar_module_free(system);
+        }
+    }
     return runtime_providers;
 }
 

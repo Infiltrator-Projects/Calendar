@@ -113,7 +113,7 @@ preserve_failure() {
 build_once 1
 build_once 2
 
-for package in calendar infiltrator-calendar-resources; do
+for package in calendar; do
     DEB1="$TMP/run-1/${package}_${VERSION}_${ARCH}.deb"
     DEB2="$TMP/run-2/${package}_${VERSION}_${ARCH}.deb"
 

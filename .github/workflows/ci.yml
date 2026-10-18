@@ -35,9 +35,11 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y \
-            build-essential clang desktop-file-utils gettext gobject-introspection gjs \
+            build-essential clang desktop-file-utils gettext gobject-introspection gjs curl \
             gir1.2-glib-2.0-dev libglib2.0-dev libgtk-3-dev libicu-dev nodejs \
             pkg-config python3 xdotool xvfb xz-utils
+      - name: Install Common resource test dependency
+        run: tools/test-resources.sh "$RUNNER_TEMP/common-resources"
       - name: Build and test
         env:
           CC: ${{ matrix.compiler }}
@@ -85,7 +87,7 @@ jobs:
       - name: Prepare checkout runtime
         run: |
           apt-get update
-          apt-get install -y --no-install-recommends ca-certificates git
+          apt-get install -y --no-install-recommends ca-certificates curl git
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           submodules: true
@@ -95,9 +97,11 @@ jobs:
         run: |
           apt-get update
           apt-get install -y --no-install-recommends \
-            build-essential gettext gobject-introspection gjs \
+            build-essential gettext gobject-introspection gjs curl \
             libglib2.0-dev libgtk-3-dev libicu-dev nodejs \
             pkg-config python3
+      - name: Install Common resource test dependency
+        run: tools/test-resources.sh "$RUNNER_TEMP/common-resources"
       - name: Verify ICU major and execute Calendar tests
         shell: bash
         run: |
@@ -120,6 +124,8 @@ jobs:
           sudo apt-get install -y \
             build-essential gobject-introspection \
             gir1.2-glib-2.0-dev libglib2.0-dev libgtk-3-dev libicu-dev pkg-config
+      - name: Install Common resource test dependency
+        run: tools/test-resources.sh "$RUNNER_TEMP/common-resources"
       - name: ASan and UBSan
         run: make sanitize
 
@@ -137,6 +143,8 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y \
             build-essential gcovr libglib2.0-dev libgtk-3-dev libicu-dev pkg-config
+      - name: Install Common resource test dependency
+        run: tools/test-resources.sh "$RUNNER_TEMP/common-resources"
       - name: Coverage gate
         run: make coverage
 
@@ -187,7 +195,7 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y \
-            build-essential debhelper desktop-file-utils devscripts gettext gobject-introspection gjs \
+            build-essential debhelper desktop-file-utils devscripts gettext gobject-introspection gjs curl \
             gir1.2-glib-2.0-dev libglib2.0-dev libgtk-3-dev libicu-dev nodejs \
             pkg-config python3 xz-utils \
             lintian shellcheck
@@ -209,7 +217,6 @@ jobs:
           name: calendar-release-${{ github.sha }}
           path: |
             dist/calendar_*_amd64.deb
-            dist/infiltrator-calendar-resources_*_amd64.deb
             dist/calendar-*-local-folder.run
             dist/release-manifest.json
             dist/release-notes.md
@@ -232,7 +239,7 @@ jobs:
         run: |
           apt-get update
           apt-get install -y --no-install-recommends \
-            ca-certificates cinnamon dbus-x11 git libglib2.0-bin python3 xvfb
+            ca-certificates curl cinnamon dbus-x11 git libglib2.0-bin python3 xvfb
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           submodules: false
@@ -247,11 +254,12 @@ jobs:
         run: |
           set -euo pipefail
           deb=$(find qualified-release -maxdepth 1 -type f -name 'calendar_*_amd64.deb' -print -quit)
-          resources=$(find qualified-release -maxdepth 1 -type f -name 'infiltrator-calendar-resources_*_amd64.deb' -print -quit)
+          tools/test-resources.sh "$RUNNER_TEMP/common-resources"
+          resources=$(find "$RUNNER_TEMP/common-resources" -maxdepth 1 -type f -name 'infiltrator-calendar-resources_*_amd64.deb' -print -quit)
           test -n "$deb" && test -s "$deb"
           test -n "$resources" && test -s "$resources"
           printf 'deb=%s/%s\n' "$GITHUB_WORKSPACE" "$deb" >> "$GITHUB_OUTPUT"
-          printf 'resources=%s/%s\n' "$GITHUB_WORKSPACE" "$resources" >> "$GITHUB_OUTPUT"
+          printf 'resources=%s\n' "$resources" >> "$GITHUB_OUTPUT"
       - name: Record Cinnamon qualification environment
         shell: bash
         run: |
@@ -275,7 +283,7 @@ jobs:
       - name: Prepare clean Debian container
         run: |
           apt-get update
-          apt-get install -y --no-install-recommends ca-certificates git gjs python3
+          apt-get install -y --no-install-recommends ca-certificates curl git gjs python3
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           submodules: false
@@ -291,14 +299,23 @@ jobs:
           --dist qualified-release
           --expected-sha "$GITHUB_SHA"
           --github-env "$GITHUB_ENV"
+      - name: Verify normal host operation without optional modules
+        shell: bash
+        run: |
+          set -euo pipefail
+          apt-get install -y --no-install-recommends "./$RELEASE_DEB"
+          CALENDAR_EXPECTED_VERSION="$RELEASE_VERSION" gjs tests/smoke-typelib.js
+          apt-get purge -y calendar
       - name: Install app and resources, then purge only the app
         shell: bash
         run: |
           set -euo pipefail
           test -s "$RELEASE_DEB"
+          tools/test-resources.sh "$RUNNER_TEMP/common-resources"
+          RELEASE_RESOURCES_DEB=$(find "$RUNNER_TEMP/common-resources" -name '*.deb' -print -quit)
           test -s "$RELEASE_RESOURCES_DEB"
           apt-get install -y --no-install-recommends \
-            "./$RELEASE_RESOURCES_DEB" "./$RELEASE_DEB"
+            "$RELEASE_RESOURCES_DEB" "./$RELEASE_DEB"
           test "$(dpkg-query -W -f='${Status}' calendar)" = "install ok installed"
           test "$(dpkg-query -W -f='${Status}' infiltrator-calendar-resources)" = "install ok installed"
           for id in gregorian hebrew persian coptic iso-week julian revised-julian islamic-umalqura islamic-civil islamic-tbla islamic bahai buddhist ethiopian ethiopic-amete-alem chinese dangi indian japanese minguo roman byzantine egyptian-nabonassar armenian-traditional mayan french-republican swedish-historical international-fixed world positivist; do test -f "/System/Resources/Calendars/$id.so"; done
@@ -309,7 +326,7 @@ jobs:
           ! dpkg-query -W -f='${Status}' calendar 2>/dev/null | grep -qx "install ok installed"
           test "$(dpkg-query -W -f='${Status}' infiltrator-calendar-resources)" = "install ok installed"
           test -f /System/Resources/Calendars/hebrew.so
-          test -f /usr/share/locale/en_AU/LC_MESSAGES/calendar@the-infiltratr.mo
+          test -f /usr/share/locale/en_AU/LC_MESSAGES/infiltrator-temporal-resources.mo
           for id in decimal internet unix hexadecimal binary julian modified-julian standard-12 standard-24 chinese-ke mean-solar sidereal chinese-time solar italian-hours babylonian-hours babylonian-ancient indian-ghati roman-temporal japanese-temporal japanese-temporal-early nuremberg-hours nuremberg-solar; do test -f "/System/Resources/Clocks/$id.so"; done
           apt-get check
           apt-get purge -y infiltrator-calendar-resources
@@ -320,8 +337,9 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
+          RELEASE_RESOURCES_DEB=$(find "$RUNNER_TEMP/common-resources" -name '*.deb' -print -quit)
           apt-get install -y --no-install-recommends \
-            "./$RELEASE_RESOURCES_DEB" "./$RELEASE_DEB"
+            "$RELEASE_RESOURCES_DEB" "./$RELEASE_DEB"
           test "$(dpkg-query -W -f='${Status}' calendar)" = "install ok installed"
           apt-get purge -y calendar
           ! dpkg-query -W -f='${Status}' calendar 2>/dev/null | grep -qx "install ok installed"
