@@ -17,20 +17,6 @@
 #include <string.h>
 
 guint
-delay_sidereal_provider(gint64 unix_microseconds,
-                        gint utc_offset_seconds,
-                        gboolean show_seconds,
-                        gdouble latitude G_GNUC_UNUSED,
-                        gdouble longitude)
-{
-    (void)utc_offset_seconds;
-    return delay_for_clock_seconds(
-        calendar_local_sidereal_seconds(unix_microseconds, longitude),
-        CALENDAR_SIDEREAL_RATE,
-        show_seconds);
-}
-
-guint
 delay_solar_provider(gint64 unix_microseconds,
                      gint utc_offset_seconds,
                      gboolean show_seconds,
