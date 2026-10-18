@@ -45,7 +45,6 @@ CORE_SOURCES := \
 	src/core/calendar-arithmetic-indian.c \
 	src/core/calendar-arithmetic-islamic.c \
 	src/core/calendar-arithmetic-japanese.c \
-	src/core/calendar-arithmetic-persian.c \
 	src/core/calendar-helpers.c \
 	src/core/locale-weekend.c \
 	src/core/icu-calendar.c \
@@ -141,6 +140,7 @@ CALENDAR_RESOURCE_NAMES := hebrew gregorian persian coptic
 HEBREW_RESOURCE_SOURCE := src/resources/calendars/hebrew.c
 GREGORIAN_RESOURCE_SOURCE := src/resources/calendars/gregorian.c
 PERSIAN_RESOURCE_SOURCE := src/resources/calendars/persian.c
+PERSIAN_RESOURCE_ARITHMETIC := src/resources/calendars/arithmetic-persian.c
 COPTIC_RESOURCE_SOURCE := src/resources/calendars/coptic.c
 CALENDAR_RESOURCE_SOURCES := $(HEBREW_RESOURCE_SOURCE) \
 	$(GREGORIAN_RESOURCE_SOURCE) \
@@ -409,13 +409,13 @@ $(GREGORIAN_RESOURCE): $(GREGORIAN_RESOURCE_SOURCE) $(CALENDAR_RESOURCE_MAP) \
 		-o $@ $(LDFLAGS) $(CORE_LIBS) $(ICU_BRIDGE_LIBS) $(MATH_LIBS)
 
 $(PERSIAN_RESOURCE): $(PERSIAN_RESOURCE_SOURCE) $(CALENDAR_RESOURCE_MAP) \
-		src/core/calendar-arithmetic-persian.c src/core/icu-calendar.c \
+		$(PERSIAN_RESOURCE_ARITHMETIC) src/core/icu-calendar.c \
 		src/core/icu-compat-bridge.c $(INFILTRATR_COMMON_HEADERS) \
 		$(INFILTRATR_COMMON_ARCHIVE)
 	@mkdir -p "$(CALENDAR_RESOURCE_BUILD_DIR)"
 	$(CC) $(CPPFLAGS) $(CFLAGS) -fvisibility=hidden \
 		-frandom-seed=$(REPRO_SEED_PREFIX)-persian-resource $(CORE_CFLAGS) \
-		-shared $(PERSIAN_RESOURCE_SOURCE) src/core/calendar-arithmetic-persian.c \
+		-shared $(PERSIAN_RESOURCE_SOURCE) $(PERSIAN_RESOURCE_ARITHMETIC) \
 		src/core/icu-calendar.c src/core/icu-compat-bridge.c \
 		$(INFILTRATR_COMMON_ARCHIVE) \
 		-Wl,--version-script=$(CALENDAR_RESOURCE_MAP) \
