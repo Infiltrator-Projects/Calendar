@@ -34,7 +34,6 @@ GIR := Calendar-1.0
 CORE_SOURCES := \
 	src/core/clock-engine.c \
 	src/core/time-formats.c \
-	src/core/time-formats-civil.c \
 	src/core/time-formats-astronomy.c \
 	src/core/time-formats-nuremberg.c \
 	src/core/time-astronomy.c \
