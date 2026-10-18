@@ -43,9 +43,7 @@ guint calendar_time_delay_for_clock_seconds(long double clock_seconds, long doub
 guint delay_roman_temporal_provider(gint64, gint, gboolean, gdouble, gdouble);
 guint delay_japanese_temporal_provider(gint64, gint, gboolean, gdouble, gdouble);
 guint delay_japanese_temporal_early_provider(gint64, gint, gboolean, gdouble, gdouble);
-guint delay_indian_ghati_provider(gint64, gint, gboolean, gdouble, gdouble);
 guint delay_nuremberg_hours_provider(gint64, gint, gboolean, gdouble, gdouble);
-guint delay_babylonian_ancient_provider(gint64, gint, gboolean, gdouble, gdouble);
 guint delay_nuremberg_solar_provider(gint64, gint, gboolean, gdouble, gdouble);
 
 G_END_DECLS

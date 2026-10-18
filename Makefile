@@ -167,7 +167,7 @@ FIXED_CLOCK_RESOURCE_NAMES := decimal internet unix hexadecimal binary
 JULIAN_CLOCK_RESOURCE_NAMES := julian modified-julian
 CONVENTIONAL_CLOCK_RESOURCE_NAMES := standard-12 standard-24
 NEXT_CLOCK_RESOURCE_NAMES := chinese-ke mean-solar
-ORIGIN_CLOCK_RESOURCE_NAMES := italian-hours babylonian-hours
+ORIGIN_CLOCK_RESOURCE_NAMES := italian-hours babylonian-hours babylonian-ancient indian-ghati
 CLOCK_RESOURCE_NAMES := $(FIXED_CLOCK_RESOURCE_NAMES) $(JULIAN_CLOCK_RESOURCE_NAMES) $(CONVENTIONAL_CLOCK_RESOURCE_NAMES) $(NEXT_CLOCK_RESOURCE_NAMES) $(ORIGIN_CLOCK_RESOURCE_NAMES) sidereal chinese-time solar
 CLOCK_RESOURCES := $(addprefix $(CLOCK_RESOURCE_BUILD_DIR)/,$(addsuffix .so,$(CLOCK_RESOURCE_NAMES)))
 TEST_CLOCK_RESOURCE_CPPFLAG := \
@@ -480,6 +480,8 @@ $(addprefix $(CLOCK_RESOURCE_BUILD_DIR)/,$(addsuffix .so,$(ORIGIN_CLOCK_RESOURCE
 	$(CC) $(CPPFLAGS) $(CFLAGS) -fvisibility=hidden \
 		-frandom-seed=$(REPRO_SEED_PREFIX)-$*-solar-origin-clock \
 		$(if $(filter babylonian-hours,$*),-DCLOCK_SUNRISE=1,) \
+		$(if $(filter babylonian-ancient,$*),-DCLOCK_ANCIENT_BABYLONIAN=1,) \
+		$(if $(filter indian-ghati,$*),-DCLOCK_GHATI=1,) \
 		-shared $(SOLAR_ORIGIN_CLOCK_SOURCE) \
 		-Wl,--version-script=$(CLOCK_RESOURCE_MAP) -o $@ $(LDFLAGS) $(MATH_LIBS)
 
