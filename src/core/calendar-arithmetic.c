@@ -39,7 +39,6 @@ arithmetic_mode_supported(CalendarCalendarMode mode)
         case CALENDAR_CALENDAR_MODE_GREGORIAN:
         case CALENDAR_CALENDAR_MODE_BUDDHIST:
         case CALENDAR_CALENDAR_MODE_MINGUO:
-        case CALENDAR_CALENDAR_MODE_PERSIAN:
         case CALENDAR_CALENDAR_MODE_JAPANESE:
         case CALENDAR_CALENDAR_MODE_ISLAMIC_CIVIL:
         case CALENDAR_CALENDAR_MODE_ISLAMIC_UMM_AL_QURA:
@@ -186,9 +185,6 @@ month_length(CalendarCalendarMode mode,
         case CALENDAR_CALENDAR_MODE_INDIAN:
             return calendar_arithmetic_indian_month_length(year, fields->month);
 
-        case CALENDAR_CALENDAR_MODE_PERSIAN:
-            return calendar_arithmetic_persian_month_length(year, fields->month);
-
         default:
             return 0;
     }
@@ -222,10 +218,6 @@ fields_to_jdn(CalendarCalendarMode mode,
 
         case CALENDAR_CALENDAR_MODE_INDIAN:
             return calendar_arithmetic_indian_fields_to_jdn(
-                year, fields->month, fields->day);
-
-        case CALENDAR_CALENDAR_MODE_PERSIAN:
-            return calendar_arithmetic_persian_fields_to_jdn(
                 year, fields->month, fields->day);
 
         default:
@@ -276,10 +268,6 @@ calendar_arithmetic_fields_from_jdn(
 
         case CALENDAR_CALENDAR_MODE_INDIAN:
             calendar_arithmetic_indian_fields_from_jdn(jdn, fields);
-            return TRUE;
-
-        case CALENDAR_CALENDAR_MODE_PERSIAN:
-            calendar_arithmetic_persian_fields_from_jdn(jdn, fields);
             return TRUE;
 
         default:
