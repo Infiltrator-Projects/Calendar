@@ -17,6 +17,8 @@ static void test_extracted_clocks_require_installed_modules(void)
         CalendarTimeMode mode;
         const char *id;
     } extracted[] = {
+        { CALENDAR_TIME_MODE_BABYLONIAN_ANCIENT, "babylonian-ancient" },
+        { CALENDAR_TIME_MODE_INDIAN_GHATI, "indian-ghati" },
         { CALENDAR_TIME_MODE_ITALIAN_HOURS, "italian-hours" },
         { CALENDAR_TIME_MODE_BABYLONIAN_HOURS, "babylonian-hours" },
         { CALENDAR_TIME_MODE_SOLAR, "solar" },

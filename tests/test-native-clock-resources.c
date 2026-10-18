@@ -426,7 +426,10 @@ static void test_apparent_solar_resource(void)
 /* Both equal-hour solar-origin resources must own their rendered boundaries. */
 static void test_solar_origin_hour_resources(void)
 {
-    static const char *const ids[] = { "italian-hours", "babylonian-hours" };
+    static const char *const ids[] = {
+        "italian-hours", "babylonian-hours",
+        "babylonian-ancient", "indian-ghati"
+    };
     static const int64_t instants[] = {
         INT64_C(-1000000000), INT64_C(0),
         INT64_C(946728000000000), INT64_C(1792256400000000)
@@ -445,6 +448,7 @@ static void test_solar_origin_hour_resources(void)
         g_assert_cmpstr(info->id, ==, ids[m]);
         g_assert_true(info->requires_latitude);
         g_assert_true(info->requires_longitude);
+        g_assert_cmpint(info->supports_seconds, ==, m < 2U);
         for (gsize k = 0; k < G_N_ELEMENTS(instants); ++k)
         {
             char before[256] = {0}, offset[256] = {0}, after[256] = {0};
@@ -459,7 +463,8 @@ static void test_solar_origin_hour_resources(void)
             g_assert_true(infiltratr_temporal_clock_next_tick(
                 module, instants[k], 0, true, -36.39, 145.36, &delay));
             g_assert_cmpuint(delay, >, 0U);
-            g_assert_cmpuint(delay, <=, 2000U);
+            g_assert_cmpuint(delay, <=, m == 2U ? 241000U :
+                                    m == 3U ? 25000U : 2000U);
             g_assert_true(infiltratr_temporal_clock_format(
                 module, "en", instants[k] + (int64_t)delay * INT64_C(1000),
                 0, true, false, -36.39, 145.36,
