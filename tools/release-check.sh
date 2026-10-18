@@ -50,14 +50,12 @@ fi
 CALENDAR_BUILD_MODE=generic dpkg-buildpackage -us -uc -b
 
 DEB="../calendar_${VERSION}_${ARCH}.deb"
-for package in "$DEB"; do
-    if [ ! -s "$package" ]; then
-        echo "Debian package was not produced: $package" >&2
-        exit 1
-    fi
-    dpkg-deb --info "$package" >/dev/null
-    dpkg-deb --contents "$package" >/dev/null
-done
+if [ ! -s "$DEB" ]; then
+    echo "Debian package was not produced: $DEB" >&2
+    exit 1
+fi
+dpkg-deb --info "$DEB" >/dev/null
+dpkg-deb --contents "$DEB" >/dev/null
 
 command -v lintian >/dev/null || {
     echo "Missing release dependency: lintian" >&2

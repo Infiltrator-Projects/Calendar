@@ -27,7 +27,7 @@ Depends:
  cinnamon (>= 6.4),
  ${misc:Depends},
  ${shlibs:Depends}
-Suggests: infiltrator-calendar-resources (>= 1.19.66)
+Suggests: infiltrator-calendar-resources (>= 1.19.67)
 Breaks: infiltrator-calendar-resources (<< 1.19.65)
 Replaces: infiltrator-calendar-resources (<< 1.19.65)
 Description: Cinnamon clock and calendar application

@@ -4,7 +4,7 @@
 # Calendar neither builds nor republishes the shared capability package.
 set -eu
 ROOT=$(CDPATH='' cd -- "$(dirname -- "$0")/.." && pwd)
-VERSION=$(sed -n 's/^INFILTRATR_COMMON_VERSION := //p' "$ROOT/Makefile")
+VERSION=$(sed -n 's/^INFILTRATR_TEMPORAL_RESOURCES_VERSION := //p' "$ROOT/Makefile")
 DIRECTORY=${1:-"$ROOT/build/test-resources"}
 mkdir -p "$DIRECTORY"
 DIRECTORY=$(CDPATH='' cd -- "$DIRECTORY" && pwd)

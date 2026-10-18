@@ -113,17 +113,15 @@ preserve_failure() {
 build_once 1
 build_once 2
 
-for package in calendar; do
-    DEB1="$TMP/run-1/${package}_${VERSION}_${ARCH}.deb"
-    DEB2="$TMP/run-2/${package}_${VERSION}_${ARCH}.deb"
+DEB1="$TMP/run-1/calendar_${VERSION}_${ARCH}.deb"
+DEB2="$TMP/run-2/calendar_${VERSION}_${ARCH}.deb"
 
-    if ! cmp -s "$DEB1" "$DEB2"; then
-        echo "Reproducibility check failed: $package binary packages differ" >&2
-        sha256sum "$DEB1" "$DEB2" >&2
-        preserve_failure "$DEB1" "$DEB2"
-        exit 1
-    fi
+if ! cmp -s "$DEB1" "$DEB2"; then
+    echo "Reproducibility check failed: Calendar binary packages differ" >&2
+    sha256sum "$DEB1" "$DEB2" >&2
+    preserve_failure "$DEB1" "$DEB2"
+    exit 1
+fi
 
-    printf 'Reproducible package: '
-    sha256sum "$DEB1"
-done
+printf 'Reproducible package: '
+sha256sum "$DEB1"
