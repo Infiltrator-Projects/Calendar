@@ -151,6 +151,17 @@ def main() -> None:
         f"missing={sorted(declared_adapter_headers - actual_adapter_headers)}"
     )
 
+    # Migrated Persian chronology must live in its installed resource only.
+    # Keeping another compiled arithmetic copy in Calendar is not a fallback:
+    # it is a second owner that can silently drift from the resource provider.
+    assert not (ROOT / "src/core/calendar-arithmetic-persian.c").exists()
+    assert (ROOT / "src/resources/calendars/arithmetic-persian.c").is_file()
+    assert "src/core/calendar-arithmetic-persian.c" not in core_sources
+    assert "$(PERSIAN_RESOURCE_ARITHMETIC)" in read("Makefile")
+    assert "CALENDAR_CALENDAR_MODE_PERSIAN" not in code(
+        "src/core/calendar-arithmetic.c"
+    )
+
     assert all(path.startswith("src/core/") for path in declared_core)
     assert all(path.startswith("src/adapters/") for path in adapter_sources)
     assert not (set(core_sources) & set(adapter_sources))
