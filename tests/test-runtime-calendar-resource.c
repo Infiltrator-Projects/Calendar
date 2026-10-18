@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 // Copyright (C) 1993-2026 Shannon Smith
 
+#include "calendar-arithmetic.h"
 #include "calendar-arithmetic-internal.h"
 #include "calendar-registry.h"
 #include "julian-day.h"
