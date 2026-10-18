@@ -156,11 +156,14 @@ CLOCK_RESOURCE_BUILD_DIR := $(BUILD_DIR)/clock-resources
 CLOCK_RESOURCE_SOURCE := src/resources/clocks/fixed-clock.c
 JULIAN_CLOCK_RESOURCE_SOURCE := src/resources/clocks/julian-clock.c
 CONVENTIONAL_CLOCK_RESOURCE_SOURCE := src/resources/clocks/conventional-clock.c
+CHINESE_KE_CLOCK_SOURCE := src/resources/clocks/chinese-ke-clock.c
+MEAN_SOLAR_CLOCK_SOURCE := src/resources/clocks/mean-solar-clock.c
 CLOCK_RESOURCE_MAP := src/resources/clocks/clock-resource.map
 FIXED_CLOCK_RESOURCE_NAMES := decimal internet unix hexadecimal binary
 JULIAN_CLOCK_RESOURCE_NAMES := julian modified-julian
 CONVENTIONAL_CLOCK_RESOURCE_NAMES := standard-12 standard-24
-CLOCK_RESOURCE_NAMES := $(FIXED_CLOCK_RESOURCE_NAMES) $(JULIAN_CLOCK_RESOURCE_NAMES) $(CONVENTIONAL_CLOCK_RESOURCE_NAMES)
+NEXT_CLOCK_RESOURCE_NAMES := chinese-ke mean-solar
+CLOCK_RESOURCE_NAMES := $(FIXED_CLOCK_RESOURCE_NAMES) $(JULIAN_CLOCK_RESOURCE_NAMES) $(CONVENTIONAL_CLOCK_RESOURCE_NAMES) $(NEXT_CLOCK_RESOURCE_NAMES)
 CLOCK_RESOURCES := $(addprefix $(CLOCK_RESOURCE_BUILD_DIR)/,$(addsuffix .so,$(CLOCK_RESOURCE_NAMES)))
 TEST_CLOCK_RESOURCE_CPPFLAG := \
 	-DCALENDAR_NATIVE_CLOCK_RESOURCE_DIRECTORY=\"$(abspath $(CLOCK_RESOURCE_BUILD_DIR))\"
@@ -459,6 +462,20 @@ $(addprefix $(CLOCK_RESOURCE_BUILD_DIR)/,$(addsuffix .so,$(CONVENTIONAL_CLOCK_RE
 		-DCONVENTIONAL_CLOCK_KIND=$(if $(filter standard-12,$*),12,24) \
 		-shared $(CONVENTIONAL_CLOCK_RESOURCE_SOURCE) \
 		-Wl,--version-script=$(CLOCK_RESOURCE_MAP) -o $@ $(LDFLAGS)
+
+$(CLOCK_RESOURCE_BUILD_DIR)/chinese-ke.so: $(CHINESE_KE_CLOCK_SOURCE) $(CLOCK_RESOURCE_MAP) $(INFILTRATR_COMMON_HEADERS)
+	@mkdir -p "$(CLOCK_RESOURCE_BUILD_DIR)"
+	$(CC) $(CPPFLAGS) $(CFLAGS) -fvisibility=hidden \
+		-frandom-seed=$(REPRO_SEED_PREFIX)-chinese-ke-clock-resource \
+		-shared $(CHINESE_KE_CLOCK_SOURCE) \
+		-Wl,--version-script=$(CLOCK_RESOURCE_MAP) -o $@ $(LDFLAGS)
+
+$(CLOCK_RESOURCE_BUILD_DIR)/mean-solar.so: $(MEAN_SOLAR_CLOCK_SOURCE) $(CLOCK_RESOURCE_MAP) $(INFILTRATR_COMMON_HEADERS)
+	@mkdir -p "$(CLOCK_RESOURCE_BUILD_DIR)"
+	$(CC) $(CPPFLAGS) $(CFLAGS) -fvisibility=hidden \
+		-frandom-seed=$(REPRO_SEED_PREFIX)-mean-solar-clock-resource \
+		-shared $(MEAN_SOLAR_CLOCK_SOURCE) \
+		-Wl,--version-script=$(CLOCK_RESOURCE_MAP) -o $@ $(LDFLAGS) $(MATH_LIBS)
 
 $(BUILD_DIR)/$(LIB_REALNAME): $(OBJECTS) $(INFILTRATR_COMMON_ARCHIVE) \
 		src/abi/calendar.map

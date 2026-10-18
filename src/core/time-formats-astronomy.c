@@ -44,20 +44,6 @@ delay_solar_provider(gint64 unix_microseconds,
         show_seconds);
 }
 
-guint
-delay_mean_solar_provider(gint64 unix_microseconds,
-                          gint utc_offset_seconds,
-                          gboolean show_seconds,
-                          gdouble latitude G_GNUC_UNUSED,
-                          gdouble longitude)
-{
-    (void)utc_offset_seconds;
-    return delay_for_clock_seconds(
-        calendar_mean_solar_seconds(unix_microseconds, longitude),
-        1.0L,
-        show_seconds);
-}
-
 typedef struct
 {
     gboolean daylight;

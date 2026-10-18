@@ -3,8 +3,8 @@
 
 /*
  * Native clock-provider registry, shared timing primitives and public dispatch.
- * Common owns stable identifiers and capability metadata. Nine executable
- * clock resources (seven alternative clocks, two explicit conventional
+ * Common owns stable identifiers and capability metadata. Eleven executable
+ * clock resources (nine alternative clocks, two explicit conventional
  * modes) own their notation and next-visible-tick scheduling. The 21-mode
  * alternative catalogue remains stable; OS-following standard mode retains
  * Cinnamon's locale fallback.
@@ -128,7 +128,7 @@ static const TimeProvider time_providers[] = {
     TIME_PROVIDER(SIDEREAL, sidereal, "sidereal"),
     TIME_PROVIDER(SOLAR, solar, "solar"),
     NATIVE_TIME_PROVIDER(JULIAN, "julian"),
-    TIME_PROVIDER(MEAN_SOLAR, mean_solar, "mean-solar"),
+    NATIVE_TIME_PROVIDER(MEAN_SOLAR, "mean-solar"),
     NATIVE_TIME_PROVIDER(MODIFIED_JULIAN, "modified-julian"),
     TIME_PROVIDER(CHINESE, chinese, "chinese-time"),
     TIME_PROVIDER(ROMAN_TEMPORAL, roman_temporal, "roman-temporal"),
@@ -136,7 +136,7 @@ static const TimeProvider time_providers[] = {
     TIME_PROVIDER(ITALIAN_HOURS, italian_hours, "italian-hours"),
     TIME_PROVIDER(BABYLONIAN_HOURS, babylonian_hours, "babylonian-hours"),
     TIME_PROVIDER(INDIAN_GHATI, indian_ghati, "indian-ghati"),
-    TIME_PROVIDER(CHINESE_KE, chinese_ke, "chinese-ke"),
+    NATIVE_TIME_PROVIDER(CHINESE_KE, "chinese-ke"),
     TIME_PROVIDER(NUREMBERG_HOURS, nuremberg_hours, "nuremberg-hours"),
     TIME_PROVIDER(BABYLONIAN_ANCIENT, babylonian_ancient, "babylonian-ancient"),
     TIME_PROVIDER(NUREMBERG_SOLAR, nuremberg_solar, "nuremberg-solar"),
@@ -148,7 +148,7 @@ static const TimeProvider time_providers[] = {
 G_STATIC_ASSERT(G_N_ELEMENTS(time_providers) == CALENDAR_TIME_MODE_STANDARD_24 + 1);
 
 /*
- * These nine resource-backed clocks have no Calendar-owned implementation
+ * These eleven resource-backed clocks have no Calendar-owned implementation
  * or fallback at runtime. OS-following standard uses Cinnamon unchanged.
  * Common validates and calls the independent system resources.
  * A test build may override only the scan directory, never the clock ABI.
@@ -174,6 +174,8 @@ is_native_clock(CalendarTimeMode mode)
            mode == CALENDAR_TIME_MODE_BINARY ||
            mode == CALENDAR_TIME_MODE_JULIAN ||
            mode == CALENDAR_TIME_MODE_MODIFIED_JULIAN ||
+           mode == CALENDAR_TIME_MODE_CHINESE_KE ||
+           mode == CALENDAR_TIME_MODE_MEAN_SOLAR ||
            mode == CALENDAR_TIME_MODE_STANDARD_12 ||
            mode == CALENDAR_TIME_MODE_STANDARD_24;
 }
@@ -189,6 +191,8 @@ initialise_clock_resources(gpointer unused)
         CALENDAR_TIME_MODE_BINARY,
         CALENDAR_TIME_MODE_JULIAN,
         CALENDAR_TIME_MODE_MODIFIED_JULIAN,
+        CALENDAR_TIME_MODE_CHINESE_KE,
+        CALENDAR_TIME_MODE_MEAN_SOLAR,
         CALENDAR_TIME_MODE_STANDARD_12,
         CALENDAR_TIME_MODE_STANDARD_24
     };
