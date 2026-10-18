@@ -322,6 +322,21 @@ def main() -> None:
     assert "JULIAN_CLOCK_RESOURCE_NAMES := julian modified-julian" in read("Makefile")
     assert "CONVENTIONAL_CLOCK_RESOURCE_NAMES := standard-12 standard-24" in read("Makefile")
     assert "NEXT_CLOCK_RESOURCE_NAMES := chinese-ke mean-solar" in read("Makefile")
+    # The separately-owned Debian package must qualify every migrated clock,
+    # not just the first five extracted modes. A missing .so is a broken
+    # resource package even when Calendar itself still builds successfully.
+    mandatory_clock_ids = {
+        "decimal", "internet", "unix", "hexadecimal", "binary",
+        "julian", "modified-julian", "standard-12", "standard-24",
+        "chinese-ke", "mean-solar",
+    }
+    installed_clock_checks = re.findall(
+        r"@for resource in ([^;]+); do \\\\?", rules
+    )
+    assert any(set(group.split()) == mandatory_clock_ids
+               for group in installed_clock_checks), (
+        "debian/rules does not verify all eleven mandatory clock resources"
+    )
     assert "for id in decimal internet unix hexadecimal binary julian modified-julian standard-12 standard-24 chinese-ke mean-solar" in read("tools/isolated-cinnamon-artifact-smoke.sh")
     assert "debian/calendar/System/Resources/Calendars/\"*.so" in rules
     assert "test ! -e" in rules
