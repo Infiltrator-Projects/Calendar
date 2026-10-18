@@ -17,6 +17,7 @@ static void test_extracted_clocks_require_installed_modules(void)
         CalendarTimeMode mode;
         const char *id;
     } extracted[] = {
+        { CALENDAR_TIME_MODE_SIDEREAL, "sidereal" },
         { CALENDAR_TIME_MODE_DECIMAL, "decimal" },
         { CALENDAR_TIME_MODE_INTERNET, "internet" },
         { CALENDAR_TIME_MODE_UNIX, "unix" },
@@ -46,8 +47,8 @@ static void test_extracted_clocks_require_installed_modules(void)
     }
 
     /* A missing migrated resource must not disable an unrelated clock. */
-    g_assert_cmpint(calendar_time_mode_from_string("sidereal"),
-                    ==, CALENDAR_TIME_MODE_SIDEREAL);
+    g_assert_cmpint(calendar_time_mode_from_string("solar"),
+                    ==, CALENDAR_TIME_MODE_SOLAR);
 }
 
 int main(int argc, char **argv)
