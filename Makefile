@@ -159,12 +159,13 @@ JULIAN_CLOCK_RESOURCE_SOURCE := src/resources/clocks/julian-clock.c
 CONVENTIONAL_CLOCK_RESOURCE_SOURCE := src/resources/clocks/conventional-clock.c
 CHINESE_KE_CLOCK_SOURCE := src/resources/clocks/chinese-ke-clock.c
 MEAN_SOLAR_CLOCK_SOURCE := src/resources/clocks/mean-solar-clock.c
+SIDEREAL_CLOCK_SOURCE := src/resources/clocks/sidereal-clock.c
 CLOCK_RESOURCE_MAP := src/resources/clocks/clock-resource.map
 FIXED_CLOCK_RESOURCE_NAMES := decimal internet unix hexadecimal binary
 JULIAN_CLOCK_RESOURCE_NAMES := julian modified-julian
 CONVENTIONAL_CLOCK_RESOURCE_NAMES := standard-12 standard-24
 NEXT_CLOCK_RESOURCE_NAMES := chinese-ke mean-solar
-CLOCK_RESOURCE_NAMES := $(FIXED_CLOCK_RESOURCE_NAMES) $(JULIAN_CLOCK_RESOURCE_NAMES) $(CONVENTIONAL_CLOCK_RESOURCE_NAMES) $(NEXT_CLOCK_RESOURCE_NAMES)
+CLOCK_RESOURCE_NAMES := $(FIXED_CLOCK_RESOURCE_NAMES) $(JULIAN_CLOCK_RESOURCE_NAMES) $(CONVENTIONAL_CLOCK_RESOURCE_NAMES) $(NEXT_CLOCK_RESOURCE_NAMES) sidereal
 CLOCK_RESOURCES := $(addprefix $(CLOCK_RESOURCE_BUILD_DIR)/,$(addsuffix .so,$(CLOCK_RESOURCE_NAMES)))
 TEST_CLOCK_RESOURCE_CPPFLAG := \
 	-DCALENDAR_NATIVE_CLOCK_RESOURCE_DIRECTORY=\"$(abspath $(CLOCK_RESOURCE_BUILD_DIR))\"
@@ -470,6 +471,13 @@ $(CLOCK_RESOURCE_BUILD_DIR)/chinese-ke.so: $(CHINESE_KE_CLOCK_SOURCE) $(CLOCK_RE
 		-frandom-seed=$(REPRO_SEED_PREFIX)-chinese-ke-clock-resource \
 		-shared $(CHINESE_KE_CLOCK_SOURCE) \
 		-Wl,--version-script=$(CLOCK_RESOURCE_MAP) -o $@ $(LDFLAGS)
+
+$(CLOCK_RESOURCE_BUILD_DIR)/sidereal.so: $(SIDEREAL_CLOCK_SOURCE) $(CLOCK_RESOURCE_MAP) $(INFILTRATR_COMMON_HEADERS)
+	@mkdir -p "$(CLOCK_RESOURCE_BUILD_DIR)"
+	$(CC) $(CPPFLAGS) $(CFLAGS) -fvisibility=hidden \
+		-frandom-seed=$(REPRO_SEED_PREFIX)-sidereal-clock-resource \
+		-shared $(SIDEREAL_CLOCK_SOURCE) \
+		-Wl,--version-script=$(CLOCK_RESOURCE_MAP) -o $@ $(LDFLAGS) $(MATH_LIBS)
 
 $(CLOCK_RESOURCE_BUILD_DIR)/mean-solar.so: $(MEAN_SOLAR_CLOCK_SOURCE) $(CLOCK_RESOURCE_MAP) $(INFILTRATR_COMMON_HEADERS)
 	@mkdir -p "$(CLOCK_RESOURCE_BUILD_DIR)"
