@@ -15,9 +15,6 @@ G_BEGIN_DECLS
 
 /* Astronomical Julian Date; its integer-day boundary is noon UTC. */
 long double calendar_julian_date(gint64 unix_microseconds);
-/* Seconds in [0, 86400); longitude is degrees east of Greenwich. */
-long double calendar_local_sidereal_seconds(gint64 unix_microseconds,
-                                                  gdouble longitude);
 /* Local mean solar seconds in [0, 86400); longitude is east-positive. */
 long double calendar_mean_solar_seconds(gint64 unix_microseconds,
                                               gdouble longitude);
