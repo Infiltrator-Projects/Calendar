@@ -97,7 +97,7 @@ static ClockWords words_for(const char *locale)
         return (ClockWords){ "Час ", "", ", ",
                              "первая половина", "вторая половина", "Час", false };
     return (ClockWords){ "", " hour", ", ",
-                         "first half", "second half", "hour", true };
+                         "first half", "second half", "Hour", true };
 }
 
 static bool render(const InfiltratrTemporalClockProvider *provider,
