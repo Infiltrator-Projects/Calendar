@@ -22,8 +22,8 @@ DIST_DIR := dist
 # authoritative when the preferred MB Corpo families are unavailable.
 INFILTRATR_COMMON_DIR := src/vendor/infiltratr-common
 INFILTRATR_COMMON_URL := https://github.com/Infiltrator-Projects/Libraries.git
-INFILTRATR_COMMON_COMMIT := 0eb5ff274dd71ec362f68a2ebaf4fad591887b8b
-INFILTRATR_COMMON_VERSION := 1.19.61
+INFILTRATR_COMMON_COMMIT := 98c877a12104671167197b76a5898b7418f5d06c
+INFILTRATR_COMMON_VERSION := 1.19.62
 LIB_BASENAME := calendar
 LIB_SONAME := lib$(LIB_BASENAME).so.0
 LIB_REALNAME := lib$(LIB_BASENAME).so.0.0.0
