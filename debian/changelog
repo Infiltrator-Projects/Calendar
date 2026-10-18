@@ -1,3 +1,15 @@
+calendar (1.0.114) unstable; urgency=medium
+
+  * Extract Chinese hundred-kè time and local mean solar time into two
+    independent executable clock resources with exact tick scheduling.
+  * Preserve language-specific kè notation and longitude-based mean solar
+    time without altering canonical event or filesystem timestamps.
+  * Remove duplicate Calendar scheduling for both migrated clocks.
+  * Extend native resource, epoch, locale, time-zone and release tests
+    and keep the existing 21 alternative-clock catalogue intact.
+
+ -- Shannon Smith <infiltratr@yandex.com>  Sun, 18 Oct 2026 14:20:00 +1100
+
 calendar (1.0.113) unstable; urgency=medium
 
   * Extract explicit 12-hour and 24-hour clock formatting and exact tick

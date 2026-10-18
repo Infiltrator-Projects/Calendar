@@ -321,7 +321,8 @@ def main() -> None:
     assert "FIXED_CLOCK_RESOURCE_NAMES := decimal internet unix hexadecimal binary" in read("Makefile")
     assert "JULIAN_CLOCK_RESOURCE_NAMES := julian modified-julian" in read("Makefile")
     assert "CONVENTIONAL_CLOCK_RESOURCE_NAMES := standard-12 standard-24" in read("Makefile")
-    assert "for id in decimal internet unix hexadecimal binary julian modified-julian standard-12 standard-24" in read("tools/isolated-cinnamon-artifact-smoke.sh")
+    assert "NEXT_CLOCK_RESOURCE_NAMES := chinese-ke mean-solar" in read("Makefile")
+    assert "for id in decimal internet unix hexadecimal binary julian modified-julian standard-12 standard-24 chinese-ke mean-solar" in read("tools/isolated-cinnamon-artifact-smoke.sh")
     assert "debian/calendar/System/Resources/Calendars/\"*.so" in rules
     assert "test ! -e" in rules
     assert "-DU_DISABLE_RENAMING=1" in makefile
