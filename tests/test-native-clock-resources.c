@@ -385,6 +385,43 @@ static void test_chinese_double_hour_resource(void)
     infiltratr_temporal_clock_module_free(module);
 }
 
+static void test_apparent_solar_resource(void)
+{
+    g_autofree gchar *path = g_build_filename(
+        TEST_CLOCK_RESOURCE_DIRECTORY, "solar.so", NULL);
+    InfiltratrTemporalClockModule *module =
+        infiltratr_temporal_clock_module_open(path);
+    const int64_t j2000 = INT64_C(946728000000000);
+    char initial[256] = {0};
+    char later[256] = {0};
+    uint32_t delay = 0U;
+
+    g_assert_nonnull(module);
+    /* Independent NOAA compact-model vector at J2000, Greenwich. */
+    g_assert_true(infiltratr_temporal_clock_format(
+        module, "en", j2000, 0, true, false,
+        0.0, 0.0, initial, sizeof(initial), NULL));
+    g_assert_cmpstr(initial, ==, "11:57:05 SOL");
+    g_assert_true(infiltratr_temporal_clock_format(
+        module, "en", j2000, 39600, true, false,
+        0.0, 0.0, later, sizeof(later), NULL));
+    g_assert_cmpstr(initial, ==, later);
+
+    /* The module, rather than Calendar polling, owns the next exact tick. */
+    g_assert_true(infiltratr_temporal_clock_next_tick(
+        module, j2000, 0, true, 0.0, 0.0, &delay));
+    g_assert_cmpuint(delay, >, 0U);
+    g_assert_cmpuint(delay, <=, 2000U);
+    g_assert_true(infiltratr_temporal_clock_format(
+        module, "en", j2000 + (int64_t)delay * INT64_C(1000), 0,
+        true, false, 0.0, 0.0, later, sizeof(later), NULL));
+    g_assert_cmpstr(initial, !=, later);
+    g_assert_false(infiltratr_temporal_clock_format(
+        module, "en", j2000, 0, true, false,
+        0.0, -180.0001, later, sizeof(later), NULL));
+    infiltratr_temporal_clock_module_free(module);
+}
+
 int main(int argc, char **argv)
 {
     g_test_init(&argc, &argv, NULL);
@@ -399,6 +436,8 @@ int main(int argc, char **argv)
     g_test_add_func("/clock-resource/sidereal", test_sidereal_resource);
     g_test_add_func("/clock-resource/chinese-double-hour",
                     test_chinese_double_hour_resource);
+    g_test_add_func("/clock-resource/apparent-solar",
+                    test_apparent_solar_resource);
     g_test_add_func("/clock-resource/known-epoch-vectors",
                     test_resource_known_epoch_vectors);
     return g_test_run();
