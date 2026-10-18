@@ -55,7 +55,7 @@ override_dh_auto_install:
 		test -f "$(CURDIR)/debian/infiltrator-calendar-resources/System/Resources/Calendars/$$resource.so"; \
 		test ! -e "$(CURDIR)/debian/calendar/System/Resources/Calendars/$$resource.so"; \
 	done
-	@for resource in decimal internet unix hexadecimal binary; do \
+	@for resource in decimal internet unix hexadecimal binary julian modified-julian standard-12 standard-24 chinese-ke mean-solar; do \
 		test -f "$(CURDIR)/debian/infiltrator-calendar-resources/System/Resources/Clocks/$$resource.so"; \
 		test ! -e "$(CURDIR)/debian/calendar/System/Resources/Clocks/$$resource.so"; \
 	done
