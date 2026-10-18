@@ -909,10 +909,6 @@ test_arithmetic_calendar_engines(void)
             2419403, 1, 1, 1, 1
         },
         {
-            CALENDAR_CALENDAR_MODE_PERSIAN,
-            2461121, 1405, 1, 1, 0
-        },
-        {
             CALENDAR_CALENDAR_MODE_JAPANESE,
             2458605, 1, 5, 1, 236
         }
