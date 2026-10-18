@@ -454,10 +454,9 @@ $(addprefix $(CLOCK_RESOURCE_BUILD_DIR)/,$(addsuffix .so,$(JULIAN_CLOCK_RESOURCE
 
 $(addprefix $(CLOCK_RESOURCE_BUILD_DIR)/,$(addsuffix .so,$(CONVENTIONAL_CLOCK_RESOURCE_NAMES))): $(CLOCK_RESOURCE_BUILD_DIR)/%.so: $(CONVENTIONAL_CLOCK_RESOURCE_SOURCE) $(CLOCK_RESOURCE_MAP) $(INFILTRATR_COMMON_HEADERS)
 	@mkdir -p "$(CLOCK_RESOURCE_BUILD_DIR)"
-	@case "$*" in standard-12) kind=12 ;; standard-24) kind=24 ;; *) exit 1 ;; esac; \
 	$(CC) $(CPPFLAGS) $(CFLAGS) -fvisibility=hidden \
 		-frandom-seed=$(REPRO_SEED_PREFIX)-$*-clock-resource \
-		-DCONVENTIONAL_CLOCK_KIND=$kind \
+		-DCONVENTIONAL_CLOCK_KIND=$(if $(filter standard-12,$*),12,24) \
 		-shared $(CONVENTIONAL_CLOCK_RESOURCE_SOURCE) \
 		-Wl,--version-script=$(CLOCK_RESOURCE_MAP) -o $@ $(LDFLAGS)
 
