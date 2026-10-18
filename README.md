@@ -101,7 +101,8 @@ The source tree is grouped by responsibility:
 
 ```text
 src/
-├── core/       Portable chronology, clock, astronomy and event logic
+├── core/       Canonical coordinates, resource adapters and event logic
+├── resources/  Independent calendar and clock implementations
 ├── adapters/   GObject, GVariant, main-loop and native integration
 ├── app/        Project identity, version API and About helper
 ├── cinnamon/   Cinnamon JavaScript runtime and settings
@@ -110,7 +111,7 @@ src/
 └── vendor/     Pinned Libraries submodule
 ```
 
-Calendar-specific chronology, continuation and astronomy policy remains local. Common owns only genuinely generic mechanisms. Cinnamon owns desktop integration. Fixed-rule calendar arithmetic is now Calendar-owned; ICU/CLDR remains authoritative only for the remaining lunisolar/astronomical providers and locale-formatting data Calendar still explicitly delegates.
+Calendar-specific chronology, continuation and astronomy algorithms live in the independently installed Calendar Resources pack. Common owns the resource ABIs, discovery, validation, loading and policy integration. Cinnamon owns desktop integration. Calendar, Files and System Settings consume the shared resources. ICU/CLDR remains authoritative for explicitly delegated lunisolar models and locale data inside the resource pack.
 
 The installed `libcalendar.so.0` ABI and established `Calendar` compatibility identifiers remain stable runtime contracts even though the visible product is **Calendar** and the Debian package is `calendar`.
 
@@ -118,7 +119,7 @@ Detailed representation, event ownership, failure, security and release contract
 
 ## Correctness and model scope
 
-Historical calendars and clocks are deterministic computational models rather than claims about every historical locality or observational practice. Islamic results are not local crescent observations; solar and seasonal clocks use defined astronomical approximations and may be unavailable at polar latitudes. Japanese modern-era boundaries are Calendar-owned for stable cross-ICU behaviour, while locale-sensitive era wording and other explicitly delegated presentation data continue to use ICU/CLDR.
+Historical calendars and clocks are deterministic computational models rather than claims about every historical locality or observational practice. Islamic results are not local crescent observations; solar and seasonal clocks use defined astronomical approximations and may be unavailable at polar latitudes. Japanese modern-era boundaries are resource-owned for stable cross-ICU behaviour, while locale-sensitive era wording and other explicitly delegated presentation data continue to use ICU/CLDR.
 
 The evidence hierarchy, exact model authorities, continuation rules, astronomical references and admission requirements for new calendars/clocks are maintained in [MODELS.md](docs/MODELS.md).
 

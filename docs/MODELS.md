@@ -19,14 +19,14 @@ A familiar name, convenient formula, plausible output or another desktop applica
 
 ## Model classes
 
-Calendar currently combines several kinds of model:
+The temporal architecture combines several kinds of model:
 
-- Calendar-owned arithmetic calendars whose conversion/navigation rules are implemented locally;
-- ICU/CLDR-backed astronomical/lunisolar calendars and locale formatting still delegated where Calendar has not yet replaced the authoritative data/model;
-- deterministic native calendar algorithms owned by Calendar;
-- specialised clock rendering delegated to Libraries's canonical clock-mode formatter;
-- Calendar-owned exact next-boundary scheduling for partitioning and astronomical clocks so the panel updates without polling;
-- event semantics that normalise CalendarServer data into Calendar-owned interval contracts.
+- native calendar modules that own conversion, navigation and date presentation;
+- resource-owned ICU/CLDR bridges for the delegated lunisolar models and locale data;
+- clock modules that own both rendering and exact next-visible-boundary scheduling;
+- application-owned event semantics that normalise CalendarServer data into interval contracts.
+
+Common discovers, validates and loads these resources. Calendar, Files, System Settings and the desktop consume the same executable resource ABIs. The independently installed resource pack owns the algorithms, ICU runtime dependency and translations; uninstalling a consumer does not remove it.
 
 These classes have different authorities and should not be described as though they share one source of truth.
 
@@ -34,46 +34,47 @@ These classes have different authorities and should not be described as though t
 
 | Area | Authority / model |
 | --- | --- |
-| Conventional panel time and Gregorian locale presentation | CinnamonDesktop.WallClock |
-| Gregorian, Hebrew, Persian, Indian, Coptic, Ethiopic, Buddhist, Japanese, Minguo, Islamic civil/tabular and Umm al-Qura arithmetic/navigation | Calendar deterministic native algorithms, with locale-sensitive formatting still delegated to ICU/CLDR |
+| OS-following panel time | CinnamonDesktop.WallClock |
+| Explicit 12/24-hour clocks and Gregorian date presentation | Independently installed clock/calendar resources |
+| Gregorian, Hebrew, Persian, Indian, Coptic, Ethiopic, Buddhist, Japanese, Minguo, Islamic civil/tabular and Umm al-Qura arithmetic/navigation | Calendar Resources deterministic native algorithms, with locale-sensitive formatting still delegated to ICU/CLDR |
 | Computational Islamic, Chinese and Dangi lunisolar conversion/navigation | ICU/CLDR calendar implementations |
-| Julian, ISO week, French Republican, Roman, Mayan, Badíʿ, International Fixed, World, Positivist, Revised Julian, Byzantine Anno Mundi, Egyptian civil (Nabonassar era) and traditional Armenian calendars | Calendar deterministic native algorithms |
-| French Republican decimal, Internet, Unix, hexadecimal, binary and Chinese hundred-kè clocks | Pinned Libraries canonical clock renderer; Calendar retains exact display-boundary scheduling |
-| Sidereal, solar, Roman temporal, Edo seasonal, Italian, Babylonian-hour, Indian ghaṭī and Nuremberg clocks | Pinned Libraries canonical clock renderer using configured coordinates; Calendar retains astronomical boundary scheduling |
+| Julian, ISO week, French Republican, Roman, Mayan, Badíʿ, International Fixed, World, Positivist, Revised Julian, Byzantine Anno Mundi, Egyptian civil (Nabonassar era) and traditional Armenian calendars | Calendar Resources deterministic native algorithms |
+| French Republican decimal, Internet, Unix, hexadecimal, binary and Chinese hundred-kè clocks | Independent clock resources owning both rendering and exact display-boundary scheduling |
+| Sidereal, solar, Roman temporal, Edo seasonal, Italian, Babylonian-hour, Indian ghaṭī and Nuremberg clocks | Independent clock resources owning rendering and astronomical boundary scheduling using configured coordinates where required |
 
 Sweden's 1700–1753 civil calendar is modelled explicitly, including 30 February 1712.
 
-Chinese and Dangi date/year labels use ICU/CLDR's localized native cyclic year names (`U`), such as `bing-wu`, `丙午` or `병오`. They do not add a related Gregorian year (`r`) or display a bare cycle-year counter (`y`). These traditional names repeat every sixty years; canonical civil coordinates and navigation retain the complete underlying date independently of the displayed name. The UI language controls wording without changing calendar day/month/year rules. Calendar's bounded date ABI supplies the same presentation to Common, Files and System Settings.
+Chinese and Dangi date/year labels use ICU/CLDR's localized native cyclic year names (`U`), such as `bing-wu`, `丙午` or `병오`. They do not add a related Gregorian year (`r`) or display a bare cycle-year counter (`y`). These traditional names repeat every sixty years; canonical civil coordinates and navigation retain the complete underlying date independently of the displayed name. The UI language controls wording without changing calendar day/month/year rules. Common's bounded executable calendar ABI supplies the same resource presentation to Calendar, Files and System Settings.
 
-Edo clock timestamps use Japanese branch names and traditional bell numerals, with surrounding wording in the UI language. Branch names distinguish the repeated day/night bell counts; English animal explanations belong outside timestamps. The two documented solar-boundary models remain separate. Conventional 12-hour clock markers follow the requested locale, including locale-specific ordering, through Common.
+Edo clock timestamps use Japanese branch names and traditional bell numerals, with surrounding wording in the UI language. Branch names distinguish the repeated day/night bell counts; English animal explanations belong outside timestamps. The two documented solar-boundary models remain separate. Conventional 12-hour clock markers follow the requested locale, including locale-specific ordering, through the selected clock resource.
 
 ## Range and continuation matrix
 
-The registry contains 30 calendar providers and 20 native time providers. The tables below state the maintained range/continuation contract without pretending that every historical name is a universal historical reconstruction.
+The registry contains 30 independent calendar resources and 23 independent explicit clock resources. The tables below state the maintained range/continuation contract without pretending that every historical name is a universal historical reconstruction.
 
 ### Calendar providers
 
 | Provider id | Range / continuation contract |
 | --- | --- |
-| `gregorian` | Calendar-owned proleptic Gregorian arithmetic across the representable civil-date domain; locale-sensitive formatting remains ICU/CLDR-backed. |
+| `gregorian` | Resource-owned proleptic Gregorian arithmetic across the representable civil-date domain; locale-sensitive formatting remains ICU/CLDR-backed. |
 | `julian` | Proleptic Julian arithmetic across Calendar's representable civil-date domain. |
 | `iso-week` | ISO week arithmetic derived from the proleptic Gregorian civil-date domain. |
-| `hebrew` | Calendar-owned deterministic Hebrew arithmetic with the 19-year cycle and postponement rules; locale-sensitive formatting remains ICU/CLDR-backed. |
+| `hebrew` | Resource-owned deterministic Hebrew arithmetic with the 19-year cycle and postponement rules; locale-sensitive formatting remains ICU/CLDR-backed. |
 | `islamic` | ICU computational Islamic model; not local crescent observation. Effective supported range is ICU-defined. |
-| `islamic-civil` | Calendar-owned civil/tabular Islamic arithmetic using the Friday epoch. |
-| `islamic-umalqura` | Calendar-owned Umm al-Qura month table for 1300–1600 AH; outside that maintained table Calendar reports unavailable rather than inventing a continuation. |
-| `persian` | Calendar-owned Solar Hijri arithmetic compatible with the maintained ICU rule/correction set; locale-sensitive formatting remains ICU/CLDR-backed. |
+| `islamic-civil` | Resource-owned civil/tabular Islamic arithmetic using the Friday epoch. |
+| `islamic-umalqura` | Resource-owned Umm al-Qura month table for 1300–1600 AH; outside that maintained table the resource reports unavailable rather than inventing a continuation. |
+| `persian` | Resource-owned Solar Hijri arithmetic compatible with the maintained ICU rule/correction set; locale-sensitive formatting remains ICU/CLDR-backed. |
 | `chinese` | ICU traditional Chinese calendar; effective supported range and cyclical fields are ICU-defined. |
-| `indian` | Calendar-owned Indian National/Saka arithmetic derived from the proleptic Gregorian year. |
-| `coptic` | Calendar-owned Coptic arithmetic with its 13-month leap cycle. |
-| `ethiopian` | Calendar-owned Ethiopic Amete Mihret arithmetic with its 13-month leap cycle. |
-| `buddhist` | Calendar-owned Gregorian-derived Buddhist year arithmetic; locale-sensitive formatting remains ICU/CLDR-backed. |
-| `japanese` | Calendar-owned modern Japanese era boundaries (Meiji through Reiwa) and Gregorian-derived arithmetic; locale-sensitive formatting remains ICU/CLDR-backed. |
-| `minguo` | Calendar-owned Republic of China/Minguo year arithmetic over the proleptic Gregorian calendar. |
-| `french-republican` | Historical epoch at JDN 2375840 (22 September 1792 = Year I), with Calendar's explicit Romme-style arithmetic continuation outside the historical republican era. |
+| `indian` | Resource-owned Indian National/Saka arithmetic derived from the proleptic Gregorian year. |
+| `coptic` | Resource-owned Coptic arithmetic with its 13-month leap cycle. |
+| `ethiopian` | Resource-owned Ethiopic Amete Mihret arithmetic with its 13-month leap cycle. |
+| `buddhist` | Resource-owned Gregorian-derived Buddhist year arithmetic; locale-sensitive formatting remains ICU/CLDR-backed. |
+| `japanese` | Resource-owned modern Japanese era boundaries (Meiji through Reiwa) and Gregorian-derived arithmetic; locale-sensitive formatting remains ICU/CLDR-backed. |
+| `minguo` | Resource-owned Republic of China/Minguo year arithmetic over the proleptic Gregorian calendar. |
+| `french-republican` | Historical epoch at JDN 2375840 (22 September 1792 = Year I), with the resource's explicit Romme-style arithmetic continuation outside the historical republican era. |
 | `roman` | Roman date naming over the proleptic Julian calendar; not a separate absolute chronology. |
 | `mayan` | Arithmetic Long Count over kin using the GMT 584283 correlation. GMT is a family of nearby proposed correlations, so absolute Gregorian correspondence is explicitly model-dependent; pre-epoch arithmetic remains reversible. |
-| `bahai` | Years 1–171 B.E. use the historical Western 21-March convention. From 172 B.E., years whose corresponding Gregorian year is 1000–3000 use the Tehran/equinox model; outside that astronomical range Calendar deliberately returns to the 21-March continuation. |
+| `bahai` | Years 1–171 B.E. use the historical Western 21-March convention. From 172 B.E., years whose corresponding Gregorian year is 1000–3000 use the Tehran/equinox model; outside that astronomical range the resource deliberately returns to the 21-March continuation. |
 | `international-fixed` | Deterministic reform-calendar mapping derived from the proleptic Gregorian civil year, including explicit intercalary days. |
 | `world` | Deterministic World Calendar mapping derived from the proleptic Gregorian civil year, including explicit intercalary days. |
 | `positivist` | Comte's Positivist calendar: Gregorian 1789 is Year 1 of the Great Crisis; 13×28 days plus one or two festival days, with Gregorian leap-year alignment. |
@@ -81,15 +82,17 @@ The registry contains 30 calendar providers and 20 native time providers. The ta
 | `byzantine` | Julian month/day with a 1 September year boundary and Constantinopolitan Anno Mundi era; continued arithmetically using astronomical year numbering internally. |
 | `egyptian-nabonassar` | Wandering 365-day Egyptian civil year anchored at 1 Thoth year 1 = JDN 1448638; arithmetic continuation in both directions. |
 | `dangi` | ICU Dangi calendar; effective supported range and cyclical data are ICU-defined. |
-| `ethiopic-amete-alem` | Calendar-owned Ethiopic Amete Alem arithmetic using the maintained 5500-year era offset. |
-| `islamic-tbla` | Calendar-owned tabular Islamic arithmetic using the astronomical Thursday epoch. |
+| `ethiopic-amete-alem` | Resource-owned Ethiopic Amete Alem arithmetic using the maintained 5500-year era offset. |
+| `islamic-tbla` | Resource-owned tabular Islamic arithmetic using the astronomical Thursday epoch. |
 | `armenian-traditional` | Traditional 365-day wandering year anchored to 11 July 552 Julian, with twelve 30-day months plus five epagomenal days and no leap day; arithmetic continuation in both directions. |
 | `swedish-historical` | Actual Swedish civil transitions are modelled for 1700–1753, including 30 February 1712 and the 1753 omission. Earlier dates use Julian labels; dates from March 1753 onward use Gregorian labels rather than inventing a proleptic Swedish system. |
 
-### Native time providers
+### Clock resources
 
 | Provider id | Range / continuation contract |
 | --- | --- |
+| `standard-12` | Explicit locale-sensitive 12-hour civil clock over the representable instant domain. |
+| `standard-24` | Explicit locale-sensitive 24-hour civil clock over the representable instant domain. |
 | `decimal` | Exact ten-hour partition of the local civil day for any representable input instant. |
 | `internet` | Exact 1000-beat partition using the defined Internet Time offset for any representable input instant. |
 | `unix` | Signed Unix epoch seconds over the representable native instant domain. |
@@ -102,11 +105,12 @@ The registry contains 30 calendar providers and 20 native time providers. The ta
 | `modified-julian` | Modified Julian Date derived directly from the representable Unix-microsecond instant. |
 | `chinese-time` | Exact traditional double-hour partition of local civil time; no geographic solar event required. |
 | `roman-temporal` | Unequal temporal hours between computed sunrise/sunset boundaries. Requires finite latitude/longitude and a real crossing; polar absence is unavailable. |
-| `japanese-temporal` | Edo seasonal unequal-hour model using computed solar boundaries. Requires finite latitude/longitude and a real crossing; polar absence is unavailable. |
+| `japanese-temporal` | Edo late seasonal unequal-hour model using the documented 7°21′40″ dawn/dusk solar depression. Requires finite latitude/longitude and a real crossing; polar absence is unavailable. |
+| `japanese-temporal-early` | Edo early seasonal unequal-hour model using the 0.833° sunrise/sunset boundary. Requires finite latitude/longitude and a real crossing; polar absence is unavailable. |
 | `italian-hours` | Equal elapsed hours from computed sunset. Requires finite latitude/longitude and a valid sunset; otherwise unavailable. |
 | `babylonian-hours` | Renaissance European gnomonic convention called “Babylonian hours”: 24 equal hours counted from computed sunrise. This is not ancient Mesopotamian timekeeping. |
 | `babylonian-ancient` | Ancient Mesopotamian astronomical time: 12 fixed bēru per sunset-to-sunset day, 30 UŠ per bēru (4 SI minutes per UŠ). Requires a valid computed sunset as the daily origin. |
-| `indian-ghati` | Sixty ghaṭī per mean day counted from computed sunrise; Common displays ghaṭī/pala units explicitly. Requires finite latitude/longitude and a valid sunrise. |
+| `indian-ghati` | Sixty ghaṭī per mean day counted from computed sunrise; the resource displays ghaṭī/pala units explicitly. Requires finite latitude/longitude and a valid sunrise. |
 | `chinese-ke` | Exact hundred-kè partition of the civil day; no geographic solar event required. The generic mode does not pretend one dynasty's finer subdivision applied universally. |
 | `nuremberg-solar` | Location-aware Nuremberg-style sunrise/sunset reconstruction retained separately from Nürnberg's documented civic Wendetag system. |
 | `nuremberg-hours` | Historical Nürnberg Great Clock reconstruction: equal hours with separate day/night counts and fixed civic Wendetage at Nürnberg; user coordinates are not used. |

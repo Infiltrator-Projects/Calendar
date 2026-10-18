@@ -2,7 +2,7 @@
 
 # Architecture
 
-Calendar separates platform-neutral chronology, clock scheduling, astronomy and event semantics from Cinnamon presentation, GObject/GVariant/main-loop adapters and reusable Common mechanisms. That separation is a correctness boundary: desktop code should present completed Calendar-owned state rather than becoming a second implementation of chronology or timekeeping rules.
+Calendar separates independently installed chronology, clock scheduling and astronomy resources from application event semantics, Cinnamon presentation, GObject/GVariant/main-loop adapters and reusable Common mechanisms. Desktop code presents completed resource results and application event state without implementing chronology or timekeeping rules.
 
 The versioned `calendar_format_date_v1` export is a narrow cross-application boundary over the native chronology engine. It accepts a calendar ID, a Gregorian civil date and `short`/`full` presentation, writes bounded UTF-8 into caller storage, and leaves output unchanged on failure. Common's POSIX adapter owns discovery and validation of that entry point. This route does not construct GObject calendar types or transfer chronology into Common.
 
@@ -109,7 +109,7 @@ Unsupported, malformed, unavailable or physically undefined states remain explic
 
 A failure in one optional model should not corrupt independent Calendar behaviour. Locale fallback, event transport loss, astronomical unavailability and unsupported calendar ranges are represented at the narrowest owning boundary so presentation can report them honestly.
 
-Calendar providers resolve by Calendar's stable IDs. Common catalogue metadata is looked up per provider; missing descriptive metadata may degrade that provider's display name to its stable ID but does not disable unrelated Calendar chronology. Release builds still pin an exact Common revision and validate catalogue agreement as release evidence rather than making runtime chronology depend on array-order or global catalogue completeness.
+Calendar providers resolve by Calendar's stable IDs. Common validates executable resource metadata per provider; a missing or invalid implementation is unavailable and does not disable unrelated installed resources. Release builds still pin an exact Common revision and validate catalogue agreement as release evidence rather than making runtime chronology depend on array-order or global catalogue completeness.
 
 Malformed external data is rejected or normalised once at the adapter/domain boundary. The portable core should not need to understand transport-specific error recovery.
 
@@ -121,7 +121,7 @@ UTF-8, locale and translation handling must not become hidden chronology policy.
 
 ## Common
 
-`src/vendor/infiltratr-common` is pinned to one exact Common release commit. Common is the authoritative home for reusable mechanisms; Calendar owns chronology, historical continuation and astronomy policy that is genuinely specific to this product.
+`src/vendor/infiltratr-common` is pinned to one exact Common release commit. Common is the authoritative home for reusable mechanisms; the independently installed Calendar Resources own chronology, historical continuation and astronomy implementations. The application owns no duplicate selectable calendar or clock algorithm.
 
 If Calendar contains a stronger implementation of a capability that is fundamentally generic, the correct direction is to improve Common so its generic contract preserves that correctness, performance and resilience. Once Common is at least as strong, Calendar should consume it and remove the duplicate implementation.
 
