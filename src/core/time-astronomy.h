@@ -12,7 +12,6 @@
 
 G_BEGIN_DECLS
 
-#define CALENDAR_SIDEREAL_RATE 1.002737909350795L
 
 /* Astronomical Julian Date; its integer-day boundary is noon UTC. */
 long double calendar_julian_date(gint64 unix_microseconds);
