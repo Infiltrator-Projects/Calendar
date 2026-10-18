@@ -1,12 +1,14 @@
 calendar (1.0.117) unstable; urgency=medium
 
   * Move shared implementation source, module builds and publication to Common.
-  * Consume Common 1.19.66 without bundled custom algorithms or arithmetic copies.
+  * Consume Common 1.19.66 without bundled custom algorithms or duplicated
+    arithmetic; qualify Common resource package 1.19.67 independently.
   * Keep normal host calendar/time operation without the optional resource pack.
-  * Publish only the application and its native builder; resources have independent versions.
+  * Publish only the application and its native builder; resources have
+    independent versions.
   * Transfer application translations out of the legacy resource package safely.
 
- -- Shannon Smith <infiltratr@yandex.com>  Sun, 18 Oct 2026 20:30:00 +1100
+ -- Shannon Smith <infiltratr@yandex.com>  Sun, 18 Oct 2026 10:27:11 +0000
 
 calendar (1.0.116) unstable; urgency=medium
 
