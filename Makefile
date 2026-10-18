@@ -654,13 +654,28 @@ $(BUILD_DIR)/test-runtime-calendar-resource: \
 		$(INFILTRATR_COMMON_ARCHIVE) -o $@ $(LDFLAGS) $(CORE_LIBS) \
 		$(ICU_BRIDGE_LIBS) $(MATH_LIBS)
 
+$(BUILD_DIR)/test-missing-clock-resources: \
+		tests/test-missing-clock-resources.c \
+		$(CORE_SOURCES) $(CORE_HEADERS) $(INFILTRATR_COMMON_ARCHIVE)
+	@mkdir -p "$(BUILD_DIR)/empty-clock-resources"
+	@test -z "$(find "$(BUILD_DIR)/empty-clock-resources" -maxdepth 1 -name '*.so' -print -quit)" || { \
+		echo "Missing-resource test directory unexpectedly contains a clock module" >&2; exit 1; }
+	$(CC) $(CPPFLAGS) \
+		-DCALENDAR_NATIVE_CLOCK_RESOURCE_DIRECTORY=\"$(abspath $(BUILD_DIR)/empty-clock-resources)\" \
+		$(CFLAGS) -frandom-seed=$(REPRO_SEED_PREFIX)-test-missing-clock-resources \
+		$(CORE_CFLAGS) tests/test-missing-clock-resources.c $(CORE_SOURCES) \
+		$(INFILTRATR_COMMON_ARCHIVE) -o $@ $(LDFLAGS) $(CORE_LIBS) \
+		$(ICU_BRIDGE_LIBS) $(MATH_LIBS)
+
 test: $(BUILD_DIR)/test-native-clock-resources $(BUILD_DIR)/test-time-formats $(BUILD_DIR)/test-properties \
+	$(BUILD_DIR)/test-missing-clock-resources \
 	$(BUILD_DIR)/test-portable-core \
 	$(BUILD_DIR)/test-exact-clock-boundaries \
 	$(BUILD_DIR)/test-runtime-calendar-resource \
 	common-test \
 	$(BUILD_DIR)/$(ABOUT_BINARY)
 	./$(BUILD_DIR)/test-native-clock-resources
+	./$(BUILD_DIR)/test-missing-clock-resources
 	./$(BUILD_DIR)/test-time-formats
 	./$(BUILD_DIR)/test-properties
 	./$(BUILD_DIR)/test-portable-core
