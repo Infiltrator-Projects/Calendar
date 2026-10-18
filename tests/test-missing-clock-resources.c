@@ -17,6 +17,7 @@ static void test_extracted_clocks_require_installed_modules(void)
         CalendarTimeMode mode;
         const char *id;
     } extracted[] = {
+        { CALENDAR_TIME_MODE_SOLAR, "solar" },
         { CALENDAR_TIME_MODE_CHINESE, "chinese-time" },
         { CALENDAR_TIME_MODE_SIDEREAL, "sidereal" },
         { CALENDAR_TIME_MODE_DECIMAL, "decimal" },
