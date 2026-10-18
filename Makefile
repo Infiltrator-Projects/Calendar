@@ -161,12 +161,14 @@ MEAN_SOLAR_CLOCK_SOURCE := src/resources/clocks/mean-solar-clock.c
 SIDEREAL_CLOCK_SOURCE := src/resources/clocks/sidereal-clock.c
 CHINESE_TIME_CLOCK_SOURCE := src/resources/clocks/chinese-time-clock.c
 SOLAR_CLOCK_SOURCE := src/resources/clocks/solar-clock.c
+SOLAR_ORIGIN_CLOCK_SOURCE := src/resources/clocks/solar-origin-clock.c
 CLOCK_RESOURCE_MAP := src/resources/clocks/clock-resource.map
 FIXED_CLOCK_RESOURCE_NAMES := decimal internet unix hexadecimal binary
 JULIAN_CLOCK_RESOURCE_NAMES := julian modified-julian
 CONVENTIONAL_CLOCK_RESOURCE_NAMES := standard-12 standard-24
 NEXT_CLOCK_RESOURCE_NAMES := chinese-ke mean-solar
-CLOCK_RESOURCE_NAMES := $(FIXED_CLOCK_RESOURCE_NAMES) $(JULIAN_CLOCK_RESOURCE_NAMES) $(CONVENTIONAL_CLOCK_RESOURCE_NAMES) $(NEXT_CLOCK_RESOURCE_NAMES) sidereal chinese-time solar
+ORIGIN_CLOCK_RESOURCE_NAMES := italian-hours babylonian-hours
+CLOCK_RESOURCE_NAMES := $(FIXED_CLOCK_RESOURCE_NAMES) $(JULIAN_CLOCK_RESOURCE_NAMES) $(CONVENTIONAL_CLOCK_RESOURCE_NAMES) $(NEXT_CLOCK_RESOURCE_NAMES) $(ORIGIN_CLOCK_RESOURCE_NAMES) sidereal chinese-time solar
 CLOCK_RESOURCES := $(addprefix $(CLOCK_RESOURCE_BUILD_DIR)/,$(addsuffix .so,$(CLOCK_RESOURCE_NAMES)))
 TEST_CLOCK_RESOURCE_CPPFLAG := \
 	-DCALENDAR_NATIVE_CLOCK_RESOURCE_DIRECTORY=\"$(abspath $(CLOCK_RESOURCE_BUILD_DIR))\"
@@ -472,6 +474,14 @@ $(CLOCK_RESOURCE_BUILD_DIR)/chinese-ke.so: $(CHINESE_KE_CLOCK_SOURCE) $(CLOCK_RE
 		-frandom-seed=$(REPRO_SEED_PREFIX)-chinese-ke-clock-resource \
 		-shared $(CHINESE_KE_CLOCK_SOURCE) \
 		-Wl,--version-script=$(CLOCK_RESOURCE_MAP) -o $@ $(LDFLAGS)
+
+$(addprefix $(CLOCK_RESOURCE_BUILD_DIR)/,$(addsuffix .so,$(ORIGIN_CLOCK_RESOURCE_NAMES))): $(CLOCK_RESOURCE_BUILD_DIR)/%.so: $(SOLAR_ORIGIN_CLOCK_SOURCE) $(CLOCK_RESOURCE_MAP) $(INFILTRATR_COMMON_HEADERS)
+	@mkdir -p "$(CLOCK_RESOURCE_BUILD_DIR)"
+	$(CC) $(CPPFLAGS) $(CFLAGS) -fvisibility=hidden \
+		-frandom-seed=$(REPRO_SEED_PREFIX)-$*-solar-origin-clock \
+		$(if $(filter babylonian-hours,$*),-DCLOCK_SUNRISE=1,) \
+		-shared $(SOLAR_ORIGIN_CLOCK_SOURCE) \
+		-Wl,--version-script=$(CLOCK_RESOURCE_MAP) -o $@ $(LDFLAGS) $(MATH_LIBS)
 
 $(CLOCK_RESOURCE_BUILD_DIR)/solar.so: $(SOLAR_CLOCK_SOURCE) $(CLOCK_RESOURCE_MAP) $(INFILTRATR_COMMON_HEADERS)
 	@mkdir -p "$(CLOCK_RESOURCE_BUILD_DIR)"
@@ -871,7 +881,7 @@ static-analysis:
 	clang-tidy \
 		-checks='-*,clang-analyzer-*,bugprone-*,-bugprone-easily-swappable-parameters,-bugprone-reserved-identifier,performance-*,portability-*' \
 		-warnings-as-errors='clang-analyzer-*,bugprone-*,performance-*,portability-*' \
-		$(SOURCES) $(CALENDAR_RESOURCE_SOURCES) $(SIDEREAL_CLOCK_SOURCE) $(CHINESE_TIME_CLOCK_SOURCE) $(SOLAR_CLOCK_SOURCE) -- $(CPPFLAGS) $(GLIB_CFLAGS) \
+		$(SOURCES) $(CALENDAR_RESOURCE_SOURCES) $(SIDEREAL_CLOCK_SOURCE) $(CHINESE_TIME_CLOCK_SOURCE) $(SOLAR_CLOCK_SOURCE) $(SOLAR_ORIGIN_CLOCK_SOURCE) -- $(CPPFLAGS) $(GLIB_CFLAGS) \
 		-std=c11 -Wall -Wextra -Wpedantic
 	# The About helper is a separately linked production executable. Analyse it
 	# with its GTK boundary flags instead of contaminating the library source set.
