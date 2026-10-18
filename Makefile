@@ -733,12 +733,19 @@ validate-abi: $(BUILD_DIR)/$(LIB_REALNAME)
 validate-runtime-deps: $(BUILD_DIR)/$(LIB_REALNAME) $(CALENDAR_RESOURCES) $(CLOCK_RESOURCES)
 	@command -v readelf >/dev/null || { \
 		echo "Missing validation dependency: readelf" >&2; exit 1; }
-	@for binary in "$(BUILD_DIR)/$(LIB_REALNAME)" $(CALENDAR_RESOURCES); do \
+	@for binary in "$(BUILD_DIR)/$(LIB_REALNAME)" $(CALENDAR_RESOURCES) $(CLOCK_RESOURCES); do \
 		needed=$$(readelf -d "$$binary" | \
 			sed -n 's/.*Shared library: \[\([^]]*\)\].*/\1/p'); \
 		if printf '%s\n' "$$needed" | grep -Eq '^libicu(i18n|uc|data)\.so'; then \
 			echo "Generic runtime must not embed an ICU-major DT_NEEDED entry in $$binary:" >&2; \
 			printf '%s\n' "$$needed" >&2; \
+			exit 1; \
+		fi; \
+	done
+
+	@for resource in $(CALENDAR_RESOURCES) $(CLOCK_RESOURCES); do \
+		if readelf -d "$resource" | grep -Eq 'Shared library: \[libcalendar\.so'; then \
+			echo "System resource unexpectedly depends on Calendar application: $resource" >&2; \
 			exit 1; \
 		fi; \
 	done
