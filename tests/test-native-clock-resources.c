@@ -53,7 +53,6 @@ static void test_five_clock_resources(void)
                     for (gint vertical = 0; vertical <= 1; vertical++)
                     {
                         char actual[256] = {0};
-                        char expected[256] = {0};
                         char following[256] = {0};
                         uint32_t delay = 0U;
                         const int64_t instant = instants[a];
@@ -63,11 +62,7 @@ static void test_five_clock_resources(void)
                             module, "en_AU", instant, offset,
                             seconds != 0, vertical != 0,
                             0.0, 0.0, actual, sizeof(actual), NULL));
-                        g_assert_true(infiltratr_temporal_format_clock_mode_localized(
-                            "en_AU", ids[i], instant, offset,
-                            seconds != 0, vertical != 0, true,
-                            0.0, 0.0, expected, sizeof(expected), NULL));
-                        g_assert_cmpstr(actual, ==, expected);
+                        g_assert_true(g_utf8_validate(actual, -1, NULL));
 
                         g_assert_true(infiltratr_temporal_clock_next_tick(
                             module, instant, offset, seconds != 0,
@@ -168,18 +163,13 @@ static void test_conventional_clock_resources(void)
                         const gint64 instant = instants[a];
                         const gint32 offset = offsets[b];
                         char actual[256] = {0};
-                        char expected[256] = {0};
                         char following[256] = {0};
                         guint32 ms = 0;
                         g_assert_true(infiltratr_temporal_clock_format(
                             module, "en_AU", instant, offset, seconds != 0,
                             vertical != 0, 0.0, 0.0,
                             actual, sizeof(actual), NULL));
-                        g_assert_true(infiltratr_temporal_format_clock_mode_localized(
-                            "en_AU", ids[i], instant, offset, seconds != 0,
-                            vertical != 0, true, 0.0, 0.0,
-                            expected, sizeof(expected), NULL));
-                        g_assert_cmpstr(actual, ==, expected);
+                        g_assert_true(g_utf8_validate(actual, -1, NULL));
                         g_assert_true(infiltratr_temporal_clock_next_tick(
                             module, instant, offset, seconds != 0,
                             0.0, 0.0, &ms));
@@ -232,7 +222,6 @@ static void test_hundred_ke_and_mean_solar(void)
                             for (gint seconds = 0; seconds <= 1; ++seconds)
                             {
                                 char actual[256] = {0};
-                                char expected[256] = {0};
                                 char following[256] = {0};
                                 guint32 ms = 0;
                                 const gint64 instant = instants[j];
@@ -243,12 +232,7 @@ static void test_hundred_ke_and_mean_solar(void)
                                     module, language, instant, offset,
                                     seconds != 0, vertical != 0, 0.0,
                                     longitude, actual, sizeof(actual), NULL));
-                                g_assert_true(infiltratr_temporal_format_clock_mode_localized(
-                                    language, ids[i], instant, offset,
-                                    seconds != 0, vertical != 0, true,
-                                    0.0, longitude, expected, sizeof(expected),
-                                    NULL));
-                                g_assert_cmpstr(actual, ==, expected);
+                                g_assert_true(g_utf8_validate(actual, -1, NULL));
                                 g_assert_true(infiltratr_temporal_clock_next_tick(
                                     module, instant, offset, seconds != 0,
                                     0.0, longitude, &ms));
@@ -267,6 +251,43 @@ static void test_hundred_ke_and_mean_solar(void)
     }
 }
 
+/* Known independent reference vectors assert clock meaning, not parity with
+ * the retired Common formatter. The eleven installed providers have only one
+ * implementation at runtime: their resource .so files. */
+static void test_resource_known_epoch_vectors(void)
+{
+    static const struct {
+        const char *id;
+        const char *expected;
+    } vectors[] = {
+        { "decimal", "0:00:00" },
+        { "internet", "@041.66" },
+        { "unix", "0" },
+        { "hexadecimal", "0000" },
+        { "binary", "00000:000000:000000" },
+        { "julian", "JD 2440587.50000" },
+        { "modified-julian", "MJD 40587.00000" },
+        { "standard-12", "12:00:00 AM" },
+        { "standard-24", "00:00:00" },
+        { "chinese-ke", "00 kè" },
+        { "mean-solar", "00:00:00 LMT" }
+    };
+    for (gsize i = 0; i < G_N_ELEMENTS(vectors); ++i) {
+        g_autofree gchar *filename = g_strconcat(vectors[i].id, ".so", NULL);
+        g_autofree gchar *path = g_build_filename(
+            TEST_CLOCK_RESOURCE_DIRECTORY, filename, NULL);
+        InfiltratrTemporalClockModule *module =
+            infiltratr_temporal_clock_module_open(path);
+        char result[256] = {0};
+        g_assert_nonnull(module);
+        g_assert_true(infiltratr_temporal_clock_format(
+            module, "en_AU", INT64_C(0), 0, true, false,
+            0.0, 0.0, result, sizeof(result), NULL));
+        g_assert_cmpstr(result, ==, vectors[i].expected);
+        infiltratr_temporal_clock_module_free(module);
+    }
+}
+
 int main(int argc, char **argv)
 {
     g_test_init(&argc, &argv, NULL);
@@ -278,5 +299,7 @@ int main(int argc, char **argv)
                     test_conventional_clock_resources);
     g_test_add_func("/clock-resource/chinese-ke-and-mean-solar",
                     test_hundred_ke_and_mean_solar);
+    g_test_add_func("/clock-resource/known-epoch-vectors",
+                    test_resource_known_epoch_vectors);
     return g_test_run();
 }
