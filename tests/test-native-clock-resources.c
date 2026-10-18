@@ -334,6 +334,57 @@ static void test_sidereal_resource(void)
     infiltratr_temporal_clock_module_free(module);
 }
 
+static void test_chinese_double_hour_resource(void)
+{
+    g_autofree gchar *path = g_build_filename(
+        TEST_CLOCK_RESOURCE_DIRECTORY, "chinese-time.so", NULL);
+    InfiltratrTemporalClockModule *module =
+        infiltratr_temporal_clock_module_open(path);
+    static const struct {
+        const char *locale;
+        int64_t instant;
+        bool seconds;
+        bool vertical;
+        const char *expected;
+    } vectors[] = {
+        { "en_AU.UTF-8", 0, false, false, "Zǐ hour" },
+        { "en", 0, false, true, "Zǐ\nHour" },
+        { "en", 0, true, false, "Zǐ, second half" },
+        { "en", -1, true, false, "Zǐ, first half" },
+        { "en", INT64_C(39600000000), false, false, "Wǔ hour" },
+        { "zh_CN.UTF-8", 0, false, false, "子时" },
+        { "zh-Hant-TW", 0, false, false, "子時" },
+        { "zh-Hant-TW", 0, true, false, "子正" },
+        { "fr_FR.UTF-8", 0, true, false, "Zǐ, seconde moitié" },
+        { "de_DE", 0, true, false, "Zǐ, zweite Hälfte" },
+        { "C", 0, true, false, "Zǐ, second half" }
+    };
+    uint32_t millis = 0U;
+    g_assert_nonnull(module);
+    for (gsize i = 0; i < G_N_ELEMENTS(vectors); ++i) {
+        char text[256] = {0};
+        g_assert_true(infiltratr_temporal_clock_format(
+            module, vectors[i].locale, vectors[i].instant, 0,
+            vectors[i].seconds, vectors[i].vertical,
+            0.0, 0.0, text, sizeof(text), NULL));
+        g_assert_cmpstr(text, ==, vectors[i].expected);
+    }
+
+    /* Midnight is the halfway point of Zi, not a new branch. */
+    g_assert_true(infiltratr_temporal_clock_next_tick(
+        module, INT64_C(0), 0, false, 0.0, 0.0, &millis));
+    g_assert_cmpuint(millis, ==, 3600000U);
+    g_assert_true(infiltratr_temporal_clock_next_tick(
+        module, INT64_C(23) * INT64_C(3600000000), 0,
+        false, 0.0, 0.0, &millis));
+    g_assert_cmpuint(millis, ==, 7200000U);
+    g_assert_true(infiltratr_temporal_clock_next_tick(
+        module, INT64_C(23) * INT64_C(3600000000), 0,
+        true, 0.0, 0.0, &millis));
+    g_assert_cmpuint(millis, ==, 3600000U);
+    infiltratr_temporal_clock_module_free(module);
+}
+
 int main(int argc, char **argv)
 {
     g_test_init(&argc, &argv, NULL);
@@ -346,6 +397,8 @@ int main(int argc, char **argv)
     g_test_add_func("/clock-resource/chinese-ke-and-mean-solar",
                     test_hundred_ke_and_mean_solar);
     g_test_add_func("/clock-resource/sidereal", test_sidereal_resource);
+    g_test_add_func("/clock-resource/chinese-double-hour",
+                    test_chinese_double_hour_resource);
     g_test_add_func("/clock-resource/known-epoch-vectors",
                     test_resource_known_epoch_vectors);
     return g_test_run();
