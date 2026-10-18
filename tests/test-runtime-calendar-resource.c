@@ -97,21 +97,25 @@ test_runtime_calendar_resource(void)
                     calendar_gregorian_to_jdn(2026, 9, 1));
 
     /*
-     * Persian and Coptic are compared with the pre-migration arithmetic
-     * engines. This guards resource extraction against semantic drift while
-     * leaving the resource ABI as the only provider-discovery path.
+     * Persian is resource-only: its verified Nowruz epoch is independent of
+     * the removed Calendar-core arithmetic copy. The old direct arithmetic
+     * entry point must reject it instead of manufacturing a fallback.
      */
+    g_assert_false(calendar_arithmetic_fields_from_jdn(
+        CALENDAR_CALENDAR_MODE_PERSIAN, jdn, &expected));
     assert_runtime_metadata(
         "persian", "Persian (Solar Hijri arithmetic)");
     provider = calendar_calendar_provider_from_id("persian");
-    calendar_arithmetic_persian_fields_from_jdn(jdn, &expected);
-    g_assert_true(provider->fields_from_jdn(provider, jdn, &fields));
-    g_assert_cmpint(fields.year, ==, expected.year);
-    g_assert_cmpint(fields.month, ==, expected.month);
-    g_assert_cmpint(fields.day, ==, expected.day);
-    g_assert_cmpint(fields.auxiliary, ==, expected.auxiliary);
-    g_assert_cmpint(fields.special, ==, expected.special);
+    g_assert_true(provider->fields_from_jdn(
+        provider, calendar_gregorian_to_jdn(2026, 3, 21), &fields));
+    g_assert_cmpint(fields.year, ==, 1405);
+    g_assert_cmpint(fields.month, ==, 1);
+    g_assert_cmpint(fields.day, ==, 1);
+    g_assert_cmpint(fields.auxiliary, ==, 0);
+    g_assert_false(fields.special);
 
+    /* Ethiopian calendars still share arithmetic with Coptic pending their
+     * own extraction; keep their invariant comparison until that migration. */
     assert_runtime_metadata(
         "coptic", "Coptic (Alexandrian 13-month calendar)");
     provider = calendar_calendar_provider_from_id("coptic");
