@@ -863,7 +863,7 @@ static-analysis:
 	clang-tidy \
 		-checks='-*,clang-analyzer-*,bugprone-*,-bugprone-easily-swappable-parameters,-bugprone-reserved-identifier,performance-*,portability-*' \
 		-warnings-as-errors='clang-analyzer-*,bugprone-*,performance-*,portability-*' \
-		$(SOURCES) $(CALENDAR_RESOURCE_SOURCES) -- $(CPPFLAGS) $(GLIB_CFLAGS) \
+		$(SOURCES) $(CALENDAR_RESOURCE_SOURCES) $(SIDEREAL_CLOCK_SOURCE) $(CHINESE_TIME_CLOCK_SOURCE) -- $(CPPFLAGS) $(GLIB_CFLAGS) \
 		-std=c11 -Wall -Wextra -Wpedantic
 	# The About helper is a separately linked production executable. Analyse it
 	# with its GTK boundary flags instead of contaminating the library source set.
