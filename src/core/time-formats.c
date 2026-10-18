@@ -22,7 +22,6 @@
 
 typedef guint (*TimeDelayFunc)(gint64, gint, gboolean, gdouble, gdouble);
 
-guint delay_babylonian_ancient_provider(gint64, gint, gboolean, gdouble, gdouble);
 guint delay_nuremberg_solar_provider(gint64, gint, gboolean, gdouble, gdouble);
 guint delay_japanese_temporal_early_provider(gint64, gint, gboolean, gdouble, gdouble);
 
