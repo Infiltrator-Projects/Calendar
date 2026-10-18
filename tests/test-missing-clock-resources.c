@@ -50,9 +50,9 @@ static void test_extracted_clocks_require_installed_modules(void)
             extracted[i].mode, 0, 0, TRUE, -36.0, 145.0), ==, 1000U);
     }
 
-    /* A missing migrated resource must not disable an unrelated clock. */
-    g_assert_cmpint(calendar_time_mode_from_string("solar"),
-                    ==, CALENDAR_TIME_MODE_SOLAR);
+    /* A missing migrated resource must not disable an unmigrated clock. */
+    g_assert_cmpint(calendar_time_mode_from_string("roman-temporal"),
+                    ==, CALENDAR_TIME_MODE_ROMAN_TEMPORAL);
 }
 
 int main(int argc, char **argv)
