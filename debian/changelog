@@ -1,3 +1,16 @@
+calendar (1.0.112) unstable; urgency=medium
+
+  * Extract Julian Date (JD) and Modified Julian Date (MJD) clock notation
+    and next-visible-tick scheduling into two independent executable modules.
+  * Use exact integer day/fraction arithmetic, including negative epochs,
+    without changing canonical filesystem or event timestamps.
+  * Expand the standalone resource ABI, Cinnamon and package qualification
+    to require seven clock modules; remove redundant Calendar JD/MJD schedulers.
+  * Pin Common 1.19.55, with validated installed resources preferred before
+    compiled legacy clock implementations.
+
+ -- Shannon Smith <infiltratr@yandex.com>  Sun, 18 Oct 2026 11:00:00 +1100
+
 calendar (1.0.111) unstable; urgency=medium
 
   * Move Decimal, Swatch Internet, Unix, Hexadecimal and Binary clock modes

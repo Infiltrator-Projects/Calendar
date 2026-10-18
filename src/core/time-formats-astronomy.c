@@ -45,20 +45,6 @@ delay_solar_provider(gint64 unix_microseconds,
 }
 
 guint
-delay_julian_provider(gint64 unix_microseconds,
-                      gint utc_offset_seconds,
-                      gboolean show_seconds,
-                      gdouble latitude G_GNUC_UNUSED,
-                      gdouble longitude)
-{
-    (void)utc_offset_seconds;
-    (void)longitude;
-    return delay_for_day_ticks(
-        positive_modulo(unix_microseconds, MICROSECONDS_PER_DAY),
-        show_seconds ? 100000 : 1000);
-}
-
-guint
 delay_mean_solar_provider(gint64 unix_microseconds,
                           gint utc_offset_seconds,
                           gboolean show_seconds,
@@ -70,20 +56,6 @@ delay_mean_solar_provider(gint64 unix_microseconds,
         calendar_mean_solar_seconds(unix_microseconds, longitude),
         1.0L,
         show_seconds);
-}
-
-guint
-delay_modified_julian_provider(gint64 unix_microseconds,
-                               gint utc_offset_seconds,
-                               gboolean show_seconds,
-                               gdouble latitude G_GNUC_UNUSED,
-                               gdouble longitude)
-{
-    (void)utc_offset_seconds;
-    (void)longitude;
-    return delay_for_day_ticks(
-        positive_modulo(unix_microseconds, MICROSECONDS_PER_DAY),
-        show_seconds ? 100000 : 1000);
 }
 
 typedef struct

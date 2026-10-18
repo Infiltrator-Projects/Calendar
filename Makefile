@@ -22,8 +22,8 @@ DIST_DIR := dist
 # authoritative when the preferred MB Corpo families are unavailable.
 INFILTRATR_COMMON_DIR := src/vendor/infiltratr-common
 INFILTRATR_COMMON_URL := https://github.com/Infiltrator-Projects/Libraries.git
-INFILTRATR_COMMON_COMMIT := 10e5fcc2b3b78375352778144a04f30ea2e9de8a
-INFILTRATR_COMMON_VERSION := 1.19.53
+INFILTRATR_COMMON_COMMIT := 914ca4bce8968340a974667b47e12bf82601c104
+INFILTRATR_COMMON_VERSION := 1.19.55
 LIB_BASENAME := calendar
 LIB_SONAME := lib$(LIB_BASENAME).so.0
 LIB_REALNAME := lib$(LIB_BASENAME).so.0.0.0
@@ -154,8 +154,11 @@ CALENDAR_RESOURCES := $(HEBREW_RESOURCE) $(GREGORIAN_RESOURCE) \
 	$(PERSIAN_RESOURCE) $(COPTIC_RESOURCE)
 CLOCK_RESOURCE_BUILD_DIR := $(BUILD_DIR)/clock-resources
 CLOCK_RESOURCE_SOURCE := src/resources/clocks/fixed-clock.c
+JULIAN_CLOCK_RESOURCE_SOURCE := src/resources/clocks/julian-clock.c
 CLOCK_RESOURCE_MAP := src/resources/clocks/clock-resource.map
-CLOCK_RESOURCE_NAMES := decimal internet unix hexadecimal binary
+FIXED_CLOCK_RESOURCE_NAMES := decimal internet unix hexadecimal binary
+JULIAN_CLOCK_RESOURCE_NAMES := julian modified-julian
+CLOCK_RESOURCE_NAMES := $(FIXED_CLOCK_RESOURCE_NAMES) $(JULIAN_CLOCK_RESOURCE_NAMES)
 CLOCK_RESOURCES := $(addprefix $(CLOCK_RESOURCE_BUILD_DIR)/,$(addsuffix .so,$(CLOCK_RESOURCE_NAMES)))
 TEST_CLOCK_RESOURCE_CPPFLAG := \
 	-DCALENDAR_NATIVE_CLOCK_RESOURCE_DIRECTORY=\"$(abspath $(CLOCK_RESOURCE_BUILD_DIR))\"
@@ -426,7 +429,7 @@ $(COPTIC_RESOURCE): $(COPTIC_RESOURCE_SOURCE) $(CALENDAR_RESOURCE_MAP) \
 		-Wl,--version-script=$(CALENDAR_RESOURCE_MAP) \
 		-o $@ $(LDFLAGS) $(CORE_LIBS) $(ICU_BRIDGE_LIBS) $(MATH_LIBS)
 
-$(CLOCK_RESOURCE_BUILD_DIR)/%.so: $(CLOCK_RESOURCE_SOURCE) $(CLOCK_RESOURCE_MAP) $(INFILTRATR_COMMON_HEADERS)
+$(addprefix $(CLOCK_RESOURCE_BUILD_DIR)/,$(addsuffix .so,$(FIXED_CLOCK_RESOURCE_NAMES))): $(CLOCK_RESOURCE_BUILD_DIR)/%.so: $(CLOCK_RESOURCE_SOURCE) $(CLOCK_RESOURCE_MAP) $(INFILTRATR_COMMON_HEADERS)
 	@mkdir -p "$(CLOCK_RESOURCE_BUILD_DIR)"
 	@case "$*" in decimal) kind=1; seconds=true ;; internet) kind=2; seconds=true ;; \
 		unix) kind=3; seconds=false ;; hexadecimal) kind=4; seconds=false ;; \
@@ -436,6 +439,15 @@ $(CLOCK_RESOURCE_BUILD_DIR)/%.so: $(CLOCK_RESOURCE_SOURCE) $(CLOCK_RESOURCE_MAP)
 		-DCLOCK_RESOURCE_KIND=$$kind -DCLOCK_RESOURCE_ID=\"$*\" \
 		-DCLOCK_RESOURCE_NAME=\"$*\" -DCLOCK_RESOURCE_SECONDS=$$seconds \
 		-shared $(CLOCK_RESOURCE_SOURCE) \
+		-Wl,--version-script=$(CLOCK_RESOURCE_MAP) -o $@ $(LDFLAGS)
+
+$(addprefix $(CLOCK_RESOURCE_BUILD_DIR)/,$(addsuffix .so,$(JULIAN_CLOCK_RESOURCE_NAMES))): $(CLOCK_RESOURCE_BUILD_DIR)/%.so: $(JULIAN_CLOCK_RESOURCE_SOURCE) $(CLOCK_RESOURCE_MAP) $(INFILTRATR_COMMON_HEADERS)
+	@mkdir -p "$(CLOCK_RESOURCE_BUILD_DIR)"
+	@case "$*" in julian) kind=1 ;; modified-julian) kind=2 ;; *) exit 1 ;; esac; \
+	$(CC) $(CPPFLAGS) $(CFLAGS) -fvisibility=hidden \
+		-frandom-seed=$(REPRO_SEED_PREFIX)-$*-clock-resource \
+		-DJULIAN_CLOCK_KIND=$$kind \
+		-shared $(JULIAN_CLOCK_RESOURCE_SOURCE) \
 		-Wl,--version-script=$(CLOCK_RESOURCE_MAP) -o $@ $(LDFLAGS)
 
 $(BUILD_DIR)/$(LIB_REALNAME): $(OBJECTS) $(INFILTRATR_COMMON_ARCHIVE) \

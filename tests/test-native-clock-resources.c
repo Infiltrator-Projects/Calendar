@@ -86,10 +86,64 @@ static void test_five_clock_resources(void)
     }
 }
 
+/*
+ * JD's 12:00 UTC turnover and MJD's 00:00 UTC turnover are different
+ * presentation boundaries. Assert exact notation and the next tick with no
+ * dependency on either the Calendar application or Common's old renderer.
+ */
+static void test_julian_clock_resources(void)
+{
+    static const struct {
+        const char *id;
+        const char *epoch;
+        const char *before_epoch;
+        const char *at_rollover;
+        int64_t rollover;
+    } modes[] = {
+        { "julian", "JD 2440587.50000", "JD 2440587.49999",
+          "JD 2440588.00000", INT64_C(43200000000) },
+        { "modified-julian", "MJD 40587.00000", "MJD 40586.99999",
+          "MJD 40588.00000", INT64_C(86400000000) }
+    };
+    for (gsize i = 0; i < G_N_ELEMENTS(modes); ++i)
+    {
+        g_autofree gchar *filename = g_strconcat(modes[i].id, ".so", NULL);
+        g_autofree gchar *path =
+            g_build_filename(TEST_CLOCK_RESOURCE_DIRECTORY, filename, NULL);
+        InfiltratrTemporalClockModule *module =
+            infiltratr_temporal_clock_module_open(path);
+        char buffer[256] = {0};
+        uint32_t delay = 0U;
+        g_assert_nonnull(module);
+        g_assert_true(infiltratr_temporal_clock_format(
+            module, "en_AU", 0, 36000, true, false, 0.0, 0.0,
+            buffer, sizeof(buffer), NULL));
+        g_assert_cmpstr(buffer, ==, modes[i].epoch);
+        g_assert_true(infiltratr_temporal_clock_format(
+            module, "en_AU", -1, 0, true, false, 0.0, 0.0,
+            buffer, sizeof(buffer), NULL));
+        g_assert_cmpstr(buffer, ==, modes[i].before_epoch);
+        g_assert_true(infiltratr_temporal_clock_format(
+            module, "en_AU", modes[i].rollover, -39600, true, false,
+            0.0, 0.0, buffer, sizeof(buffer), NULL));
+        g_assert_cmpstr(buffer, ==, modes[i].at_rollover);
+        g_assert_true(infiltratr_temporal_clock_format(
+            module, "en_AU", 0, 0, false, true, 0.0, 0.0,
+            buffer, sizeof(buffer), NULL));
+        g_assert_nonnull(strchr(buffer, '\n'));
+        g_assert_true(infiltratr_temporal_clock_next_tick(
+            module, 0, 0, true, 0.0, 0.0, &delay));
+        g_assert_cmpuint(delay, ==, 864U);
+        infiltratr_temporal_clock_module_free(module);
+    }
+}
+
 int main(int argc, char **argv)
 {
     g_test_init(&argc, &argv, NULL);
     g_test_add_func("/clock-resource/five-executable-modes",
                     test_five_clock_resources);
+    g_test_add_func("/clock-resource/julian-executable-modes",
+                    test_julian_clock_resources);
     return g_test_run();
 }

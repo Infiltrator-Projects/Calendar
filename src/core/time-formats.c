@@ -3,10 +3,10 @@
 
 /*
  * Native clock-provider registry, shared timing primitives and public dispatch.
- * Common owns stable identifiers and capability metadata. Five fixed-unit
- * clocks are independently loaded system modules implementing both rendering
- * and update scheduling; remaining modes use Common rendering and Calendar
- * boundary callbacks until their own resource migration.
+ * Common owns stable identifiers and capability metadata. Seven clock modes
+ * are independent executable system resources owning both their notation and
+ * next-visible-tick scheduling. Other modes temporarily use the legacy
+ * formatter until independently extracted.
  */
 
 #include "time-formats.h"
@@ -126,9 +126,9 @@ static const TimeProvider time_providers[] = {
     NATIVE_TIME_PROVIDER(BINARY, "binary"),
     TIME_PROVIDER(SIDEREAL, sidereal, "sidereal"),
     TIME_PROVIDER(SOLAR, solar, "solar"),
-    TIME_PROVIDER(JULIAN, julian, "julian"),
+    NATIVE_TIME_PROVIDER(JULIAN, "julian"),
     TIME_PROVIDER(MEAN_SOLAR, mean_solar, "mean-solar"),
-    TIME_PROVIDER(MODIFIED_JULIAN, modified_julian, "modified-julian"),
+    NATIVE_TIME_PROVIDER(MODIFIED_JULIAN, "modified-julian"),
     TIME_PROVIDER(CHINESE, chinese, "chinese-time"),
     TIME_PROVIDER(ROMAN_TEMPORAL, roman_temporal, "roman-temporal"),
     TIME_PROVIDER(JAPANESE_TEMPORAL, japanese_temporal, "japanese-temporal"),
@@ -145,7 +145,7 @@ static const TimeProvider time_providers[] = {
 G_STATIC_ASSERT(G_N_ELEMENTS(time_providers) == CALENDAR_TIME_MODE_JAPANESE_TEMPORAL_EARLY + 1);
 
 /*
- * The five migrated clocks have no Calendar-owned implementation or fallback
+ * These seven migrated clocks have no Calendar-owned implementation or fallback
  * at runtime. Common validates and calls the independent system resources.
  * A test build may override only the scan directory, never the clock ABI.
  */
@@ -167,7 +167,9 @@ is_native_clock(CalendarTimeMode mode)
            mode == CALENDAR_TIME_MODE_INTERNET ||
            mode == CALENDAR_TIME_MODE_UNIX ||
            mode == CALENDAR_TIME_MODE_HEXADECIMAL ||
-           mode == CALENDAR_TIME_MODE_BINARY;
+           mode == CALENDAR_TIME_MODE_BINARY ||
+           mode == CALENDAR_TIME_MODE_JULIAN ||
+           mode == CALENDAR_TIME_MODE_MODIFIED_JULIAN;
 }
 
 static gpointer
@@ -178,7 +180,9 @@ initialise_clock_resources(gpointer unused)
         CALENDAR_TIME_MODE_INTERNET,
         CALENDAR_TIME_MODE_UNIX,
         CALENDAR_TIME_MODE_HEXADECIMAL,
-        CALENDAR_TIME_MODE_BINARY
+        CALENDAR_TIME_MODE_BINARY,
+        CALENDAR_TIME_MODE_JULIAN,
+        CALENDAR_TIME_MODE_MODIFIED_JULIAN
     };
     gsize index;
 

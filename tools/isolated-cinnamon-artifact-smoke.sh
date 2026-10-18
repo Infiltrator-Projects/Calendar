@@ -115,7 +115,7 @@ for id in hebrew gregorian persian coptic; do
     }
     install -m 0644 "$source" "/System/Resources/Calendars/$id.so"
 done
-for id in decimal internet unix hexadecimal binary; do
+for id in decimal internet unix hexadecimal binary julian modified-julian; do
     source="$STAGE_ROOT/System/Resources/Clocks/$id.so"
     [[ -s "$source" ]] || {
         echo "Qualified Clock Resources package lacks $id.so." >&2
