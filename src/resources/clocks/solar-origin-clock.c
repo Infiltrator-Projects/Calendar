@@ -16,7 +16,15 @@
 #define US_SECOND INT64_C(1000000)
 #define US_DAY INT64_C(86400000000)
 #define PI 3.141592653589793238462643383279502884L
-#ifdef CLOCK_SUNRISE
+#if defined(CLOCK_ANCIENT_BABYLONIAN)
+#define CLOCK_ID "babylonian-ancient"
+#define CLOCK_NAME "Ancient Babylonian time (sunset-start day; 12 fixed bēru/day; 30 UŠ per bēru)"
+#define CLOCK_SUFFIX "BAB-A"
+#elif defined(CLOCK_GHATI)
+#define CLOCK_ID "indian-ghati"
+#define CLOCK_NAME "Indian ghaṭī time (60 per sunrise day; 1 ghaṭī = 24 min)"
+#define CLOCK_SUFFIX "GH"
+#elif defined(CLOCK_SUNRISE)
 #define CLOCK_ID "babylonian-hours"
 #define CLOCK_NAME "Renaissance European ‘Babylonian’ hours (24 equal hours counted from sunrise)"
 #define CLOCK_SUFFIX "BAB-R"
@@ -88,7 +96,7 @@ static bool origin_on_day(int64_t day, double lat, double lon, int64_t *event)
     if (cos_ha < -1.0 || cos_ha > 1.0) return false;
     long double ha_minutes = acosl((long double)cos_ha)*180.0L/PI*4.0L;
     long double noon_minutes = 720.0L-4.0L*lon-eq;
-#ifdef CLOCK_SUNRISE
+#if defined(CLOCK_SUNRISE) || defined(CLOCK_GHATI)
     long double event_minutes = noon_minutes-ha_minutes;
 #else
     long double event_minutes = noon_minutes+ha_minutes;
@@ -132,6 +140,19 @@ static bool render(const InfiltratrTemporalClockProvider *self,
         n=snprintf(text,sizeof(text),vertical?"N/A\n%s":"N/A %s",CLOCK_SUFFIX);
     } else {
         int64_t elapsed=floor_div(instant-origin,US_SECOND);
+#if defined(CLOCK_ANCIENT_BABYLONIAN)
+        const int beru=(int)(elapsed/7200)+1;
+        const int ush=(int)((elapsed%7200)/240);
+        (void)seconds;
+        n=snprintf(text,sizeof(text),vertical?"bēru %02d\nUŠ %02d":
+                   "bēru %02d · UŠ %02d",beru,ush);
+#elif defined(CLOCK_GHATI)
+        const int ghati=(int)(elapsed/1440);
+        const int pala=(int)((elapsed/24)%60);
+        (void)seconds;
+        n=snprintf(text,sizeof(text),vertical?"%d ghaṭī\n%d pala":
+                   "%d ghaṭī · %d pala",ghati,pala);
+#else
         int hour=(int)(elapsed/3600);
         int minute=(int)(elapsed/60%60);
         int second=(int)(elapsed%60);
@@ -140,6 +161,7 @@ static bool render(const InfiltratrTemporalClockProvider *self,
                           hour,sep,minute,sep,second,vertical?"\n":" ",CLOCK_SUFFIX)
                   : snprintf(text,sizeof(text),"%02d%s%02d%s%s",
                           hour,sep,minute,vertical?"\n":" ",CLOCK_SUFFIX);
+#endif
     }
     if (n<=0 || (size_t)n>=sizeof(text) || (size_t)n>=capacity) return false;
     memcpy(dst,text,(size_t)n+1);
@@ -166,7 +188,14 @@ static bool next_tick(const InfiltratrTemporalClockProvider *self,
     char previous[96];
     if (!render(NULL,NULL,instant,0,seconds,false,lat,lon,
                 previous,sizeof(previous),NULL)) return false;
-    uint32_t lo=0, hi=seconds?2000U:61000U;
+    uint32_t lo=0;
+#if defined(CLOCK_ANCIENT_BABYLONIAN)
+    uint32_t hi=241000U;
+#elif defined(CLOCK_GHATI)
+    uint32_t hi=25000U;
+#else
+    uint32_t hi=seconds?2000U:61000U;
+#endif
     if (!changed(instant,hi,seconds,lat,lon,previous)) {
         /* A polar interval without a crossing has stable N/A output. */
         if (strncmp(previous,"N/A ",4)==0) {
@@ -188,7 +217,13 @@ static const InfiltratrTemporalResourceMetadata metadata={
     sizeof(InfiltratrTemporalResourceMetadata),
     INFILTRATR_TEMPORAL_RESOURCE_METADATA_ABI,
     INFILTRATR_TEMPORAL_RESOURCE_CLOCK,
-    CLOCK_ID,CLOCK_NAME,true,true,true
+    CLOCK_ID,CLOCK_NAME,
+#if defined(CLOCK_ANCIENT_BABYLONIAN) || defined(CLOCK_GHATI)
+    false,
+#else
+    true,
+#endif
+    true,true
 };
 static const InfiltratrTemporalClockProvider provider={
     sizeof(InfiltratrTemporalClockProvider),
