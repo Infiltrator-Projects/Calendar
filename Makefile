@@ -658,8 +658,8 @@ $(BUILD_DIR)/test-missing-clock-resources: \
 		tests/test-missing-clock-resources.c \
 		$(CORE_SOURCES) $(CORE_HEADERS) $(INFILTRATR_COMMON_ARCHIVE)
 	@mkdir -p "$(BUILD_DIR)/empty-clock-resources"
-	@test -z "$(find "$(BUILD_DIR)/empty-clock-resources" -maxdepth 1 -name '*.so' -print -quit)" || { \
-		echo "Missing-resource test directory unexpectedly contains a clock module" >&2; exit 1; }
+	@if find "$(BUILD_DIR)/empty-clock-resources" -maxdepth 1 -name '*.so' -print -quit | grep -q .; then \
+		echo "Missing-resource fixture unexpectedly contains a clock module" >&2; exit 1; fi
 	$(CC) $(CPPFLAGS) \
 		-DCALENDAR_NATIVE_CLOCK_RESOURCE_DIRECTORY=\"$(abspath $(BUILD_DIR)/empty-clock-resources)\" \
 		$(CFLAGS) -frandom-seed=$(REPRO_SEED_PREFIX)-test-missing-clock-resources \
