@@ -422,6 +422,57 @@ static void test_apparent_solar_resource(void)
     infiltratr_temporal_clock_module_free(module);
 }
 
+
+/* Both equal-hour solar-origin resources must own their rendered boundaries. */
+static void test_solar_origin_hour_resources(void)
+{
+    static const char *const ids[] = { "italian-hours", "babylonian-hours" };
+    static const int64_t instants[] = {
+        INT64_C(-1000000000), INT64_C(0),
+        INT64_C(946728000000000), INT64_C(1792256400000000)
+    };
+    for (gsize m = 0; m < G_N_ELEMENTS(ids); ++m)
+    {
+        g_autofree gchar *name = g_strconcat(ids[m], ".so", NULL);
+        g_autofree gchar *path = g_build_filename(
+            TEST_CLOCK_RESOURCE_DIRECTORY, name, NULL);
+        InfiltratrTemporalClockModule *module =
+            infiltratr_temporal_clock_module_open(path);
+        g_assert_nonnull(module);
+        const InfiltratrTemporalResourceMetadata *info =
+            infiltratr_temporal_clock_module_metadata(module);
+        g_assert_nonnull(info);
+        g_assert_cmpstr(info->id, ==, ids[m]);
+        g_assert_true(info->requires_latitude);
+        g_assert_true(info->requires_longitude);
+        for (gsize k = 0; k < G_N_ELEMENTS(instants); ++k)
+        {
+            char before[256] = {0}, offset[256] = {0}, after[256] = {0};
+            uint32_t delay = 0U;
+            g_assert_true(infiltratr_temporal_clock_format(
+                module, "en", instants[k], 0, true, false,
+                -36.39, 145.36, before, sizeof(before), NULL));
+            g_assert_true(infiltratr_temporal_clock_format(
+                module, "en", instants[k], 39600, true, false,
+                -36.39, 145.36, offset, sizeof(offset), NULL));
+            g_assert_cmpstr(before, ==, offset);
+            g_assert_true(infiltratr_temporal_clock_next_tick(
+                module, instants[k], 0, true, -36.39, 145.36, &delay));
+            g_assert_cmpuint(delay, >, 0U);
+            g_assert_cmpuint(delay, <=, 2000U);
+            g_assert_true(infiltratr_temporal_clock_format(
+                module, "en", instants[k] + (int64_t)delay * INT64_C(1000),
+                0, true, false, -36.39, 145.36,
+                after, sizeof(after), NULL));
+            g_assert_cmpstr(before, !=, after);
+            g_assert_false(infiltratr_temporal_clock_format(
+                module, "en", instants[k], 0, true, false,
+                100.0, 145.36, after, sizeof(after), NULL));
+        }
+        infiltratr_temporal_clock_module_free(module);
+    }
+}
+
 int main(int argc, char **argv)
 {
     g_test_init(&argc, &argv, NULL);
@@ -438,6 +489,8 @@ int main(int argc, char **argv)
                     test_chinese_double_hour_resource);
     g_test_add_func("/clock-resource/apparent-solar",
                     test_apparent_solar_resource);
+    g_test_add_func("/clock-resource/sunrise-sunset-equal-hours",
+                    test_solar_origin_hour_resources);
     g_test_add_func("/clock-resource/known-epoch-vectors",
                     test_resource_known_epoch_vectors);
     return g_test_run();
