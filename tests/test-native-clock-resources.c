@@ -9,6 +9,7 @@
 #include <infiltratr/temporal_clock_resource.h>
 
 #include <glib.h>
+#include <math.h>
 #include <stdint.h>
 #include <string.h>
 
@@ -288,6 +289,51 @@ static void test_resource_known_epoch_vectors(void)
     }
 }
 
+static void test_sidereal_resource(void)
+{
+    g_autofree gchar *path = g_build_filename(
+        TEST_CLOCK_RESOURCE_DIRECTORY, "sidereal.so", NULL);
+    InfiltratrTemporalClockModule *module =
+        infiltratr_temporal_clock_module_open(path);
+    const InfiltratrTemporalResourceMetadata *info;
+    char text[256] = {0};
+    char following[256] = {0};
+    uint32_t delay = 0U;
+
+    g_assert_nonnull(module);
+    info = infiltratr_temporal_clock_module_metadata(module);
+    g_assert_nonnull(info);
+    g_assert_cmpstr(info->id, ==, "sidereal");
+    g_assert_true(info->requires_longitude);
+
+    /* J2000 (2000-01-01 12:00:00 UTC): 18.697374558 h GMST. */
+    g_assert_true(infiltratr_temporal_clock_format(
+        module, "en_AU", INT64_C(946728000000000), 0,
+        true, false, 0.0, 0.0, text, sizeof(text), NULL));
+    g_assert_cmpstr(text, ==, "18:41:50 LST");
+    g_assert_true(infiltratr_temporal_clock_next_tick(
+        module, INT64_C(946728000000000), 0, true,
+        0.0, 0.0, &delay));
+    g_assert_cmpuint(delay, >, 0U);
+    g_assert_cmpuint(delay, <=, 1000U);
+    g_assert_true(infiltratr_temporal_clock_format(
+        module, "en_AU", INT64_C(946728000000000) +
+        (int64_t)delay * INT64_C(1000), 0, true, false,
+        0.0, 0.0, following, sizeof(following), NULL));
+    g_assert_cmpstr(text, !=, following);
+
+    g_assert_true(infiltratr_temporal_clock_format(
+        module, "en_AU", INT64_C(946728000000000), 39600,
+        false, false, 0.0, 15.0, text, sizeof(text), NULL));
+    g_assert_cmpstr(text, ==, "19:41 LST");
+
+    /* Invalid coordinates fail instead of using Greenwich implicitly. */
+    g_assert_false(infiltratr_temporal_clock_format(
+        module, "en_AU", 0, 0, true, false, 0.0,
+        INFINITY, text, sizeof(text), NULL));
+    infiltratr_temporal_clock_module_free(module);
+}
+
 int main(int argc, char **argv)
 {
     g_test_init(&argc, &argv, NULL);
@@ -299,6 +345,7 @@ int main(int argc, char **argv)
                     test_conventional_clock_resources);
     g_test_add_func("/clock-resource/chinese-ke-and-mean-solar",
                     test_hundred_ke_and_mean_solar);
+    g_test_add_func("/clock-resource/sidereal", test_sidereal_resource);
     g_test_add_func("/clock-resource/known-epoch-vectors",
                     test_resource_known_epoch_vectors);
     return g_test_run();
