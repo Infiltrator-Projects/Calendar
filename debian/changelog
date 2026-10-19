@@ -6,7 +6,7 @@ calendar (1.0.120) unstable; urgency=medium
     implementations or scheduling fallbacks.
   * Add an architectural regression check for the resource-only timing boundary.
 
- -- Shannon Smith <infiltratr@yandex.com>  Tue, 20 Oct 2026 09:45:00 +1100
+ -- Shannon Smith <infiltratr@yandex.com>  Tue, 20 Oct 2026 10:05:00 +1100
 
 calendar (1.0.119) unstable; urgency=medium
 
