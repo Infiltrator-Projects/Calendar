@@ -8,12 +8,27 @@ imports.gi.versions.Calendar = "1.0";
 const Calendar = imports.gi.Calendar;
 const GLib = imports.gi.GLib;
 const expectedVersion = GLib.getenv("CALENDAR_EXPECTED_VERSION");
-const nativeCalendarResources = new Map([
-    ["hebrew", "/System/Resources/Calendars/hebrew.so"],
-    ["gregorian", "/System/Resources/Calendars/gregorian.so"],
-    ["persian", "/System/Resources/Calendars/persian.so"],
-    ["coptic", "/System/Resources/Calendars/coptic.so"],
-]);
+const nativeCalendarResources = ["hebrew", "gregorian", "persian", "coptic"];
+
+// Installed filenames are canonical names, not provider IDs.
+function installedModuleCount(directory) {
+    if (!GLib.file_test(directory, GLib.FileTest.IS_DIR))
+        return 0;
+    const dir = GLib.Dir.open(directory, 0);
+    let count = 0;
+    for (let name = dir.read_name(); name !== null; name = dir.read_name()) {
+        if (name.endsWith(".so"))
+            count++;
+    }
+    dir.close();
+    return count;
+}
+const installedCalendars = installedModuleCount("/System/Resources/Calendars");
+const installedClocks = installedModuleCount("/System/Resources/Clocks");
+requireCondition(installedCalendars === 0 || installedCalendars === 30,
+                 "incomplete installed calendar resource set");
+requireCondition(installedClocks === 0 || installedClocks === 23,
+                 "incomplete installed clock resource set");
 
 function requireCondition(condition, message) {
     if (!condition) {
@@ -50,7 +65,7 @@ const calendarIds = [
     "world", "positivist",
 ];
 for (const id of calendarIds) {
-    nativeCalendarResources.set(id, `/System/Resources/Calendars/${id}.so`);
+    nativeCalendarResources.push(id);
 }
 
 /*
@@ -58,8 +73,8 @@ for (const id of calendarIds) {
  * canonical module, while a build-tree smoke on a host without that file must
  * observe no compiled fallback for the same stable ID.
  */
-for (const [id, resourcePath] of nativeCalendarResources) {
-    const installed = id === "gregorian" || GLib.file_test(resourcePath, GLib.FileTest.EXISTS);
+for (const id of nativeCalendarResources) {
+    const installed = id === "gregorian" || installedCalendars === 30;
     const provider = Calendar.CalendarSystem.new(id);
     if (installed) {
         requireCondition(
@@ -93,7 +108,7 @@ const timeModeIds = [
 for (const id of timeModeIds) {
     requireCondition(
         (Calendar.time_mode_from_string(id) !== Calendar.TimeMode.INVALID) ===
-            GLib.file_test(`/System/Resources/Clocks/${id}.so`, GLib.FileTest.EXISTS),
+            (installedClocks === 23),
         `time provider unavailable: ${id}`
     );
 }
@@ -102,8 +117,7 @@ const historicalClock = Calendar.SystemClock.new();
 historicalClock.start_at_location(
     "roman-temporal", false, false, 0.0, 0.0
 );
-const romanInstalled = GLib.file_test(
-    "/System/Resources/Clocks/roman-temporal.so", GLib.FileTest.EXISTS);
+const romanInstalled = installedClocks === 23;
 requireCondition(historicalClock.is_running() === romanInstalled,
                  "historical clock availability disagrees with its resource");
 requireCondition(!romanInstalled || historicalClock.get_time().length > 0,

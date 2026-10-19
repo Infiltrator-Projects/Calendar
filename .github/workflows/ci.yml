@@ -318,20 +318,20 @@ jobs:
             "$RELEASE_RESOURCES_DEB" "./$RELEASE_DEB"
           test "$(dpkg-query -W -f='${Status}' calendar)" = "install ok installed"
           test "$(dpkg-query -W -f='${Status}' infiltrator-calendar-resources)" = "install ok installed"
-          for id in gregorian hebrew persian coptic iso-week julian revised-julian islamic-umalqura islamic-civil islamic-tbla islamic bahai buddhist ethiopian ethiopic-amete-alem chinese dangi indian japanese minguo roman byzantine egyptian-nabonassar armenian-traditional mayan french-republican swedish-historical international-fixed world positivist; do test -f "/System/Resources/Calendars/$id.so"; done
+          test "$(find /System/Resources/Calendars -maxdepth 1 -type f -name '*.so' | wc -l)" -eq 30
           /usr/libexec/calendar-about --print-metadata | grep -qx "version=$RELEASE_VERSION"
           /usr/libexec/calendar-about --print-metadata | grep -qx "build-profile=generic"
           CALENDAR_EXPECTED_VERSION="$RELEASE_VERSION" gjs tests/smoke-typelib.js >/dev/null
           apt-get purge -y calendar
           ! dpkg-query -W -f='${Status}' calendar 2>/dev/null | grep -qx "install ok installed"
           test "$(dpkg-query -W -f='${Status}' infiltrator-calendar-resources)" = "install ok installed"
-          test -f /System/Resources/Calendars/hebrew.so
+          test -f "/System/Resources/Calendars/Hebrew Calendar.so"
           test -f /usr/share/locale/en_AU/LC_MESSAGES/infiltrator-temporal-resources.mo
-          for id in decimal internet unix hexadecimal binary julian modified-julian standard-12 standard-24 chinese-ke mean-solar sidereal chinese-time solar italian-hours babylonian-hours babylonian-ancient indian-ghati roman-temporal japanese-temporal japanese-temporal-early nuremberg-hours nuremberg-solar; do test -f "/System/Resources/Clocks/$id.so"; done
+          test "$(find /System/Resources/Clocks -maxdepth 1 -type f -name '*.so' | wc -l)" -eq 23
           apt-get check
           apt-get purge -y infiltrator-calendar-resources
-          ! test -e /System/Resources/Calendars/hebrew.so
-          ! test -e /System/Resources/Clocks/decimal.so
+          ! test -e "/System/Resources/Calendars/Hebrew Calendar.so"
+          ! test -e "/System/Resources/Clocks/French Revolutionary Decimal Clock.so"
           apt-get check
       - name: Reinstall and remove the canonical alpha package
         shell: bash
