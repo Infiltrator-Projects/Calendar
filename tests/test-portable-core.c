@@ -15,6 +15,7 @@
 #include "julian-day.h"
 
 #include <infiltratr/temporal.h>
+#include <infiltratr/temporal_clock_resource.h>
 #include <math.h>
 
 
@@ -141,7 +142,7 @@ test_calendar_reference_vectors(void)
         const InfiltratrTemporalCalendarInfo *info =
             calendar_calendar_provider_info(hebrew);
         g_assert_nonnull(info);
-        g_assert_cmpstr(info->name, ==, "Hebrew (fixed arithmetic calendar)");
+        g_assert_cmpstr(info->name, ==, "Hebrew Calendar");
     }
 
     for (index = 0; index < G_N_ELEMENTS(vectors); index++)
@@ -911,7 +912,16 @@ test_time_catalogue(void)
         g_assert_nonnull(id);
         info = infiltratr_temporal_clock_mode_find(id);
         g_assert_nonnull(info);
-        g_assert_cmpstr(calendar_time_mode_get_name(mode), ==, info->name);
+        /* Stable IDs/capabilities belong to Common's policy catalogue,
+         * but the actual human name belongs to the installed module. */
+        InfiltratrTemporalClockModule *module =
+            infiltratr_temporal_clock_module_open_id(id);
+        g_assert_nonnull(module);
+        const InfiltratrTemporalResourceMetadata *metadata =
+            infiltratr_temporal_clock_module_metadata(module);
+        g_assert_nonnull(metadata);
+        g_assert_cmpstr(calendar_time_mode_get_name(mode), ==, metadata->name);
+        infiltratr_temporal_clock_module_free(module);
         g_assert_cmpint(calendar_time_mode_supports_seconds(mode), ==,
                         info->supports_seconds);
         g_assert_cmpint(calendar_time_mode_requires_latitude(mode), ==,

@@ -74,7 +74,7 @@ test_runtime_calendar_resource(void)
 
     /* Hebrew remains the reference production runtime chronology. */
     assert_runtime_metadata(
-        "hebrew", "Hebrew (fixed arithmetic calendar)");
+        "hebrew", "Hebrew Calendar");
     provider = calendar_calendar_provider_from_id("hebrew");
     jdn = calendar_gregorian_to_jdn(2026, 9, 12);
     g_assert_true(provider->fields_from_jdn(provider, jdn, &fields));
@@ -84,7 +84,7 @@ test_runtime_calendar_resource(void)
     g_assert_cmpint(provider->period_start(provider, jdn), ==, jdn);
 
     /* Gregorian now has exactly the same resource-only ownership model. */
-    assert_runtime_metadata("gregorian", "Gregorian");
+    assert_runtime_metadata("gregorian", "Gregorian Calendar");
     provider = calendar_calendar_provider_from_id("gregorian");
     g_assert_true(provider->fields_from_jdn(provider, jdn, &fields));
     g_assert_cmpint(fields.year, ==, 2026);
@@ -100,7 +100,7 @@ test_runtime_calendar_resource(void)
      * entry point must reject it instead of manufacturing a fallback.
      */
     assert_runtime_metadata(
-        "persian", "Persian (Solar Hijri arithmetic)");
+        "persian", "Persian Solar Hijri Calendar");
     provider = calendar_calendar_provider_from_id("persian");
     g_assert_true(provider->fields_from_jdn(
         provider, calendar_gregorian_to_jdn(2026, 3, 21), &fields));
@@ -112,7 +112,7 @@ test_runtime_calendar_resource(void)
 
     /* A fixed Coptic reference vector through the installed provider ABI. */
     assert_runtime_metadata(
-        "coptic", "Coptic (Alexandrian 13-month calendar)");
+        "coptic", "Coptic Calendar");
     provider = calendar_calendar_provider_from_id("coptic");
     g_assert_true(provider->fields_from_jdn(provider, jdn, &fields));
     g_assert_cmpint(fields.year, ==, 1743);
