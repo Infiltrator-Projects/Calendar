@@ -38,7 +38,7 @@ The source tree reflects those responsibilities:
 
 ```text
 src/
-├── core/       Portable chronology, clock, astronomy and event logic
+├── core/       Calendar grid/event logic and resource ABI adapters
 ├── adapters/   GObject, GVariant, main-loop and native integration
 ├── app/        Project identity, version API and About helper
 ├── cinnamon/   Cinnamon composition, presentation and narrow desktop adapters
@@ -57,9 +57,9 @@ Live applet and desktop settings terminate at the composition root; a dedicated 
 
 The small Cinnamon bootstrap that locates `runtimeSupport.js` must execute before shared JavaScript code can itself be loaded. Its unavoidable textual copies therefore have one canonical generator/checker in `tools/update-runtime-loader.py`; independent hand-maintained loader variants are not permitted.
 
-The private resource engine under `src/resources/calendars/engine` owns Japanese imperial-era, Coptic/Ethiopic, Indian National, Islamic/Umm al-Qura and historical/reform rules. Only resource modules link its archive. Tests may link it directly to verify numeric invariants; the production Calendar library never does. Resource modules expose only Common's neutral metadata and executable provider entry points and have no dependency on the Calendar application or its private dispatch interface. Shared canonical Gregorian/JDN coordinate helpers do not supply selectable chronology, formatting or fallback behaviour.
+The calendar algorithms, astronomical rules and their private engine live in `Libraries/resources/temporal`. Only Common's independently installed resource modules link that engine; the Calendar application links no resource algorithms. Common owns the provider ABIs and discovery, while each module owns its chronology or clock semantics. Shared Gregorian/JDN coordinate helpers supply no selectable chronology or clock fallback.
 
-The resource Debian package owns ICU runtime requirements and shared translations, so uninstalling either UI leaves its algorithms, wording and dependencies available. The native installer carries both matching Debian packages and installs them together.
+The independently released `infiltrator-calendar-resources` package owns ICU runtime requirements and resource translations. Calendar's native installer installs only Calendar; removing a consumer does not take ownership of the system temporal resources.
 
 Ownership is visible at API boundaries. Caller-owned values, returned heap data, snapshots, compatibility ABI objects and adapter-owned platform state should not be inferred from accidental implementation detail.
 

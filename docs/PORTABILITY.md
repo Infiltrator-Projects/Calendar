@@ -2,7 +2,7 @@
 
 # Portability
 
-Calendar is portable at its domain boundaries rather than by pretending that the current Cinnamon implementation is platform-neutral. Chronology, clock, astronomy and event semantics should remain testable without a running desktop. The core may use GLib foundational types, strings, containers and civil-time helpers; GObject/GVariant facades, Cinnamon presentation, desktop lifecycle and other platform integration stay behind explicit seams. ICU/CLDR is delegated only where its documented calendar/locale contract remains authoritative; fixed-rule arithmetic that Calendar can validate directly is owned locally.
+Calendar is portable at its domain boundaries rather than by pretending that the current Cinnamon implementation is platform-neutral. Chronology, clock, astronomy and event semantics should remain testable without a running desktop. The core may use GLib foundational types, strings, containers and civil-time helpers; GObject/GVariant facades, Cinnamon presentation, desktop lifecycle and other platform integration stay behind explicit seams. ICU/CLDR is delegated where its documented calendar/locale contract remains authoritative. Fixed-rule chronology and clock arithmetic belong to independently installed Common resource modules, not the Calendar application.
 
 ## Language and interface policy
 
@@ -58,7 +58,7 @@ Portability work must distinguish public/user-facing naming from compatibility i
 
 Calendar may depend on Cinnamon, GLib, pinned Libraries and the shrinking ICU/CLDR boundary where their documented contracts are the strongest engineering choice. A dependency must not silently become the owner of Calendar-specific policy.
 
-Generic mechanisms belong in Common when their contract is genuinely reusable and at least as strong as the best local implementation. Calendar-specific chronology, continuation rules and astronomical policy remain in Calendar.
+Generic mechanisms belong in Common when their contract is genuinely reusable and at least as strong as the best local implementation. Provider-specific chronology, continuation rules and astronomical policy remain in independently installed temporal resources; Calendar owns grid, event and desktop integration semantics.
 
 ## Review test
 

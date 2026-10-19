@@ -307,7 +307,11 @@ def main() -> None:
     assert "\nPackage: calendar\n" in control
     assert "\nPackage: infiltrator-calendar-resources\n" not in control
     assert "infiltrator-calendar-resources (= ${binary:Version})" not in control
-    assert "Suggests: infiltrator-calendar-resources (>= 1.19.67)" in control
+    resource_version = make_var(makefile, "INFILTRATR_TEMPORAL_RESOURCES_VERSION")
+    assert (
+        f"Suggests: infiltrator-calendar-resources (>= {resource_version})"
+        in control
+    )
     assert "cinnamon (>= 6.4)" in control
     assert not (ROOT / "src/resources").exists()
     assert "RESOURCE_ENGINE_ARCHIVE" not in makefile

@@ -6,7 +6,7 @@ that must be invented before the application can be considered finished.
 
 ## Completion baseline
 
-- preserve the 30-calendar and alternative-clock capability with explicit model provenance
+- preserve the 30-calendar and 23-clock resource capability with explicit model provenance
 - preserve the separation between portable chronology/event logic and Cinnamon presentation
 - preserve the installed ABI, settings identity, package identity and upgrade path
 - keep unavailable astronomical or platform states explicit rather than guessing values

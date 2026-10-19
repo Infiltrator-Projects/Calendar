@@ -50,7 +50,7 @@ Edo clock timestamps use Japanese branch names and traditional bell numerals, wi
 
 ## Range and continuation matrix
 
-The registry contains 30 independent calendar resources and 23 independent explicit clock resources. The tables below state the maintained range/continuation contract without pretending that every historical name is a universal historical reconstruction.
+The installed resource package contains 30 independent calendars and 23 independent explicit clocks. Calendar's own provider registry adapts only the validated resources Common reports as installed. The tables below state the maintained range/continuation contract without pretending that every historical name is a universal historical reconstruction.
 
 ### Calendar providers
 

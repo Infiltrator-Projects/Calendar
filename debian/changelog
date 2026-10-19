@@ -1,3 +1,15 @@
+calendar (1.0.118) unstable; urgency=medium
+
+  * Pin the independently qualified Common and system resources to 1.19.68.
+  * Discover test clock resources by validated provider ID and stage calendar
+    modules safely when canonical native filenames contain spaces.
+  * Obtain clock display names from installed resource metadata, removing
+    the compiled parallel display-name authority.
+  * Correct declared Debian build dependencies and release test version drift.
+  * Remove redundant diagnostic CI and update maintained ownership documents.
+
+ -- Shannon Smith <infiltratr@yandex.com>  Mon, 19 Oct 2026 15:25:00 +1100
+
 calendar (1.0.117) unstable; urgency=medium
 
   * Move shared implementation source, module builds and publication to Common.

@@ -122,6 +122,13 @@ test_mode_parser(void)
             CALENDAR_TIME_MODE_INVALID);
     }
 
+    /* Canonical names are metadata owned by the executable resource.
+     * Stable IDs survive their corresponding filesystem filename changes. */
+    g_assert_cmpstr(
+        calendar_time_mode_get_name(
+            calendar_time_mode_from_string("decimal")),
+        ==, "French Revolutionary Decimal Clock");
+
     g_assert_cmpint(calendar_time_mode_from_string("standard"),
                     ==,
                     CALENDAR_TIME_MODE_INVALID);

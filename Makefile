@@ -22,9 +22,9 @@ DIST_DIR := dist
 # authoritative when the preferred MB Corpo families are unavailable.
 INFILTRATR_COMMON_DIR := src/vendor/infiltratr-common
 INFILTRATR_COMMON_URL := https://github.com/Infiltrator-Projects/Libraries.git
-INFILTRATR_COMMON_COMMIT := e1ba8e17007e033028039d86363d16baac2e4319
-INFILTRATR_COMMON_VERSION := 1.19.66
-INFILTRATR_TEMPORAL_RESOURCES_VERSION := 1.19.67
+INFILTRATR_COMMON_COMMIT := 7f468a1c9e1f12c30693fcc4b2eafaaa2b48e54f
+INFILTRATR_COMMON_VERSION := 1.19.68
+INFILTRATR_TEMPORAL_RESOURCES_VERSION := 1.19.68
 LIB_BASENAME := calendar
 LIB_SONAME := lib$(LIB_BASENAME).so.0
 LIB_REALNAME := lib$(LIB_BASENAME).so.0.0.0
@@ -111,7 +111,6 @@ TEST_CLOCK_RESOURCE_CPPFLAG := -DCALENDAR_NATIVE_CLOCK_RESOURCE_DIRECTORY=\"$(CL
 TEST_CALENDAR_RESOURCE_CPPFLAG := -DCALENDAR_NATIVE_CALENDAR_RESOURCE_DIRECTORY=\"$(CALENDAR_RESOURCE_BUILD_DIR)\"
 RUNTIME_CALENDAR_FIXTURE_DIR := $(BUILD_DIR)/calendar-resource-fixture
 RUNTIME_CALENDAR_FIXTURE := $(RUNTIME_CALENDAR_FIXTURE_DIR)/fixture-calendar.so
-RUNTIME_CALENDAR_RESOURCES := $(addprefix $(RUNTIME_CALENDAR_FIXTURE_DIR)/,$(notdir $(wildcard $(CALENDAR_RESOURCE_BUILD_DIR)/*.so)))
 MULTIARCH ?= $(shell $(CC) -dumpmachine)
 LIBDIR ?= $(PREFIX)/lib/$(MULTIARCH)
 
@@ -471,17 +470,22 @@ $(RUNTIME_CALENDAR_FIXTURE): \
 		$(CORE_CFLAGS) -shared tests/calendar-resource-fixture.c \
 		-o $@ $(LDFLAGS) $(CORE_LIBS)
 
-$(RUNTIME_CALENDAR_FIXTURE_DIR)/%.so: $(CALENDAR_RESOURCE_BUILD_DIR)/%.so
-	@mkdir -p "$(RUNTIME_CALENDAR_FIXTURE_DIR)"
-	cp "$<" "$@"
+# Native resource filenames contain spaces. GNU Make wildcard/prerequisite
+# lists cannot represent them reliably; stage exact files using quoted paths.
+.PHONY: stage-runtime-calendar-resources
+stage-runtime-calendar-resources: $(RUNTIME_CALENDAR_FIXTURE)
+	@find "$(RUNTIME_CALENDAR_FIXTURE_DIR)" -maxdepth 1 -type f -name '*.so' ! -name 'fixture-calendar.so' -delete
+	@for module in "$(CALENDAR_RESOURCE_BUILD_DIR)"/*.so; do \
+		test -f "$module" || continue; \
+		cp "$module" "$(RUNTIME_CALENDAR_FIXTURE_DIR)/"; \
+	done
 
 $(BUILD_DIR)/test-runtime-calendar-resource: \
 		tests/test-runtime-calendar-resource.c \
 		$(RUNTIME_CALENDAR_FIXTURE) \
-		$(RUNTIME_CALENDAR_RESOURCES) \
 		$(CORE_SOURCES) \
 		$(CORE_HEADERS) \
-		$(INFILTRATR_COMMON_ARCHIVE)
+		$(INFILTRATR_COMMON_ARCHIVE) | stage-runtime-calendar-resources
 	@mkdir -p "$(BUILD_DIR)"
 	$(CC) $(CPPFLAGS) $(CFLAGS) \
 		-DCALENDAR_NATIVE_CALENDAR_RESOURCE_DIRECTORY=\"$(abspath $(RUNTIME_CALENDAR_FIXTURE_DIR))\" \

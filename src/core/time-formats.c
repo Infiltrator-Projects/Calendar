@@ -3,11 +3,10 @@
 
 /*
  * Native clock-provider registry, shared timing primitives and public dispatch.
- * Common owns stable identifiers and capability metadata. Twenty-three executable
- * clock resources (sixteen alternative clocks, two explicit conventional
- * modes) own their notation and next-visible-tick scheduling. The 21-mode
- * alternative catalogue remains stable; OS-following standard mode retains
- * Cinnamon's locale fallback.
+ * Common owns stable IDs, validation and loading. Twenty-three independent
+ * resource clocks (21 alternatives and two explicit conventional modes) own
+ * rendering and next-visible-tick scheduling. OS-following standard time
+ * remains Cinnamon's platform policy choice.
  */
 
 #include "time-formats.h"
@@ -16,6 +15,7 @@
 #include <infiltratr/core.h>
 #include <infiltratr/temporal.h>
 #include <infiltratr/temporal_clock_resource.h>
+#include <infiltratr/temporal_runtime.h>
 #include <infiltratr/timing.h>
 #include <math.h>
 #include <string.h>
@@ -30,8 +30,8 @@ typedef struct
     guint abi_version;
     CalendarTimeMode mode;
     /*
-     * Stable binding key into Common's authoritative temporal catalogue.
-     * Common renders the clock; Calendar owns only next-boundary scheduling.
+     * Stable binding key into Common's temporal resource contract. The loaded
+     * module owns both rendering and its next-visible-display boundary.
      */
     const gchar *common_id;
     TimeDelayFunc next_tick;
@@ -170,22 +170,60 @@ is_native_clock(CalendarTimeMode mode)
            mode <= CALENDAR_TIME_MODE_STANDARD_24;
 }
 
+#ifdef CALENDAR_NATIVE_CLOCK_RESOURCE_DIRECTORY_OVERRIDE
+static bool
+load_clock_test_resource(const InfiltratrTemporalResourceMetadata *metadata,
+                         const char *module_path,
+                         void *user_data)
+{
+    (void)user_data;
+    if (metadata == NULL || module_path == NULL)
+        return true;
+
+    /* File names are not provider IDs. The overridden test directory must
+     * exercise the same executable metadata/ABI validation as production,
+     * including modules compiled under canonical human-readable filenames. */
+    for (CalendarTimeMode mode = CALENDAR_TIME_MODE_DECIMAL;
+         mode <= CALENDAR_TIME_MODE_STANDARD_24; mode++)
+    {
+        if (clock_modules[mode] != NULL ||
+            !infiltratr_string_equal(time_providers[mode].common_id,
+                                     metadata->id))
+            continue;
+        InfiltratrTemporalClockModule *module =
+            infiltratr_temporal_clock_module_open(module_path);
+        if (module != NULL)
+        {
+            const InfiltratrTemporalResourceMetadata *actual =
+                infiltratr_temporal_clock_module_metadata(module);
+            if (actual != NULL &&
+                infiltratr_string_equal(actual->id, metadata->id))
+                clock_modules[mode] = module;
+            else
+                infiltratr_temporal_clock_module_free(module);
+        }
+        break;
+    }
+    return true;
+}
+#endif
+
 static gpointer
 initialise_clock_resources(gpointer unused)
 {
     (void)unused;
+#ifdef CALENDAR_NATIVE_CLOCK_RESOURCE_DIRECTORY_OVERRIDE
+    size_t visited = 0U;
+    (void)infiltratr_temporal_runtime_scan_directory(
+        CALENDAR_NATIVE_CLOCK_RESOURCE_DIRECTORY,
+        INFILTRATR_TEMPORAL_RESOURCE_CLOCK,
+        load_clock_test_resource, NULL, &visited);
+#else
     for (CalendarTimeMode mode = CALENDAR_TIME_MODE_DECIMAL;
          mode <= CALENDAR_TIME_MODE_STANDARD_24; mode++)
     {
         const gchar *id = time_providers[mode].common_id;
-#ifdef CALENDAR_NATIVE_CLOCK_RESOURCE_DIRECTORY_OVERRIDE
-        g_autofree gchar *filename = g_strconcat(id, ".so", NULL);
-        g_autofree gchar *path = g_build_filename(
-            CALENDAR_NATIVE_CLOCK_RESOURCE_DIRECTORY, filename, NULL);
-        clock_modules[mode] = infiltratr_temporal_clock_module_open(path);
-#else
         clock_modules[mode] = infiltratr_temporal_clock_module_open_id(id);
-#endif
         if (clock_modules[mode] != NULL)
         {
             const InfiltratrTemporalResourceMetadata *info =
@@ -197,6 +235,7 @@ initialise_clock_resources(gpointer unused)
             }
         }
     }
+#endif
     return &clock_modules_once;
 }
 
@@ -278,9 +317,12 @@ CalendarTimeMode calendar_time_mode_get_at(gsize index)
 
 const gchar *calendar_time_mode_get_name(CalendarTimeMode mode)
 {
-    const InfiltratrTemporalClockModeInfo *info =
-        common_mode_info_for_provider(time_provider_for_mode(mode));
-    return info != NULL ? info->name : NULL;
+    const InfiltratrTemporalClockModule *module = clock_resource_for_mode(mode);
+    const InfiltratrTemporalResourceMetadata *metadata =
+        module != NULL ? infiltratr_temporal_clock_module_metadata(module) : NULL;
+    /* The executable module owns this borrowed process-lifetime name, not
+     * the compiled catalogue of persisted mode identifiers. */
+    return metadata != NULL ? metadata->name : NULL;
 }
 
 gboolean calendar_time_mode_supports_seconds(CalendarTimeMode mode)
