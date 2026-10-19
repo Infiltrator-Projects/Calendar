@@ -361,6 +361,14 @@ def main() -> None:
     assert "apt-get purge -y infiltrator-calendar-resources" in package_install
     assert "dpkg-buildpackage" not in package_install
 
+    # The installed Cinnamon smoke must exercise the byte-for-byte packaged
+    # applet, not checkout JavaScript paired with a qualified native library.
+    # A mixed-source session can pass while the published .deb is unusable.
+    isolated = read("tools/isolated-cinnamon-artifact-smoke.sh")
+    assert 'EXACT_APPLET="$STAGE_ROOT/usr/share/cinnamon/applets/$UUID"' in isolated
+    assert 'cp -a "$EXACT_APPLET/." "$TEST_ROOT/data/cinnamon/applets/$UUID/"' in isolated
+    assert 'cp -a "$ROOT/src/cinnamon/."' not in isolated
+
     live_cinnamon = workflow_job(workflow, "live-cinnamon", "package-install")
     assert "runs-on: ubuntu-24.04" in live_cinnamon
     assert "image: debian:13" in live_cinnamon

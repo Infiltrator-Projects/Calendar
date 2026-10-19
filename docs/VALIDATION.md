@@ -9,6 +9,7 @@ Validation distinguishes implemented behaviour from behaviour that has actually 
 The repository currently uses:
 
 - .github/workflows/ci.yml
+- .github/workflows/pr.yml
 - .github/workflows/release.yml
 - .github/workflows/upstream-drift.yml
 

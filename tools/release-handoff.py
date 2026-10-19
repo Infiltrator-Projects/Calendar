@@ -36,7 +36,7 @@ def read(relative: str) -> str:
 def changelog_version(text: str) -> str:
     match = re.match(r"calendar \(([0-9]+\.[0-9]+\.[0-9]+)\) ", text)
     if not match:
-        fail("debian/changelog does not start with an calendar X.Y.Z stanza")
+        fail("debian/changelog does not start with a calendar X.Y.Z stanza")
     return match.group(1)
 
 
@@ -50,7 +50,7 @@ def current_version() -> str:
     if metadata_version != version or changelog != version:
         fail(
             "release version identities disagree: "
-            f"Makefile={version}, metadata={metadata_version}, changelog={changelog}"
+            f"VERSION={version}, metadata={metadata_version}, changelog={changelog}"
         )
     return version
 

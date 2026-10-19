@@ -1,3 +1,13 @@
+calendar (1.0.119) unstable; urgency=medium
+
+  * Qualify the Cinnamon session against the exact packaged applet rather
+    than checkout JavaScript, preserving the already-tested native payload.
+  * Guard that package-source boundary with a release-model regression.
+  * Correct temporal-policy persistence and validation authority documentation.
+  * Align release metadata diagnostics with the VERSION authority.
+
+ -- Shannon Smith <infiltratr@yandex.com>  Tue, 20 Oct 2026 09:45:00 +1100
+
 calendar (1.0.118) unstable; urgency=medium
 
   * Pin the independently qualified Common and system resources to 1.19.68.
