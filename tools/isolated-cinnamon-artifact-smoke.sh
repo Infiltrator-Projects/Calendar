@@ -146,16 +146,21 @@ LD_LIBRARY_PATH="$LIBRARY_DIR${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}" \
 CALENDAR_EXPECTED_VERSION="$EXPECTED_VERSION" \
     "$JS_RUNTIME" "$ROOT/tests/smoke-typelib.js" >/dev/null
 
+EXACT_APPLET="$STAGE_ROOT/usr/share/cinnamon/applets/$UUID"
+if [[ ! -s "$EXACT_APPLET/applet.js" || ! -s "$EXACT_APPLET/metadata.json" ||
+      ! -s "$EXACT_APPLET/icon.png" ]]; then
+    echo "Exact Calendar package is missing its Cinnamon applet payload." >&2
+    exit 1
+fi
+
 mkdir -p \
     "$TEST_ROOT/home/.config/autostart" \
     "$TEST_ROOT/config" \
     "$TEST_ROOT/cache" \
     "$TEST_ROOT/data/cinnamon/applets/$UUID"
-cp -a "$ROOT/src/cinnamon/." "$TEST_ROOT/data/cinnamon/applets/$UUID/"
-EXACT_ICON="$STAGE_ROOT/usr/share/cinnamon/applets/$UUID/icon.png"
-if [[ -f "$EXACT_ICON" ]]; then
-    cp "$EXACT_ICON" "$TEST_ROOT/data/cinnamon/applets/$UUID/icon.png"
-fi
+# Use the qualified .deb for the *whole* running application, not a mixture
+# of packaged native binaries and potentially different checkout JS/CSS.
+cp -a "$EXACT_APPLET/." "$TEST_ROOT/data/cinnamon/applets/$UUID/"
 
 # Let Xvfb atomically choose an unused display so concurrently scheduled hosted
 # jobs never contend for a hard-coded X display number.
