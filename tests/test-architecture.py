@@ -208,6 +208,20 @@ def main() -> None:
     assert '#include "temporal-policy-source.h"' in system_clock
     assert "temporal-policy-source.inc" not in system_clock
 
+    # There must be no second clock arithmetic or clock-face implementation
+    # in Calendar after the native resources migration. Both formatting and
+    # next-tick scheduling belong to the installed resource's checked ABI.
+    clock_dispatch = code("src/core/time-formats.c")
+    assert "infiltratr_temporal_clock_format(" in clock_dispatch
+    assert "infiltratr_temporal_clock_next_tick(" in clock_dispatch
+    assert not re.search(
+        r"\b(?:delay_[a-z_]+_provider|calendar_time_delay_for_[a-z_]+"
+        r"|calendar_time_fractional_day_tick)\s*\(",
+        clock_dispatch,
+    )
+    assert "TimeDelayFunc" not in clock_dispatch
+    assert not (ROOT / "src/core/time-formats-internal.h").exists()
+
     # The build must preserve a separately testable portable archive and the
     # architecture check itself as a required validation gate.
     makefile = read("Makefile")

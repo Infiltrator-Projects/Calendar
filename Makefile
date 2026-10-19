@@ -61,7 +61,6 @@ PUBLIC_HEADERS := \
 CORE_HEADERS := \
 	src/core/clock-engine.h \
 	src/core/time-formats.h \
-	src/core/time-formats-internal.h \
 	src/core/julian-day.h \
 	src/core/calendar-types.h \
 	src/core/calendar-core.h \

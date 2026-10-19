@@ -2,7 +2,7 @@
 // Copyright (C) 1993-2026 Shannon Smith
 
 /*
- * Native clock-provider registry, shared timing primitives and public dispatch.
+ * Native clock-provider registry and Common-backed public dispatch.
  * Common owns stable IDs, validation and loading. Twenty-three independent
  * resource clocks (21 alternatives and two explicit conventional modes) own
  * rendering and next-visible-tick scheduling. OS-following standard time
@@ -10,113 +10,24 @@
  */
 
 #include "time-formats.h"
-#include "time-formats-internal.h"
 
 #include <infiltratr/core.h>
 #include <infiltratr/temporal.h>
 #include <infiltratr/temporal_clock_resource.h>
 #include <infiltratr/temporal_runtime.h>
-#include <infiltratr/timing.h>
 #include <math.h>
 #include <string.h>
 
-typedef guint (*TimeDelayFunc)(gint64, gint, gboolean, gdouble, gdouble);
-
-guint delay_nuremberg_solar_provider(gint64, gint, gboolean, gdouble, gdouble);
-guint delay_japanese_temporal_early_provider(gint64, gint, gboolean, gdouble, gdouble);
-
+/* Persisted mode -> Common resource ID. The executable resource exclusively
+ * owns clock calculation, presentation and next-visible-tick scheduling. */
 typedef struct
 {
-    guint abi_version;
     CalendarTimeMode mode;
-    /*
-     * Stable binding key into Common's temporal resource contract. The loaded
-     * module owns both rendering and its next-visible-display boundary.
-     */
     const gchar *common_id;
-    TimeDelayFunc next_tick;
 } TimeProvider;
 
-enum { CALENDAR_TIME_PROVIDER_ABI = 1 };
-
-guint
-calendar_time_fractional_day_tick(gint64 microseconds_of_day, guint ticks_per_day)
-{
-    uint64_t tick = 0;
-    g_return_val_if_fail(microseconds_of_day >= 0, 0);
-    g_return_val_if_fail(ticks_per_day > 0, 0);
-    g_return_val_if_fail(infiltratr_cycle_partition_u64((uint64_t)microseconds_of_day,
-                                                        (uint64_t)MICROSECONDS_PER_DAY,
-                                                        (uint64_t)ticks_per_day,
-                                                        &tick, NULL), 0);
-    return (guint)tick;
-}
-
-
-static guint
-delay_seconds_to_milliseconds(long double seconds)
-{
-    uint64_t milliseconds = 0;
-    if (!infiltratr_seconds_to_milliseconds_ceil(seconds, &milliseconds))
-        return 1;
-    return milliseconds > G_MAXUINT ? G_MAXUINT : (guint)milliseconds;
-}
-
-guint
-calendar_time_delay_continuous_microseconds_to_milliseconds(long double microseconds)
-{
-    return delay_seconds_to_milliseconds(microseconds / (long double)G_USEC_PER_SEC);
-}
-
-static guint
-delay_exact_microseconds_to_milliseconds(uint64_t microseconds)
-{
-    uint64_t milliseconds = 0;
-    if (!infiltratr_microseconds_to_milliseconds_ceil(microseconds, &milliseconds))
-        return 1;
-    return milliseconds > G_MAXUINT ? G_MAXUINT : (guint)milliseconds;
-}
-
-guint
-calendar_time_delay_for_integer_period(gint64 position_microseconds, gint64 period_microseconds)
-{
-    uint64_t remaining = 0;
-    if (!infiltratr_i64_period_remaining(position_microseconds, period_microseconds, &remaining))
-        return 1;
-    return delay_exact_microseconds_to_milliseconds(remaining);
-}
-
-guint
-calendar_time_delay_for_day_ticks(gint64 microseconds_of_day, guint ticks_per_day)
-{
-    uint64_t remaining = 0;
-    if (microseconds_of_day < 0 || ticks_per_day == 0 ||
-        !infiltratr_cycle_partition_u64((uint64_t)microseconds_of_day,
-                                        (uint64_t)MICROSECONDS_PER_DAY,
-                                        (uint64_t)ticks_per_day, NULL, &remaining))
-        return 1;
-    return delay_exact_microseconds_to_milliseconds(remaining);
-}
-
-guint
-calendar_time_delay_for_clock_seconds(long double clock_seconds,
-                                           long double clock_rate,
-                                           gboolean show_seconds)
-{
-    const long double unit = show_seconds ? 1.0L : 60.0L;
-    long double remaining = 0.0L;
-    if (!isfinite(clock_rate) || clock_rate <= 0.0L ||
-        !infiltratr_period_remaining(clock_seconds, unit, &remaining))
-        return 1;
-    return delay_seconds_to_milliseconds(remaining / clock_rate);
-}
-
-#define TIME_PROVIDER(mode_, token_, id_) \
-    [CALENDAR_TIME_MODE_##mode_] = { CALENDAR_TIME_PROVIDER_ABI, \
-        CALENDAR_TIME_MODE_##mode_, id_, delay_##token_##_provider }
 #define NATIVE_TIME_PROVIDER(mode_, id_) \
-    [CALENDAR_TIME_MODE_##mode_] = { CALENDAR_TIME_PROVIDER_ABI, \
-        CALENDAR_TIME_MODE_##mode_, id_, NULL }
+    [CALENDAR_TIME_MODE_##mode_] = { CALENDAR_TIME_MODE_##mode_, id_ }
 
 static const TimeProvider time_providers[] = {
     NATIVE_TIME_PROVIDER(DECIMAL, "decimal"),
@@ -267,8 +178,7 @@ time_provider_for_mode(CalendarTimeMode mode)
         return NULL;
 
     provider = &time_providers[mode];
-    return provider->abi_version == CALENDAR_TIME_PROVIDER_ABI &&
-           common_mode_info_for_provider(provider) != NULL &&
+    return common_mode_info_for_provider(provider) != NULL &&
            (!is_native_clock(mode) || clock_resource_for_mode(mode) != NULL)
         ? provider : NULL;
 }
