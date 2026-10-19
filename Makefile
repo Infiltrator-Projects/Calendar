@@ -470,15 +470,15 @@ $(RUNTIME_CALENDAR_FIXTURE): \
 		$(CORE_CFLAGS) -shared tests/calendar-resource-fixture.c \
 		-o $@ $(LDFLAGS) $(CORE_LIBS)
 
-# Native resource filenames contain spaces. GNU Make wildcard/prerequisite
-# lists cannot represent them reliably; stage exact files using quoted paths.
+# Canonical native filenames contain spaces, so resource files cannot be
+# represented as an unquoted GNU Make wildcard/prerequisite list. Stage the
+# installed resource directory atomically as a qualified package unit.
 .PHONY: stage-runtime-calendar-resources
 stage-runtime-calendar-resources: $(RUNTIME_CALENDAR_FIXTURE)
 	@find "$(RUNTIME_CALENDAR_FIXTURE_DIR)" -maxdepth 1 -type f -name '*.so' ! -name 'fixture-calendar.so' -delete
-	@for module in "$(CALENDAR_RESOURCE_BUILD_DIR)"/*.so; do \
-		test -f "$module" || continue; \
-		cp "$module" "$(RUNTIME_CALENDAR_FIXTURE_DIR)/"; \
-	done
+	@cp -a "$(CALENDAR_RESOURCE_BUILD_DIR)/." "$(RUNTIME_CALENDAR_FIXTURE_DIR)/"
+	@find "$(CALENDAR_RESOURCE_BUILD_DIR)" -maxdepth 1 -type f -name '*.so' | awk 'END { if (NR != 30) { print "Expected 30 installed calendar modules"; exit 1 } }'
+	@find "$(RUNTIME_CALENDAR_FIXTURE_DIR)" -maxdepth 1 -type f -name '*.so' ! -name 'fixture-calendar.so' | awk 'END { if (NR != 30) { print "Expected 30 staged calendar modules"; exit 1 } }'
 
 $(BUILD_DIR)/test-runtime-calendar-resource: \
 		tests/test-runtime-calendar-resource.c \
