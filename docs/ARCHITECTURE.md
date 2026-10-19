@@ -57,7 +57,7 @@ Live applet and desktop settings terminate at the composition root; a dedicated 
 
 The small Cinnamon bootstrap that locates `runtimeSupport.js` must execute before shared JavaScript code can itself be loaded. Its unavoidable textual copies therefore have one canonical generator/checker in `tools/update-runtime-loader.py`; independent hand-maintained loader variants are not permitted.
 
-Calendar's `time-formats.c` binds persisted clock-mode IDs to Common-validated executable resources and dispatches their results. It contains no clock arithmetic, provider-local callback table or private tick-partition implementation: those were retired once all clocks became independent resources. The public clock engine schedules through each module's next-visible-tick ABI, never through a Calendar-local substitute.
+Calendar's `time-formats.c` maps stable enum identities to Common resource IDs without duplicating those enum values in its table. Common metadata determines capabilities and human-readable names; the resource owns clock arithmetic, formatting and next-visible-tick scheduling. The applet's clock engine uses that scheduling ABI with no application-local substitute. The 21 alternative clocks and two explicit conventional clocks have fixed application identities, while installation determines availability.
 
 The calendar algorithms, astronomical rules and their private engine live in `Libraries/resources/temporal`. Only Common's independently installed resource modules link that engine; the Calendar application links no resource algorithms. Common owns the provider ABIs and discovery, while each module owns its chronology or clock semantics. Shared Gregorian/JDN coordinate helpers supply no selectable chronology or clock fallback.
 

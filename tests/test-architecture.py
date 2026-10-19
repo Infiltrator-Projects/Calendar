@@ -220,6 +220,8 @@ def main() -> None:
         clock_dispatch,
     )
     assert "TimeDelayFunc" not in clock_dispatch
+    assert "TimeProvider" not in clock_dispatch
+    assert "time_providers" not in clock_dispatch
     assert not (ROOT / "src/core/time-formats-internal.h").exists()
 
     # The build must preserve a separately testable portable archive and the

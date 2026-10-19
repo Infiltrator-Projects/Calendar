@@ -18,15 +18,9 @@ Chinese and Korean Dangi dates/year headings use native cyclic year names, such 
 
 ## Engineering ethos
 
-Calendar is a first-principles engineering project. It does not treat the stock desktop clock/calendar as the specification for what chronology and timekeeping should be.
+Calendar follows the [Infiltrator Engineering Philosophy](docs/PHILOSOPHY.md): correctness, restrained design, explicit ownership, recoverable failure and proven behaviour take priority over novelty or code volume. Historical evidence, standards and mature platform libraries inform the design but do not silently determine its semantics.
 
-Calendar is a clean-sheet, independently designed calendar system rather than a derivative of another calendar application's architecture or implementation. Using operating-system, desktop-platform and third-party library interfaces such as Cinnamon, GLib, GTK and ICU/CLDR is treated as normal dependency and platform integration, not as shared implementation lineage; Calendar owns its product-specific architecture, chronology policy and behaviour except where a model or data source is explicitly delegated and documented.
-
-Historical evidence, international standards, maintained reference data, mature implementations and astronomical literature are treated as evidence. Techniques are adopted because they improve correctness, fidelity, performance, resilience, usability, accessibility or maintainability rather than because they are fashionable or new.
-
-Calendar owns the behaviour for which it is responsible. Historical rules, continuation policies, epochs, units, astronomical assumptions, failure states and compatibility boundaries should be explicit, testable and explainable. A plausible-looking date or clock value is not considered sufficient evidence of correctness.
-
-The same principle applies across the wider software family: study what is known now, preserve proven ideas that still deserve to survive, replace assumptions that no longer do, and prove the result in real use.
+Cinnamon owns desktop integration; Calendar owns application and event behaviour; Common owns reusable mechanisms and temporal resource ABIs; independently installed resources own chronology and clock algorithms. The authoritative design and evidence boundaries are maintained in [Architecture](docs/ARCHITECTURE.md), [Decisions](docs/DECISIONS.md) and [Models](docs/MODELS.md).
 
 ## System temporal authority
 
@@ -153,13 +147,14 @@ A scheduled upstream-drift workflow watches the reviewed Cinnamon calendar/Calen
 
 ## Install and releases
 
-Numbered releases publish three project-owned binary/install artifacts:
+Each Calendar release publishes **two** application artifacts:
 
-| File | Purpose |
+| Artifact | Purpose |
 | --- | --- |
-| `calendar_<version>_amd64.deb` | Generic amd64 Debian application package; package identity is `calendar` |
-| Common release: `infiltrator-calendar-resources_<Common-version>_amd64.deb` | Optional shared system modules, built and published exclusively by Common |
-| `calendar-<version>-local-folder.run` | Verified local hardware-native PGO builder (`-O3 -march=native -mtune=native`, LTO, representative profile training, profile-use rebuild) |
+| `calendar_<version>_amd64.deb` | Generic amd64 Debian application package |
+| `calendar-<version>-local-folder.run` | Verified local hardware-native PGO source builder |
+
+Common independently releases `infiltrator-calendar-resources_<Common-version>_amd64.deb`, the optional system-wide calendars and clocks. It is **not** a Calendar release asset and survives removal of Calendar.
 
 Install the generic packages with:
 

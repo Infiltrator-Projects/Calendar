@@ -160,6 +160,35 @@ test_mode_parser(void)
 }
 
 static void
+test_clock_catalogue_ids(void)
+{
+    const gsize alternatives =
+        CALENDAR_TIME_MODE_STANDARD_12 - CALENDAR_TIME_MODE_DECIMAL;
+
+    g_assert_cmpuint(calendar_time_mode_get_count(), ==, 21U);
+    g_assert_cmpuint(calendar_time_mode_get_count(), ==, alternatives);
+    for (gsize index = 0; index < alternatives; index++)
+    {
+        const CalendarTimeMode mode = calendar_time_mode_get_at(index);
+        const gchar *id = calendar_time_mode_get_id(mode);
+
+        g_assert_cmpint(mode, ==, (CalendarTimeMode)(index + CALENDAR_TIME_MODE_DECIMAL));
+        g_assert_nonnull(id);
+        g_assert_cmpint(calendar_time_mode_from_string(id), ==, mode);
+    }
+    g_assert_cmpint(calendar_time_mode_get_at(alternatives),
+                    ==, CALENDAR_TIME_MODE_INVALID);
+    g_assert_cmpint(calendar_time_mode_get_at(G_MAXSIZE),
+                    ==, CALENDAR_TIME_MODE_INVALID);
+
+    /* Conventional explicit resources exist, but are not alternative modes. */
+    g_assert_cmpstr(calendar_time_mode_get_id(CALENDAR_TIME_MODE_STANDARD_12),
+                    ==, "standard-12");
+    g_assert_cmpstr(calendar_time_mode_get_id(CALENDAR_TIME_MODE_STANDARD_24),
+                    ==, "standard-24");
+}
+
+static void
 test_decimal_time(void)
 {
     assert_time("decimal", USECONDS(0), 0,
@@ -1399,6 +1428,7 @@ main(int argc, char **argv)
 {
     g_test_init(&argc, &argv, NULL);
     g_test_add_func("/time-formats/mode-parser", test_mode_parser);
+    g_test_add_func("/time-formats/catalogue-ids", test_clock_catalogue_ids);
     g_test_add_func("/time-formats/decimal", test_decimal_time);
     g_test_add_func("/time-formats/internet", test_internet_time);
     g_test_add_func("/time-formats/unix-hex-binary",

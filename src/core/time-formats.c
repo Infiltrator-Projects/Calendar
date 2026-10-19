@@ -18,44 +18,37 @@
 #include <math.h>
 #include <string.h>
 
-/* Persisted mode -> Common resource ID. The executable resource exclusively
- * owns clock calculation, presentation and next-visible-tick scheduling. */
-typedef struct
-{
-    CalendarTimeMode mode;
-    const gchar *common_id;
-} TimeProvider;
+/* Only persisted mode-to-resource bindings live here. Common's metadata
+ * is authoritative for names/capabilities and the module owns execution. */
+#define CLOCK_RESOURCE(mode_, id_) [CALENDAR_TIME_MODE_##mode_] = id_
 
-#define NATIVE_TIME_PROVIDER(mode_, id_) \
-    [CALENDAR_TIME_MODE_##mode_] = { CALENDAR_TIME_MODE_##mode_, id_ }
-
-static const TimeProvider time_providers[] = {
-    NATIVE_TIME_PROVIDER(DECIMAL, "decimal"),
-    NATIVE_TIME_PROVIDER(INTERNET, "internet"),
-    NATIVE_TIME_PROVIDER(UNIX, "unix"),
-    NATIVE_TIME_PROVIDER(HEXADECIMAL, "hexadecimal"),
-    NATIVE_TIME_PROVIDER(BINARY, "binary"),
-    NATIVE_TIME_PROVIDER(SIDEREAL, "sidereal"),
-    NATIVE_TIME_PROVIDER(SOLAR, "solar"),
-    NATIVE_TIME_PROVIDER(JULIAN, "julian"),
-    NATIVE_TIME_PROVIDER(MEAN_SOLAR, "mean-solar"),
-    NATIVE_TIME_PROVIDER(MODIFIED_JULIAN, "modified-julian"),
-    NATIVE_TIME_PROVIDER(CHINESE, "chinese-time"),
-    NATIVE_TIME_PROVIDER(ROMAN_TEMPORAL, "roman-temporal"),
-    NATIVE_TIME_PROVIDER(JAPANESE_TEMPORAL, "japanese-temporal"),
-    NATIVE_TIME_PROVIDER(ITALIAN_HOURS, "italian-hours"),
-    NATIVE_TIME_PROVIDER(BABYLONIAN_HOURS, "babylonian-hours"),
-    NATIVE_TIME_PROVIDER(INDIAN_GHATI, "indian-ghati"),
-    NATIVE_TIME_PROVIDER(CHINESE_KE, "chinese-ke"),
-    NATIVE_TIME_PROVIDER(NUREMBERG_HOURS, "nuremberg-hours"),
-    NATIVE_TIME_PROVIDER(BABYLONIAN_ANCIENT, "babylonian-ancient"),
-    NATIVE_TIME_PROVIDER(NUREMBERG_SOLAR, "nuremberg-solar"),
-    NATIVE_TIME_PROVIDER(JAPANESE_TEMPORAL_EARLY, "japanese-temporal-early"),
-    NATIVE_TIME_PROVIDER(STANDARD_12, "standard-12"),
-    NATIVE_TIME_PROVIDER(STANDARD_24, "standard-24")
+static const gchar *const clock_resource_ids[] = {
+    CLOCK_RESOURCE(DECIMAL, "decimal"),
+    CLOCK_RESOURCE(INTERNET, "internet"),
+    CLOCK_RESOURCE(UNIX, "unix"),
+    CLOCK_RESOURCE(HEXADECIMAL, "hexadecimal"),
+    CLOCK_RESOURCE(BINARY, "binary"),
+    CLOCK_RESOURCE(SIDEREAL, "sidereal"),
+    CLOCK_RESOURCE(SOLAR, "solar"),
+    CLOCK_RESOURCE(JULIAN, "julian"),
+    CLOCK_RESOURCE(MEAN_SOLAR, "mean-solar"),
+    CLOCK_RESOURCE(MODIFIED_JULIAN, "modified-julian"),
+    CLOCK_RESOURCE(CHINESE, "chinese-time"),
+    CLOCK_RESOURCE(ROMAN_TEMPORAL, "roman-temporal"),
+    CLOCK_RESOURCE(JAPANESE_TEMPORAL, "japanese-temporal"),
+    CLOCK_RESOURCE(ITALIAN_HOURS, "italian-hours"),
+    CLOCK_RESOURCE(BABYLONIAN_HOURS, "babylonian-hours"),
+    CLOCK_RESOURCE(INDIAN_GHATI, "indian-ghati"),
+    CLOCK_RESOURCE(CHINESE_KE, "chinese-ke"),
+    CLOCK_RESOURCE(NUREMBERG_HOURS, "nuremberg-hours"),
+    CLOCK_RESOURCE(BABYLONIAN_ANCIENT, "babylonian-ancient"),
+    CLOCK_RESOURCE(NUREMBERG_SOLAR, "nuremberg-solar"),
+    CLOCK_RESOURCE(JAPANESE_TEMPORAL_EARLY, "japanese-temporal-early"),
+    CLOCK_RESOURCE(STANDARD_12, "standard-12"),
+    CLOCK_RESOURCE(STANDARD_24, "standard-24")
 };
 
-G_STATIC_ASSERT(G_N_ELEMENTS(time_providers) == CALENDAR_TIME_MODE_STANDARD_24 + 1);
+G_STATIC_ASSERT(G_N_ELEMENTS(clock_resource_ids) == CALENDAR_TIME_MODE_STANDARD_24 + 1);
 
 /*
  * These twenty-three resource-backed clocks have no Calendar-owned implementation
@@ -98,7 +91,7 @@ load_clock_test_resource(const InfiltratrTemporalResourceMetadata *metadata,
          mode <= CALENDAR_TIME_MODE_STANDARD_24; mode++)
     {
         if (clock_modules[mode] != NULL ||
-            !infiltratr_string_equal(time_providers[mode].common_id,
+            !infiltratr_string_equal(clock_resource_ids[mode],
                                      metadata->id))
             continue;
         InfiltratrTemporalClockModule *module =
@@ -133,7 +126,7 @@ initialise_clock_resources(gpointer unused)
     for (CalendarTimeMode mode = CALENDAR_TIME_MODE_DECIMAL;
          mode <= CALENDAR_TIME_MODE_STANDARD_24; mode++)
     {
-        const gchar *id = time_providers[mode].common_id;
+        const gchar *id = clock_resource_ids[mode];
         clock_modules[mode] = infiltratr_temporal_clock_module_open_id(id);
         if (clock_modules[mode] != NULL)
         {
@@ -160,27 +153,17 @@ clock_resource_for_mode(CalendarTimeMode mode)
 }
 
 
+/* An enum is an application ABI identity, not evidence that its executable
+ * resource is installed. Never advertise an unloaded or invalid provider. */
 static const InfiltratrTemporalClockModeInfo *
-common_mode_info_for_provider(const TimeProvider *provider)
+available_mode_info(CalendarTimeMode mode)
 {
-    return provider != NULL && provider->common_id != NULL
-        ? infiltratr_temporal_clock_mode_find(provider->common_id)
-        : NULL;
-}
+    const InfiltratrTemporalClockModeInfo *info;
 
-static const TimeProvider *
-time_provider_for_mode(CalendarTimeMode mode)
-{
-    const TimeProvider *provider;
-
-    if (mode < CALENDAR_TIME_MODE_DECIMAL ||
-        mode > CALENDAR_TIME_MODE_STANDARD_24)
+    if (!is_native_clock(mode))
         return NULL;
-
-    provider = &time_providers[mode];
-    return common_mode_info_for_provider(provider) != NULL &&
-           (!is_native_clock(mode) || clock_resource_for_mode(mode) != NULL)
-        ? provider : NULL;
+    info = infiltratr_temporal_clock_mode_find(clock_resource_ids[mode]);
+    return info != NULL && clock_resource_for_mode(mode) != NULL ? info : NULL;
 }
 
 CalendarTimeMode
@@ -196,11 +179,11 @@ calendar_time_mode_from_string(const gchar *mode)
     if (info == NULL)
         return CALENDAR_TIME_MODE_INVALID;
 
-    for (index = 1; index < G_N_ELEMENTS(time_providers); index++)
-        if (time_providers[index].common_id != NULL &&
-            infiltratr_string_equal(info->id, time_providers[index].common_id))
-            return clock_resource_for_mode(time_providers[index].mode) != NULL
-                ? time_providers[index].mode : CALENDAR_TIME_MODE_INVALID;
+    for (index = 1; index < G_N_ELEMENTS(clock_resource_ids); index++)
+        if (clock_resource_ids[index] != NULL &&
+            infiltratr_string_equal(info->id, clock_resource_ids[index]))
+            return clock_resource_for_mode((CalendarTimeMode)index) != NULL
+                ? (CalendarTimeMode)index : CALENDAR_TIME_MODE_INVALID;
 
     return CALENDAR_TIME_MODE_INVALID;
 }
@@ -208,20 +191,20 @@ calendar_time_mode_from_string(const gchar *mode)
 const gchar *calendar_time_mode_get_id(CalendarTimeMode mode)
 {
     const InfiltratrTemporalClockModeInfo *info =
-        common_mode_info_for_provider(time_provider_for_mode(mode));
+        available_mode_info(mode);
     return info != NULL ? info->id : NULL;
 }
 
 gsize calendar_time_mode_get_count(void)
 {
     /* Explicit conventional modes are native, but not alternative systems. */
-    return CALENDAR_TIME_MODE_JAPANESE_TEMPORAL_EARLY;
+    return CALENDAR_TIME_MODE_STANDARD_12 - CALENDAR_TIME_MODE_DECIMAL;
 }
 
 CalendarTimeMode calendar_time_mode_get_at(gsize index)
 {
     return index < calendar_time_mode_get_count()
-        ? time_providers[index + 1].mode
+        ? (CalendarTimeMode)(index + CALENDAR_TIME_MODE_DECIMAL)
         : CALENDAR_TIME_MODE_INVALID;
 }
 
@@ -238,31 +221,31 @@ const gchar *calendar_time_mode_get_name(CalendarTimeMode mode)
 gboolean calendar_time_mode_supports_seconds(CalendarTimeMode mode)
 {
     const InfiltratrTemporalClockModeInfo *info =
-        common_mode_info_for_provider(time_provider_for_mode(mode));
+        available_mode_info(mode);
     return info != NULL && info->supports_seconds;
 }
 
 gboolean calendar_time_mode_requires_longitude(CalendarTimeMode mode)
 {
     const InfiltratrTemporalClockModeInfo *info =
-        common_mode_info_for_provider(time_provider_for_mode(mode));
+        available_mode_info(mode);
     return info != NULL && info->requires_longitude;
 }
 
 gboolean calendar_time_mode_requires_latitude(CalendarTimeMode mode)
 {
     const InfiltratrTemporalClockModeInfo *info =
-        common_mode_info_for_provider(time_provider_for_mode(mode));
+        available_mode_info(mode);
     return info != NULL && info->requires_latitude;
 }
 
 static gboolean
-location_is_valid_for_provider(const TimeProvider *provider,
+location_is_valid_for_mode(CalendarTimeMode mode,
                                gdouble latitude,
                                gdouble longitude)
 {
     const InfiltratrTemporalClockModeInfo *info =
-        common_mode_info_for_provider(provider);
+        available_mode_info(mode);
 
     return info != NULL &&
            (!info->requires_latitude ||
@@ -274,28 +257,26 @@ location_is_valid_for_provider(const TimeProvider *provider,
 
 gchar *
 calendar_format_time_at_location(CalendarTimeMode mode, gint64 unix_microseconds,
-                                      gint utc_offset_seconds, gboolean show_seconds,
-                                      gboolean vertical, gdouble latitude, gdouble longitude)
+                                 gint utc_offset_seconds, gboolean show_seconds,
+                                 gboolean vertical, gdouble latitude,
+                                 gdouble longitude)
 {
-    const TimeProvider *provider = time_provider_for_mode(mode);
-    const gdouble safe_latitude = isfinite(latitude) ? infiltratr_clamp_double(latitude, -90.0, 90.0) : 0.0;
-    const gdouble safe_longitude = isfinite(longitude) ? infiltratr_clamp_double(longitude, -180.0, 180.0) : 0.0;
+    const InfiltratrTemporalClockModule *resource =
+        clock_resource_for_mode(mode);
+    const gdouble safe_latitude = isfinite(latitude) ?
+        infiltratr_clamp_double(latitude, -90.0, 90.0) : 0.0;
+    const gdouble safe_longitude = isfinite(longitude) ?
+        infiltratr_clamp_double(longitude, -180.0, 180.0) : 0.0;
     gchar text[256];
 
-    if (!location_is_valid_for_provider(provider, latitude, longitude))
+    if (resource == NULL || !location_is_valid_for_mode(mode, latitude, longitude) ||
+        !infiltratr_temporal_clock_format(
+            resource, g_get_language_names()[0], unix_microseconds,
+            utc_offset_seconds, show_seconds, vertical,
+            safe_latitude, safe_longitude, text, sizeof(text), NULL))
         return g_strdup("");
-    if (is_native_clock(mode))
-    {
-        const InfiltratrTemporalClockModule *resource =
-            clock_resource_for_mode(mode);
-        if (resource == NULL || !infiltratr_temporal_clock_format(
-                resource, g_get_language_names()[0], unix_microseconds,
-                utc_offset_seconds, show_seconds, vertical,
-                safe_latitude, safe_longitude, text, sizeof(text), NULL))
-            return g_strdup("");
-        return g_strdup(text);
-    }
-    return g_strdup("");
+
+    return g_strdup(text);
 }
 
 gchar *
@@ -312,23 +293,22 @@ calendar_time_delay_to_next_tick_at_location(CalendarTimeMode mode,
     gint64 unix_microseconds, gint utc_offset_seconds, gboolean show_seconds,
     gdouble latitude, gdouble longitude)
 {
-    const TimeProvider *provider = time_provider_for_mode(mode);
-    const gdouble safe_latitude = isfinite(latitude) ? infiltratr_clamp_double(latitude, -90.0, 90.0) : 0.0;
-    const gdouble safe_longitude = isfinite(longitude) ? infiltratr_clamp_double(longitude, -180.0, 180.0) : 0.0;
-    if (provider == NULL)
-        return 1000;
-    if (!location_is_valid_for_provider(provider, latitude, longitude))
+    const InfiltratrTemporalClockModule *resource =
+        clock_resource_for_mode(mode);
+    const gdouble safe_latitude = isfinite(latitude) ?
+        infiltratr_clamp_double(latitude, -90.0, 90.0) : 0.0;
+    const gdouble safe_longitude = isfinite(longitude) ?
+        infiltratr_clamp_double(longitude, -180.0, 180.0) : 0.0;
+    uint32_t delay = 0U;
+
+    if (resource == NULL || available_mode_info(mode) == NULL)
+        return 1000U;
+    if (!location_is_valid_for_mode(mode, latitude, longitude))
         return 3600000U;
-    if (is_native_clock(mode))
-    {
-        const InfiltratrTemporalClockModule *resource =
-            clock_resource_for_mode(mode);
-        uint32_t delay = 0U;
-        return resource != NULL && infiltratr_temporal_clock_next_tick(
-            resource, unix_microseconds, utc_offset_seconds, show_seconds,
-            safe_latitude, safe_longitude, &delay) ? delay : 1000U;
-    }
-    return 1000U;
+
+    return infiltratr_temporal_clock_next_tick(
+        resource, unix_microseconds, utc_offset_seconds, show_seconds,
+        safe_latitude, safe_longitude, &delay) ? delay : 1000U;
 }
 
 guint

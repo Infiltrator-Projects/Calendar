@@ -1,3 +1,13 @@
+calendar (1.0.121) unstable; urgency=medium
+
+  * Replace redundant mode/enum records with one immutable resource-ID table,
+    removing unreachable resource dispatch branches and keeping one clock owner.
+  * Qualify all 21 alternative mode IDs and two conventional resource IDs.
+  * Correct README release-asset ownership and reduce repeated engineering
+    and qualification history in maintained documentation.
+
+ -- Shannon Smith <infiltratr@yandex.com>  Tue, 20 Oct 2026 10:10:00 +1100
+
 calendar (1.0.120) unstable; urgency=medium
 
   * Remove unused pre-migration clock-delay arithmetic, callback declarations,
