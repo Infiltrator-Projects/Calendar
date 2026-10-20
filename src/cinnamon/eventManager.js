@@ -459,8 +459,7 @@ var EventsManager = class EventsManager {
             exclusiveEnd.to_unix() - 1,
             Boolean(force),
             (succeeded, currentTransport) => {
-                if (this._destroyed || !this._enabled || !currentTransport ||
-                    !this._rangeState.isCurrent(requestGeneration)) {
+                if (this._destroyed || !this._enabled || !currentTransport) {
                     return;
                 }
                 if (!this._rangeState.finishRequest(
@@ -531,8 +530,7 @@ var EventsManager = class EventsManager {
 
         const changed = !sameInstant(first, this.current_range_start) ||
             !sameInstant(last, this.current_range_end);
-        const needsRetry = !this._rangeState.pending &&
-            !this._rangeState.succeeded;
+        const needsRetry = this._rangeState.needsRetry();
         if (!changed && !force && !needsRetry) {
             return;
         }

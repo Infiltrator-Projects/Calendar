@@ -48,7 +48,7 @@ This file records durable architectural decisions for Calendar. It complements `
 
 **Why.** Independent booleans make valid states implicit and allow one callback to update only part of a transition. An explicit state owner makes lifecycle invariants testable without binding tests to transport-controller internals.
 
-**Consequence.** New CalendarServer lifecycle state belongs in the narrow state object when it participates in the range-request protocol. Presentation and transport code must not recreate parallel range-state flags.
+**Consequence.** New CalendarServer lifecycle state belongs in the narrow state object when it participates in the range-request protocol. Presentation and transport code must not recreate parallel range-state flags. Completion is an exactly-once state transition: a generation match without a pending request is not sufficient, and duplicate/stale callbacks never replace the settled outcome.
 
 ## ADR-007 — Civil chronology has one native implementation
 

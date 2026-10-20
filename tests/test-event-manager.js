@@ -292,6 +292,19 @@ vm.runInContext(
 );
 const EventsManager = context.__EventsManager;
 
+/* Exactly-once completion is owned by EventRangeState, not by each
+ * transport caller. Generation equality alone cannot reject duplicates. */
+const rangeState = new context.__rangeModule.EventRangeState();
+assert.equal(rangeState.finishRequest(0, true), false,
+    "a request that never started must not be completed");
+const rangeGeneration = rangeState.beginRequest();
+assert.equal(rangeState.finishRequest(rangeGeneration, true), true);
+assert.equal(rangeState.acceptCompletedRequest(), true);
+assert.equal(rangeState.finishRequest(rangeGeneration, false), false,
+    "a second completion must not overwrite a settled success");
+assert.equal(rangeState.acceptingEvents, true);
+assert.equal(rangeState.needsRetry(), false);
+
 const transport = new FakeTransport();
 transport.ready = true;
 transport.status = 2;
@@ -305,6 +318,12 @@ assert.equal(
     42 * 86400 - 1
 );
 transport.complete(0, true);
+assert.equal(manager._rangeState.acceptingEvents, true);
+transport.complete(0, false);
+assert.equal(manager._rangeState.acceptingEvents, true,
+    "duplicate failed completion must not revoke accepted events");
+assert.equal(timeouts.size, 0,
+    "duplicate failed completion must not schedule a retry");
 manager.set_visible_range(first, last, false);
 assert.equal(
     observations.rangeRequests.length,
@@ -339,6 +358,11 @@ assert.equal(
 manager.set_visible_range(first, last, true);
 transport.complete(2, false);
 assert.equal(timeouts.size, 1, "range failure must retain bounded retry behaviour");
+transport.complete(2, true);
+assert.equal(manager._rangeState.acceptingEvents, false,
+    "duplicate successful completion must not admit failed-range events");
+assert.equal(timeouts.size, 1,
+    "duplicate successful completion must not cancel a pending retry");
 const retry = timeouts.values().next().value;
 timeouts.clear();
 retry();

@@ -21,9 +21,7 @@ var EventRangeState = class EventRangeState {
         this._retryAttempt = 0;
     }
 
-    get generation() { return this._generation; }
     get pending() { return this._pending; }
-    get succeeded() { return this._succeeded; }
     get acceptingEvents() { return this._acceptingEvents; }
     get queuedForce() { return this._queuedForce; }
 
@@ -43,7 +41,10 @@ var EventRangeState = class EventRangeState {
     }
 
     finishRequest(generation, succeeded) {
-        if (!this.isCurrent(generation)) {
+        /* A generation identifies a request, but only the pending request may
+         * finish. Late or duplicate completions must not reverse admission or
+         * cancel a retry belonging to an already-settled range. */
+        if (!this._pending || !this.isCurrent(generation)) {
             return false;
         }
         this._pending = false;

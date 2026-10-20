@@ -1,3 +1,13 @@
+calendar (1.0.122) unstable; urgency=medium
+
+  * Make CalendarServer visible-range completion an exactly-once state
+    transition, rejecting duplicate callbacks after success or failure.
+  * Remove duplicate generation checks and let EventRangeState own retry
+    eligibility rather than repeating its state predicate in EventsManager.
+  * Extend request lifecycle regression coverage and document the invariant.
+
+ -- Shannon Smith <infiltratr@yandex.com>  Tue, 20 Oct 2026 11:10:00 +1100
+
 calendar (1.0.121) unstable; urgency=medium
 
   * Replace redundant mode/enum records with one immutable resource-ID table,
