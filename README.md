@@ -28,7 +28,7 @@ All thirty-one calendar implementations and all twenty-three explicit clock mode
 are independently installed system resources. The `infiltrator-calendar-resources`
 package owns `/System/Resources/Calendars/*.so` and `/System/Resources/Clocks/*.so`;
 removing Calendar or System Settings leaves those resources installed. Common
-1.19.74 owns the source, builds, tests, releases and Debian package, as well as
+1.19.75 owns the source, builds, tests, releases and Debian package, as well as
 the validated provider ABIs, discovery, loading and policy bridge.
 Calendar, Files, Settings and the desktop consume the same installed providers.
 Calendar's production core contains no selectable chronology or clock-face

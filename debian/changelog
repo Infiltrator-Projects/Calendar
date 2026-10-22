@@ -4,8 +4,9 @@ calendar (1.0.123) unstable; urgency=medium
     the previous resource from appearing as the newly selected clock.
   * Keep unavailable calendar navigation inert and verify recovery when an
     installed calendar is selected again.
-  * Pin Common and independently published resources to 1.19.74, including
+  * Pin Common and independently published resources to 1.19.75, including
     corrected executable-provider selection and the 31-calendar catalogue.
+  * Consume the Common fix for the 2060 Badi civil/solar-midnight boundary.
   * Qualify unavailable-state transitions through native and GJS boundaries.
 
  -- Shannon Smith <infiltratr@yandex.com>  Fri, 23 Oct 2026 10:28:24 +1100

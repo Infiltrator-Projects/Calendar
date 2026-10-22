@@ -122,7 +122,7 @@ Historical names do not imply universal historical reconstruction. Where a syste
 
 Examples:
 
-- modern Badíʿ years use a Tehran-referenced astronomical March equinox and sunset boundary;
+- modern Badíʿ years compare the Tehran-referenced March equinox and the sunset of its civil date as UTC instants, preserving the distinction between civil and apparent-solar midnight;
 - years before 172 B.E. retain the historical Western 21-March civil convention;
 - Italian hours are the explicitly historical equal-hour system measured from computed sunset;
 - “Babylonian hours” refers to the later European sunrise-origin convention; ancient Babylonian bēru/UŠ is a separate mode;
