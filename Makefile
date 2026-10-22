@@ -476,8 +476,8 @@ $(RUNTIME_CALENDAR_FIXTURE): \
 stage-runtime-calendar-resources: $(RUNTIME_CALENDAR_FIXTURE)
 	@find "$(RUNTIME_CALENDAR_FIXTURE_DIR)" -maxdepth 1 -type f -name '*.so' ! -name 'fixture-calendar.so' -delete
 	@cp -a "$(CALENDAR_RESOURCE_BUILD_DIR)/." "$(RUNTIME_CALENDAR_FIXTURE_DIR)/"
-	@find "$(CALENDAR_RESOURCE_BUILD_DIR)" -maxdepth 1 -type f -name '*.so' | awk 'END { if (NR != 30) { print "Expected 30 installed calendar modules"; exit 1 } }'
-	@find "$(RUNTIME_CALENDAR_FIXTURE_DIR)" -maxdepth 1 -type f -name '*.so' ! -name 'fixture-calendar.so' | awk 'END { if (NR != 30) { print "Expected 30 staged calendar modules"; exit 1 } }'
+	@find "$(CALENDAR_RESOURCE_BUILD_DIR)" -maxdepth 1 -type f -name '*.so' | awk 'END { if (NR != 31) { print "Expected 31 installed calendar modules"; exit 1 } }'
+	@find "$(RUNTIME_CALENDAR_FIXTURE_DIR)" -maxdepth 1 -type f -name '*.so' ! -name 'fixture-calendar.so' | awk 'END { if (NR != 31) { print "Expected 31 staged calendar modules"; exit 1 } }'
 
 $(BUILD_DIR)/test-runtime-calendar-resource: \
 		tests/test-runtime-calendar-resource.c \
