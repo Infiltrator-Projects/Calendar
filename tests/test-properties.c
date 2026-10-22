@@ -104,6 +104,13 @@ test_all_calendar_grid_properties(void)
                 guint selected = 0;
                 gsize cell_index;
 
+                /* The independent Thai civil chronology starts in April 1912. */
+                if (g_str_equal(descriptor.id, "thai-buddhist-solar") &&
+                    year < 1912)
+                {
+                    g_assert_null(grid);
+                    continue;
+                }
                 g_assert_nonnull(grid);
                 g_assert_true(g_variant_is_of_type(
                     grid,

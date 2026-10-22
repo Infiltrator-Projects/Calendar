@@ -76,6 +76,7 @@ test_calendar_reference_vectors(void)
         { "coptic", 2026, 9, 11, 1743, 1, 1 },
         { "ethiopian", 2026, 9, 11, 2019, 1, 1 },
         { "buddhist", 2026, 1, 1, 2569, 1, 1 },
+        { "thai-buddhist-solar", 1940, 1, 1, 2482, 1, 1 },
         { "japanese", 2019, 5, 1, 1, 5, 1 },
         { "minguo", 1912, 1, 1, 1, 1, 1 },
         { "french-republican", 1792, 9, 22, 1, 1, 1 },
@@ -553,6 +554,9 @@ test_clock_interfaces(void)
     calendar_clock_engine_stop(engine);
     g_assert_false(calendar_clock_engine_is_running(engine));
     g_assert_cmpuint(clock.cancellations, ==, 2);
+    g_clear_pointer(&formatted, g_free);
+    formatted = calendar_clock_engine_format(engine);
+    g_assert_cmpstr(formatted, ==, "");
 
     config.mode = CALENDAR_TIME_MODE_NUREMBERG_SOLAR;
     config.latitude = NAN;
@@ -639,7 +643,7 @@ test_calendar_records(void)
     guint selected_count = 0;
     guint item;
 
-    g_assert_cmpuint(calendar_calendar_catalogue_get_count(), ==, 30);
+    g_assert_cmpuint(calendar_calendar_catalogue_get_count(), ==, 31);
     for (item = 0; item < calendar_calendar_catalogue_get_count(); item++)
     {
         g_assert_true(calendar_calendar_catalogue_get(item, &descriptor));

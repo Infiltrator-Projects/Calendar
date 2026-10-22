@@ -6,7 +6,7 @@ that must be invented before the application can be considered finished.
 
 ## Completion baseline
 
-- preserve the 30-calendar and 23-clock resource capability with explicit model provenance
+- preserve the 31-calendar and 23-clock resource capability with explicit model provenance
 - preserve the separation between portable chronology/event logic and Cinnamon presentation
 - preserve the installed ABI, settings identity, package identity and upgrade path
 - keep unavailable astronomical or platform states explicit rather than guessing values
@@ -21,7 +21,7 @@ features. A fixed defect should gain the narrowest useful permanent regression
 test. Tests that are completely subsumed by stronger coverage should be
 consolidated rather than retained for historical reasons.
 
-The temporal resource migration is complete for the declared catalogue: thirty calendars and twenty-three explicit clocks. Each is an independently installed module under `/System/Resources/Calendars` or `/System/Resources/Clocks`. Common validates metadata and executable provider ABIs before advertising installed capabilities. Calendar, Files and System Settings are consumers; no UI owns a duplicate implementation or a hidden fallback. Missing resources preserve the user's policy and remain visibly unavailable.
+The temporal resource migration is complete for the declared catalogue: thirty-one calendars and twenty-three explicit clocks. Each is an independently installed module under `/System/Resources/Calendars` or `/System/Resources/Clocks`. Common validates metadata and executable provider ABIs before advertising installed capabilities. Calendar, Files and System Settings are consumers; no UI owns a duplicate implementation or a hidden fallback. Missing resources preserve the user's policy and remain visibly unavailable.
 
 ## Optional expansion
 

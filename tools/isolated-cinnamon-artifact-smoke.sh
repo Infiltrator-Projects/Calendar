@@ -109,7 +109,7 @@ dpkg --compare-versions "$(dpkg-deb -f "$RESOURCES_DEB" Version)" ge 1.19.66 || 
 install -d /System/Resources/Calendars /System/Resources/Clocks
 # Install qualified .so files directly with the compiler's canonical names.
 # No aliases or internal-ID filename substitutions.
-for record in "Calendars:30" "Clocks:23"; do
+for record in "Calendars:31" "Clocks:23"; do
     kind=${record%%:*}
     expected=${record#*:}
     source_directory="$STAGE_ROOT/System/Resources/$kind"

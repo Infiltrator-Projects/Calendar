@@ -199,7 +199,7 @@ calendar_clock_engine_format(const CalendarClockEngine *engine)
     gint64 now;
     gint offset;
 
-    if (engine == NULL)
+    if (engine == NULL || !engine->running)
         return g_strdup("");
 
     now = engine->time_source.now(engine->time_source.context);

@@ -25,7 +25,7 @@ function installedModuleCount(directory) {
 }
 const installedCalendars = installedModuleCount("/System/Resources/Calendars");
 const installedClocks = installedModuleCount("/System/Resources/Clocks");
-requireCondition(installedCalendars === 0 || installedCalendars === 30,
+requireCondition(installedCalendars === 0 || installedCalendars === 31,
                  "incomplete installed calendar resource set");
 requireCondition(installedClocks === 0 || installedClocks === 23,
                  "incomplete installed clock resource set");
@@ -58,7 +58,7 @@ requireCondition(
 const calendarIds = [
     "iso-week", "julian", "revised-julian",
     "islamic-umalqura", "islamic-civil", "islamic-tbla", "islamic",
-    "bahai", "buddhist", "ethiopian", "ethiopic-amete-alem", "chinese",
+    "bahai", "buddhist", "thai-buddhist-solar", "ethiopian", "ethiopic-amete-alem", "chinese",
     "dangi", "indian", "japanese", "minguo", "roman", "byzantine",
     "egyptian-nabonassar", "armenian-traditional", "mayan",
     "french-republican", "swedish-historical", "international-fixed",
@@ -74,7 +74,7 @@ for (const id of calendarIds) {
  * observe no compiled fallback for the same stable ID.
  */
 for (const id of nativeCalendarResources) {
-    const installed = id === "gregorian" || installedCalendars === 30;
+    const installed = id === "gregorian" || installedCalendars === 31;
     const provider = Calendar.CalendarSystem.new(id);
     if (installed) {
         requireCondition(
@@ -123,6 +123,22 @@ requireCondition(historicalClock.is_running() === romanInstalled,
 requireCondition(!romanInstalled || historicalClock.get_time().length > 0,
                  "historical clock produced no text");
 historicalClock.stop();
+requireCondition(historicalClock.get_time() === "",
+                 "stopped clock retained display text");
+if (installedClocks === 23) {
+    historicalClock.start("decimal", false, false, 0.0);
+    requireCondition(historicalClock.get_time().length > 0,
+                     "available clock produced no text before selection change");
+    historicalClock.start("missing-clock", false, false, 0.0);
+    requireCondition(!historicalClock.is_running() &&
+                     historicalClock.get_time() === "",
+                     "unavailable selection displayed the previous clock");
+    historicalClock.start("internet", false, false, 0.0);
+    requireCondition(historicalClock.is_running() &&
+                     historicalClock.get_time().startsWith("@"),
+                     "available clock did not recover after unavailable selection");
+    historicalClock.stop();
+}
 
 const effectivePolicy = historicalClock.get_system_policy().deep_unpack();
 requireCondition(

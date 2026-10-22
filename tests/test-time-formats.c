@@ -517,6 +517,9 @@ test_clock_lifecycle(void)
     calendar_system_clock_start_at_location(
         clock, "roman-temporal", FALSE, FALSE, NAN, 0.0);
     g_assert_false(calendar_system_clock_is_running(clock));
+    g_clear_pointer(&current_time, g_free);
+    current_time = calendar_system_clock_get_time(clock);
+    g_assert_cmpstr(current_time, ==, "");
 
     calendar_system_clock_stop(clock);
     g_assert_false(calendar_system_clock_is_running(clock));
@@ -524,6 +527,36 @@ test_clock_lifecycle(void)
     /* Stop is deliberately idempotent for Cinnamon applet teardown. */
     calendar_system_clock_stop(clock);
     g_assert_false(calendar_system_clock_is_running(clock));
+}
+
+static void
+test_clock_unavailable_selection(void)
+{
+    g_autoptr(CalendarSystemClock) clock = calendar_system_clock_new();
+    const gchar *unavailable_modes[] = { "missing-clock", "", NULL };
+
+    for (gsize index = 0; index < G_N_ELEMENTS(unavailable_modes); index++)
+    {
+        g_autofree gchar *active = NULL;
+        g_autofree gchar *unavailable = NULL;
+
+        calendar_system_clock_start(clock, "decimal", FALSE, FALSE, 0.0);
+        g_assert_true(calendar_system_clock_is_running(clock));
+        active = calendar_system_clock_get_time(clock);
+        g_assert_cmpstr(active, !=, "");
+
+        calendar_system_clock_start(
+            clock, unavailable_modes[index], FALSE, FALSE, 0.0);
+        g_assert_false(calendar_system_clock_is_running(clock));
+        unavailable = calendar_system_clock_get_time(clock);
+        g_assert_cmpstr(unavailable, ==, "");
+    }
+
+    calendar_system_clock_start(clock, "internet", FALSE, FALSE, 0.0);
+    g_assert_true(calendar_system_clock_is_running(clock));
+    calendar_system_clock_stop(clock);
+    g_autofree gchar *stopped = calendar_system_clock_get_time(clock);
+    g_assert_cmpstr(stopped, ==, "");
 }
 
 static void
@@ -637,6 +670,7 @@ test_calendar_catalogue(void)
         "coptic",
         "ethiopian",
         "buddhist",
+        "thai-buddhist-solar",
         "japanese",
         "minguo",
         "french-republican",
@@ -1444,6 +1478,8 @@ main(int argc, char **argv)
     g_test_add_func("/time-formats/label-replacement",
                     test_label_replacement);
     g_test_add_func("/system-clock/lifecycle", test_clock_lifecycle);
+    g_test_add_func("/system-clock/unavailable-selection",
+                    test_clock_unavailable_selection);
     g_test_add_func("/system-clock/authority-resolution",
                     test_temporal_authority_resolution);
     g_test_add_func("/calendar-system/catalogue", test_calendar_catalogue);

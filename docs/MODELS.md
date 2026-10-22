@@ -50,7 +50,7 @@ Edo clock timestamps use Japanese branch names and traditional bell numerals, wi
 
 ## Range and continuation matrix
 
-The installed resource package contains 30 independent calendars and 23 independent explicit clocks. Calendar's own provider registry adapts only the validated resources Common reports as installed. The tables below state the maintained range/continuation contract without pretending that every historical name is a universal historical reconstruction.
+The installed resource package contains 31 independent calendars and 23 independent explicit clocks. Calendar's own provider registry adapts only the validated resources Common reports as installed. The tables below state the maintained range/continuation contract without pretending that every historical name is a universal historical reconstruction.
 
 ### Calendar providers
 
@@ -69,6 +69,7 @@ The installed resource package contains 30 independent calendars and 23 independ
 | `coptic` | Resource-owned Coptic arithmetic with its 13-month leap cycle. |
 | `ethiopian` | Resource-owned Ethiopic Amete Mihret arithmetic with its 13-month leap cycle. |
 | `buddhist` | Resource-owned Gregorian-derived Buddhist year arithmetic; locale-sensitive formatting remains ICU/CLDR-backed. |
+| `thai-buddhist-solar` | Thai solar civil calendar from 1 April 1912: April New Year through 1940, the shortened 2483 B.E. year, and January New Year from 1941. Earlier dates and nonexistent January–March 2483 B.E. are unavailable. |
 | `japanese` | Resource-owned modern Japanese era boundaries (Meiji through Reiwa) and Gregorian-derived arithmetic; locale-sensitive formatting remains ICU/CLDR-backed. |
 | `minguo` | Resource-owned Republic of China/Minguo year arithmetic over the proleptic Gregorian calendar. |
 | `french-republican` | Historical epoch at JDN 2375840 (22 September 1792 = Year I), with the resource's explicit Romme-style arithmetic continuation outside the historical republican era. |

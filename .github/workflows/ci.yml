@@ -318,7 +318,7 @@ jobs:
             "$RELEASE_RESOURCES_DEB" "./$RELEASE_DEB"
           test "$(dpkg-query -W -f='${Status}' calendar)" = "install ok installed"
           test "$(dpkg-query -W -f='${Status}' infiltrator-calendar-resources)" = "install ok installed"
-          test "$(find /System/Resources/Calendars -maxdepth 1 -type f -name '*.so' | wc -l)" -eq 30
+          test "$(find /System/Resources/Calendars -maxdepth 1 -type f -name '*.so' | wc -l)" -eq 31
           /usr/libexec/calendar-about --print-metadata | grep -qx "version=$RELEASE_VERSION"
           /usr/libexec/calendar-about --print-metadata | grep -qx "build-profile=generic"
           CALENDAR_EXPECTED_VERSION="$RELEASE_VERSION" gjs tests/smoke-typelib.js >/dev/null

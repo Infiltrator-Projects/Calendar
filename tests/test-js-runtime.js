@@ -1224,6 +1224,36 @@ function testCalendarLifecycle() {
     assert.equal(calendar._destroyed, true);
 }
 
+function testCalendarUnavailableNavigationRecovers() {
+    const { Calendar, eventsManager } = evaluateCalendar();
+    const calendar = new Calendar(eventsManager, 0, false);
+    const destinations = [];
+    calendar._monthLabel = { text: "" };
+    calendar._yearLabel = { text: "" };
+    calendar._removeCells = () => {};
+    calendar._gridModelForDate = () => ({});
+    calendar._update = () => {};
+    calendar.queue_set_date = date => destinations.push(date);
+
+    calendar.setCalendarSystem("missing-calendar");
+    assert.equal(calendar._monthLabel.text, "Calendar unavailable");
+    for (const [years, months] of [[0, -1], [0, 1], [-1, 0], [1, 0]]) {
+        assert.doesNotThrow(() => calendar._browse(years, months));
+    }
+    assert.equal(destinations.length, 0);
+
+    calendar.setCalendarSystem("gregorian");
+    calendar._calendarSystem.add_months_parts = () => ({
+        deep_unpack() { return [2026, 11, 23]; },
+    });
+    calendar._browse(0, 1);
+    assert.equal(destinations.length, 1);
+    assert.equal(destinations[0].getFullYear(), 2026);
+    assert.equal(destinations[0].getMonth(), 10);
+    assert.equal(destinations[0].getDate(), 23);
+    calendar.destroy();
+}
+
 function testCalendarNavigationCoalescing() {
     const { Calendar, eventsManager, observations } = evaluateCalendar();
     const calendar = new Calendar(eventsManager, 0, false);
@@ -1572,6 +1602,7 @@ testCalendarRejectsUnsupportedProviderDate();
 testCalendarSelectedDateIsolation();
 testCalendarGridFailureIsTransactional();
 testCalendarLifecycle();
+testCalendarUnavailableNavigationRecovers();
 testCalendarNavigationCoalescing();
 testCalendarKeyboardNavigation();
 testEventListLaunchesSelectedCinnamonBackend();

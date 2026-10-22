@@ -19,6 +19,8 @@ The tests/ tree includes portable-core, exact clock-boundary, property, ABI, Jav
 
 The Cinnamon boundary suite includes behavioural tests for popup lifecycle/input ownership, effective temporal-policy resolution, CalendarServer transport/reconnect semantics and EventsManager orchestration through an injected transport port. CalendarServer tests cover asynchronous completion failures, synchronous proxy/range-call initiation failures, and repeated completions of the same range generation. This qualifies initiation and completion recovery without duplicating ownership of retry/admission state. Architecture checks enforce dependency direction and ownership without treating private source layout as a compatibility contract: portable core code cannot acquire Gio/D-Bus/settings objects, and positional native GVariant records are decoded through the named JavaScript native boundary rather than scattered field-number assumptions.
 
+Unavailable-clock transitions are checked through the portable engine, native GObject facade and installed GJS typelib. Tests begin with a working clock, reject the next selection, require empty display text, and verify recovery. Calendar navigation tests likewise preserve the unavailable state without throwing, then verify navigation after a valid selection is restored. Common's provider-loader qualification remains owned by the pinned Common release.
+
 Automated checks should cover ordinary behaviour, important boundaries, malformed/error cases and release/package contracts appropriate to the project.
 
 ## Manual and environment-dependent evidence

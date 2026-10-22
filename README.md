@@ -6,7 +6,7 @@
 
 [![Build and test](https://github.com/Infiltrator-Projects/Calendar/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/Infiltrator-Projects/Calendar/actions/workflows/ci.yml?query=branch%3Amain)
 
-Calendar is a native Cinnamon panel clock and calendar with alternative clock modes, 30 selectable calendar systems and CalendarServer integration. Its installed Linux desktop identity, Cinnamon Applets manager entry, Linux Mint Software Manager package-name alias and suite-standard native GTK About dialog all use the project-owned Calendar icon. The Calendar package owns and installs that artwork itself; no shared icon-helper package is required.
+Calendar is a native Cinnamon panel clock and calendar with alternative clock modes, 31 selectable calendar systems and CalendarServer integration. Its installed Linux desktop identity, Cinnamon Applets manager entry, Linux Mint Software Manager package-name alias and suite-standard native GTK About dialog all use the project-owned Calendar icon. The Calendar package owns and installs that artwork itself; no shared icon-helper package is required.
 
 **Runtime:** Cinnamon 6.4, 6.6 and 6.7\
 **Build-tested bases:** Debian 13, Linux Mint 22 and Ubuntu 24.04\
@@ -24,11 +24,11 @@ Cinnamon owns desktop integration; Calendar owns application and event behaviour
 
 ## System temporal authority
 
-All thirty calendar implementations and all twenty-three explicit clock modes
+All thirty-one calendar implementations and all twenty-three explicit clock modes
 are independently installed system resources. The `infiltrator-calendar-resources`
 package owns `/System/Resources/Calendars/*.so` and `/System/Resources/Clocks/*.so`;
 removing Calendar or System Settings leaves those resources installed. Common
-1.19.68 owns the source, builds, tests, releases and Debian package, as well as
+1.19.74 owns the source, builds, tests, releases and Debian package, as well as
 the validated provider ABIs, discovery, loading and policy bridge.
 Calendar, Files, Settings and the desktop consume the same installed providers.
 Calendar's production core contains no selectable chronology or clock-face
@@ -44,7 +44,7 @@ Calendar does not own temporal presentation preferences. System Settings is the 
 
 Clock modes include normal 12/24-hour time, French Republican decimal time, Internet Time, Unix time, hexadecimal and binary time, sidereal time, apparent and mean solar time, Julian/MJD, traditional Chinese double-hours and hundred-kè time, Roman temporal time, late-Edo 1797 twilight time and early-Edo sunrise/sunset unequal time, Italian hours from sunset, the Renaissance European gnomonic convention known as Babylonian hours from sunrise, ancient Babylonian bēru/UŠ time, Indian ghaṭī time from sunrise, and the historical Nürnberg Great Clock with fixed Wendetage and a separate location-aware Nuremberg-style solar reconstruction.
 
-Calendar systems available through System Settings include Gregorian, Julian, ISO week, Hebrew, four Islamic variants, Persian, Chinese, Dangi, Indian National, Coptic, Ethiopic Amete Mihret and Amete Alem, Buddhist, Japanese, Minguo, French Republican, Roman, Mayan Long Count with Tzolk’in/Haab Calendar Round, Badíʿ, International Fixed, World, Positivist, Revised Julian, Byzantine Anno Mundi, Egyptian civil (Nabonassar era), traditional Armenian, and Sweden's historical 1700–1753 civil calendar including 30 February 1712.
+Calendar systems available through System Settings include Gregorian, Julian, ISO week, Hebrew, four Islamic variants, Persian, Chinese, Dangi, Indian National, Coptic, Ethiopic Amete Mihret and Amete Alem, Buddhist, historical Thai Buddhist solar, Japanese, Minguo, French Republican, Roman, Mayan Long Count with Tzolk’in/Haab Calendar Round, Badíʿ, International Fixed, World, Positivist, Revised Julian, Byzantine Anno Mundi, Egyptian civil (Nabonassar era), traditional Armenian, and Sweden's historical 1700–1753 civil calendar including 30 February 1712.
 
 The applet can coexist with Cinnamon's stock Calendar applet and installs no project-owned daemon, polling service or autostart entry. System Settings is optional at runtime. Common's installed `temporal-v3` provider marker advertises that the writer/UI is currently installed, while the validated persisted policy is the durable system authority and survives writer removal. With neither a valid saved policy nor an installed richer authority, Calendar follows Mint/Cinnamon. Calendar monitors both the policy document and writer-marker boundary live and needs no background daemon.
 

@@ -122,7 +122,8 @@ gboolean calendar_clock_engine_is_running(
  * calendar_clock_engine_format:
  * @engine: clock engine
  *
- * Returns: (transfer full): allocated current native-clock text
+ * Returns: (transfer full): allocated current native-clock text, or empty
+ * text while the engine is idle or its selected configuration was rejected
  */
 gchar *calendar_clock_engine_format(
     const CalendarClockEngine *engine);

@@ -482,6 +482,9 @@ var Calendar = class Calendar {
     }
 
     _browse(yearDelta, periodDelta, baseDate = null, focus = false) {
+        if (this._destroyed || !this._calendarSystem) {
+            return;
+        }
         const sourceDate = baseDate || this._pendingDate || this._selectedDate;
         const args = _dateFields(sourceDate);
         const variant = yearDelta !== 0
