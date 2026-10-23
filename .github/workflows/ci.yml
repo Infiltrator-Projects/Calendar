@@ -31,6 +31,7 @@ jobs:
         with:
           submodules: true
       - name: Install build dependencies
+        if: runner.environment == 'github-hosted'
         run: |
           sudo apt-get update
           sudo apt-get install -y \
@@ -117,6 +118,7 @@ jobs:
         with:
           submodules: true
       - name: Install build dependencies
+        if: runner.environment == 'github-hosted'
         run: |
           sudo apt-get update
           sudo apt-get install -y \
@@ -136,6 +138,7 @@ jobs:
         with:
           submodules: true
       - name: Install coverage dependencies
+        if: runner.environment == 'github-hosted'
         run: |
           sudo apt-get update
           sudo apt-get install -y \
@@ -154,6 +157,7 @@ jobs:
         with:
           submodules: true
       - name: Install analysis dependencies
+        if: runner.environment == 'github-hosted'
         run: |
           sudo apt-get update
           sudo apt-get install -y \
@@ -163,7 +167,7 @@ jobs:
 
   debian-package:
     needs: [native]
-    runs-on: [self-hosted, Linux, X64, linux-native]
+    runs-on: ubuntu-24.04
     outputs:
       release_requested: ${{ steps.release-intent.outputs.requested }}
       release_version: ${{ steps.release-intent.outputs.version }}
