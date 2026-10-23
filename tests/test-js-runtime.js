@@ -472,6 +472,7 @@ function evaluateCalendar() {
 
     const context = {
         console,
+        _: value => value,
         global: { logError() {} },
         log() {},
         require(name) {
