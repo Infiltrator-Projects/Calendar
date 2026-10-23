@@ -4,7 +4,9 @@
 
 ## Status and ownership
 
-This document is Calendar's specialist historical authority for **native ancient Egyptian** date- and time-reckoning. Its scope is intentionally narrow: it records the Egyptian systems themselves, not every calendar or clock that later existed in Egypt under Greek, Roman, Christian or other traditions.
+This document is Calendar's historical research catalogue for **native ancient Egyptian** date- and time-reckoning. Its scope is intentionally narrow: it records the Egyptian systems themselves, not every calendar or clock that later existed in Egypt under Greek, Roman, Christian or other traditions.
+
+This research is outside the completed [Calendar 1.0 baseline](ROADMAP.md#scope-decision). It creates no implementation commitment or release requirement; the existing Egyptian Nabonassar resource remains supported independently.
 
 `MODELS.md` remains authoritative for Calendar's general evidence hierarchy, failure semantics and model-admission rules. This document owns the Egyptian historical detail.
 

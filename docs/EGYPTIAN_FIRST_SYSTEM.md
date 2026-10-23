@@ -4,7 +4,7 @@
 
 ## Purpose
 
-This document defines the **first Egyptian date-and-time profile** that Calendar should implement when working through native Egyptian systems in historical order.
+This document explores a possible **first Egyptian date-and-time profile** for future work. It is research outside the completed [Calendar 1.0 baseline](ROADMAP.md#scope-decision), not an implementation commitment or release requirement.
 
 It records the project's **current best historical model** from the available archaeological and specialist evidence. It is not frozen doctrine. If stronger evidence or specialist consensus changes, the model, tests and presentation must change with it.
 
@@ -31,9 +31,9 @@ The earliest Egyptian calendar was most likely lunar. A 2024 peer-reviewed UCLA 
 
 The fixed 365-day civil calendar belongs later, by the first half of the third millennium BCE. It is therefore not the first calendar in this historical sequence.
 
-## Current project model
+## Research model
 
-Calendar shall model the earliest system as an **observational lunar calendar associated with the Nile seasonal cycle**.
+The proposed provider would model the earliest system as an **observational lunar calendar associated with the Nile seasonal cycle**.
 
 The current model is:
 

@@ -1,8 +1,9 @@
 # Roadmap
 
-Calendar is feature-complete for its current Linux/Cinnamon product scope. This
-document therefore defines a maintenance boundary rather than a queue of work
-that must be invented before the application can be considered finished.
+Calendar 1.0 is feature-complete for the implemented Linux/Cinnamon product
+scope. The completion baseline was confirmed on 23 October 2026 for release
+1.0.124. This document is the authority for that scope and its maintenance
+boundary.
 
 ## Completion baseline
 
@@ -12,6 +13,24 @@ that must be invented before the application can be considered finished.
 - keep unavailable astronomical or platform states explicit rather than guessing values
 - keep proprietary font binaries outside the redistributed source/package while honouring the preferred typography contract when those fonts are installed
 - require the exact release revision to pass the automated qualification gates
+
+The baseline includes the panel clock, calendar grid/navigation, CalendarServer
+events, existing settings and desktop integration, and the current resource
+catalogue. OS-following standard time and the host Gregorian calendar remain
+available without optional resources. Common's independent resource package
+adds the 31 calendars and 23 explicit clocks; Calendar owns no private model
+fallbacks.
+
+## Scope decision
+
+Earlier discussions and research proposals are not an outstanding feature
+backlog. The proposed Parker Egyptian lunistellar calendar and early Egyptian
+lunar/stellar–solar profile are excluded from this completion baseline. The
+existing Egyptian Nabonassar resource remains part of the released catalogue.
+
+The Egyptian documents are retained as research for possible future work. They
+do not promise implementation or hold this release open. Any later expansion is
+separate work; it does not retrospectively make this baseline incomplete.
 
 ## Maintenance priorities
 

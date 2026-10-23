@@ -1,3 +1,14 @@
+calendar (1.0.124) unstable; urgency=medium
+
+  * Confirm the implemented Linux/Cinnamon feature set as the completed
+    Calendar 1.0 baseline, with 31 calendars and 23 explicit clock resources.
+  * Classify proposed Egyptian calendar and clock work as optional research
+    outside the completion baseline, preserving the Nabonassar resource.
+  * Correct README ownership and package-identity descriptions to match the
+    independently installed Common resources and current calendar package.
+
+ -- Shannon Smith <infiltratr@yandex.com>  Fri, 23 Oct 2026 11:02:48 +1100
+
 calendar (1.0.123) unstable; urgency=medium
 
   * Return no clock display after a stopped or rejected selection, preventing

@@ -12,7 +12,9 @@ Calendar is a native Cinnamon panel clock and calendar with alternative clock mo
 **Build-tested bases:** Debian 13, Linux Mint 22 and Ubuntu 24.04\
 **Shared foundation:** an exact pinned Libraries release, including canonical theme, typography and structural-metric contracts
 
-Date and clock wording follows the desktop UI language while the selected calendar and clock retain their own rules. Traditional Chinese time renders as `Shēn hour` or `Shēn, first half` in English, and native Chinese forms in Chinese. Roman seasonal daylight clocks retain Roman numerals and native twelfths with translated wording. The panel schedules updates at those native boundaries. Calendar also exposes `calendar_format_date_v1`, a bounded C date-rendering entry point used by Common's optional POSIX bridge; date conversion remains in this native engine.
+The released feature set is the completed Calendar 1.0 baseline. [Roadmap](docs/ROADMAP.md) defines its maintenance boundary and distinguishes optional research from release work.
+
+Date and clock wording follows the desktop UI language while the selected calendar and clock retain their own rules. Traditional Chinese time renders as `Shēn hour` or `Shēn, first half` in English, and native Chinese forms in Chinese. Roman seasonal daylight clocks retain Roman numerals and native twelfths with translated wording. The panel schedules updates at those native boundaries. Calendar also exposes `calendar_format_date_v1`, a bounded C date-rendering entry point available to Common's optional POSIX bridge; it delegates conversion and formatting to the validated system resource.
 
 Chinese and Korean Dangi dates/year headings use native cyclic year names, such as `bing-wu`, `丙午` or `병오`, without adding a Gregorian reference year or a bare cycle counter. Edo clocks retain Japanese bell numerals with localized branch names and wording; explicit 12-hour clocks use locale-specific day-period markers and ordering. The same date output is supplied to Files and System Settings.
 
@@ -72,25 +74,12 @@ Code and tests remain authoritative for executable behaviour. Immutable tags and
 
 ## Architecture summary
 
-```text
-Cinnamon presentation / settings / panel lifecycle
-                    ↓
-         JavaScript/native boundary
-                    ↓
-GObject / GVariant / CalendarServer / main-loop adapters
-                    ↓
-portable Calendar domain contracts
-                    ↓
-chronology / clocks / astronomy / event semantics
-
-Calendar native arithmetic    Libraries (exact pinned release)
-     ↓                                  ↓
-fixed-rule chronology         generic checked arithmetic /
-                               formatting / timing / loading /
-
-ICU / CLDR → remaining lunisolar/astronomical conversion and locale formatting
-                               UTF-8 / allocation primitives
-```
+| Owner | Responsibility |
+| --- | --- |
+| Cinnamon frontend | Panel/popup presentation, settings and desktop lifecycle |
+| Calendar core and adapters | Civil coordinates, grid construction, event semantics, native presentation boundary and timer orchestration |
+| Pinned Common library | Shared primitives, temporal policy, resource discovery, ABI validation and loading |
+| Independently installed Common resources | Calendar conversion, clock rendering, astronomical models and next-visible-tick boundaries; ICU/CLDR where delegated |
 
 The source tree is grouped by responsibility:
 
@@ -175,8 +164,6 @@ The About dialog reports the compiled build profile using Libraries's canonical 
 The `.run` performs a two-pass local build. Pass 1 instruments Calendar and the pinned Common library with GCC profile generation, runs Calendar's automated tests plus a representative clock/calendar/event workload on the actual machine, then pass 2 rebuilds with the measured profile using `-fprofile-use -fprofile-correction -fprofile-partial-training`. The resulting Debian-managed package is therefore tuned to the local CPU rather than being a generic repository build. The correctness-preserving profile deliberately does not use `-Ofast` or `-ffast-math`.
 
 After installation, add **Calendar** from **System Settings → Applets**.
-
-The previous `calendar` and `cinnamon-calendar` Debian names are migration identities only. The central Infiltrator repository supplies transitional packages so installed systems move to `calendar` without losing the application.
 
 GitHub supplies the standard source ZIP and tarball for each immutable release tag, so the project does not upload a redundant source archive.
 

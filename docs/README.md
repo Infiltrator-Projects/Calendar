@@ -8,7 +8,7 @@ This directory is the canonical documentation entry point for Calendar. The Infi
 - [Architecture](ARCHITECTURE.md) — ownership, layers, dependencies and system boundaries.
 - [Design](DESIGN.md) — first-principles goals, non-goals, trade-offs and failure philosophy.
 - [Decisions](DECISIONS.md) — durable architectural decisions, alternatives and consequences.
-- [Roadmap](ROADMAP.md) — current foundation, near-term priorities and longer-term direction.
+- [Roadmap](ROADMAP.md) — completed product scope, maintenance boundary and optional expansion.
 - [Validation](VALIDATION.md) — automated, manual and environment-specific evidence boundaries.
 - [Project README](../README.md) — product overview, capabilities, build/use entry point and engineering ethos.
 - [Changelog](../CHANGELOG.md) — pointer to the single versioned release-history authority in `debian/changelog`.
@@ -24,8 +24,8 @@ Specialist documents may go deeper into one subsystem, protocol, platform, repre
 ## Specialist documentation
 
 - [Chronology, time and astronomy models](MODELS.md) — evidence hierarchy, provenance, continuation rules, astronomical assumptions and model failure semantics.
-- [Native Ancient Egyptian chronology and timekeeping](EGYPTIAN_CHRONOLOGY_AND_TIMEKEEPING.md) — the five native Egyptian date-system families and five native Egyptian time-system families, their evidence status, model boundaries, precision semantics and admission requirements. Imported, Coptic and later non-native systems are deliberately excluded from this Egyptian catalogue.
-- [First Egyptian calendar and time system](EGYPTIAN_FIRST_SYSTEM.md) — the current best historical model for the earliest Egyptian profile: Early Egyptian Lunar Calendar plus Early Egyptian Stellar–Solar Time, including the evidence base and the rule that the model changes when stronger evidence changes the historical conclusion.
+- [Native Ancient Egyptian chronology and timekeeping](EGYPTIAN_CHRONOLOGY_AND_TIMEKEEPING.md) — optional historical research into five date and five time families, outside the completed product scope.
+- [First Egyptian calendar and time system](EGYPTIAN_FIRST_SYSTEM.md) — optional research into an early lunar/stellar–solar profile, outside the completed product scope.
 - [Portability](PORTABILITY.md) — language, platform, representation, locale, ABI and compatibility boundaries.
 - [Qualification](QUALIFICATION.md) — exact-source environment-dependent Cinnamon/location evidence and its evidence-class boundaries.
 
