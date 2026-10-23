@@ -107,6 +107,8 @@ var Calendar = class Calendar {
         this._pendingDate = null;
         this._focusAfterUpdate = null;
         this.events_enabled = false;
+        this._renderedRecords = null;
+        this._renderedCells = [];
 
         this._actorSignals = new SignalBag();
         this._eventSignals = new SignalBag();
@@ -291,7 +293,7 @@ var Calendar = class Calendar {
         this._update_id = Mainloop.idle_add(() => {
             this._update_id = 0;
             if (!this._destroyed) {
-                this._update(false);
+                this._refreshEventDots();
             }
             return GLib.SOURCE_REMOVE;
         });
@@ -318,6 +320,8 @@ var Calendar = class Calendar {
 
         const weekOffset = this.show_week_numbers ? 1 : 0;
         this.actor.destroy_all_children();
+        this._renderedRecords = null;
+        this._renderedCells = [];
 
         const monthBox = new St.BoxLayout();
         const yearBox = new St.BoxLayout();
@@ -500,9 +504,57 @@ var Calendar = class Calendar {
     }
 
     _removeCells() {
+        this._renderedRecords = null;
+        this._renderedCells = [];
         const children = this.actor.get_children();
         for (let index = children.length - 1; index >= this._firstCellIndex; index--) {
             this.actor.remove_actor(children[index]);
+        }
+    }
+
+    refreshToday() {
+        if (!this._destroyed) {
+            this._update(false);
+        }
+    }
+
+    _setCellColors(cell, colors) {
+        const next = this.events_enabled ? (colors || []).slice(0, MAX_EVENT_DOTS) : [];
+        if (next.length === cell.colors.length &&
+            next.every((color, index) => color === cell.colors[index])) {
+            return;
+        }
+        cell.colors = next;
+        cell.dotBox.destroy_all_children();
+        for (const color of next) {
+            cell.dotBox.add_actor(new St.Bin({
+                style_class: "calendar-day-event-dot",
+                style: `background-color: ${color};`,
+                x_align: Clutter.ActorAlign.CENTER,
+            }));
+        }
+        cell.button.set_accessible_name(
+            cell.accessibleBase + (next.length > 0 ? `, ${_("Calendar events")}` : "")
+        );
+    }
+
+    _refreshEventDots() {
+        if (this._destroyed || !this._calendarSystem) {
+            return;
+        }
+        if (this._renderedRecords === null) {
+            this._update(false);
+            return;
+        }
+        const colorsByCell = EventProjection.build(
+            this._renderedRecords, this.event_source, this.events_enabled,
+            false, _representableLocalDate, MAX_EVENT_DOTS
+        );
+        for (let index = 0; index < this._renderedCells.length; index++) {
+            const cell = this._renderedCells[index];
+            if (cell) {
+                this._setCellColors(cell, colorsByCell[index]);
+            }
         }
     }
 
@@ -541,6 +593,7 @@ var Calendar = class Calendar {
         this._removeCells();
 
         const records = NativeBoundary.decodeCalendarGrid(model);
+        this._renderedRecords = records;
         const eventColorsByCell = EventProjection.build(
             records,
             this.event_source,
@@ -551,13 +604,13 @@ var Calendar = class Calendar {
         );
 
         for (let index = 0; index < records.length; index++) {
-            this._addGridCell(records[index], eventColorsByCell[index] || []);
+            this._addGridCell(records[index], eventColorsByCell[index] || [], index);
         }
 
         this.event_source.select_date(_cloneDate(this._selectedDate), forceReload);
     }
 
-    _addGridCell(record, eventColors) {
+    _addGridCell(record, eventColors, index) {
         const {
             dayLabel,
             year,
@@ -579,9 +632,6 @@ var Calendar = class Calendar {
             global.logError("Calendar: native grid returned an invalid civil date.");
             return;
         }
-        eventColors = this.events_enabled
-            ? eventColors.slice(0, MAX_EVENT_DOTS)
-            : [];
         const accessibleParts = [
             `${this.getCalendarName()}: ${this.formatDate(date, "full")}`,
         ];
@@ -591,10 +641,7 @@ var Calendar = class Calendar {
         if (isSelected) {
             accessibleParts.push(_("Selected"));
         }
-        if (eventColors.length > 0) {
-            accessibleParts.push(_("Calendar events"));
-        }
-
+        const accessibleBase = accessibleParts.join(", ");
         const group = new Cinnamon.Stack();
         const button = new St.Button({
             label: dayLabel,
@@ -603,7 +650,7 @@ var Calendar = class Calendar {
              * Home/End and Page keys move that focus spatially inside the grid.
              */
             can_focus: isSelected,
-            accessible_name: accessibleParts.join(", "),
+            accessible_name: accessibleBase,
         });
         /*
          * Date selection belongs to Calendar, not to CalendarServer. Event
@@ -654,16 +701,9 @@ var Calendar = class Calendar {
             });
         }
 
-        if (!this.events_enabled) {
-            return;
-        }
-        for (const color of eventColors) {
-            dotBox.add_actor(new St.Bin({
-                style_class: "calendar-day-event-dot",
-                style: `background-color: ${color};`,
-                x_align: Clutter.ActorAlign.CENTER,
-            }));
-        }
+        const cell = { button, dotBox, accessibleBase, colors: [] };
+        this._renderedCells[index] = cell;
+        this._setCellColors(cell, eventColors);
     }
 
     _dayStyle(workday, today, currentPeriod, topRow, leftEdge) {

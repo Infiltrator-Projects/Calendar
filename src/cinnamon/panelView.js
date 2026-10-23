@@ -72,6 +72,9 @@ var PanelClockView = class PanelClockView {
         if (!this.label || !text) {
             return;
         }
+        if (this.label.get_text() === text) {
+            return;
+        }
         this.label.set_text(text);
         this.updateWidth();
     }

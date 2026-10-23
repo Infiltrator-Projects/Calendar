@@ -100,7 +100,11 @@ function evaluateApplet(nativeVersion = version, loaderMode = "legacy") {
                 },
             },
         },
-        panelClock: { CLOCK_MODE_STANDARD: "standard" },
+        panelClock: {
+            CLOCK_MODE_STANDARD: "standard",
+            todayDisplay() { return { shortDate: "23 Oct", tooltip: "23 October" }; },
+            dayName() { return "Friday"; },
+        },
     };
     const runtimeSupport = {
         SignalBag,
@@ -430,6 +434,7 @@ function evaluateCalendar() {
         },
     };
     const Clutter = {
+        ActorAlign: { CENTER: 0 },
         KEY_Left: 1,
         KEY_Right: 2,
         KEY_Up: 3,
@@ -509,7 +514,7 @@ function evaluateCalendar() {
                 Clutter,
                 Gio: { Settings: DesktopSettings },
                 GLib: { SOURCE_REMOVE: false },
-                St: { Table },
+                St: { Table, Bin: class Bin { constructor(params) { this.params = params; } } },
                 Pango: { SCALE: 1024 },
                 Cinnamon: {
                     util_get_week_start() { return 0; },
@@ -699,9 +704,12 @@ function evaluatePanelClock() {
 
 function testPanelClockDefensiveFormatting() {
     const { PanelClock, systemClock, observations } = evaluatePanelClock();
+    let shellReads = 0;
     const clock = {
-        get_clock() { return "12:34"; },
-        get_clock_for_format() { return null; },
+        get_clock() { shellReads++; return "12:34"; },
+        get_clock_for_format() {
+            throw new Error("native mode must not probe WallClock");
+        },
     };
     const base = {
         mode: "decimal",
@@ -727,6 +735,7 @@ function testPanelClockDefensiveFormatting() {
         "@500",
         "native time must remain authoritative for non-conventional modes"
     );
+    assert.equal(shellReads, 0, "native ticks must not re-read WallClock");
 
     const conventional = { ...base, mode: "standard" };
     assert.equal(
@@ -1590,6 +1599,118 @@ function testEventListCacheIdentity() {
     assert.equal(stableRow.variationUpdates, 1);
 }
 
+function testPanelViewSkipsUnchangedLabels() {
+    const source = fs.readFileSync(
+        path.join(root, "src", "cinnamon", "panelView.js"), "utf8"
+    );
+    const context = {
+        imports: { gi: {
+            GObject: { registerClass(klass) { return klass; } },
+            Pango: { EllipsizeMode: { NONE: 0 } },
+            St: { Bin: class {}, Label: class {} },
+        } },
+    };
+    vm.createContext(context);
+    vm.runInContext(
+        source + "\nglobalThis.__PanelClockView = PanelClockView;",
+        context, { filename: "panelView.js" }
+    );
+    const panel = Object.create(context.__PanelClockView.prototype);
+    let text = "10:00", writes = 0, layouts = 0;
+    panel.label = {
+        get_text() { return text; },
+        set_text(value) { text = value; writes++; },
+    };
+    panel.updateWidth = () => { layouts++; };
+    panel.setText("10:00");
+    assert.equal(writes, 0);
+    assert.equal(layouts, 0);
+    panel.setText("10:01");
+    assert.equal(writes, 1);
+    assert.equal(layouts, 1);
+}
+
+function testClockRefreshIsBoundaryDriven() {
+    const CalendarApplet = evaluateApplet();
+    const applet = Object.create(CalendarApplet.prototype);
+    let panelTicks = 0, todayRefreshes = 0, agendaRefreshes = 0;
+    const menu = { isOpen: false };
+    Object.assign(applet, {
+        _destroyed: false,
+        clock: {},
+        menu,
+        _calendar: {
+            todaySelected() { return true; },
+            refreshToday() { throw new Error("initial date must not rebuild grid"); },
+        },
+        events_manager: {},
+        event_list: { refresh_variations() { agendaRefreshes++; } },
+        _popupView: { updateToday() { todayRefreshes++; } },
+        _updatePanelClock() { panelTicks++; },
+        _clockConfig() { return {}; },
+        set_applet_tooltip() {},
+        _displayedCivilDay: null,
+        _displayedAgendaMinute: null,
+    });
+    applet._updateClockAndDate();
+    applet._updateClockAndDate();
+    assert.equal(panelTicks, 2);
+    assert.equal(todayRefreshes, 1, "second ticks must not reformat the date");
+    assert.equal(agendaRefreshes, 0, "closed agenda must not be refreshed");
+    menu.isOpen = true;
+    applet._updateClockAndDate();
+    applet._updateClockAndDate();
+    assert.equal(agendaRefreshes, 1, "same-minute open ticks must be coalesced");
+    applet._updateClockAndDate(true);
+    assert.equal(todayRefreshes, 2, "explicit settings/selection refresh must work");
+    assert.equal(agendaRefreshes, 2, "popup reopening must refresh the agenda");
+}
+
+function testEventDotUpdateRetainsGridActors() {
+    const { Calendar } = evaluateCalendar();
+    const calendar = Object.create(Calendar.prototype);
+    let color = "#112233", rebuilds = 0, dotReplacements = 0, accessible = "";
+    const dots = [];
+    const cell = {
+        colors: [],
+        accessibleBase: "Gregorian: Friday, 23 October 2026",
+        button: { set_accessible_name(value) { accessible = value; } },
+        dotBox: {
+            destroy_all_children() { dots.length = 0; dotReplacements++; },
+            add_actor(actor) { dots.push(actor); },
+        },
+    };
+    Object.assign(calendar, {
+        _destroyed: false,
+        _calendarSystem: {},
+        _renderedRecords: [{ year: 2026, month: 10, day: 23 }],
+        _renderedCells: [cell],
+        events_enabled: true,
+        _update() { rebuilds++; },
+        event_source: {
+            set_visible_range() {},
+            get_colors_for_range() { return [[color]]; },
+        },
+    });
+    calendar._refreshEventDots();
+    assert.equal(rebuilds, 0, "event-only change must reuse month grid");
+    assert.equal(dotReplacements, 1);
+    assert.equal(dots.length, 1);
+    assert.match(accessible, /Calendar events/);
+    calendar._refreshEventDots();
+    assert.equal(dotReplacements, 1, "identical colours must not mutate actors");
+    color = "#445566";
+    calendar._refreshEventDots();
+    assert.equal(dotReplacements, 2, "changed colour must update dots in place");
+    calendar.events_enabled = false;
+    calendar._refreshEventDots();
+    assert.equal(dots.length, 0);
+    assert.doesNotMatch(accessible, /Calendar events/);
+}
+
+testPanelViewSkipsUnchangedLabels();
+testClockRefreshIsBoundaryDriven();
+testEventDotUpdateRetainsGridActors();
 testPanelClockDefensiveFormatting();
 testPanelClockPreservesLocaleCasingAndNullFormats();
 testMintFallbackClockFormatting();

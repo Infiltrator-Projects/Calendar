@@ -81,6 +81,8 @@ class CalendarApplet extends Applet.Applet {
         this._popupView = null;
         this._temporalPolicy = null;
         this._desktopIntegration = null;
+        this._displayedCivilDay = null;
+        this._displayedAgendaMinute = null;
 
         this._signals = new SignalBag();
         this._eventSignals = new SignalBag();
@@ -129,7 +131,7 @@ class CalendarApplet extends Applet.Applet {
         this._signals.connect(
             this.system_clock,
             "tick",
-            () => this._updatePanelClock()
+            () => this._updateClockAndDate()
         );
         this._signals.connect(
             this.system_clock,
@@ -221,7 +223,7 @@ class CalendarApplet extends Applet.Applet {
         this._eventSignals.connect(
             this._calendar,
             "selected-date-changed",
-            () => this._updateClockAndDate()
+            () => this._updateClockAndDate(true)
         );
     }
 
@@ -282,7 +284,7 @@ class CalendarApplet extends Applet.Applet {
         this._resetLabelWidth();
         this.event_list.set_use_24h(this._desktopUses24h());
         this._configureWallClock();
-        this._updateClockAndDate();
+        this._updateClockAndDate(true);
         if (refreshAgenda && this.events_manager.is_active()) {
             this.events_manager.select_date(
                 this._calendar.getSelectedDate(),
@@ -322,6 +324,7 @@ class CalendarApplet extends Applet.Applet {
             }
             this.events_manager.start_events();
             this._resetCalendar();
+            this._updateClockAndDate(true);
             this._rebalancePopupWidth();
         });
     }
@@ -335,7 +338,7 @@ class CalendarApplet extends Applet.Applet {
             this.system_clock.stop();
             this._syncSystemClock();
         }
-        this._updateClockAndDate();
+        this._updateClockAndDate(true);
     }
 
     _applyThemeMode() {
@@ -372,7 +375,7 @@ class CalendarApplet extends Applet.Applet {
         this._syncCalendarSystem();
         this._configureWallClock();
         this._syncSystemClock();
-        this._updateClockAndDate();
+        this._updateClockAndDate(true);
         this._syncEventVisibility(false);
     }
 
@@ -428,27 +431,39 @@ class CalendarApplet extends Applet.Applet {
         }
     }
 
-    _updateClockAndDate() {
+    _updateClockAndDate(force = false) {
         if (this._destroyed || !this.clock || !this._calendar ||
             !this.events_manager || !this.event_list || !this._popupView) {
             return;
         }
 
         this._updatePanelClock();
-        const display = PanelClock.todayDisplay(
-            this.clock,
-            this._calendar_system,
-            this._clockConfig()
-        );
-        const dayName = PanelClock.dayName(this.clock);
-        this._popupView.updateToday(
-            dayName,
-            display.shortDate,
-            this._calendar.todaySelected()
-        );
+        const now = new Date();
+        const civilDay = `${now.getFullYear()}-${now.getMonth() + 1}-${now.getDate()}`;
+        const dayChanged = civilDay !== this._displayedCivilDay;
+        if (dayChanged || force) {
+            /* At midnight keep the user's selected month while correcting
+             * the native "today" grid state; initial setup builds the grid. */
+            if (dayChanged && this._displayedCivilDay !== null) {
+                this._calendar.refreshToday();
+            }
+            this._displayedCivilDay = civilDay;
+            const display = PanelClock.todayDisplay(
+                this.clock, this._calendar_system, this._clockConfig()
+            );
+            const dayName = PanelClock.dayName(this.clock);
+            this._popupView.updateToday(
+                dayName, display.shortDate, this._calendar.todaySelected()
+            );
+            this.set_applet_tooltip(display.tooltip);
+        }
 
-        this.set_applet_tooltip(display.tooltip);
-        this.event_list.refresh_variations();
+        const minute = Math.floor(now.getTime() / 60000);
+        if (this.menu && this.menu.isOpen &&
+            (dayChanged || force || minute !== this._displayedAgendaMinute)) {
+            this._displayedAgendaMinute = minute;
+            this.event_list.refresh_variations();
+        }
     }
 
     _syncEventVisibility(forceRefresh) {

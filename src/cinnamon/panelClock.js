@@ -23,58 +23,12 @@ var CLOCK_MODE_STANDARD_24 = "standard-24";
 var CLOCK_MODE_STANDARD_12 = "standard-12";
 
 const DAY_FORMAT = CinnamonDesktop.WallClock.lctime_format("cinnamon", "%A");
-const DATE_FORMAT_SHORT = CinnamonDesktop.WallClock.lctime_format(
-    "cinnamon", _("%B %-e, %Y")
-);
-const DATE_FORMAT_FULL = CinnamonDesktop.WallClock.lctime_format(
-    "cinnamon", _("%A, %B %-e, %Y")
-);
-
-/*
- * These strings intentionally pass through CinnamonDesktop.WallClock.  That
- * preserves locale-aware day/month ordering while Calendar independently
- * controls whether this applet instance displays seconds.
- */
 const DEFAULT_CLOCK_FORMATS = Object.freeze({
-    withDate24Seconds: CinnamonDesktop.WallClock.lctime_format(
-        "cinnamon", "%A %B %-e, %R:%S"
-    ),
-    withDate12Seconds: CinnamonDesktop.WallClock.lctime_format(
-        "cinnamon", "%A %B %-e, %-l:%M:%S %p"
-    ),
-    withDate24: CinnamonDesktop.WallClock.lctime_format(
-        "cinnamon", "%A %B %-e, %R"
-    ),
-    withDate12: CinnamonDesktop.WallClock.lctime_format(
-        "cinnamon", "%A %B %-e, %-l:%M %p"
-    ),
-    withoutDate24Seconds: CinnamonDesktop.WallClock.lctime_format(
-        "cinnamon", "%R:%S"
-    ),
-    withoutDate12Seconds: CinnamonDesktop.WallClock.lctime_format(
-        "cinnamon", "%-l:%M:%S %p"
-    ),
-    withoutDate24: CinnamonDesktop.WallClock.lctime_format("cinnamon", "%R"),
-    withoutDate12: CinnamonDesktop.WallClock.lctime_format(
-        "cinnamon", "%-l:%M %p"
-    ),
+    seconds24: CinnamonDesktop.WallClock.lctime_format("cinnamon", "%R:%S"),
+    seconds12: CinnamonDesktop.WallClock.lctime_format("cinnamon", "%-l:%M:%S %p"),
+    minutes24: CinnamonDesktop.WallClock.lctime_format("cinnamon", "%R"),
+    minutes12: CinnamonDesktop.WallClock.lctime_format("cinnamon", "%-l:%M %p"),
 });
-
-/*
- * A native horizontal clock retains Cinnamon's localized surrounding date and
- * replaces only the conventional time token.  Longer candidates come first so
- * HH:MM cannot consume the prefix of HH:MM:SS.
- */
-const CONVENTIONAL_TIME_FORMATS = Object.freeze([
-    "%H:%M:%S",
-    "%-l:%M:%S %p",
-    "%l:%M:%S %p",
-    "%I:%M:%S %p",
-    "%H:%M",
-    "%-l:%M %p",
-    "%l:%M %p",
-    "%I:%M %p",
-]);
 
 function isNativeClockMode(mode) {
     /* Every explicit selection requires a resource, including an unknown or
@@ -133,35 +87,17 @@ function uses24HourClock(mode, use24h) {
 }
 
 function defaultHorizontalFormat(config) {
-    /*
-     * Cinnamon's WallClock can only render Gregorian date text. When System
-     * Settings selects another calendar, keep WallClock responsible for the
-     * time token only; panelText() will prepend the selected calendar's date
-     * through Calendar's own chronology engine.
-     */
-    const showDate = false; // Every selected date comes from its resource.
+    /* The calendar resource supplies the date independently of WallClock. */
     const use24 = uses24HourClock(config.mode, config.use24h);
     const seconds = config.showSeconds && !isNativeClockMode(config.mode);
-
-    if (showDate) {
-        if (use24) {
-            return seconds
-                ? DEFAULT_CLOCK_FORMATS.withDate24Seconds
-                : DEFAULT_CLOCK_FORMATS.withDate24;
-        }
-        return seconds
-            ? DEFAULT_CLOCK_FORMATS.withDate12Seconds
-            : DEFAULT_CLOCK_FORMATS.withDate12;
-    }
-
     if (use24) {
         return seconds
-            ? DEFAULT_CLOCK_FORMATS.withoutDate24Seconds
-            : DEFAULT_CLOCK_FORMATS.withoutDate24;
+            ? DEFAULT_CLOCK_FORMATS.seconds24
+            : DEFAULT_CLOCK_FORMATS.minutes24;
     }
     return seconds
-        ? DEFAULT_CLOCK_FORMATS.withoutDate12Seconds
-        : DEFAULT_CLOCK_FORMATS.withoutDate12;
+        ? DEFAULT_CLOCK_FORMATS.seconds12
+        : DEFAULT_CLOCK_FORMATS.minutes12;
 }
 
 function configureWallClock(clock, config) {
@@ -203,41 +139,16 @@ function syncNativeClock(systemClock, config) {
         config.longitude
     );
 }
-function nativePanelText(clock, systemClock, config) {
+function nativePanelText(systemClock, config) {
     if (!locationIsConfigured(config)) {
         return config.vertical ? "N/A\nLOC" : "N/A LOC";
     }
-
+    /* The resource owns the native display text. WallClock is already
+     * configured with a time-only string; probing multiple patterns and
+     * replacing a token duplicates native calls without changing output. */
     const nativeTime = systemClock.get_time();
-    if (typeof nativeTime !== "string" || nativeTime.length === 0) {
-        return _("Clock unavailable");
-    }
-    if (config.vertical) {
-        return nativeTime;
-    }
-
-    const shellText = clock.get_clock();
-    if (typeof shellText !== "string") {
-        return nativeTime;
-    }
-
-    for (const pattern of CONVENTIONAL_TIME_FORMATS) {
-        const normalTime = clockForFormat(clock, pattern);
-        if (normalTime === null || normalTime.length === 0) {
-            continue;
-        }
-        const replaced = NativeCalendar.replace_time(
-            shellText,
-            normalTime,
-            nativeTime
-        );
-        if (replaced !== null) {
-            return replaced;
-        }
-    }
-
-    /* A custom pattern may intentionally contain no conventional time token. */
-    return nativeTime;
+    return typeof nativeTime === "string" && nativeTime.length > 0
+        ? nativeTime : _("Clock unavailable");
 }
 
 function selectedCalendarPanelDate(primaryCalendarSystem, config) {
@@ -273,7 +184,7 @@ function panelText(clock, systemClock, config, primaryCalendarSystem = null) {
     let text;
 
     if (isNativeClockMode(config.mode)) {
-        text = systemClock ? nativePanelText(clock, systemClock, config) : _("Clock unavailable");
+        text = systemClock ? nativePanelText(systemClock, config) : _("Clock unavailable");
     } else {
         text = clock.get_clock();
     }

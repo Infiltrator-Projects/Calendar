@@ -1,3 +1,14 @@
+calendar (1.0.125) unstable; urgency=medium
+
+  * Reuse month actors on event-only updates while refreshing dot colours and
+    accessibility without rebuilding day buttons.
+  * Remove redundant WallClock probes and unchanged panel-label layout work.
+  * Refresh the date at civil-day changes and visible agenda rows by minute,
+    retaining explicit refresh on settings, selection, resume and popup open.
+  * Add behavioural performance-regression tests.
+
+ -- Shannon Smith <infiltratr@yandex.com>  Fri, 23 Oct 2026 14:00:00 +1100
+
 calendar (1.0.124) unstable; urgency=medium
 
   * Confirm the implemented Linux/Cinnamon feature set as the completed
