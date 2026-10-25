@@ -20,7 +20,7 @@ concurrency:
 jobs:
   native:
     name: Native / ${{ matrix.compiler }}
-    runs-on: [self-hosted, Linux, X64, linux-native]
+    runs-on: ubuntu-24.04
     timeout-minutes: 30
     strategy:
       fail-fast: false
@@ -31,13 +31,12 @@ jobs:
         with:
           submodules: true
       - name: Install build dependencies
-        if: runner.environment == 'github-hosted'
         run: |
           sudo apt-get update
           sudo apt-get install -y \
             build-essential clang desktop-file-utils gettext gobject-introspection gjs curl \
             gir1.2-glib-2.0-dev libglib2.0-dev libgtk-3-dev libicu-dev nodejs \
-            pkg-config python3 xdotool xvfb xz-utils
+            pkg-config python3 shellcheck xauth xdotool xvfb xz-utils
       - name: Install Common resource test dependency
         run: tools/test-resources.sh "$RUNNER_TEMP/common-resources"
       - name: Build and test
@@ -111,18 +110,17 @@ jobs:
 
   sanitizer:
     name: ASan / UBSan
-    runs-on: [self-hosted, Linux, X64, linux-native]
+    runs-on: ubuntu-24.04
     timeout-minutes: 30
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           submodules: true
       - name: Install build dependencies
-        if: runner.environment == 'github-hosted'
         run: |
           sudo apt-get update
           sudo apt-get install -y \
-            build-essential gobject-introspection \
+            build-essential gettext gobject-introspection gjs \
             gir1.2-glib-2.0-dev libglib2.0-dev libgtk-3-dev libicu-dev pkg-config
       - name: Install Common resource test dependency
         run: tools/test-resources.sh "$RUNNER_TEMP/common-resources"
@@ -131,18 +129,17 @@ jobs:
 
   coverage:
     name: Coverage
-    runs-on: [self-hosted, Linux, X64, linux-native]
+    runs-on: ubuntu-24.04
     timeout-minutes: 30
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           submodules: true
       - name: Install coverage dependencies
-        if: runner.environment == 'github-hosted'
         run: |
           sudo apt-get update
           sudo apt-get install -y \
-            build-essential gcovr libglib2.0-dev libgtk-3-dev libicu-dev pkg-config
+            build-essential gcovr gettext gjs libglib2.0-dev libgtk-3-dev libicu-dev pkg-config
       - name: Install Common resource test dependency
         run: tools/test-resources.sh "$RUNNER_TEMP/common-resources"
       - name: Coverage gate
@@ -150,14 +147,13 @@ jobs:
 
   static-analysis:
     name: Clang-tidy
-    runs-on: [self-hosted, Linux, X64, linux-native]
+    runs-on: ubuntu-24.04
     timeout-minutes: 30
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           submodules: true
       - name: Install analysis dependencies
-        if: runner.environment == 'github-hosted'
         run: |
           sudo apt-get update
           sudo apt-get install -y \
