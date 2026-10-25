@@ -20,7 +20,7 @@ if ! "$RUN" --build-only --output-dir "$TMP/output" \
     exit 1
 fi
 cat "$TMP/native-build.log"
-for native_flag in -O3 -march=native -mtune=native -flto=auto; do
+for native_flag in -O3 -march=native -mtune=native -flto=auto -fno-semantic-interposition -fno-plt; do
     grep -Eq "^(cc|gcc) .* ${native_flag}( |$)" "$TMP/native-build.log"
 done
 grep -Fq "PGO pass 1:" "$TMP/native-build.log"
