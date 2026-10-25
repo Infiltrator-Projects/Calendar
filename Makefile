@@ -124,8 +124,8 @@ GENERIC_CFLAGS := -O2 -g
 # Apply the same compiler-probed ELF call/visibility optimisations as
 # System Monitor to Calendar's C clock/date libraries AND pinned Common.
 NATIVE_ELF_FLAGS := $(shell for flag in -fno-semantic-interposition -fno-plt; do \
-    printf 'int f(void){return 0;}\n' | $(CC) -std=c11 -x c -c "$flag" -o /dev/null - \
-    >/dev/null 2>&1 && printf '%s ' "$flag"; done)
+    printf 'int f(void){return 0;}\n' | $(CC) -std=c11 -x c -c "$$flag" -o /dev/null - \
+    >/dev/null 2>&1 && printf '%s ' "$$flag"; done)
 NATIVE_CFLAGS := -O3 -g -march=native -mtune=native -flto=auto $(NATIVE_ELF_FLAGS)
 PGO_MODE ?= none
 PGO_DIR ?= $(abspath .pgo-data)
