@@ -1,3 +1,13 @@
+calendar (1.0.126) unstable; urgency=medium
+
+  * Align native clock, date, calendar and pinned Common compilation with
+    System Monitor's compiler-probed -fno-semantic-interposition and -fno-plt
+    ELF optimisations, keeping two-pass CPU-native PGO and LTO.
+  * Retain Cinnamon time/date JavaScript engines unchanged; GCC compiler
+    options apply only to compiled C modules.
+
+ -- Shannon Smith <infiltratr@yandex.com>  Sun, 25 Oct 2026 21:00:00 +1100
+
 calendar (1.0.125) unstable; urgency=medium
 
   * Reuse month actors on event-only updates while refreshing dot colours and
