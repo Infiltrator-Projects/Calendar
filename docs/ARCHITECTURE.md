@@ -59,9 +59,9 @@ The small Cinnamon bootstrap that locates `runtimeSupport.js` must execute befor
 
 Calendar's `time-formats.c` maps stable enum identities to Common resource IDs without duplicating those enum values in its table. Common metadata determines capabilities and human-readable names; the resource owns clock arithmetic, formatting and next-visible-tick scheduling. The applet's clock engine uses that scheduling ABI with no application-local substitute. A stopped engine exposes no display text, including after an invalid or unavailable selection; retained configuration never becomes a substitute for the requested clock. The 21 alternative clocks and two explicit conventional clocks have fixed application identities, while installation determines availability.
 
-The calendar algorithms, astronomical rules and their private engine live in `Libraries/resources/temporal`. Only Common's independently installed resource modules link that engine; the Calendar application links no resource algorithms. Common owns the provider ABIs and discovery, while each module owns its chronology or clock semantics. Shared Gregorian/JDN coordinate helpers supply no selectable chronology or clock fallback.
+The calendar algorithms, astronomical rules and private helpers live in the independent `Calendar-*` and `Clock-*` repositories. Common preserves its original source without an active production-provider build; the Calendar application links no resource algorithms. Common owns the provider ABIs and discovery, while each module owns its chronology or clock semantics. Shared Gregorian/JDN coordinate helpers supply no selectable chronology or clock fallback.
 
-The independently released `infiltrator-calendar-resources` package owns ICU runtime requirements and resource translations. Calendar's native installer installs only Calendar; removing a consumer does not take ownership of the system temporal resources.
+Each independent provider package owns its ICU runtime requirement and any provider-specific translations. Calendar's native installer installs only Calendar; removing a consumer does not take ownership of the system temporal resources.
 
 Ownership is visible at API boundaries. Caller-owned values, returned heap data, snapshots, compatibility ABI objects and adapter-owned platform state should not be inferred from accidental implementation detail.
 

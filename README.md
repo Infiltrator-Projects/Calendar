@@ -26,12 +26,13 @@ Cinnamon owns desktop integration; Calendar owns application and event behaviour
 
 ## System temporal authority
 
-All thirty-one calendar implementations and all twenty-three explicit clock modes
-are independently installed system resources. The `infiltrator-calendar-resources`
-package owns `/System/Resources/Calendars/*.so` and `/System/Resources/Clocks/*.so`;
-removing Calendar or System Settings leaves those resources installed. Common
-1.19.75 owns the source, builds, tests, releases and Debian package, as well as
-the validated provider ABIs, discovery, loading and policy bridge.
+All thirty-one calendar implementations and twenty-three explicit clock modes
+are independently installed system resources. Each `Calendar-*` or `Clock-*`
+repository owns its module, tests, translations, package and native installer.
+Their packages own the files under `/System/Resources/Calendars/` and
+`/System/Resources/Clocks/`; removing an application leaves those packages
+installed. Common owns neutral APIs, validated discovery/loading and the policy
+bridge, and preserves its original implementation source without building it.
 Calendar, Files, Settings and the desktop consume the same installed providers.
 Calendar's production core contains no selectable chronology or clock-face
 fallback implementation. Each clock resource owns its notation and exact next
@@ -94,7 +95,7 @@ src/
 └── vendor/     Pinned Libraries submodule
 ```
 
-Calendar chronology, continuation and astronomy source, tests, builds and packages live in Common (`Libraries/resources/temporal`), which independently releases the system resource pack. Common owns the resource ABIs, discovery, validation, loading and policy integration. Cinnamon owns desktop integration. Calendar, Files and System Settings consume the shared resources. ICU/CLDR remains authoritative for explicitly delegated lunisolar models and locale data inside the resource pack.
+Chronology, continuation and astronomy source, tests, builds and packages live in the independent provider repositories. Common owns the resource ABI, discovery, validation, loading and policy integration, while retaining its original source as a reference. Cinnamon owns desktop integration. Provider-specific model and authority choices, including ICU/CLDR delegation and owned lunar tables, are documented in each provider repository.
 
 The installed `libcalendar.so.0` ABI and established `Calendar` compatibility identifiers remain stable runtime contracts even though the visible product is **Calendar** and the Debian package is `calendar`.
 
@@ -143,13 +144,14 @@ Each Calendar release publishes **two** application artifacts:
 | `calendar_<version>_amd64.deb` | Generic amd64 Debian application package |
 | `calendar-<version>-local-folder.run` | Verified local hardware-native PGO source builder |
 
-Common independently releases `infiltrator-calendar-resources_<Common-version>_amd64.deb`, the optional system-wide calendars and clocks. It is **not** a Calendar release asset and survives removal of Calendar.
+Each optional clock or calendar has its own `.deb`, native source `.run` and source ZIP. These are provider release assets and remain installed when Calendar is removed. InfiltratorOS installs all 54 providers through their aggressive native source installers.
 
 Install the generic packages with:
 
 ```bash
-sudo apt install ./calendar_<version>_amd64.deb \
-    ./infiltrator-calendar-resources_<Common-version>_amd64.deb
+sudo apt install ./calendar_<version>_amd64.deb
+# Optional examples from the configured Infiltrator repository:
+sudo apt install infiltrator-calendar-gregorian infiltrator-clock-standard-24
 ```
 
 Or use the native PGO builder:
@@ -198,3 +200,7 @@ Calendar owns no calendar/clock implementation source or module release jobs.
 Normal host Gregorian dates and standard system time work without optional
 modules. Additional system capabilities are discovered from the resource folders
 through Common. Missing custom selections stay visibly unavailable.
+
+## Independent temporal packages
+
+All 31 calendar and 23 clock implementations are released by their own repositories. Calendar suggests their individual packages and tests verified snapshots from those releases, including provider-owned translation catalogues. Common supplies the neutral public ABI and preserves its original source; it no longer builds or publishes the combined resource package. Calendar removal leaves the provider packages installed.

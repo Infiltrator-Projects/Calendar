@@ -37,8 +37,10 @@ jobs:
             build-essential clang desktop-file-utils gettext gobject-introspection gjs curl \
             gir1.2-glib-2.0-dev libglib2.0-dev libgtk-3-dev libicu-dev nodejs \
             pkg-config python3 shellcheck xauth xdotool xvfb xz-utils
-      - name: Install Common resource test dependency
-        run: tools/test-resources.sh "$RUNNER_TEMP/common-resources"
+      - name: Install independently released provider test dependencies
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: tools/test-resources.sh "$RUNNER_TEMP/independent-providers"
       - name: Build and test
         env:
           CC: ${{ matrix.compiler }}
@@ -99,8 +101,8 @@ jobs:
             build-essential gettext gobject-introspection gjs curl \
             libglib2.0-dev libgtk-3-dev libicu-dev nodejs \
             pkg-config python3
-      - name: Install Common resource test dependency
-        run: tools/test-resources.sh "$RUNNER_TEMP/common-resources"
+      - name: Install independently released provider test dependencies
+        run: tools/test-resources.sh "$RUNNER_TEMP/independent-providers"
       - name: Verify ICU major and execute Calendar tests
         shell: bash
         run: |
@@ -122,8 +124,8 @@ jobs:
           sudo apt-get install -y \
             build-essential gettext gobject-introspection gjs \
             gir1.2-glib-2.0-dev libglib2.0-dev libgtk-3-dev libicu-dev pkg-config
-      - name: Install Common resource test dependency
-        run: tools/test-resources.sh "$RUNNER_TEMP/common-resources"
+      - name: Install independently released provider test dependencies
+        run: tools/test-resources.sh "$RUNNER_TEMP/independent-providers"
       - name: ASan and UBSan
         run: make sanitize
 
@@ -140,8 +142,8 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y \
             build-essential gcovr gettext gjs libglib2.0-dev libgtk-3-dev libicu-dev pkg-config
-      - name: Install Common resource test dependency
-        run: tools/test-resources.sh "$RUNNER_TEMP/common-resources"
+      - name: Install independently released provider test dependencies
+        run: tools/test-resources.sh "$RUNNER_TEMP/independent-providers"
       - name: Coverage gate
         run: make coverage
 
@@ -245,15 +247,17 @@ jobs:
           name: calendar-release-${{ github.sha }}
           path: qualified-release
       - name: Locate exact qualified package
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
         id: qualified-package
         shell: bash
         run: |
           set -euo pipefail
           deb=$(find qualified-release -maxdepth 1 -type f -name 'calendar_*_amd64.deb' -print -quit)
-          tools/test-resources.sh "$RUNNER_TEMP/common-resources"
-          resources=$(find "$RUNNER_TEMP/common-resources" -maxdepth 1 -type f -name 'infiltrator-calendar-resources_*_amd64.deb' -print -quit)
+          tools/test-resources.sh "$RUNNER_TEMP/independent-providers"
+          resources="$RUNNER_TEMP/independent-providers"
           test -n "$deb" && test -s "$deb"
-          test -n "$resources" && test -s "$resources"
+          test -s "$resources/providers.json"
           printf 'deb=%s/%s\n' "$GITHUB_WORKSPACE" "$deb" >> "$GITHUB_OUTPUT"
           printf 'resources=%s\n' "$resources" >> "$GITHUB_OUTPUT"
       - name: Record Cinnamon qualification environment
@@ -303,29 +307,30 @@ jobs:
           CALENDAR_EXPECTED_VERSION="$RELEASE_VERSION" gjs tests/smoke-typelib.js
           apt-get purge -y calendar
       - name: Install app and resources, then purge only the app
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
         shell: bash
         run: |
           set -euo pipefail
           test -s "$RELEASE_DEB"
-          tools/test-resources.sh "$RUNNER_TEMP/common-resources"
-          RELEASE_RESOURCES_DEB=$(find "$RUNNER_TEMP/common-resources" -name '*.deb' -print -quit)
-          test -s "$RELEASE_RESOURCES_DEB"
-          apt-get install -y --no-install-recommends \
-            "$RELEASE_RESOURCES_DEB" "./$RELEASE_DEB"
+          tools/test-resources.sh "$RUNNER_TEMP/independent-providers"
+          resource_packages=$(python3 -c 'import json,sys; print(" ".join(x["package"] for x in json.load(open(sys.argv[1]))))' "$RUNNER_TEMP/independent-providers/providers.json")
+          test -n "$resource_packages"
+          apt-get install -y --no-install-recommends "./$RELEASE_DEB"
           test "$(dpkg-query -W -f='${Status}' calendar)" = "install ok installed"
-          test "$(dpkg-query -W -f='${Status}' infiltrator-calendar-resources)" = "install ok installed"
+          for resource_package in $resource_packages; do test "$(dpkg-query -W -f='${Status}' "$resource_package")" = "install ok installed"; done
           test "$(find /System/Resources/Calendars -maxdepth 1 -type f -name '*.so' | wc -l)" -eq 31
           /usr/libexec/calendar-about --print-metadata | grep -qx "version=$RELEASE_VERSION"
           /usr/libexec/calendar-about --print-metadata | grep -qx "build-profile=generic"
           CALENDAR_EXPECTED_VERSION="$RELEASE_VERSION" gjs tests/smoke-typelib.js >/dev/null
           apt-get purge -y calendar
           ! dpkg-query -W -f='${Status}' calendar 2>/dev/null | grep -qx "install ok installed"
-          test "$(dpkg-query -W -f='${Status}' infiltrator-calendar-resources)" = "install ok installed"
+          for resource_package in $resource_packages; do test "$(dpkg-query -W -f='${Status}' "$resource_package")" = "install ok installed"; done
           test -f "/System/Resources/Calendars/Hebrew Calendar.so"
-          test -f /usr/share/locale/en_AU/LC_MESSAGES/infiltrator-temporal-resources.mo
+          test -f /usr/share/locale/en_AU/LC_MESSAGES/infiltrator-calendar-julian.mo
           test "$(find /System/Resources/Clocks -maxdepth 1 -type f -name '*.so' | wc -l)" -eq 23
           apt-get check
-          apt-get purge -y infiltrator-calendar-resources
+          apt-get purge -y $resource_packages
           ! test -e "/System/Resources/Calendars/Hebrew Calendar.so"
           ! test -e "/System/Resources/Clocks/French Revolutionary Decimal Clock.so"
           apt-get check
@@ -333,7 +338,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          RELEASE_RESOURCES_DEB=$(find "$RUNNER_TEMP/common-resources" -name '*.deb' -print -quit)
+          RELEASE_RESOURCES_DEB=$(find "$RUNNER_TEMP/independent-providers" -name '*.deb' -print -quit)
           apt-get install -y --no-install-recommends \
             "$RELEASE_RESOURCES_DEB" "./$RELEASE_DEB"
           test "$(dpkg-query -W -f='${Status}' calendar)" = "install ok installed"

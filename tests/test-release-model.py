@@ -302,21 +302,22 @@ def main() -> None:
     assert policy["font_binaries_are_not_part_of_this_contract"] is True
     assert policy["fallback_is_required_when_mb_corpo_is_unavailable"] is True
 
-    # Common alone owns provider source, module compilation and publication.
+    # Independent provider repositories own module compilation and publication.
     assert "Source: calendar" in control
     assert "\nPackage: calendar\n" in control
     assert "\nPackage: infiltrator-calendar-resources\n" not in control
     assert "infiltrator-calendar-resources (= ${binary:Version})" not in control
-    resource_version = make_var(makefile, "INFILTRATR_TEMPORAL_RESOURCES_VERSION")
-    assert (
-        f"Suggests: infiltrator-calendar-resources (>= {resource_version})"
-        in control
-    )
+    provider_entries = json.loads(read("tools/temporal-providers.json"))
+    assert len(provider_entries) == 54
+    for provider in provider_entries:
+        assert provider["package"] in control
+    assert "Suggests: infiltrator-calendar-resources" not in control
     assert "cinnamon (>= 6.4)" in control
     assert not (ROOT / "src/resources").exists()
     assert "RESOURCE_ENGINE_ARCHIVE" not in makefile
     assert "System/Resources" not in read("tools/release-check.sh")
-    assert "github.com/Infiltrator-Projects/Libraries/releases/download" in read("tools/test-resources.sh")
+    assert "temporal-packages.py" in read("tools/test-resources.sh")
+    assert "Libraries/releases" not in read("tools/test-resources.sh")
     assert "validate-runtime-deps:" in makefile
 
     assert 'NATIVE_VERSION="${VERSION}+nativepgo${NATIVE_REVISION}"' in installer
@@ -354,11 +355,12 @@ def main() -> None:
     assert "needs: [debian-package]" in package_install
     assert "actions/download-artifact@" in package_install
     assert "qualified-release/release-handoff.py verify" in package_install
-    assert '"$RELEASE_RESOURCES_DEB" "./$RELEASE_DEB"' in package_install
+    assert "providers.json" in package_install
+    assert "resource_packages" in package_install
     assert "apt-get purge -y calendar" in package_install
-    assert "infiltrator-calendar-resources" in package_install
+    assert "infiltrator-calendar-resources" not in package_install
     assert 'test -f "/System/Resources/Calendars/Hebrew Calendar.so"' in package_install
-    assert "apt-get purge -y infiltrator-calendar-resources" in package_install
+    assert "apt-get purge -y $resource_packages" in package_install
     assert "dpkg-buildpackage" not in package_install
 
     # The installed Cinnamon smoke must exercise the byte-for-byte packaged

@@ -9,13 +9,13 @@
 set -euo pipefail
 
 if [[ $# -ne 2 ]]; then
-    echo "usage: $0 <calendar.deb> <calendar-resources.deb>" >&2
+    echo "usage: $0 <calendar.deb> <provider-package-directory>" >&2
     exit 2
 fi
 
 ROOT=$(CDPATH='' cd -- "$(dirname -- "$0")/.." && pwd)
 DEB=$1
-RESOURCES_DEB=$2
+RESOURCES_DIRECTORY=$2
 UUID=calendar@the-infiltratr
 EXPECTED_VERSION=$(cat "$ROOT/VERSION")
 
@@ -23,8 +23,8 @@ EXPECTED_VERSION=$(cat "$ROOT/VERSION")
     echo "Exact CI-qualified Calendar package is unavailable: $DEB" >&2
     exit 1
 }
-[[ -s "$RESOURCES_DEB" ]] || {
-    echo "Exact CI-qualified Calendar Resources package is unavailable: $RESOURCES_DEB" >&2
+[[ -d "$RESOURCES_DIRECTORY" && -s "$RESOURCES_DIRECTORY/providers.json" ]] || {
+    echo "Exact qualified independent provider snapshot is unavailable: $RESOURCES_DIRECTORY" >&2
     exit 1
 }
 
@@ -35,10 +35,7 @@ if [[ ! -f /.dockerenv || "$(id -u)" -ne 0 ]]; then
     exit 1
 fi
 
-[[ "$(dpkg-deb -f "$RESOURCES_DEB" Package)" == "infiltrator-calendar-resources" ]] || {
-    echo "Qualified supplemental artifact has the wrong package identity." >&2
-    exit 1
-}
+python3 "$ROOT/tools/temporal-packages.py" verify "$RESOURCES_DIRECTORY"
 
 for command_name in Xvfb dbus-run-session cinnamon gdbus dpkg-deb python3; do
     command -v "$command_name" >/dev/null 2>&1 || {
@@ -97,15 +94,19 @@ trap cleanup EXIT HUP INT TERM
 
 chmod 700 "$TEST_RUNTIME"
 dpkg-deb -x "$DEB" "$STAGE_ROOT"
-dpkg-deb -x "$RESOURCES_DEB" "$STAGE_ROOT"
+python3 "$ROOT/tools/temporal-packages.py" install "$RESOURCES_DIRECTORY"
+python3 - "$RESOURCES_DIRECTORY" "$STAGE_ROOT" <<'PROVIDER_PACKAGES'
+import json, pathlib, subprocess, sys
+snapshot, stage = map(pathlib.Path, sys.argv[1:])
+records = json.loads((snapshot / "providers.json").read_text())
+assert len(records) == 54
+for record in records:
+    subprocess.run(["dpkg-deb", "-x", str(snapshot / record["filename"]), str(stage)], check=True)
+PROVIDER_PACKAGES
 
 # The native Common loader deliberately uses the canonical system capability
 # directory. Install ONLY exact handoff modules into this disposable container;
 # never make the production loader accept arbitrary environment override paths.
-dpkg --compare-versions "$(dpkg-deb -f "$RESOURCES_DEB" Version)" ge 1.19.66 || {
-    echo "Common resource package is older than the required executable ABI release." >&2
-    exit 1
-}
 install -d /System/Resources/Calendars /System/Resources/Clocks
 # Install qualified .so files directly with the compiler's canonical names.
 # No aliases or internal-ID filename substitutions.

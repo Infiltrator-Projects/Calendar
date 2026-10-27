@@ -1,3 +1,12 @@
+calendar (1.0.127) unstable; urgency=medium
+
+  * Consume all 54 independent calendar/clock packages and provider-owned
+    translation catalogues instead of Common's retired combined package.
+  * Qualify exact provider snapshots in native, Cinnamon and package-lifecycle
+    tests; preserve resource ownership when Calendar is removed.
+
+ -- Shannon Smith <infiltratr@yandex.com>  Tue, 27 Oct 2026 22:00:00 +1100
+
 calendar (1.0.126) unstable; urgency=medium
 
   * Align native clock, date, calendar and pinned Common compilation with
