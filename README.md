@@ -32,7 +32,7 @@ repository owns its module, tests, translations, package and native installer.
 Their packages own the files under `/System/Resources/Calendars/` and
 `/System/Resources/Clocks/`; removing an application leaves those packages
 installed. Common owns neutral APIs, validated discovery/loading and the policy
-bridge, and preserves its original implementation source without building it.
+bridge. Provider implementation source lives only in its owning repository.
 Calendar, Files, Settings and the desktop consume the same installed providers.
 Calendar's production core contains no selectable chronology or clock-face
 fallback implementation. Each clock resource owns its notation and exact next
@@ -95,7 +95,7 @@ src/
 └── vendor/     Pinned Libraries submodule
 ```
 
-Chronology, continuation and astronomy source, tests, builds and packages live in the independent provider repositories. Common owns the resource ABI, discovery, validation, loading and policy integration, while retaining its original source as a reference. Cinnamon owns desktop integration. Provider-specific model and authority choices, including ICU/CLDR delegation and owned lunar tables, are documented in each provider repository.
+Chronology, continuation and astronomy source, tests, builds and packages live exclusively in the independent provider repositories. Common owns the resource ABI, discovery, validation, loading and policy integration. Cinnamon owns desktop integration. Provider-specific model and authority choices, including ICU/CLDR delegation and owned lunar tables, are documented in each provider repository.
 
 The installed `libcalendar.so.0` ABI and established `Calendar` compatibility identifiers remain stable runtime contracts even though the visible product is **Calendar** and the Debian package is `calendar`.
 
@@ -203,4 +203,4 @@ through Common. Missing custom selections stay visibly unavailable.
 
 ## Independent temporal packages
 
-All 31 calendar and 23 clock implementations are released by their own repositories. Calendar suggests their individual packages and tests verified snapshots from those releases, including provider-owned translation catalogues. Common supplies the neutral public ABI and preserves its original source; it no longer builds or publishes the combined resource package. Calendar removal leaves the provider packages installed.
+All 31 calendar and 23 clock implementations are owned and released by their own repositories. Calendar suggests their individual packages and tests verified snapshots from those releases, including provider-owned translation catalogues. Common supplies the neutral public ABI and contains no provider implementation copies or combined resource package build. Calendar removal leaves the provider packages installed.
