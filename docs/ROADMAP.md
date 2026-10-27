@@ -17,9 +17,9 @@ boundary.
 The baseline includes the panel clock, calendar grid/navigation, CalendarServer
 events, existing settings and desktop integration, and the current resource
 catalogue. OS-following standard time and the host Gregorian calendar remain
-available without optional resources. Common's independent resource package
-adds the 31 calendars and 23 explicit clocks; Calendar owns no private model
-fallbacks.
+available without optional resources. The 31 independent calendar packages and
+23 independent clock packages supply the optional models through Common's
+public ABI; Calendar owns no private model fallbacks.
 
 ## Scope decision
 
