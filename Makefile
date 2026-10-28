@@ -22,8 +22,8 @@ DIST_DIR := dist
 # authoritative when the preferred MB Corpo families are unavailable.
 INFILTRATR_COMMON_DIR := src/vendor/infiltratr-common
 INFILTRATR_COMMON_URL := https://github.com/Infiltrator-Projects/Libraries.git
-INFILTRATR_COMMON_COMMIT := cfde05efabf55c4f0408ee908034d649303d5a26
-INFILTRATR_COMMON_VERSION := 1.19.75
+INFILTRATR_COMMON_COMMIT := dc4aac326964ca4400b6e21851d16eea674040c8
+INFILTRATR_COMMON_VERSION := 1.19.80
 LIB_BASENAME := calendar
 LIB_SONAME := lib$(LIB_BASENAME).so.0
 LIB_REALNAME := lib$(LIB_BASENAME).so.0.0.0
@@ -102,7 +102,8 @@ INFILTRATR_COMMON_CPPFLAGS := -Iinclude
 OBJECTS := $(patsubst src/%.c,$(BUILD_DIR)/%.o,$(SOURCES))
 CORE_OBJECTS := $(patsubst src/%.c,$(BUILD_DIR)/%.o,$(CORE_SOURCES))
 CORE_ARCHIVE := $(BUILD_DIR)/libcalendar-core.a
-# Optional provider modules are built and published by Common, never Calendar.
+# Independent Calendar-* and Clock-* repositories build/publish provider modules;
+# Common owns the provider ABI, validation and runtime discovery only.
 CALENDAR_RESOURCE_BUILD_DIR ?= /System/Resources/Calendars
 CLOCK_RESOURCE_BUILD_DIR ?= /System/Resources/Clocks
 TEST_CLOCK_RESOURCE_CPPFLAG := -DCALENDAR_NATIVE_CLOCK_RESOURCE_DIRECTORY=\"$(CLOCK_RESOURCE_BUILD_DIR)\"
