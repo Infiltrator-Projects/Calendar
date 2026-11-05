@@ -23,6 +23,7 @@ Specialist documents may go deeper into one subsystem, protocol, platform, repre
 
 ## Specialist documentation
 
+- [User guide](USER-GUIDE.md) — maintained source for the [installed PDF](Calendar.pdf) in `/System/Resources/Documentation/Calendar.pdf`; it summarises the canonical documentation and does not replace it.
 - [Chronology, time and astronomy models](MODELS.md) — evidence hierarchy, provenance, continuation rules, astronomical assumptions and model failure semantics.
 - [Native Ancient Egyptian chronology and timekeeping](EGYPTIAN_CHRONOLOGY_AND_TIMEKEEPING.md) — optional historical research into five date and five time families, outside the completed product scope.
 - [First Egyptian calendar and time system](EGYPTIAN_FIRST_SYSTEM.md) — optional research into an early lunar/stellar–solar profile, outside the completed product scope.

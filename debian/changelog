@@ -1,3 +1,11 @@
+calendar (1.0.128) unstable; urgency=medium
+
+  * Install the Calendar app user guide directly in
+    /System/Resources/Documentation/Calendar.pdf and verify it in both
+    generic and native packages.
+
+ -- Shannon Smith <infiltratr@yandex.com>  Thu, 05 Nov 2026 22:00:00 +1100
+
 calendar (1.0.127) unstable; urgency=medium
 
   * Consume all 54 independent calendar/clock packages and provider-owned

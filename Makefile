@@ -716,6 +716,8 @@ install: all
 	install -d "$(DESTDIR)$(PREFIX)/share/doc/calendar"
 	install -m644 README.md \
 		"$(DESTDIR)$(PREFIX)/share/doc/calendar/"
+	install -Dm644 docs/Calendar.pdf \
+		"$(DESTDIR)/System/Resources/Documentation/Calendar.pdf"
 	printf 'Calendar source version: %s\nBuild mode: %s\nShared C library: Libraries %s\n' \
 		"$(VERSION)" "$(BUILD_DESCRIPTION)" "$(INFILTRATR_COMMON_VERSION)" \
 		> "$(BUILD_DIR)/BUILD-INFO"

@@ -28,7 +28,11 @@ test -f "$STAGE/usr/share/cinnamon/applets/calendar@the-infiltratr/stylesheet.cs
 test -f "$STAGE/usr/share/cinnamon/applets/calendar@the-infiltratr/icon.png"
 test ! -e "$STAGE/usr/share/cinnamon/applets/calendar@the-infiltratr/settings.py"
 test -f "$STAGE/usr/share/locale/en_AU/LC_MESSAGES/calendar@the-infiltratr.mo"
-test ! -e "$STAGE/System/Resources"
+cmp "$ROOT/docs/Calendar.pdf" "$STAGE/System/Resources/Documentation/Calendar.pdf"
+test "$(head -c 5 "$STAGE/System/Resources/Documentation/Calendar.pdf")" = '%PDF-'
+test ! -e "$STAGE/System/Resources/Calendars"
+test ! -e "$STAGE/System/Resources/Clocks"
+test "$(find "$STAGE/System/Resources" -type f | wc -l)" -eq 1
 test ! -e "$STAGE/usr/share/fonts/truetype/calendar"
 "$STAGE/usr/libexec/calendar-about" --print-metadata | grep -qx "version=$VERSION"
 "$STAGE/usr/libexec/calendar-about" --print-metadata | grep -qx 'build-profile=generic'

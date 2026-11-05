@@ -216,6 +216,7 @@ test -f \
 test -x "$PACKAGE_ROOT/usr/libexec/calendar-about"
 test -f "$PACKAGE_ROOT/usr/share/icons/hicolor/256x256/apps/infiltratr-calendar.png"
 test -f "$PACKAGE_ROOT/usr/share/app-install/icons/calendar.png"
+cmp "$SOURCE_DIR/docs/Calendar.pdf" "$PACKAGE_ROOT/System/Resources/Documentation/Calendar.pdf"
 test ! -e "$PACKAGE_ROOT/usr/share/fonts/truetype/calendar"
 test -f \
     "$PACKAGE_ROOT/usr/share/cinnamon/applets/calendar@the-infiltratr/icon.png"

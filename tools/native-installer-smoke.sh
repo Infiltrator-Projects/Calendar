@@ -44,6 +44,7 @@ test -f \
     "$TMP/native/usr/lib/$MULTIARCH/girepository-1.0/Calendar-1.0.typelib"
 test -x "$TMP/native/usr/libexec/calendar-about"
 test -f "$TMP/native/usr/share/cinnamon/applets/calendar@the-infiltratr/stylesheet.css"
+cmp "$ROOT/docs/Calendar.pdf" "$TMP/native/System/Resources/Documentation/Calendar.pdf"
 test ! -e "$TMP/native/usr/share/cinnamon/applets/calendar@the-infiltratr/settings.py"
 test ! -e "$TMP/native/usr/share/fonts/truetype/calendar"
 test -f \

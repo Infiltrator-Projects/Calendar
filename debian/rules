@@ -37,4 +37,7 @@ override_dh_auto_install:
 	rm -rf "$(CURDIR)/debian/calendar"
 	$(MAKE) BUILD_MODE=$(CALENDAR_BUILD_MODE) install \
 		'DESTDIR=$(CURDIR)/debian/calendar' PREFIX=/usr
-	@test ! -d "$(CURDIR)/debian/calendar/System/Resources"
+	@cmp "$(CURDIR)/docs/Calendar.pdf" "$(CURDIR)/debian/calendar/System/Resources/Documentation/Calendar.pdf"
+	@test ! -e "$(CURDIR)/debian/calendar/System/Resources/Calendars"
+	@test ! -e "$(CURDIR)/debian/calendar/System/Resources/Clocks"
+	@test "$$(find "$(CURDIR)/debian/calendar/System/Resources" -type f | wc -l)" -eq 1
