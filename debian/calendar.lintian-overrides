@@ -1,0 +1,4 @@
+# Infiltrator applications deliberately share this documentation directory.
+# Only the System top-level directory is excepted; all other Lintian errors
+# remain release-blocking.
+calendar: non-standard-toplevel-dir [System/]
