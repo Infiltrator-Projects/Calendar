@@ -23,7 +23,9 @@ permissions:
 
 jobs:
   publish:
-    runs-on: [self-hosted, Linux, X64, linux-native]
+    # Publication only transfers and verifies previously qualified artifacts.
+    # Avoid coupling the release to availability of a special self-hosted runner.
+    runs-on: ubuntu-24.04
     timeout-minutes: 10
     env:
       GH_REPO: ${{ github.repository }}
