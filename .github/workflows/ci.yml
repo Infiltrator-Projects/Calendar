@@ -201,8 +201,15 @@ jobs:
           sudo apt-get install -y \
             build-essential debhelper desktop-file-utils devscripts gettext gobject-introspection gjs curl \
             gir1.2-glib-2.0-dev libglib2.0-dev libgtk-3-dev libicu-dev nodejs \
-            pkg-config python3 xz-utils \
+            pkg-config python3 python3-pypdf python3-reportlab xz-utils \
             lintian shellcheck
+      - name: Render installed manual using verified MB Corpo fonts
+        if: steps.release-intent.outputs.requested == 'true'
+        shell: bash
+        run: |
+          set -euo pipefail
+          sudo sh src/vendor/infiltratr-common/cmake/InfiltratrEnsureNativeFonts.sh
+          python3 tools/render-user-guide.py docs/USER-GUIDE.md docs/Calendar.pdf
       - name: Run packaging and release gates
         if: steps.release-intent.outputs.requested == 'true'
         env:

@@ -1,3 +1,14 @@
+calendar (1.0.129) unstable; urgency=medium
+
+  * Replace the Calendar app PDF with a ten-page illustrated operating
+    manual covering the actual Cinnamon applet, settings, navigation,
+    event handling and troubleshooting.
+  * Keep separately installed Calendar and Clock resource manuals separate.
+  * Regenerate the packaged guide using verified MB Corpo fonts during
+    release qualification, without allowing unapproved font substitution.
+
+ -- Shannon Smith <infiltratr@yandex.com>  Fri, 06 Nov 2026 15:04:00 +1100
+
 calendar (1.0.128) unstable; urgency=medium
 
   * Install the Calendar app user guide directly in
