@@ -1,9 +1,10 @@
 #!/usr/bin/env python3
 # SPDX-License-Identifier: GPL-3.0-or-later
-"""Render a project user guide from its maintained Markdown source.
+"""Build Calendar's application-only manual with semantic figures and page checks.
 
-Requires reportlab and DejaVu Sans fonts for guide authors. Published packages install
-the checked-in PDF and do not require reportlab at runtime or package build.
+Source: docs/USER-GUIDE.md. Separate Calendar-* / Clock-* resources own their own
+manuals. The font search prefers InfiltratorOS's verified MB Corpo resources;
+--allow-preview-fallback is solely for local review on hosts without them.
 """
 from __future__ import annotations
 
@@ -13,169 +14,196 @@ from pathlib import Path
 from xml.sax.saxutils import escape
 
 from reportlab.lib import colors
-from reportlab.lib.enums import TA_CENTER
+from reportlab.lib.enums import TA_LEFT
 from reportlab.lib.pagesizes import A4
 from reportlab.lib.styles import ParagraphStyle
 from reportlab.lib.units import mm
 from reportlab.pdfbase import pdfmetrics
 from reportlab.pdfbase.ttfonts import TTFont
-from reportlab.pdfgen import canvas
-from reportlab.platypus import (BaseDocTemplate, Frame, HRFlowable,
-                               PageBreak, PageTemplate, Paragraph,
-                               Preformatted, Spacer, Table, TableStyle)
+from reportlab.pdfgen.canvas import Canvas
+from reportlab.platypus import (BaseDocTemplate, Flowable, Frame, KeepTogether,
+    PageBreak, PageTemplate, Paragraph, Spacer, Table, TableStyle)
 
-FONT_DIR = Path('/usr/share/fonts/truetype/dejavu')
-pdfmetrics.registerFont(TTFont('GuideSans', str(FONT_DIR / 'DejaVuSans.ttf')))
-pdfmetrics.registerFont(TTFont('GuideSans-Bold', str(FONT_DIR / 'DejaVuSans-Bold.ttf')))
-pdfmetrics.registerFont(TTFont('GuideMono', str(FONT_DIR / 'DejaVuSansMono.ttf')))
-pdfmetrics.registerFontFamily('GuideSans', normal='GuideSans', bold='GuideSans-Bold')
-
-NAVY = colors.HexColor('#142235')
-TEAL = colors.HexColor('#007E87')
-INK = colors.HexColor('#203040')
-GREY = colors.HexColor('#5C6B77')
-PALE = colors.HexColor('#EDF5F5')
-WIDTH, HEIGHT = A4
-MARGIN = 20 * mm
-BODY_WIDTH = WIDTH - MARGIN * 2
-STYLES = {
-    'kicker': ParagraphStyle('kicker', fontName='GuideSans-Bold', fontSize=9,
-                             leading=13, textColor=TEAL, spaceAfter=8),
-    'cover_title': ParagraphStyle('cover-title', fontName='GuideSans-Bold',
-                                  fontSize=32, leading=38, textColor=NAVY,
-                                  spaceAfter=10),
-    'cover_subtitle': ParagraphStyle('cover-subtitle', fontName='GuideSans',
-                                     fontSize=14, leading=20, textColor=GREY,
-                                     spaceAfter=18),
-    'heading': ParagraphStyle('heading', fontName='GuideSans-Bold', fontSize=16,
-                              leading=21, textColor=NAVY, spaceBefore=15,
-                              spaceAfter=8, keepWithNext=True),
-    'body': ParagraphStyle('body', fontName='GuideSans', fontSize=10.3,
-                           leading=15.4, textColor=INK, spaceAfter=8),
-    'bullet': ParagraphStyle('bullet', fontName='GuideSans', fontSize=10.1,
-                             leading=15, textColor=INK, leftIndent=15,
-                             firstLineIndent=-10, spaceAfter=5),
-    'small': ParagraphStyle('small', fontName='GuideSans', fontSize=9,
-                            leading=13, textColor=GREY, spaceAfter=7),
-    'code': ParagraphStyle('code', fontName='GuideMono', fontSize=8.1,
-                           leading=11.5, textColor=NAVY, leftIndent=10,
-                           spaceAfter=8),
-    'card': ParagraphStyle('card', fontName='GuideSans-Bold', fontSize=9,
-                           leading=12, textColor=NAVY, alignment=TA_CENTER),
-}
+INK = colors.HexColor('#26323E')
+NAVY = colors.HexColor('#102033')
+BLUE = colors.HexColor('#00ADEF')
+PALE = colors.HexColor('#EDF6FA')
+MUTED = colors.HexColor('#657482')
+LINE = colors.HexColor('#C9D9E4')
+PAGE_W, PAGE_H = A4
+MARGIN = 18*mm
+CONTENT_W = PAGE_W - 2*MARGIN
+FONT_DIRS = [Path('/System/Resources/Fonts'), Path('/usr/local/share/fonts'), Path.home()/'.local/share/fonts']
 
 
-def rich(value: str) -> str:
-    value = escape(value)
-    value = re.sub(r'`([^`]+)`', r'<font name="GuideMono">\1</font>', value)
-    value = re.sub(r'\*\*([^*]+)\*\*', r'<b>\1</b>', value)
-    return value
+def fonts(allow_fallback: bool):
+    files = {}
+    for directory in FONT_DIRS:
+        if directory.is_dir():
+            for file in directory.rglob('*.ttf'):
+                files.setdefault(file.name.lower(), file)
+    mb = ['mb_corpo_s_title_regular.ttf', 'mb_corpo_s_title_bold.ttf',
+          'mb_corpo_a_title_cond_regular.ttf']
+    # The verified Common baseline uses these three MB Corpo 1.010 Title faces.
+    if all(key in files for key in mb):
+        pdfmetrics.registerFont(TTFont('Body', str(files[mb[0]])))
+        pdfmetrics.registerFont(TTFont('Body-Bold', str(files[mb[1]])))
+        pdfmetrics.registerFont(TTFont('Brand', str(files[mb[2]])))
+        pdfmetrics.registerFontFamily('Body', normal='Body', bold='Body-Bold')
+        return True
+    if not allow_fallback:
+        raise RuntimeError('The verified MB Corpo font resources are required. '
+                           'Install them under /System/Resources/Fonts; '
+                           'use --allow-preview-fallback only for non-release previews.')
+    pdfmetrics.registerFont(TTFont('Body','/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf'))
+    pdfmetrics.registerFont(TTFont('Body-Bold','/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf'))
+    pdfmetrics.registerFont(TTFont('Brand','/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf'))
+    pdfmetrics.registerFontFamily('Body', normal='Body', bold='Body-Bold')
+    return False
 
 
-class GuideCanvas(canvas.Canvas):
-    def __init__(self, *args, **kwargs):
-        kwargs['invariant'] = 1
-        super().__init__(*args, **kwargs)
+def styles():
+    return {
+      'cover': ParagraphStyle('cover',fontName='Brand',fontSize=43,leading=48,textColor=NAVY,spaceAfter=12),
+      'sub': ParagraphStyle('sub',fontName='Body',fontSize=12.5,leading=20,textColor=MUTED,spaceAfter=14),
+      'kicker': ParagraphStyle('kicker',fontName='Body-Bold',fontSize=9,leading=13,textColor=BLUE,spaceAfter=8),
+      'h': ParagraphStyle('h',fontName='Body-Bold',fontSize=22,leading=28,textColor=NAVY,spaceAfter=17),
+      'body': ParagraphStyle('body',fontName='Body',fontSize=10.0,leading=15.5,textColor=INK,spaceAfter=10),
+      'bullet': ParagraphStyle('bullet',fontName='Body',fontSize=9.8,leading=15,textColor=INK,leftIndent=14,firstLineIndent=-10,spaceAfter=7),
+      'tiny': ParagraphStyle('tiny',fontName='Body',fontSize=8.0,leading=12,textColor=MUTED,spaceAfter=6),
+      'toc': ParagraphStyle('toc',fontName='Body',fontSize=10.5,leading=21,textColor=NAVY,spaceAfter=5),
+    }
 
 
-class Guide(BaseDocTemplate):
-    def __init__(self, destination: Path, title: str):
-        self.guide_title = title
-        super().__init__(str(destination), pagesize=A4, title=title + ' User Guide',
-                         author='Shannon Smith', leftMargin=MARGIN,
-                         rightMargin=MARGIN, topMargin=25 * mm,
-                         bottomMargin=22 * mm)
-        frame = Frame(MARGIN, 22 * mm, BODY_WIDTH, HEIGHT - 47 * mm,
-                      leftPadding=0, rightPadding=0, topPadding=0, bottomPadding=0)
-        self.addPageTemplates(PageTemplate(id='guide', frames=frame, onPage=self.decorate))
-
-    def decorate(self, page, doc):
-        page.saveState()
-        if doc.page > 1:
-            page.setFillColor(NAVY)
-            page.rect(0, HEIGHT - 17 * mm, WIDTH, 17 * mm, fill=1, stroke=0)
-            page.setFont('GuideSans-Bold', 9)
-            page.setFillColor(colors.white)
-            page.drawString(MARGIN, HEIGHT - 11 * mm, self.guide_title.upper() + '  /  USER GUIDE')
-            page.setFillColor(TEAL)
-            page.rect(MARGIN, HEIGHT - 17 * mm, 28 * mm, 2.5, fill=1, stroke=0)
-        page.setStrokeColor(colors.HexColor('#D2DBDE'))
-        page.line(MARGIN, 15 * mm, WIDTH - MARGIN, 15 * mm)
-        page.setFont('GuideSans', 8)
-        page.setFillColor(GREY)
-        page.drawString(MARGIN, 10 * mm, 'Infiltrator Projects  |  User guide')
-        page.drawRightString(WIDTH - MARGIN, 10 * mm, str(doc.page))
-        page.restoreState()
+def rich(s):
+    s = escape(s)
+    s = re.sub(r'\*\*(.+?)\*\*',r'<b>\1</b>',s)
+    s = re.sub(r'`([^`]+)`',r'<font color="#087FA8">\1</font>',s)
+    return s
 
 
-def panel(title: str):
-    if title == 'Calendar':
-        labels = ['PANEL CLOCK', 'CALENDAR VIEW', 'EVENTS']
-        explanation = 'One applet, with independently installed calendar and clock resources.'
-    else:
-        labels = ['MANAGER + TOOLS', 'PORTABLE FORMAT', 'LINUX DRIVER']
-        explanation = 'A portable filesystem connected to the host through native adapters.'
-    row = [Paragraph(escape(label), STYLES['card']) for label in labels]
-    table = Table([row], colWidths=[BODY_WIDTH / 3] * 3, rowHeights=[43])
-    table.setStyle(TableStyle([
-        ('BACKGROUND', (0, 0), (-1, -1), PALE),
-        ('BOX', (0, 0), (-1, -1), .6, colors.HexColor('#CCDDDF')),
-        ('INNERGRID', (0, 0), (-1, -1), .6, colors.HexColor('#CCDDDF')),
-        ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
-        ('LEFTPADDING', (0, 0), (-1, -1), 5),
-        ('RIGHTPADDING', (0, 0), (-1, -1), 5),
-    ]))
-    return [table, Spacer(1, 3 * mm), Paragraph(explanation, STYLES['small'])]
+class Diagram(Flowable):
+    """Actual application relationships from the Cinnamon sources; NOT screenshot art."""
+    def __init__(self, name):
+        super().__init__(); self.name=name
+        self.width=CONTENT_W; self.height={'popup':180,'settings':145,'navigation':94,'events':94,'ownership':130}[name]
+    def draw(self):
+        c=self.canv; w=self.width; h=self.height
+        c.setFillColor(PALE); c.setStrokeColor(LINE)
+        c.roundRect(0,0,w,h,9,stroke=1,fill=1)
+        def box(x,y,bw,bh,label,light=False):
+            c.setFillColor(colors.white if light else NAVY)
+            c.roundRect(x,y,bw,bh,5,stroke=0,fill=1)
+            c.setFillColor(NAVY if light else colors.white)
+            c.setFont('Body-Bold',8.5)
+            c.drawCentredString(x+bw/2,y+bh/2-3,label)
+        if self.name=='popup':
+            box(14,h-40,110,25,'A  PANEL CLOCK')
+            c.setFillColor(MUTED);c.setFont('Body',8);c.drawString(132,h-31,'select to open popup')
+            box(14,40,178,93,'B  EVENTS / AGENDA',True)
+            for i,txt in enumerate(('selected date','09:00   Meeting','13:30   Appointment')):
+                c.setFillColor(INK);c.setFont('Body',8);c.drawString(25,111-i*21,txt)
+            box(204,103,w-218,30,'C  TODAY HEADING')
+            box(204,70,w-218,29,'D  MONTH / YEAR')
+            box(204,40,w-218,26,'E  DATE GRID')
+            box(14,9,w-28,25,'F  DATE & TIME SETTINGS     |     ABOUT',True)
+        elif self.name=='settings':
+            c.setFillColor(NAVY);c.setFont('Body-Bold',11);c.drawString(15,h-24,'Calendar applet configuration')
+            fields=[('Display / Theme','Follow system  /  Day  /  Night'),('Show calendar events','On by default'),('Show week numbers','Off by default'),('Show calendar','Super+C (changeable)')]
+            for i,(a,b) in enumerate(fields):
+                y=h-52-i*26
+                c.setStrokeColor(LINE);c.line(15,y-7,w-15,y-7)
+                c.setFillColor(INK);c.setFont('Body-Bold',8.5);c.drawString(17,y+2,a)
+                c.setFont('Body',8);c.setFillColor(MUTED);c.drawRightString(w-17,y+2,b)
+        elif self.name=='navigation':
+            labs=[('<<  /  >>','YEAR'),('<  /  >','MONTH'),('DAY CELL','SELECT'),('TODAY','RESET')]
+            bw=(w-30-24)/4
+            for i,(txt,lab) in enumerate(labs):
+                x=15+i*(bw+8);box(x,40,bw,28,txt)
+                c.setFillColor(MUTED);c.setFont('Body',7.5);c.drawCentredString(x+bw/2,23,lab)
+        elif self.name=='events':
+            labs=['DESKTOP CALENDAR','CINNAMON EVENTS','CALENDAR AGENDA']
+            bw=(w-52)/3
+            for i,lab in enumerate(labs):
+                x=15+i*(bw+11);box(x,33,bw,35,lab,light=i==1)
+                if i<2:
+                    c.setFillColor(BLUE);c.setFont('Body-Bold',12);c.drawCentredString(x+bw+5,45,'>')
+            c.setFillColor(MUTED);c.setFont('Body',8);c.drawCentredString(w/2,13,'Calendar displays; editing takes place in the calendar application')
+        elif self.name=='ownership':
+            bw=(w-52)/3
+            for i,(label,lower) in enumerate([('CALENDAR APPLET','Theme / events / weeks / key'),('CINNAMON','Locale / time zone / week start'),('SHARED SETTINGS','Optional installed providers')]):
+                x=15+i*(bw+11);box(x,60,bw,48,label,light=i==1)
+                c.setFillColor(MUTED);c.setFont('Body',7.7);c.drawCentredString(x+bw/2,37,lower)
+            c.setFillColor(NAVY);c.setFont('Body-Bold',8.6)
+            c.drawCentredString(w/2,12,'Calendar consumes resource modules; it does not install them')
 
 
-def render(source: Path, destination: Path):
-    lines = source.read_text(encoding='utf-8').splitlines()
-    if not lines or not lines[0].startswith('# '):
-        raise ValueError('Guide must start with a title')
-    title = lines[0][2:].strip()
-    if title not in ('Calendar', 'InfiltratorFS'):
-        raise ValueError('Unexpected guide title')
-    destination.parent.mkdir(parents=True, exist_ok=True)
-    story = [Spacer(1, 20 * mm), Paragraph('INFILTRATOR PROJECTS', STYLES['kicker']),
-             Paragraph(escape(title.upper()), STYLES['cover_title']),
-             Paragraph('User guide and operating overview', STYLES['cover_subtitle']),
-             HRFlowable(width='100%', thickness=2, color=TEAL), Spacer(1, 18 * mm)]
-    story.extend(panel(title))
-    story.extend([Spacer(1, 18 * mm),
-                  Paragraph('Practical information for using the released application and its system components.', STYLES['body']),
-                  Spacer(1, 24 * mm),
-                  Paragraph('Copyright 1993-2026 Shannon Smith', STYLES['small']),
-                  PageBreak()])
-    code = []
-    def flush_code():
-        if code:
-            story.append(Preformatted('\n'.join(code), STYLES['code'], maxLineLength=94))
-            code.clear()
-    for line in lines[1:]:
-        if line.startswith('    '):
-            code.append(line[4:])
-            continue
-        flush_code()
-        line = line.strip()
-        if not line:
-            continue
-        if line.startswith('## '):
-            story.append(Paragraph(rich(line[3:]), STYLES['heading']))
-        elif line.startswith('- '):
-            story.append(Paragraph('&bull; ' + rich(line[2:]), STYLES['bullet']))
-        elif re.match(r'^\d+\. ', line):
-            story.append(Paragraph(rich(line), STYLES['bullet']))
-        else:
-            story.append(Paragraph(rich(line), STYLES['body']))
-    flush_code()
-    Guide(destination, title).build(story, canvasmaker=GuideCanvas)
-    if not destination.read_bytes().startswith(b'%PDF-'):
-        raise RuntimeError('Guide rendering did not produce a PDF')
+class Manual(BaseDocTemplate):
+    def __init__(self, path, release_fonts):
+        super().__init__(str(path),pagesize=A4,leftMargin=MARGIN,rightMargin=MARGIN,topMargin=22*mm,bottomMargin=18*mm,
+                         title='Calendar - User Manual',author='Shannon Smith',subject='Calendar Cinnamon panel applet operating manual')
+        self.release_fonts=release_fonts
+        fr=Frame(MARGIN,18*mm,CONTENT_W,PAGE_H-40*mm,leftPadding=0,rightPadding=0,topPadding=0,bottomPadding=0)
+        self.addPageTemplates(PageTemplate(id='main',frames=fr,onPage=self.page))
+    def page(self,c,doc):
+        c.saveState()
+        c.setFillColor(NAVY);c.rect(0,PAGE_H-13*mm,PAGE_W,13*mm,stroke=0,fill=1)
+        c.setFillColor(BLUE);c.rect(MARGIN,PAGE_H-13*mm,24*mm,2.4,stroke=0,fill=1)
+        c.setFont('Body-Bold',8);c.setFillColor(colors.white)
+        c.drawString(MARGIN,PAGE_H-8.4*mm,'CALENDAR  /  USER MANUAL')
+        c.setStrokeColor(LINE);c.line(MARGIN,13.4*mm,PAGE_W-MARGIN,13.4*mm)
+        c.setFillColor(MUTED);c.setFont('Body',7.5)
+        c.drawString(MARGIN,9.0*mm,'Infiltrator Projects  |  Calendar application only')
+        c.drawRightString(PAGE_W-MARGIN,9.0*mm,str(doc.page))
+        c.restoreState()
 
 
-if __name__ == '__main__':
-    parser = argparse.ArgumentParser()
-    parser.add_argument('source', type=Path)
-    parser.add_argument('destination', type=Path)
-    args = parser.parse_args()
-    render(args.source, args.destination)
+def generate(src, dest, preview=False):
+    release_fonts=fonts(allow_fallback=preview)
+    sty=styles(); lines=src.read_text(encoding='utf-8').splitlines()
+    if not lines or lines[0]!='# Calendar':raise ValueError('Expected Calendar guide')
+    story=[Spacer(1,28*mm),Paragraph('INFILTRATOR PROJECTS  /  APPLICATION MANUAL',sty['kicker']),
+           Paragraph('Calendar',sty['cover']),Paragraph('Native clock and calendar for Cinnamon',sty['sub']),
+           Spacer(1,4*mm),Diagram('popup'),Spacer(1,12*mm),
+           Paragraph('A working guide to the panel applet, popup, date navigation, events and configuration.',sty['sub']),
+           Spacer(1,12*mm),Paragraph('<b>SCOPE:</b> Application controls only. Separately installed clock and calendar resources have their own manuals.',sty['body']),
+           Spacer(1,10*mm),Paragraph('Copyright 1993-2026 Shannon Smith  |  GPL-3.0-or-later',sty['tiny']),PageBreak(),
+           Paragraph('Contents',sty['h'])]
+    heads=[('1. Getting started','3'),('2. Understanding the popup','4'),('3. Moving through dates','5'),
+           ('4. Calendar applet settings','6'),('5. Events and the desktop calendar','7'),
+           ('6. System time, alternative resources and location','8'),('7. Troubleshooting','9'),
+           ('8. Quick reference and boundaries','10')]
+    for name,page in heads:
+        story.append(Paragraph(f'{escape(name)} <font color="#657482"> . . . . . . . . . . . . {page}</font>',sty['toc']))
+    story.extend([Spacer(1,12*mm),Paragraph('Scope of this manual',sty['h']),
+                  Paragraph('This manual documents the actual Calendar applet and how it integrates with Cinnamon. It deliberately does not duplicate individual calendar-system or clock-mode reference material.',sty['body']),
+                  Paragraph('The interface illustrations are labelled schematics, not screenshots. They reflect the application layout and settings schema; exact appearance follows the installed Cinnamon version and theme.',sty['body'])])
+    for raw in lines[1:]:
+        t=raw.strip()
+        if not t or t.startswith('Native Cinnamon panel clock'):continue
+        if t=='<!-- PAGE -->':story.append(PageBreak());continue
+        m=re.fullmatch(r'<!-- DIAGRAM:(\w+) -->',t)
+        if m:story.extend([Diagram(m.group(1)),Spacer(1,9*mm)]);continue
+        if t.startswith('## '):story.append(Paragraph(rich(t[3:]),sty['h']));continue
+        if t.startswith('- '):story.append(Paragraph('&bull; '+rich(t[2:]),sty['bullet']));continue
+        if re.match(r'^\d+\. ',t):story.append(Paragraph(rich(t),sty['bullet']));continue
+        if t=='---':story.append(Spacer(1,5*mm));continue
+        story.append(Paragraph(rich(t),sty['body']))
+    dest.parent.mkdir(parents=True,exist_ok=True)
+    Manual(dest,release_fonts).build(story)
+    from pypdf import PdfReader
+    pdf=PdfReader(str(dest))
+    if len(pdf.pages)<10:raise AssertionError(f'Incomplete guide: {len(pdf.pages)} pages')
+    content='\n'.join(p.extract_text() or '' for p in pdf.pages)
+    for item in ('Getting started','Understanding the popup','Calendar applet settings',
+                 'System time, alternative resources and location','Troubleshooting','No Events'):
+        if item not in content:raise AssertionError(f'Missing manual section {item}')
+    print(f'{dest} | {len(pdf.pages)} pages | MB Corpo embedded: {release_fonts} | {dest.stat().st_size} bytes')
+
+if __name__=='__main__':
+    parser=argparse.ArgumentParser()
+    parser.add_argument('source',type=Path)
+    parser.add_argument('destination',type=Path)
+    parser.add_argument('--allow-preview-fallback',action='store_true')
+    a=parser.parse_args()
+    generate(a.source,a.destination,a.allow_preview_fallback)
