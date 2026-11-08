@@ -343,7 +343,12 @@ jobs:
           test -f "/System/Resources/Calendars/Hebrew Calendar.so"
           test ! -e /System/Resources/Documentation/Calendar.pdf
           test -f /System/Resources/Documentation/Calendar-Julian.pdf
-          python3 tests/test-julian-provider-translations.py "/System/Resources/Calendars/Julian Calendar.so"
+          cc -std=c11 -O2 -Wall -Wextra -Wpedantic -Werror \
+            -Isrc/vendor/infiltratr-common/include \
+            tests/test-julian-provider-translations.c -ldl \
+            -o "$RUNNER_TEMP/test-julian-provider-translations"
+          test ! -e tests/test-julian-provider-translations.py
+          "$RUNNER_TEMP/test-julian-provider-translations" "/System/Resources/Calendars/Julian Calendar.so"
           test "$(find /System/Resources/Clocks -maxdepth 1 -type f -name '*.so' | wc -l)" -eq 23
           apt-get check
           apt-get purge -y $resource_packages
