@@ -594,11 +594,15 @@ smoke-gjs: $(BUILD_DIR)/$(GIR).typelib
 	CALENDAR_EXPECTED_VERSION="$(VERSION)" \
 		gjs tests/smoke-typelib.js
 
-update-runtime-hashes:
-	python3 tools/update-runtime-hashes.py
+$(BUILD_DIR)/calendar-runtime-hashes: tools/update-runtime-hashes.cpp
+	@mkdir -p "$(BUILD_DIR)"
+	$(CXX) -std=c++17 -O2 -Wall -Wextra -Wpedantic -Werror "$<" -o "$@"
 
-validate-sources:
-	python3 tools/update-runtime-hashes.py --check
+update-runtime-hashes: $(BUILD_DIR)/calendar-runtime-hashes
+	./$(BUILD_DIR)/calendar-runtime-hashes
+
+validate-sources: $(BUILD_DIR)/calendar-runtime-hashes
+	./$(BUILD_DIR)/calendar-runtime-hashes --check
 	sha256sum --check "$(APPLET_SRC_DIR)/runtime-sources.sha256"
 
 path-space-smoke:
