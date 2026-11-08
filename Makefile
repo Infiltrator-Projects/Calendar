@@ -376,11 +376,15 @@ update-pot:
 validate-translations:
 	python3 tools/update-translations.py --check
 
-update-settings:
-	python3 tools/update-settings.py
+$(BUILD_DIR)/calendar-update-settings: tools/update-settings.cpp
+	@mkdir -p "$(BUILD_DIR)"
+	$(CXX) -std=c++17 -O2 -Wall -Wextra -Wpedantic -Werror "$<" -o "$@"
 
-validate-settings-generated:
-	python3 tools/update-settings.py --check
+update-settings: $(BUILD_DIR)/calendar-update-settings
+	./$(BUILD_DIR)/calendar-update-settings
+
+validate-settings-generated: $(BUILD_DIR)/calendar-update-settings
+	./$(BUILD_DIR)/calendar-update-settings --check
 	python3 tools/update-theme-css.py --check
 
 update-theme:

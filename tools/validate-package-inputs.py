@@ -7,7 +7,7 @@
 This script is a build-time verifier only. It is never installed. It rejects
 generated probes, caches and absolute workspace paths, enforcing release-input
 hygiene before a source archive or Debian package is released.
-Provider/settings drift is checked by tools/update-settings.py, keeping one parser
+Provider/settings drift is checked by tools/update-settings.cpp, keeping one parser
 for the provider metadata rather than duplicating registry knowledge here.
 """
 
