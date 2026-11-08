@@ -41,6 +41,18 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ github.token }}
         run: tools/test-resources.sh "$RUNNER_TEMP/independent-providers"
+      - name: Verify independent Julian translations through the native Common ABI
+        if: matrix.compiler == 'gcc'
+        shell: bash
+        run: |
+          set -euo pipefail
+          cc -std=c11 -O2 -Wall -Wextra -Wpedantic -Werror \
+            -Isrc/vendor/infiltratr-common/include \
+            tests/test-julian-provider-translations.c -ldl \
+            -o "$RUNNER_TEMP/julian-provider-translations"
+          "$RUNNER_TEMP/julian-provider-translations" \
+            "/System/Resources/Calendars/Julian Calendar.so"
+
       - name: Build and test
         env:
           CC: ${{ matrix.compiler }}
