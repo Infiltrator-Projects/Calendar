@@ -544,8 +544,12 @@ test: $(BUILD_DIR)/test-time-formats $(BUILD_DIR)/test-properties \
 	@./$(BUILD_DIR)/$(ABOUT_BINARY) --print-metadata | \
 		grep -qx 'common-library=infiltratr-common-$(INFILTRATR_COMMON_VERSION)'
 
-validate-js: validate-settings-generated
-	python3 tools/update-runtime-loader.py --check
+$(BUILD_DIR)/calendar-runtime-loader: tools/update-runtime-loader.cpp
+	@mkdir -p "$(BUILD_DIR)"
+	$(CXX) -std=c++17 -O2 -Wall -Wextra -Wpedantic -Werror "$<" -o "$@"
+
+validate-js: validate-settings-generated $(BUILD_DIR)/calendar-runtime-loader
+	./$(BUILD_DIR)/calendar-runtime-loader --check
 	@python3 -c 'import json; \
 	from pathlib import Path; \
 	p=Path("$(APPLET_SRC_DIR)"); \

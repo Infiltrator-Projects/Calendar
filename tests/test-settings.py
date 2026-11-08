@@ -301,7 +301,7 @@ def main() -> None:
         assert "class SignalBag" not in js_code(source)
     require_tokens(calendar, "SignalBag", "disconnectAll()")
     require_tokens(event_manager, "SignalBag", "disconnectAll()")
-    loader_tool = (PROJECT_ROOT / "tools/update-runtime-loader.py").read_text(
+    loader_tool = (PROJECT_ROOT / "tools/update-runtime-loader.cpp").read_text(
         encoding="utf-8"
     )
     require_tokens(loader_tool, "CANONICAL", "function _loadRuntimeSupport()", "--check")
