@@ -1,3 +1,11 @@
+calendar (1.0.130) unstable; urgency=medium
+
+  * Log native calendar provider loading and resource scan failures instead
+    of silently hiding installed calendars.
+  * Authenticate CI resource downloads to avoid GitHub API rate limits.
+
+ -- Shannon Smith <infiltratr@yandex.com>  Tue, 10 Nov 2026 16:00:00 +1100
+
 calendar (1.0.129) unstable; urgency=medium
 
   * Replace the Calendar app PDF with a ten-page illustrated operating
