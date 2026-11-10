@@ -215,12 +215,18 @@ load_runtime_provider(
         ? infiltratr_temporal_calendar_module_open(module_path)
         : infiltratr_temporal_calendar_module_open_system();
     if (module == NULL)
+    {
+        g_warning("Calendar provider '%s' could not load from '%s'",
+                  metadata->id, module_path != NULL ? module_path : "(system)");
         return true;
+    }
 
     loaded_metadata = infiltratr_temporal_calendar_module_metadata(module);
     if (loaded_metadata == NULL ||
         !infiltratr_string_equal(loaded_metadata->id, metadata->id))
     {
+        g_warning("Calendar provider '%s' returned invalid or mismatched metadata from '%s'",
+                  metadata->id, module_path != NULL ? module_path : "(system)");
         infiltratr_temporal_calendar_module_free(module);
         return true;
     }
@@ -257,12 +263,18 @@ initialise_runtime_registry(gpointer user_data)
      * error likewise leaves the catalogue empty. Individual
      * malformed modules are ignored by Common before or during behaviour load.
      */
-    (void)infiltratr_temporal_runtime_scan_directory(
+    const bool scanned = infiltratr_temporal_runtime_scan_directory(
         CALENDAR_NATIVE_CALENDAR_RESOURCE_DIRECTORY,
         INFILTRATR_TEMPORAL_RESOURCE_CALENDAR,
         load_runtime_provider,
         NULL,
         &ignored);
+    if (!scanned && g_file_test(CALENDAR_NATIVE_CALENDAR_RESOURCE_DIRECTORY,
+                               G_FILE_TEST_IS_DIR))
+    {
+        g_warning("Failed to scan native calendar resource directory: %s",
+                  CALENDAR_NATIVE_CALENDAR_RESOURCE_DIRECTORY);
+    }
     if (runtime_provider_record_from_id("gregorian") == NULL)
     {
         /* Common delegates the normal calendar to host services. This adapter
