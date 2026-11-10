@@ -316,7 +316,7 @@ def main() -> None:
     assert not (ROOT / "src/resources").exists()
     assert "RESOURCE_ENGINE_ARCHIVE" not in makefile
     assert "System/Resources" not in read("tools/release-check.sh")
-    assert "temporal-packages.py" in read("tools/test-resources.sh")
+    assert "temporal-packages.sh" in read("tools/test-resources.sh")
     assert "Libraries/releases" not in read("tools/test-resources.sh")
     assert "validate-runtime-deps:" in makefile
 
