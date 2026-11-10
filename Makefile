@@ -582,6 +582,13 @@ validate-exports: $(BUILD_DIR)/$(LIB_REALNAME)
 	diff -u "$(BUILD_DIR)/exported-symbols.expected" \
 		"$(BUILD_DIR)/exported-symbols.actual"
 
+$(BUILD_DIR)/calendar-abi-test: tests/test-abi.cpp
+	@mkdir -p "$(BUILD_DIR)"
+	$(CXX) -std=c++17 -O2 -Wall -Wextra -Wpedantic -Werror "$<" -o "$@"
+
+validate-abi: $(BUILD_DIR)/calendar-abi-test $(BUILD_DIR)/$(LIB_REALNAME)
+	./$(BUILD_DIR)/calendar-abi-test --library "$(BUILD_DIR)/$(LIB_REALNAME)"
+
 validate-runtime-deps: $(BUILD_DIR)/$(LIB_REALNAME)
 	@command -v readelf >/dev/null || { \
 		echo "Missing validation dependency: readelf" >&2; exit 1; }
