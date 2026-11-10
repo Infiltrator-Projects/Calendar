@@ -40,6 +40,9 @@ typedef struct
 } RuntimeCalendarProvider;
 
 static GPtrArray *runtime_providers;
+/* The registry is intentionally a process-lifetime snapshot: hot-unloading
+ * providers could invalidate pointers retained by Calendar presentation code.
+ * New installations are discovered on next process start. */
 static GOnce runtime_registry_once = G_ONCE_INIT;
 
 static const RuntimeCalendarProvider *
@@ -193,48 +196,34 @@ runtime_provider_record_from_interface(
     return NULL;
 }
 
+/* Adopt an already-open, validated runtime module exactly once. The record
+ * owns the module for the process lifetime so returned provider pointers stay
+ * valid even when an installed .so is replaced on disk. */
 static bool
-load_runtime_provider(
-    const InfiltratrTemporalResourceMetadata *metadata,
-    const char *module_path,
-    void *user_data)
+register_runtime_provider(const InfiltratrTemporalResourceMetadata *expected,
+                          InfiltratrTemporalCalendarModule *module,
+                          const char *origin)
 {
-    InfiltratrTemporalCalendarModule *module;
-    const InfiltratrTemporalResourceMetadata *loaded_metadata;
-    RuntimeCalendarProvider *record;
-
-    (void)user_data;
-    if (metadata == NULL ||
-        runtime_provider_record_from_id(metadata->id) != NULL)
+    const InfiltratrTemporalResourceMetadata *actual =
+        infiltratr_temporal_calendar_module_metadata(module);
+    if (actual == NULL || expected == NULL ||
+        !infiltratr_string_equal(actual->id, expected->id))
     {
-        /* The first validated native ID wins. */
+        g_warning("Calendar provider from '%s' returned mismatched metadata",
+                  origin);
+        infiltratr_temporal_calendar_module_free(module);
         return true;
     }
-
-    module = module_path != NULL
-        ? infiltratr_temporal_calendar_module_open(module_path)
-        : infiltratr_temporal_calendar_module_open_system();
-    if (module == NULL)
+    if (runtime_provider_record_from_id(actual->id) != NULL)
     {
-        g_warning("Calendar provider '%s' could not load from '%s'",
-                  metadata->id, module_path != NULL ? module_path : "(system)");
-        return true;
-    }
-
-    loaded_metadata = infiltratr_temporal_calendar_module_metadata(module);
-    if (loaded_metadata == NULL ||
-        !infiltratr_string_equal(loaded_metadata->id, metadata->id))
-    {
-        g_warning("Calendar provider '%s' returned invalid or mismatched metadata from '%s'",
-                  metadata->id, module_path != NULL ? module_path : "(system)");
         infiltratr_temporal_calendar_module_free(module);
         return true;
     }
 
-    record = g_new0(RuntimeCalendarProvider, 1);
+    RuntimeCalendarProvider *record = g_new0(RuntimeCalendarProvider, 1);
     record->module = module;
-    record->id = g_strdup(loaded_metadata->id);
-    record->name = g_strdup(loaded_metadata->name);
+    record->id = g_strdup(actual->id);
+    record->name = g_strdup(actual->name);
     record->info.id = record->id;
     record->info.name = record->name;
     record->interface = (CalendarCalendarProvider){
@@ -249,6 +238,28 @@ load_runtime_provider(
     };
     g_ptr_array_add(runtime_providers, record);
     return true;
+}
+
+static bool
+load_runtime_provider(const InfiltratrTemporalResourceMetadata *metadata,
+                      const char *module_path, void *user_data)
+{
+    (void)user_data;
+    if (metadata == NULL ||
+        runtime_provider_record_from_id(metadata->id) != NULL)
+        return true;
+
+    InfiltratrTemporalCalendarModule *module = module_path != NULL
+        ? infiltratr_temporal_calendar_module_open(module_path)
+        : infiltratr_temporal_calendar_module_open_system();
+    if (module == NULL)
+    {
+        g_warning("Calendar provider '%s' could not load from '%s'",
+                  metadata->id, module_path != NULL ? module_path : "(system)");
+        return true;
+    }
+    return register_runtime_provider(metadata, module,
+                                     module_path != NULL ? module_path : "(system)");
 }
 
 static gpointer
@@ -283,9 +294,10 @@ initialise_runtime_registry(gpointer user_data)
             infiltratr_temporal_calendar_module_open_system();
         if (system != NULL)
         {
-            (void)load_runtime_provider(
-                infiltratr_temporal_calendar_module_metadata(system), NULL, NULL);
-            infiltratr_temporal_calendar_module_free(system);
+            /* Do not reopen a module already obtained from Common. */
+            (void)register_runtime_provider(
+                infiltratr_temporal_calendar_module_metadata(system),
+                system, "(system)");
         }
     }
     return runtime_providers;
