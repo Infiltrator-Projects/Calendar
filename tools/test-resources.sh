@@ -7,9 +7,9 @@ DIRECTORY=${1:-"$ROOT/build/test-resources"}
 mkdir -p "$DIRECTORY"
 DIRECTORY=$(CDPATH='' cd -- "$DIRECTORY" && pwd)
 if [ -f "$DIRECTORY/providers.json" ]; then
-    python3 "$ROOT/tools/temporal-packages.py" verify "$DIRECTORY"
+    bash "$ROOT/tools/temporal-packages.sh" verify "$DIRECTORY"
 else
-    python3 "$ROOT/tools/temporal-packages.py" fetch "$DIRECTORY"
+    bash "$ROOT/tools/temporal-packages.sh" fetch "$DIRECTORY"
 fi
-python3 "$ROOT/tools/temporal-packages.py" install "$DIRECTORY"
+bash "$ROOT/tools/temporal-packages.sh" install "$DIRECTORY"
 printf '%s\n' "$DIRECTORY"
