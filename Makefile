@@ -631,7 +631,7 @@ validate-architecture:
 	python3 tests/test-architecture.py
 
 validate-upstream-drift:
-	python3 tests/test-upstream-drift.py
+	bash tests/test-upstream-drift.sh
 
 core-check: check-deps $(CORE_ARCHIVE) $(BUILD_DIR)/test-portable-core \
 	$(BUILD_DIR)/test-exact-clock-boundaries validate-architecture
