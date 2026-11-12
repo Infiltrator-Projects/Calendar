@@ -12,14 +12,28 @@ MULTIARCH=$(dpkg-architecture -qDEB_HOST_MULTIARCH)
 NATIVE_VERSION="${VERSION}+nativepgo1"
 TMP=$(mktemp -d)
 trap 'rm -rf "$TMP"' EXIT HUP INT TERM
-mkdir -p "$TMP/output"
+mkdir -p "$TMP/output" "$TMP/forbidden-tools"
+# CI has these tools for source qualification. Fail if the published native
+# installer starts using any of them to build the applet on a user's machine.
+for tool in python3 g-ir-scanner g-ir-compiler; do
+    cat > "$TMP/forbidden-tools/$tool" <<'EOF'
+#!/bin/sh
+printf 'Unexpected tool in Calendar native build: %s\n' "$0" >&2
+exit 97
+EOF
+    chmod +x "$TMP/forbidden-tools/$tool"
+done
 
-if ! "$RUN" --build-only --output-dir "$TMP/output" \
+if ! PATH="$TMP/forbidden-tools:$PATH" "$RUN" --build-only --output-dir "$TMP/output" \
     > "$TMP/native-build.log" 2>&1; then
     cat "$TMP/native-build.log" >&2
     exit 1
 fi
 cat "$TMP/native-build.log"
+grep -Fq 'gi-compile-repository' "$TMP/native-build.log"
+if grep -Fq 'Unexpected tool in Calendar native build:' "$TMP/native-build.log"; then
+    exit 1
+fi
 for native_flag in -O3 -march=native -mtune=native -flto=auto -fno-semantic-interposition -fno-plt; do
     grep -Eq "^(cc|gcc) .* ${native_flag}( |$)" "$TMP/native-build.log"
 done

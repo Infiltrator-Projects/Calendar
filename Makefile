@@ -6,6 +6,7 @@ AR ?= ar
 PKG_CONFIG ?= pkg-config
 G_IR_SCANNER ?= g-ir-scanner
 G_IR_COMPILER ?= g-ir-compiler
+GI_COMPILE_REPOSITORY ?= gi-compile-repository
 PREFIX ?= /usr
 DESTDIR ?=
 
@@ -31,6 +32,16 @@ ABOUT_BINARY := calendar-about
 ABOUT_DESKTOP_TEMPLATE := src/app/calendar-about.desktop.in
 ABOUT_DESKTOP := $(BUILD_DIR)/calendar-about.desktop
 GIR := Calendar-1.0
+BUNDLED_GIR := src/abi/$(GIR).gir
+# Release installers carry the scanner output for the exact bundled source.
+# Compile that interface with GLib's native tool on the target machine.
+ifeq ($(wildcard $(BUNDLED_GIR)),)
+GIR_SOURCE := $(BUILD_DIR)/$(GIR).gir
+GIR_COMPILER := $(G_IR_COMPILER)
+else
+GIR_SOURCE := $(BUNDLED_GIR)
+GIR_COMPILER := $(GI_COMPILE_REPOSITORY)
+endif
 CORE_SOURCES := \
 	src/core/clock-engine.c \
 	src/core/time-formats.c \
@@ -269,10 +280,12 @@ common-check:
 check-deps: common-check
 	@command -v "$(PKG_CONFIG)" >/dev/null || { \
 		echo "Missing build dependency: pkg-config" >&2; exit 1; }
+ifeq ($(GIR_SOURCE),$(BUILD_DIR)/$(GIR).gir)
 	@$(G_IR_SCANNER) --version >/dev/null 2>&1 || { \
 		echo "Missing build dependency: g-ir-scanner" >&2; exit 1; }
-	@$(G_IR_COMPILER) --version >/dev/null 2>&1 || { \
-		echo "Missing build dependency: g-ir-compiler" >&2; exit 1; }
+endif
+	@$(GIR_COMPILER) --version >/dev/null 2>&1 || { \
+		echo "Missing build dependency: $(GIR_COMPILER)" >&2; exit 1; }
 	@$(PKG_CONFIG) --exists gio-2.0 || { \
 		echo "Missing build dependency: libglib2.0-dev (gio-2.0)" >&2; exit 1; }
 	@$(PKG_CONFIG) --exists gobject-2.0 || { \
@@ -285,8 +298,6 @@ check-deps: common-check
 		echo "Missing build dependency: libgtk-3-dev" >&2; exit 1; }
 	@command -v msgfmt >/dev/null || { \
 		echo "Missing build dependency: gettext" >&2; exit 1; }
-	@command -v python3 >/dev/null || { \
-		echo "Missing test dependency: python3" >&2; exit 1; }
 	@command -v node >/dev/null || { \
 		echo "Missing test dependency: nodejs" >&2; exit 1; }
 	@command -v gjs >/dev/null || { \
@@ -419,8 +430,9 @@ $(BUILD_DIR)/$(GIR).gir: \
 		--output=$@ \
 		$(PUBLIC_HEADERS) $(SOURCES)
 
-$(BUILD_DIR)/$(GIR).typelib: $(BUILD_DIR)/$(GIR).gir
-	$(G_IR_COMPILER) \
+$(BUILD_DIR)/$(GIR).typelib: $(GIR_SOURCE)
+	@mkdir -p "$(BUILD_DIR)"
+	$(GIR_COMPILER) \
 		--includedir="$(GIR_INCLUDE_PATH)" \
 		--includedir="$(GIR_SHARE_INCLUDE_PATH)" \
 		$< \
@@ -743,12 +755,13 @@ install: all
 	install -m644 "$(BUILD_DIR)/BUILD-INFO" \
 		"$(DESTDIR)$(PREFIX)/share/doc/calendar/BUILD-INFO"
 
-package-source: common-check validate-settings-generated
+package-source: common-check validate-settings-generated $(GIR_SOURCE)
 	@mkdir -p "$(DIST_DIR)"
 	@rm -rf "$(BUILD_DIR)/source-stage"
 	@mkdir -p "$(BUILD_DIR)/source-stage/Calendar-$(VERSION)"
 	@tar --exclude='.git' --exclude='*/.git' -cf - $(DIST_FILES) | \
 		tar -C "$(BUILD_DIR)/source-stage/Calendar-$(VERSION)" -xf -
+	@install -m644 "$(GIR_SOURCE)" "$(BUILD_DIR)/source-stage/Calendar-$(VERSION)/$(BUNDLED_GIR)"
 	@rm -rf \
 		"$(BUILD_DIR)/source-stage/Calendar-$(VERSION)/debian/.debhelper" \
 		"$(BUILD_DIR)/source-stage/Calendar-$(VERSION)/debian/calendar" \

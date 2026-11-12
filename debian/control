@@ -7,14 +7,14 @@ Build-Depends:
  desktop-file-utils,
  gettext,
  gir1.2-glib-2.0-dev,
- gobject-introspection,
+ gobject-introspection <!pkg.calendar.bundled-gir>,
  gjs,
  libglib2.0-dev,
  libgtk-3-dev,
  libicu-dev,
  nodejs,
  pkg-config,
- python3,
+ python3 <!pkg.calendar.bundled-gir>,
  xz-utils
 Standards-Version: 4.7.2
 Rules-Requires-Root: no

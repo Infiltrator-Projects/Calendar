@@ -1,3 +1,11 @@
+calendar (1.0.131) unstable; urgency=medium
+
+  * Include the qualified introspection interface in the native source
+    installer. Compile it locally with GLib's native typelib compiler.
+  * Remove the Python and scanner prerequisites from the local PGO build.
+
+ -- Shannon Smith <infiltratr@yandex.com>  Thu, 12 Nov 2026 11:45:00 +1100
+
 calendar (1.0.130) unstable; urgency=medium
 
   * Log native calendar provider loading and resource scan failures instead
