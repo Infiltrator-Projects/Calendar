@@ -5,10 +5,10 @@ set -euo pipefail
 root=$(CDPATH='' cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)
 catalogue="$root/temporal-providers.json"
 command=${1:-}; destination=${2:-}
-[[ "$command" == fetch || "$command" == verify || "$command" == install ]] && [[ -n "$destination" ]] || {
+if [[ -z "$destination" || ( "$command" != fetch && "$command" != verify && "$command" != install ) ]]; then
     echo 'usage: temporal-packages.sh fetch|verify|install DIRECTORY [--select kind:id]...' >&2
     exit 2
-}
+fi
 shift 2
 declare -a requested=()
 while (($#)); do
@@ -85,10 +85,12 @@ fetch_one() {
         "https://api.github.com/repos/Infiltrator-Projects/$repository/releases/latest") ||
         { echo "Cannot retrieve release: $repository" >&2; return 1; }
     tag=$(jq -r '.tag_name // ""' <<<"$release")
-    [[ "$tag" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]] &&
-        [[ "$(jq -r '.draft' <<<"$release")" == false ]] &&
-        [[ "$(jq -r '.prerelease' <<<"$release")" == false ]] ||
-        { echo "No stable canonical release: $repository" >&2; return 1; }
+    if [[ ! "$tag" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ||
+          "$(jq -r '.draft' <<<"$release")" != false ||
+          "$(jq -r '.prerelease' <<<"$release")" != false ]]; then
+        echo "No stable canonical release: $repository" >&2
+        return 1
+    fi
     version=${tag#v}
     dpkg --compare-versions "$version" ge "$minimum_version" ||
         { echo "Provider version below baseline: $repository" >&2; return 1; }
@@ -105,16 +107,21 @@ fetch_one() {
     digest=$(jq -r '.digest // ""' <<<"$asset")
     bytes=$(jq -r '.size' <<<"$asset")
     url="https://github.com/Infiltrator-Projects/$repository/releases/download/$tag/$deb"
-    [[ "$digest" =~ ^sha256:[0-9a-f]{64}$ ]] &&
-        [[ "$bytes" =~ ^[0-9]+$ && "$bytes" -gt 0 ]] &&
-        [[ "$(jq -r '.browser_download_url' <<<"$asset")" == "$url" ]] ||
-        { echo "Invalid signed release metadata: $repository" >&2; return 1; }
+    if [[ ! "$digest" =~ ^sha256:[0-9a-f]{64}$ ||
+          ! "$bytes" =~ ^[0-9]+$ || "$bytes" -le 0 ||
+          "$(jq -r '.browser_download_url' <<<"$asset")" != "$url" ]]; then
+        echo "Invalid signed release metadata: $repository" >&2
+        return 1
+    fi
     file="$destination/$deb"
     request --output "$file" "$url" ||
         { rm -f -- "$file"; echo "Cannot fetch package: $deb" >&2; return 1; }
-    [[ "$(stat -c '%s' -- "$file")" == "$bytes" ]] &&
-        printf '%s  %s\n' "${digest#sha256:}" "$file" | sha256sum --check --status ||
-        { rm -f -- "$file"; echo "Published package digest mismatch: $deb" >&2; return 1; }
+    if [[ "$(stat -c '%s' -- "$file")" != "$bytes" ]] ||
+        ! printf '%s  %s\n' "${digest#sha256:}" "$file" | sha256sum --check --status; then
+        rm -f -- "$file"
+        echo "Published package digest mismatch: $deb" >&2
+        return 1
+    fi
     jq -n --argjson entry "$entry" --arg version "$version" --arg file "$deb" \
         --arg hash "${digest#sha256:}" --argjson size "$bytes" \
         '$entry + {version:$version,filename:$file,sha256:$hash,size:$size}' > "$temp/$(printf '%04d' "$ordinal").json"
@@ -126,7 +133,12 @@ if [[ "$command" == fetch ]]; then
     [[ -z "$(find "$destination" -mindepth 1 -maxdepth 1 -print -quit)" ]] ||
         { echo 'Fetch destination must be empty' >&2; exit 1; }
     temp=$(mktemp -d)
-    trap 'for id in $(jobs -pr); do kill "$id" 2>/dev/null || :; done; rm -rf -- "$temp"' EXIT
+    cleanup_fetch() {
+        local id
+        for id in $(jobs -pr); do kill "$id" 2>/dev/null || :; done
+        rm -rf -- "$temp"
+    }
+    trap cleanup_fetch EXIT
     mapfile -t entries < <(jq -c '.[]' "$catalogue")
     declare -a chosen=()
     for entry in "${entries[@]}"; do
