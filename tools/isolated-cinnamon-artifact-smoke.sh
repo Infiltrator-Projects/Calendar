@@ -35,14 +35,13 @@ if [[ ! -f /.dockerenv || "$(id -u)" -ne 0 ]]; then
     exit 1
 fi
 
-python3 "$ROOT/tools/temporal-packages.py" verify "$RESOURCES_DIRECTORY"
-
-for command_name in Xvfb dbus-run-session cinnamon gdbus dpkg-deb python3; do
+for command_name in Xvfb dbus-run-session cinnamon gdbus dpkg-deb jq; do
     command -v "$command_name" >/dev/null 2>&1 || {
         printf 'Isolated Cinnamon qualification is missing required command: %s\n' "$command_name" >&2
         exit 1
     }
 done
+"$ROOT/tools/temporal-packages.sh" verify "$RESOURCES_DIRECTORY"
 
 if command -v cjs >/dev/null 2>&1; then
     JS_RUNTIME=$(command -v cjs)
@@ -94,15 +93,15 @@ trap cleanup EXIT HUP INT TERM
 
 chmod 700 "$TEST_RUNTIME"
 dpkg-deb -x "$DEB" "$STAGE_ROOT"
-python3 "$ROOT/tools/temporal-packages.py" install "$RESOURCES_DIRECTORY"
-python3 - "$RESOURCES_DIRECTORY" "$STAGE_ROOT" <<'PROVIDER_PACKAGES'
-import json, pathlib, subprocess, sys
-snapshot, stage = map(pathlib.Path, sys.argv[1:])
-records = json.loads((snapshot / "providers.json").read_text())
-assert len(records) == 54
-for record in records:
-    subprocess.run(["dpkg-deb", "-x", str(snapshot / record["filename"]), str(stage)], check=True)
-PROVIDER_PACKAGES
+"$ROOT/tools/temporal-packages.sh" install "$RESOURCES_DIRECTORY"
+mapfile -t provider_packages < <(jq -er '.[].filename' "$RESOURCES_DIRECTORY/providers.json")
+if [[ "${#provider_packages[@]}" -ne 54 ]]; then
+    echo "Exact provider snapshot must contain 54 packages." >&2
+    exit 1
+fi
+for package in "${provider_packages[@]}"; do
+    dpkg-deb -x "$RESOURCES_DIRECTORY/$package" "$STAGE_ROOT"
+done
 
 # The native Common loader deliberately uses the canonical system capability
 # directory. Install ONLY exact handoff modules into this disposable container;
