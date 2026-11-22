@@ -84,8 +84,8 @@ Suggests:
  infiltrator-clock-standard-24,
  infiltrator-clock-unix
 Breaks: infiltrator-calendar-resources (<< 1.19.65)
-Replaces: infiltrator-calendar-resources (<< 1.19.65)
-Replaces: infiltrator-calendar (<< 1.0.132)
+Replaces: infiltrator-calendar-resources (<< 1.19.65),
+ infiltrator-calendar (<< 1.0.132)
 Description: Cinnamon clock and calendar application
  Calendar integrates with Cinnamon's panel, popup, settings and calendar
  service while consuming the system-wide temporal capabilities exposed through
