@@ -324,6 +324,30 @@ jobs:
           --dist qualified-release
           --expected-sha "$GITHUB_SHA"
           --github-env "$GITHUB_ENV"
+      - name: Verify installed legacy calendar icon migrates to canonical package
+        shell: bash
+        run: |
+          set -euo pipefail
+          dpkg-deb -f "$RELEASE_DEB" Replaces | grep -Fq 'infiltrator-calendar (<< 1.0.132)'
+          legacy="$RUNNER_TEMP/legacy-calendar-package"
+          icon=/usr/share/icons/hicolor/256x256/apps/infiltratr-calendar.png
+          mkdir -p "$legacy/DEBIAN" "$legacy/usr/share/icons/hicolor/256x256/apps"
+          printf '%s\n' \
+            'Package: infiltrator-calendar' \
+            'Version: 1.0.100' \
+            'Architecture: amd64' \
+            'Maintainer: Infiltrator Projects <maintainer@example.invalid>' \
+            'Description: old Calendar icon owner (upgrade fixture)' \
+            > "$legacy/DEBIAN/control"
+          printf 'legacy-calendar-icon-fixture\n' > "$legacy$icon"
+          dpkg-deb --root-owner-group --build "$legacy" "$RUNNER_TEMP/legacy-calendar.deb"
+          dpkg --install "$RUNNER_TEMP/legacy-calendar.deb"
+          test "$(dpkg-query -S "$icon")" = "infiltrator-calendar: $icon"
+          apt-get install -y --no-install-recommends "./$RELEASE_DEB"
+          test "$(dpkg-query -S "$icon")" = "calendar: $icon"
+          test "$(dpkg-query -W -f='${Status}' calendar)" = "install ok installed"
+          apt-get purge -y calendar infiltrator-calendar
+          apt-get check
       - name: Verify normal host operation without optional modules
         shell: bash
         run: |
