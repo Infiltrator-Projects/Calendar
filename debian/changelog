@@ -1,3 +1,11 @@
+calendar (1.0.132) unstable; urgency=medium
+
+  * Adopt legacy infiltrator-calendar desktop icon files when upgrading to
+    canonical Calendar without manually deleting package-managed resources.
+  * Qualify the historical 1.0.100 package ownership migration in Debian CI.
+
+ -- Shannon Smith <infiltratr@yandex.com>  Sun, 22 Nov 2026 22:50:00 +1100
+
 calendar (1.0.131) unstable; urgency=medium
 
   * Include the qualified introspection interface in the native source
