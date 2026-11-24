@@ -99,8 +99,8 @@ fetch_one() {
     run="${slug}-${version}-native-installer.run"
     zip="${slug}-${version}-source.zip"
     jq -e --arg deb "$deb" --arg run "$run" --arg zip "$zip" '
-      (.assets | length) == 3 and
-      ([.assets[].name] | sort) == ([$deb, $run, $zip] | sort)
+      ([.assets[].name] | sort) as $names |
+      ($names == ([$deb, $run] | sort) or $names == ([$deb, $run, $zip] | sort))
     ' <<<"$release" >/dev/null ||
         { echo "Release assets mismatch: $repository" >&2; return 1; }
     asset=$(jq -c --arg name "$deb" '.assets[] | select(.name == $name)' <<<"$release")
