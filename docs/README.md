@@ -30,6 +30,12 @@ Specialist documents may go deeper into one subsystem, protocol, platform, repre
 - [Portability](PORTABILITY.md) — language, platform, representation, locale, ABI and compatibility boundaries.
 - [Qualification](QUALIFICATION.md) — exact-source environment-dependent Cinnamon/location evidence and its evidence-class boundaries.
 
+## Independently installed resource manuals
+
+Each of the 31 calendar and 23 clock repositories owns its resource-specific manual. Its canonical editable content is `docs/GUIDE.json`, rendered during packaging using the pinned Common documentation renderer. The resource package installs its own PDF under `/System/Resources/Documentation/`; the Calendar applet package owns only Calendar.pdf. No resource manual is appended to the applet guide. A published package is identified by its own immutable release and qualification evidence.
+
+The Egyptian catalogue owns the broad historical families and their evidence. The first-profile research document specialises the two proposed providers, their unresolved deterministic boundary rules, and selection policy. Neither document is an installed provider manual or evidence of implementation.
+
 ## Maintenance rule
 
 When a change moves an ownership boundary, support boundary, validation claim or major design decision, update the corresponding canonical document in the same change. Avoid copying the same status statement into several files; link to the authoritative document instead.

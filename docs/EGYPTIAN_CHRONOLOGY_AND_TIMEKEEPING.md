@@ -8,7 +8,7 @@ This document is Calendar's historical research catalogue for **native ancient E
 
 This research is outside the completed [Calendar 1.0 baseline](ROADMAP.md#scope-decision). It creates no implementation commitment or release requirement; the existing Egyptian Nabonassar resource remains supported independently.
 
-`MODELS.md` remains authoritative for Calendar's general evidence hierarchy, failure semantics and model-admission rules. This document owns the Egyptian historical detail.
+`MODELS.md` remains authoritative for Calendar's general evidence hierarchy, failure semantics and model-admission rules. This document owns the broad Egyptian historical evidence and classification. [First Egyptian calendar and time system](EGYPTIAN_FIRST_SYSTEM.md) specialises the proposed first-profile combination and its unresolved implementation/admission rules; it does not establish a selectable provider.
 
 Documentation is not implementation. A system listed here is not selectable until its arithmetic or astronomy, shared registry identity, formatter/converter, scheduling where required, tests and presentation contracts have been implemented and validated.
 

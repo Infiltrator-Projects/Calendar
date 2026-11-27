@@ -10,7 +10,7 @@ It records the project's **current best historical model** from the available ar
 
 The user-facing system names must not contain qualifiers such as "reconstruction" merely because the surviving evidence is incomplete. Instead, this document records what evidence supports the model, what remains uncertain, and what must be revised if the evidence changes.
 
-The parent catalogue is [EGYPTIAN_CHRONOLOGY_AND_TIMEKEEPING.md](EGYPTIAN_CHRONOLOGY_AND_TIMEKEEPING.md). `MODELS.md` remains authoritative for general model admission, failure and validation rules.
+The parent catalogue is [EGYPTIAN_CHRONOLOGY_AND_TIMEKEEPING.md](EGYPTIAN_CHRONOLOGY_AND_TIMEKEEPING.md), which owns the broader historical chronology and timekeeping evidence. This profile specialises its earliest lunar and stellar/solar families: the proposed combination, operational boundary decisions and unresolved admission conditions. `MODELS.md` remains authoritative for general model admission, failure and validation rules.
 
 ## First profile
 
@@ -90,13 +90,7 @@ The first full-day time provider therefore uses the earliest stellar evidence fo
 
 ## Current project model
 
-The first time system is:
-
-```text
-Early Egyptian Stellar–Solar Time
-```
-
-Its rules are:
+The proposed time resource named in the first profile uses these rules:
 
 - **night:** twelve stellar temporal divisions;
 - **day:** twelve solar temporal divisions;
@@ -176,17 +170,7 @@ That fractional phase is modern presentation of continuous position. It is not a
 
 # First-profile selector contract
 
-When both providers are implemented, the first Egyptian historical profile in System Settings should resolve to exactly these two independent choices:
-
-```text
-Calendar
-    Early Egyptian Lunar Calendar
-
-Clock
-    Early Egyptian Stellar–Solar Time
-```
-
-Selecting the profile does not rewrite canonical timestamps. Calendar and clock remain presentation dimensions supplied through the shared Temporal policy.
+When both providers are implemented and admitted, System Settings should resolve the first Egyptian historical profile to the two independent resource names in the **First profile** section. Selecting the profile does not rewrite canonical timestamps. Calendar and clock remain presentation dimensions supplied through the shared Temporal policy.
 
 # Evidence-change policy
 
